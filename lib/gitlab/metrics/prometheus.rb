@@ -5,8 +5,12 @@ module Gitlab
     module Prometheus
       include Gitlab::CurrentSettings
 
+      def metrics_folder_present?
+        ENV.has_key?('prometheus_multiproc_dir') && ::Dir.exist?(ENV['prometheus_multiproc_dir'])
+      end
+
       def prometheus_metrics_enabled?
-        @prometheus_metrics_enabled ||= current_application_settings[:prometheus_metrics_enabled] || false
+        @prometheus_metrics_enabled ||= metrics_folder_present? || current_application_settings[:prometheus_metrics_enabled] || false
       end
 
       def registry
