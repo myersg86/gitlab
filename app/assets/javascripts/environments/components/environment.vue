@@ -222,7 +222,11 @@ export default {
     },
 
     fetchDeployBoard(environment, showLoader = false) {
-      this.store.updateEnvironmentProp(environment, 'isLoadingDeployBoard', showLoader);
+      // The first deploy board is open by default and already showing a spinner,
+      // if that is the case we won't toggle the loading again
+      if (!environment.isLoadingDeployBoard) {
+        this.store.updateEnvironmentProp(environment, 'isLoadingDeployBoard', showLoader);
+      }
 
       this.service.getDeployBoard(environment.rollout_status_path)
         .then(resp => resp.json())
@@ -233,8 +237,7 @@ export default {
         .catch(() => {
           this.store.updateEnvironmentProp(environment, 'isLoadingDeployBoard', false);
           this.store.updateEnvironmentProp(environment, 'hasErrorDeployBoard', true);
-          // eslint-disable-next-line no-new
-          new Flash('An error occurred while fetching the deploy board.');
+          Flash('An error occurred while fetching the deploy board.');
         });
     },
   },

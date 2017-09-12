@@ -13,6 +13,8 @@ export default class EnvironmentsStore {
     this.state.availableCounter = 0;
     this.state.paginationInformation = {};
 
+    this.hasOpenDeployBoard = false;
+
     return this;
   }
 
@@ -35,6 +37,9 @@ export default class EnvironmentsStore {
    * keys to those environments.
    * The first key will let's us know if we should or not render the deploy board.
    * It will be toggled when the user clicks to seee the deploy board.
+   * Only the first environment with a deploy board will render an open deploy board.
+   * To improve user experience we show this deploy board with a loading
+   * spinner until we receive the data.
    *
    * The second key will allow us to update the environment with the received deploy board data.
    *
@@ -66,11 +71,23 @@ export default class EnvironmentsStore {
       }
 
       if (filtered.size === 1 && filtered.rollout_status_path) {
+        let defaultVisibility;
+        let defaultLoading;
+
+        if (!this.hasOpenDeployBoard) {
+          defaultVisibility = true;
+          defaultLoading = true;
+          this.hasOpenDeployBoard = true;
+        } else {
+          defaultVisibility = false;
+          defaultLoading = false;
+        }
+
         filtered = Object.assign({}, filtered, {
           hasDeployBoard: true,
-          isDeployBoardVisible: oldEnvironmentState.isDeployBoardVisible || false,
+          isDeployBoardVisible: oldEnvironmentState.isDeployBoardVisible || defaultVisibility,
           deployBoardData: oldEnvironmentState.deployBoardData || {},
-          isLoadingDeployBoard: oldEnvironmentState.isLoadingDeployBoard || false,
+          isLoadingDeployBoard: oldEnvironmentState.isLoadingDeployBoard || defaultLoading,
           hasErrorDeployBoard: oldEnvironmentState.hasErrorDeployBoard || false,
         });
       }

@@ -31,9 +31,9 @@ describe('Store', () => {
       updated_at: '2017-01-31T10:53:46.894Z',
       rollout_status_path: '/path',
       hasDeployBoard: true,
-      isDeployBoardVisible: false,
+      isDeployBoardVisible: true,
       deployBoardData: {},
-      isLoadingDeployBoard: false,
+      isLoadingDeployBoard: true,
       hasErrorDeployBoard: false,
     };
 
@@ -70,7 +70,6 @@ describe('Store', () => {
 
       store.storeEnvironments([environment]);
       expect(store.state.environments[0].hasDeployBoard).toEqual(true);
-      expect(store.state.environments[0].isDeployBoardVisible).toEqual(false);
       expect(store.state.environments[0].deployBoardData).toEqual({});
     });
 
@@ -186,22 +185,34 @@ describe('Store', () => {
 
   describe('deploy boards', () => {
     beforeEach(() => {
-      const environment = {
+      const environments = [{
         name: 'foo',
         size: 1,
         latest: {
           id: 1,
         },
         rollout_status_path: 'path',
-      };
+      },
+      {
+        name: 'bar',
+        size: 1,
+        latest: {
+          id: 2,
+        },
+        rollout_status_path: 'foo/path',
+      }];
 
-      store.storeEnvironments([environment]);
+      store.storeEnvironments(environments);
     });
 
     it('should toggle deploy board property for given environment id', () => {
       store.toggleDeployBoard(1);
+      store.toggleDeployBoard(2);
 
-      expect(store.state.environments[0].isDeployBoardVisible).toEqual(true);
+      // first one is open by default, when toggled it closes
+      // second one is closed by default, when toggled it opens
+      expect(store.state.environments[0].isDeployBoardVisible).toEqual(false);
+      expect(store.state.environments[1].isDeployBoardVisible).toEqual(true);
     });
 
     it('should store deploy board data for given environment id', () => {
@@ -224,6 +235,11 @@ describe('Store', () => {
       store.storeEnvironments([environment]);
       expect(store.state.environments[0].deployBoardData).toEqual(deployBoardMockData);
     });
+
+    it('should store first deploy board as opened', () => {
+      expect(store.state.environments[0].isDeployBoardVisible).toEqual(true);
+      expect(store.state.environments[1].isDeployBoardVisible).toEqual(false);
+    });
   });
 
   describe('getOpenFolders', () => {
@@ -237,18 +253,25 @@ describe('Store', () => {
 
   describe('getOpenDeployBoards', () => {
     it('should return open deploy boards', () => {
-      const environment = {
+      const environments = [{
         name: 'foo',
         size: 1,
         latest: {
           id: 1,
         },
         rollout_status_path: 'path',
-      };
+      },
+      {
+        name: 'bar',
+        size: 1,
+        latest: {
+          id: 2,
+        },
+        rollout_status_path: 'foo/path',
+      }];
 
-      store.storeEnvironments([environment]);
-
-      expect(store.getOpenDeployBoards().length).toEqual(0);
+      store.storeEnvironments(environments);
+      expect(store.getOpenDeployBoards().length).toEqual(1);
     });
   });
 });
