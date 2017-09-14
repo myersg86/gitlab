@@ -45,7 +45,10 @@ class MergeRequestEntity < IssuableEntity
   end
 
   expose :merge_commit_message
-  expose :head_pipeline, with: PipelineDetailsEntity, as: :pipeline
+  expose :head_pipeline,
+         with: PipelineDetailsEntity,
+         as: :pipeline,
+         if: -> (merge_request, _) { merge_request.has_ci? }
 
   # Booleans
   expose :merge_ongoing?, as: :merge_ongoing

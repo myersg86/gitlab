@@ -11,16 +11,30 @@ describe MergeRequestEntity do
     described_class.new(resource, request: request).as_json
   end
 
-  it 'includes pipeline' do
-    req = double('request', current_user: user)
-    pipeline = build_stubbed(:ci_pipeline)
-    allow(resource).to receive(:head_pipeline).and_return(pipeline)
+  context 'pipeline' do
+    let(:pipeline) do
+      build_stubbed(:ci_pipeline)
+    end
 
-    pipeline_payload = PipelineDetailsEntity
-      .represent(pipeline, request: req)
-      .as_json
+    let(:pipeline_payload) do
+      PipelineDetailsEntity.represent(pipeline, request: request).as_json
+    end
 
-    expect(subject[:pipeline]).to eq(pipeline_payload)
+    before do
+      allow(resource).to receive(:head_pipeline).and_return(pipeline)
+    end
+
+    it 'is included when merge request has CI' do
+      allow(resource).to receive(:has_ci?) { true }
+
+      expect(subject[:pipeline]).to eq(pipeline_payload)
+    end
+
+    it 'is not included when merge request has no CI' do
+      allow(resource).to receive(:has_ci?) { false }
+
+      expect(subject[:pipeline]).to be_nil
+    end
   end
 
   it 'includes issues_links' do
