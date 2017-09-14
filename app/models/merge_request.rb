@@ -497,19 +497,6 @@ class MergeRequest < ActiveRecord::Base
     )
   end
 
-  def check_if_can_be_merged
-    return unless unchecked? && !Gitlab::Geo.secondary?
-
-    can_be_merged =
-      !broken? && project.repository.can_be_merged?(diff_head_sha, target_branch)
-
-    if can_be_merged
-      mark_as_mergeable
-    else
-      mark_as_unmergeable
-    end
-  end
-
   def merge_event
     @merge_event ||= target_project.events.where(target_id: self.id, target_type: "MergeRequest", action: Event::MERGED).last
   end
@@ -997,6 +984,19 @@ class MergeRequest < ActiveRecord::Base
   end
 
   private
+
+  def check_if_can_be_merged
+    return unless unchecked? && !Gitlab::Geo.secondary?
+
+    can_be_merged =
+      !broken? && project.repository.can_be_merged?(diff_head_sha, target_branch)
+
+    if can_be_merged
+      mark_as_mergeable
+    else
+      mark_as_unmergeable
+    end
+  end
 
   def write_ref
     target_project.repository.fetch_source_branch(source_project.repository, source_branch, ref_path)

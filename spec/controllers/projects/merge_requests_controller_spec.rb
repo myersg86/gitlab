@@ -512,23 +512,35 @@ describe Projects::MergeRequestsController do
   end
 
   describe 'POST remove_wip' do
-    before do
-      merge_request.title = merge_request.wip_title
-      merge_request.save
-
+    def send_request
       xhr :post, :remove_wip,
-        namespace_id: merge_request.project.namespace.to_param,
-        project_id: merge_request.project,
-        id: merge_request.iid,
-        format: :json
+          namespace_id: merge_request.project.namespace.to_param,
+          project_id: merge_request.project,
+          id: merge_request.iid,
+          format: :json
+    end
+
+    before do
+      merge_request.update(title: merge_request.wip_title)
     end
 
     it 'removes the wip status' do
+      send_request
+
       expect(merge_request.reload.title).to eq(merge_request.wipless_title)
     end
 
     it 'renders MergeRequest as JSON' do
+      send_request
+
       expect(json_response.keys).to include('id', 'iid', 'description')
+    end
+
+    it 'updates merge_status' do
+      merge_request.update!(merge_status: :unchecked)
+      allow_any_instance_of(MergeRequest).to receive(:broken?) { false }
+
+      expect { send_request }.to change { merge_request.reload.merge_status }.from('unchecked').to('can_be_merged')
     end
   end
 

@@ -56,7 +56,7 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
     validates_merge_request
     ensure_ref_fetched
     close_merge_request_without_source_project
-    check_if_can_be_merged
+    check_if_mergeable
 
     # Return if the response has already been rendered
     return if response_body
@@ -159,6 +159,8 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
     @merge_request = ::MergeRequests::UpdateService
       .new(project, current_user, wip_event: 'unwip')
       .execute(@merge_request)
+
+    check_if_mergeable
 
     render json: serializer.represent(@merge_request)
   end
@@ -302,8 +304,8 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
 
   private
 
-  def check_if_can_be_merged
-    @merge_request.check_if_can_be_merged
+  def check_if_mergeable
+    @merge_request.mergeable?
   end
 
   def merge!
