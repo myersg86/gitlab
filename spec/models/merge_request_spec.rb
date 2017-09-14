@@ -1159,44 +1159,6 @@ describe MergeRequest do
     end
   end
 
-  describe '#check_if_can_be_merged' do
-    let(:project) { create(:project, only_allow_merge_if_pipeline_succeeds: true) }
-
-    subject { create(:merge_request, source_project: project, merge_status: :unchecked) }
-
-    context 'when it is not broken and has no conflicts' do
-      before do
-        allow(subject).to receive(:broken?) { false }
-        allow(project.repository).to receive(:can_be_merged?).and_return(true)
-      end
-
-      it 'is marked as mergeable' do
-        expect { subject.check_if_can_be_merged }.to change { subject.merge_status }.to('can_be_merged')
-      end
-    end
-
-    context 'when broken' do
-      before do
-        allow(subject).to receive(:broken?) { true }
-      end
-
-      it 'becomes unmergeable' do
-        expect { subject.check_if_can_be_merged }.to change { subject.merge_status }.to('cannot_be_merged')
-      end
-    end
-
-    context 'when it has conflicts' do
-      before do
-        allow(subject).to receive(:broken?) { false }
-        allow(project.repository).to receive(:can_be_merged?).and_return(false)
-      end
-
-      it 'becomes unmergeable' do
-        expect { subject.check_if_can_be_merged }.to change { subject.merge_status }.to('cannot_be_merged')
-      end
-    end
-  end
-
   describe '#mergeable?' do
     let(:project) { create(:project) }
 
