@@ -45,7 +45,6 @@ class MergeRequestEntity < IssuableEntity
     merge_request.diff_head_sha if merge_request.diff_head_commit
   end
 
-  expose :merge_commit_sha
   expose :merge_commit_message
   expose :head_pipeline, with: PipelineDetailsEntity, as: :pipeline
 
