@@ -37,7 +37,6 @@ class MergeRequestEntity < IssuableEntity
   expose :closed_event, using: EventEntity
 
   # User entities
-  expose :author, using: UserEntity
   expose :merge_user, using: UserEntity
 
   # Diff sha's
