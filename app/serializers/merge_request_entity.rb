@@ -48,7 +48,8 @@ class MergeRequestEntity < IssuableEntity
   expose :head_pipeline,
          with: PipelineDetailsEntity,
          as: :pipeline,
-         if: -> (merge_request, _) { merge_request.has_ci? }
+         # Saves a DB roundtrip and do not send `pipeline` key unnecessarily.
+         if: -> (merge_request, _) { merge_request.head_pipeline_id }
 
   # Booleans
   expose :merge_ongoing?, as: :merge_ongoing

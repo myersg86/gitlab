@@ -24,14 +24,14 @@ describe MergeRequestEntity do
       allow(resource).to receive(:head_pipeline).and_return(pipeline)
     end
 
-    it 'is included when merge request has CI' do
-      allow(resource).to receive(:has_ci?) { true }
+    it 'is included when merge request head pipeline is persisted' do
+      allow(resource).to receive(:head_pipeline_id) { double }
 
       expect(subject[:pipeline]).to eq(pipeline_payload)
     end
 
-    it 'is not included when merge request has no CI' do
-      allow(resource).to receive(:has_ci?) { false }
+    it 'is not included when merge request head pipeline is not persisted' do
+      allow(resource).to receive(:head_pipeline_id) { nil }
 
       expect(subject[:pipeline]).to be_nil
     end
