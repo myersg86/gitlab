@@ -19,7 +19,7 @@ class MergeRequestPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def cancel_merge_when_pipeline_succeeds_path
-    if can_cancel_merge_when_pipeline_succeeds?(current_user)
+    if merge_when_pipeline_succeeds? && can_cancel_merge_when_pipeline_succeeds?(current_user)
       cancel_merge_when_pipeline_succeeds_project_merge_request_path(project, merge_request)
     end
   end
@@ -31,13 +31,13 @@ class MergeRequestPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def remove_wip_path
-    if can?(current_user, :update_merge_request, merge_request.project)
+    if work_in_progress? && can?(current_user, :update_merge_request, merge_request.project)
       remove_wip_project_merge_request_path(project, merge_request)
     end
   end
 
   def merge_path
-    if can_be_merged_by?(current_user)
+    if can_be_merged? && can_be_merged_by?(current_user)
       merge_project_merge_request_path(project, merge_request)
     end
   end
