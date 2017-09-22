@@ -44,6 +44,9 @@ describe('getStateKey', () => {
     context.isPipelineFailed = true;
     expect(bound()).toEqual('pipelineFailed');
 
+    data.work_in_progress = true;
+    expect(bound()).toEqual('workInProgress');
+
     data.has_conflicts = true;
     expect(bound()).toEqual('conflicts');
 
@@ -55,9 +58,6 @@ describe('getStateKey', () => {
 
     data.branch_missing = true;
     expect(bound()).toEqual('missingBranch');
-
-    data.work_in_progress = true;
-    expect(bound()).toEqual('workInProgress');
 
     data.project_archived = true;
     expect(bound()).toEqual('archived');

@@ -1,8 +1,6 @@
 export default function deviseState(data) {
   if (data.project_archived) {
     return 'archived';
-  } else if (data.work_in_progress) {
-    return 'workInProgress';
   } else if (data.branch_missing) {
     return 'missingBranch';
   } else if (!data.commits_count) {
@@ -11,6 +9,8 @@ export default function deviseState(data) {
     return 'checking';
   } else if (data.has_conflicts) {
     return 'conflicts';
+  } else if (data.work_in_progress) {
+    return 'workInProgress';
   } else if (this.onlyAllowMergeIfPipelineSucceeds && this.isPipelineFailed) {
     return 'pipelineFailed';
   } else if (this.hasMergeableDiscussionsState) {
