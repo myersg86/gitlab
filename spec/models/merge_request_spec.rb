@@ -1003,8 +1003,15 @@ describe MergeRequest do
   describe '#has_ci?' do
     let(:merge_request) { build_stubbed(:merge_request) }
 
-    it 'returns true if MR has CI service or pipeline, and commits' do
+    it 'returns true if MR has CI service and commits' do
       allow(merge_request).to receive_message_chain(:source_project, :ci_service) { double }
+      allow(merge_request).to receive(:commits) { [double] }
+
+      expect(merge_request.has_ci?).to be(true)
+    end
+
+    it 'returns true if MR has head_pipeline_id and commits' do
+      allow(merge_request).to receive_message_chain(:source_project, :ci_service) { nil }
       allow(merge_request).to receive(:head_pipeline_id) { double }
       allow(merge_request).to receive(:commits) { [double] }
 
