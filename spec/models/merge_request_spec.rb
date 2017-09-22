@@ -1202,22 +1202,60 @@ describe MergeRequest do
   end
 
   describe '#mergeable?' do
-    let(:project) { create(:project) }
+    context 'not mergeable' do
+      let(:project) { create(:project) }
 
-    subject { create(:merge_request, source_project: project) }
+      subject { create(:merge_request, source_project: project) }
 
-    it 'returns false if #mergeable_state? is false' do
-      expect(subject).to receive(:mergeable_state?) { false }
+      before do
+        allow(subject).to receive(:mergeable_state?) { false }
+      end
 
-      expect(subject.mergeable?).to be_falsey
+      it 'returns false if #mergeable_state? is false' do
+        expect(subject.mergeable?).to be_falsey
+      end
+
+      it 'does not change merge_status' do
+        expect { subject.mergeable? }.not_to change { subject.merge_status }
+      end
     end
 
-    it 'return true if #mergeable_state? is true and the MR #can_be_merged? is true' do
-      allow(subject).to receive(:mergeable_state?) { true }
-      expect(subject).to receive(:check_if_can_be_merged)
-      expect(subject).to receive(:can_be_merged?) { true }
+    context 'mergeable' do
+      before do
+        allow(subject).to receive(:mergeable_state?) { true }
+      end
 
-      expect(subject.mergeable?).to be_truthy
+      let(:project) { create(:project, only_allow_merge_if_pipeline_succeeds: true) }
+
+      subject { create(:merge_request, source_project: project, merge_status: :unchecked) }
+
+      it 'return true if #mergeable_state? is true and has no conflicts' do
+        allow(project.repository).to receive(:can_be_merged?).and_return(true)
+
+        expect(subject.mergeable?).to be_truthy
+      end
+
+      context 'merge_status update' do
+        context 'when it has mergeable state and has no conflicts' do
+          before do
+            allow(project.repository).to receive(:can_be_merged?).and_return(true)
+          end
+
+          it 'is marked as mergeable' do
+            expect { subject.mergeable? }.to change { subject.merge_status }.to('can_be_merged')
+          end
+        end
+
+        context 'when it has conflicts' do
+          before do
+            allow(project.repository).to receive(:can_be_merged?).and_return(false)
+          end
+
+          it 'becomes unmergeable' do
+            expect { subject.mergeable? }.to change { subject.merge_status }.to('cannot_be_merged')
+          end
+        end
+      end
     end
 
     context 'when using approvals' do
