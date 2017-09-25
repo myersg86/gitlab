@@ -37,7 +37,7 @@ class MergeRequestPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def merge_path
-    if can_be_merged? && can_be_merged_by?(current_user)
+    if can_be_merged_by?(current_user)
       merge_project_merge_request_path(project, merge_request)
     end
   end
