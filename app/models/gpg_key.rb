@@ -9,6 +9,7 @@ class GpgKey < ActiveRecord::Base
 
   belongs_to :user
   has_many :gpg_signatures
+  has_many :subkeys, class_name: 'GpgKey', foreign_key: :parent_id, dependent: :destroy
 
   validates :user, presence: true
 
@@ -18,7 +19,8 @@ class GpgKey < ActiveRecord::Base
     format: {
       with: /\A#{KEY_PREFIX}((?!#{KEY_PREFIX})(?!#{KEY_SUFFIX}).)+#{KEY_SUFFIX}\Z/m,
       message: "is invalid. A valid public GPG key begins with '#{KEY_PREFIX}' and ends with '#{KEY_SUFFIX}'"
-    }
+    },
+    unless: :parent_id?
 
   validates :fingerprint,
     presence: true,
@@ -34,9 +36,11 @@ class GpgKey < ActiveRecord::Base
     # the error about the fingerprint
     unless: -> { errors.has_key?(:key) }
 
-  before_validation :extract_fingerprint, :extract_primary_keyid
+  before_validation :extract_fingerprint, :extract_primary_keyid, unless: :parent_id?
   after_commit :update_invalid_gpg_signatures, on: :create
-  after_commit :notify_user, on: :create
+  after_commit :notify_user, on: :create, unless: :parent_id?
+
+  after_save :generate_subkeys, unless: :parent_id?
 
   def primary_keyid
     super&.upcase
@@ -106,6 +110,20 @@ class GpgKey < ActiveRecord::Base
     # we can assume that the result only contains one item as the validation
     # only allows one key
     self.primary_keyid = Gitlab::Gpg.primary_keyids_from_key(key).first
+  end
+
+  def generate_subkeys
+    gpg_subkeys = Gitlab::Gpg.subkeys_from_key(key)
+
+    gpg_subkeys[primary_keyid].each do |subkey_data|
+      unless subkeys.where(fingerprint: subkey_data[:fingerprint]).exists?
+        subkeys.create!(
+          user: user,
+          primary_keyid: subkey_data[:keyid],
+          fingerprint: subkey_data[:fingerprint]
+        )
+      end
+    end
   end
 
   def notify_user
