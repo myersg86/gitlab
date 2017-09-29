@@ -33,7 +33,7 @@ describe MergeRequestEntity do
     it 'is not included when merge request head pipeline is not persisted' do
       allow(resource).to receive(:head_pipeline_id) { nil }
 
-      expect(subject[:pipeline]).to be_nil
+      expect(subject.key?(:pipeline)).to be(false)
     end
   end
 

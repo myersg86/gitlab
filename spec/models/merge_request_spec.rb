@@ -1013,7 +1013,7 @@ describe MergeRequest do
       end
 
       it 'returns true if MR has any pipeline and commits' do
-        allow(merge_request).to receive_message_chain(:source_project, :ci_service) { double }
+        allow(merge_request).to receive_message_chain(:source_project, :ci_service) { nil }
         allow(merge_request).to receive(:head_pipeline_id) { nil }
         allow(merge_request).to receive(:commits) { [double] }
         allow(merge_request).to receive(:all_pipelines) { [double] }
@@ -1023,6 +1023,7 @@ describe MergeRequest do
 
       it 'returns true if MR has CI service and commits' do
         allow(merge_request).to receive_message_chain(:source_project, :ci_service) { double }
+        allow(merge_request).to receive(:head_pipeline_id) { nil }
         allow(merge_request).to receive(:commits) { [double] }
         allow(merge_request).to receive(:all_pipelines) { [] }
 
@@ -1202,7 +1203,7 @@ describe MergeRequest do
   end
 
   describe '#mergeable?' do
-    context 'not mergeable' do
+    context 'when #mergeable_state is false' do
       let(:project) { create(:project) }
 
       subject { create(:merge_request, source_project: project) }
@@ -1211,8 +1212,8 @@ describe MergeRequest do
         allow(subject).to receive(:mergeable_state?) { false }
       end
 
-      it 'returns false if #mergeable_state? is false' do
-        expect(subject.mergeable?).to be_falsey
+      it 'returns false' do
+        expect(subject.mergeable?).to be(false)
       end
 
       it 'does not change merge_status' do
@@ -1220,7 +1221,7 @@ describe MergeRequest do
       end
     end
 
-    context 'mergeable' do
+    context 'when #mergeable_state is true' do
       before do
         allow(subject).to receive(:mergeable_state?) { true }
       end
@@ -1229,13 +1230,13 @@ describe MergeRequest do
 
       subject { create(:merge_request, source_project: project, merge_status: :unchecked) }
 
-      it 'return true if #mergeable_state? is true and has no conflicts' do
+      it 'returns true when repository has no conflicts' do
         allow(project.repository).to receive(:can_be_merged?).and_return(true)
 
-        expect(subject.mergeable?).to be_truthy
+        expect(subject.mergeable?).to be(true)
       end
 
-      context 'merge_status update' do
+      context 'merge_status' do
         context 'when it has mergeable state and has no conflicts' do
           before do
             allow(project.repository).to receive(:can_be_merged?).and_return(true)
