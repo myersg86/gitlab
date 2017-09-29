@@ -19,7 +19,7 @@ class MergeRequestPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def cancel_merge_when_pipeline_succeeds_path
-    if merge_when_pipeline_succeeds? && can_cancel_merge_when_pipeline_succeeds?(current_user)
+    if can_cancel_merge_when_pipeline_succeeds?(current_user)
       cancel_merge_when_pipeline_succeeds_project_merge_request_path(project, merge_request)
     end
   end

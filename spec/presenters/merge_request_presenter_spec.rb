@@ -213,10 +213,6 @@ describe MergeRequestPresenter do
         .cancel_merge_when_pipeline_succeeds_path
     end
 
-    before do
-      allow(resource).to receive(:merge_when_pipeline_succeeds?).and_return(true)
-    end
-
     context 'when can cancel mwps' do
       it 'returns path' do
         allow(resource).to receive(:can_cancel_merge_when_pipeline_succeeds?)
