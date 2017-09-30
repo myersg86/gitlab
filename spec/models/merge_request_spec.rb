@@ -1260,7 +1260,9 @@ describe MergeRequest do
     end
 
     context 'when using approvals' do
+      let(:project) { create(:project) }
       let(:user) { create(:user) }
+
       before do
         allow(subject).to receive(:mergeable_state?).and_return(true)
 
