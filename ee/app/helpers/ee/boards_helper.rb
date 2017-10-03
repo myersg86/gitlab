@@ -18,7 +18,11 @@ module EE
     def build_issue_link_base
       return super unless @board.group_board?
 
-      "/#{@board.group.path}/:project_path/issues"
+      link_base = '/'
+      link_base << "#{@board.group.parent.path}/" if @board.group.subgroup?
+      link_base << "#{@board.group.path}/:project_path/issues"
+
+      link_base
     end
 
     def board_base_url
