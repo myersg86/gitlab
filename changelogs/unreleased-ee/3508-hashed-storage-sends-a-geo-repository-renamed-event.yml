@@ -1,0 +1,5 @@
+---
+title: Does not track renamed events for projects backed by hashed storage
+merge_request: 3066
+author:
+type: fixed
