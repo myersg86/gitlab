@@ -44,6 +44,8 @@ module EE
 
       if succeeded
         all_projects.each do |project|
+          next if project.hashed_storage?
+
           old_path_with_namespace = File.join(full_path_was, project.path)
 
           ::Geo::RepositoryRenamedEventStore.new(

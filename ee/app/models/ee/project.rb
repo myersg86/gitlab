@@ -428,11 +428,12 @@ module EE
     end
     alias_method :merge_requests_ff_only_enabled?, :merge_requests_ff_only_enabled
 
-    # TODO: check storage type and NOOP when not using Legacy
     def rename_repo
       raise NotImplementedError unless defined?(super)
 
       super
+
+      return if hashed_storage?
 
       path_was = previous_changes['path'].first
       old_path_with_namespace = File.join(namespace.full_path, path_was)
