@@ -2,7 +2,6 @@
   import userAvatarLink from '../../../vue_shared/components/user_avatar/user_avatar_link.vue';
   import timeagoTooltip from '../../../vue_shared/components/time_ago_tooltip.vue';
   import tooltip from '../../../vue_shared/directives/tooltip';
-  import issuableAppEventHub from '../../../issue_show/event_hub';
 
   export default {
     name: 'epicHeader',
@@ -23,11 +22,6 @@
     components: {
       userAvatarLink,
       timeagoTooltip,
-    },
-    methods: {
-      editEpic() {
-        issuableAppEventHub.$emit('open.form');
-      },
     },
   };
 </script>
@@ -55,12 +49,5 @@
         </span>
       </user-avatar-link>
     </strong>
-    <button
-      type="button"
-      class="btn issuable-edit pull-right"
-      @click="editEpic"
-    >
-      Edit
-    </button>
   </div>
 </template>

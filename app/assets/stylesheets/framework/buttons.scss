@@ -393,3 +393,12 @@
     box-shadow: none;
   }
 }
+
+.btn-svg {
+  @extend .btn-blank;
+
+  &:hover,
+  &:focus {
+    opacity: 0.5;
+  }
+}
