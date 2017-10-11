@@ -56,9 +56,8 @@
       </user-avatar-link>
     </strong>
     <button
-      style="float: right;"
       type="button"
-      class="btn issuable-edit"
+      class="btn issuable-edit pull-right"
       @click="editEpic"
     >
       Edit
