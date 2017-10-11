@@ -76,5 +76,6 @@ export default {
       :tooltip-text="tooltipText"
       :tooltip-placement="tooltipPlacement"
     />
+    <slot />
   </a>
 </template>
