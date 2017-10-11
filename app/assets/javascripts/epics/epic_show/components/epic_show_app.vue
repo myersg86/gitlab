@@ -2,7 +2,7 @@
   import epicHeader from './epic_header.vue';
 
   export default {
-    name: 'epicViewApp',
+    name: 'epicShowApp',
     components: {
       epicHeader,
     },
