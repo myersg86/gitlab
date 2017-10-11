@@ -1,10 +1,12 @@
 <script>
   import epicHeader from './epic_header.vue';
+  import issuableApp from '../../../issue_show/components/app.vue';
 
   export default {
     name: 'epicShowApp',
     components: {
       epicHeader,
+      issuableApp,
     },
     created() {
       // TODO: Get mock data from backend
@@ -15,6 +17,23 @@
         name: 'Administrator',
       };
       this.created = (new Date()).toISOString();
+
+      this.canUpdate = true;
+      this.canDestroy = false;
+      this.endpoint = '/gitlab-org/gitlab-ce/issues/1';
+      this.issuableRef = '';
+      this.initialTitleHtml = '';
+      this.initialTitleText = '';
+      this.initialDescriptionHtml = '';
+      this.initialDescriptionText = '';
+      this.issuableTemplates = [];
+      this.markdownPreviewPath = '';
+      this.markdownDocsPath = '';
+      this.projectPath = '';
+      this.projectNamespace = '';
+      this.updatedAt = '';
+      this.updatedByName = '';
+      this.updatedByPath = '';
     },
   };
 </script>
@@ -25,5 +44,25 @@
       :author="author"
       :created="created"
     />
+    <div class="issuable-details detail-page-description content-block">
+      <issuable-app
+        :can-update= "canUpdate"
+        :can-destroy= "canDestroy"
+        :endpoint= "endpoint"
+        :issuable-ref= "issuableRef"
+        :initial-title-html= "initialTitleHtml"
+        :initial-title-text= "initialTitleText"
+        :initial-description-html= "initialDescriptionHtml"
+        :initial-description-text= "initialDescriptionText"
+        :issuable-templates= "issuableTemplates"
+        :markdown-preview-path= "markdownPreviewPath"
+        :markdown-docs-path= "markdownDocsPath"
+        :project-path= "projectPath"
+        :project-namespace= "projectNamespace"
+        :updated-at= "updatedAt"
+        :updated-by-name= "updatedByName"
+        :updated-by-path= "updatedByPath"
+      />
+    </div>
   </div>
 </template>
