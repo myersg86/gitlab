@@ -46,7 +46,11 @@ class GroupPolicy < BasePolicy
   rule { has_projects }      .enable :read_group
 
   rule { developer }.enable :admin_milestones
-  rule { reporter }.enable :admin_label
+  rule { reporter }.policy do
+    enable :admin_label
+    enable :create_epic
+    enable :admin_epic
+  end
 
   rule { master }.policy do
     enable :create_projects
