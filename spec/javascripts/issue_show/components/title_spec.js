@@ -1,11 +1,13 @@
 import Vue from 'vue';
 import Store from '~/issue_show/stores';
 import titleComponent from '~/issue_show/components/title.vue';
+import eventHub from '~/issue_show/event_hub';
 
 describe('Title component', () => {
   let vm;
 
   beforeEach(() => {
+    spyOn(eventHub, '$emit');
     const Component = Vue.extend(titleComponent);
     const store = new Store({
       titleHtml: '',
@@ -70,6 +72,26 @@ describe('Title component', () => {
       ).toContain('changed');
 
       done();
+    });
+  });
+
+  describe('show inline edit button', () => {
+    it('should not show by default', () => {
+      expect(vm.$el.querySelector('.note-action-button')).toBeNull();
+    });
+
+    it('should show if showInlineEditButton', () => {
+      vm.showInlineEditButton = true;
+      expect(vm.$el.querySelector('.note-action-button')).toBeDefined();
+    });
+
+    it('should trigger open.form event when clicked', () => {
+      vm.showInlineEditButton = true;
+
+      Vue.nextTick(() => {
+        vm.$el.querySelector('.note-action-button').click();
+        expect(eventHub.$emit).toHaveBeenCalledWith('open.form');
+      });
     });
   });
 });
