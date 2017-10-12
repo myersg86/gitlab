@@ -25,7 +25,7 @@ describe('Title component', () => {
 
   it('renders title HTML', () => {
     expect(
-      vm.$el.innerHTML.trim(),
+      vm.$el.querySelector('.title').innerHTML.trim(),
     ).toBe('Testing <img>');
   });
 
@@ -47,12 +47,12 @@ describe('Title component', () => {
 
     Vue.nextTick(() => {
       expect(
-        vm.$el.classList.contains('issue-realtime-pre-pulse'),
+        vm.$el.querySelector('.title').classList.contains('issue-realtime-pre-pulse'),
       ).toBeTruthy();
 
       setTimeout(() => {
         expect(
-          vm.$el.classList.contains('issue-realtime-trigger-pulse'),
+          vm.$el.querySelector('.title').classList.contains('issue-realtime-trigger-pulse'),
         ).toBeTruthy();
 
         done();
