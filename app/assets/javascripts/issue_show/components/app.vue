@@ -88,6 +88,11 @@ export default {
       type: String,
       required: true,
     },
+    showInlineEditButton: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
     const store = new Store({
@@ -224,19 +229,23 @@ export default {
       <title-component
         :issuable-ref="issuableRef"
         :title-html="state.titleHtml"
-        :title-text="state.titleText" />
+        :title-text="state.titleText"
+        :show-inline-edit-button="showInlineEditButton"
+      />
       <description-component
         v-if="state.descriptionHtml"
         :can-update="canUpdate"
         :description-html="state.descriptionHtml"
         :description-text="state.descriptionText"
         :updated-at="state.updatedAt"
-        :task-status="state.taskStatus" />
+        :task-status="state.taskStatus"
+      />
       <edited-component
         v-if="hasUpdated"
         :updated-at="state.updatedAt"
         :updated-by-name="state.updatedByName"
-        :updated-by-path="state.updatedByPath" />
+        :updated-by-path="state.updatedByPath"
+      />
     </div>
   </div>
 </template>

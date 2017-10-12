@@ -62,6 +62,7 @@
         :updated-at= "updatedAt"
         :updated-by-name= "updatedByName"
         :updated-by-path= "updatedByPath"
+        :show-inline-edit-button="true"
       />
     </div>
   </div>
