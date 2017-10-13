@@ -11,7 +11,8 @@ class GeoNode < ActiveRecord::Base
                  host: lambda { Gitlab.config.gitlab.host },
                  port: lambda { Gitlab.config.gitlab.port },
                  relative_url_root: lambda { Gitlab.config.gitlab.relative_url_root },
-                 primary: false
+                 primary: false,
+                 clone_protocol: 'http'
 
   accepts_nested_attributes_for :geo_node_key
 
@@ -21,6 +22,7 @@ class GeoNode < ActiveRecord::Base
   validates :relative_url_root, length: { minimum: 0, allow_nil: false }
   validates :access_key, presence: true
   validates :encrypted_secret_access_key, presence: true
+  validates :clone_protocol, presence: true, inclusion: %w(ssh http)
 
   validates :geo_node_key, presence: true, if: :secondary?
   validate :check_not_adding_primary_as_secondary, if: :secondary?

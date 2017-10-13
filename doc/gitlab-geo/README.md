@@ -54,7 +54,7 @@ The following diagram illustrates the underlying architecture of GitLab Geo:
 
 ![GitLab Geo architecture](img/geo-architecture.png)
 
-[Source diagram](https://docs.google.com/drawings/d/1L44flo2Mxng928yAcHduaCJyGtKNEjk2WQkxaCU_cT8/edit)
+[Source diagram](https://docs.google.com/drawings/d/1Abw0P_H0Ew1-2Lj_xPDRWP87clGIke-1fil7_KQqrtE/edit)
 
 In this diagram, there is one Geo primary node and one secondary. The
 secondary clones repositories via git over SSH. Attachments, LFS objects, and

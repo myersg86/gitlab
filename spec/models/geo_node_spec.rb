@@ -38,6 +38,7 @@ describe GeoNode, type: :model do
       :primary            | false
       :repos_max_capacity | 25
       :files_max_capacity | 10
+      :clone_protocol     | 'http'
     end
 
     with_them do
