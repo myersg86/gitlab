@@ -1,6 +1,7 @@
 <script>
   import animateMixin from '../mixins/animate';
   import eventHub from '../event_hub';
+  import tooltip from '../../vue_shared/directives/tooltip';
 
   export default {
     mixins: [animateMixin],
@@ -29,6 +30,9 @@
         required: false,
         default: false,
       },
+    },
+    directives: {
+      tooltip,
     },
     watch: {
       titleHtml() {
@@ -66,10 +70,14 @@
     >
     </h2>
     <button
+      v-tooltip
       v-if="showInlineEditButton"
       type="button"
       class="btn-blank btn-edit note-action-button"
       v-html="pencilIcon"
+      title="Edit title and description"
+      data-placement="bottom"
+      data-container="body"
       @click="edit"
       >
     </button>
