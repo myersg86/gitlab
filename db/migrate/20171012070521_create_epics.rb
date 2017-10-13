@@ -12,12 +12,15 @@ class CreateEpics < ActiveRecord::Migration
     create_table :epics do |t|
       t.integer :iid # TODO index it
       t.string :title, null: false
+      t.string :title_html, null: false
       t.text :description
+      t.text :description_html
       t.integer :author_id, null: false
       t.integer :group_id, null: false
       t.string :state, null: false
       t.date :start_date
       t.date :end_date
+      t.integer :cached_markdown_version, limit: 4
 
       t.timestamps_with_timezone
     end

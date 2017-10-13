@@ -30,9 +30,9 @@ class Groups::EpicsController < Groups::ApplicationController
     Gitlab::PollingInterval.set_header(response, interval: 3_000)
 
     response = {
-      # title: view_context.markdown_field(@epic, :title),
+      title: view_context.markdown_field(@epic, :title),
       title_text: epic.title,
-      # description: view_context.markdown_field(@epic, :description),
+      description: view_context.markdown_field(@epic, :description),
       description_text: epic.description
     }
 
@@ -43,6 +43,18 @@ class Groups::EpicsController < Groups::ApplicationController
     # end
 
     render json: response
+  end
+
+  # TODO: this will probably be similar as snippets preview although we have group
+  def preview_markdown
+    result = PreviewMarkdownService.new(nil, current_user, params).execute
+
+    render json: {
+      body: view_context.markdown(result[:text], skip_project_check: true),
+      references: {
+        users: result[:users]
+      }
+    }
   end
 
   private

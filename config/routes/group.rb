@@ -41,6 +41,10 @@ scope(path: 'groups/*group_id',
   resources :audit_events, only: [:index]
   resources :pipeline_quota, only: [:index]
   resources :epics do
+    collection do
+      post :preview_markdown
+    end
+
     member do
       get :realtime_changes
     end

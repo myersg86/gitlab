@@ -75,7 +75,7 @@ describe Groups::EpicsController do
     it 'updates the epic correctly' do
       subject
 
-      expect(epic.title).to eq('New title')
+      expect(epic.reload.title).to eq('New title')
     end
   end
 
@@ -83,16 +83,18 @@ describe Groups::EpicsController do
     subject { get :realtime_changes, group_id: group, id: epic.to_param }
 
     it 'returns epic' do
-        subject
+      subject
 
-        expect(response.content_type).to eq 'application/json'
-        expect(JSON.parse(response.body)).to eq(
-          {
-            'title_text' => epic.title,
-            'description_text' => epic.description
-          }
-        )
-      end
+      expect(response.content_type).to eq 'application/json'
+      expect(JSON.parse(response.body)).to eq(
+        {
+          'title_text' => epic.title,
+          'title' => epic.title_html,
+          'description' => epic.description_html,
+          'description_text' => epic.description
+        }
+      )
+    end
 
       context 'with unauthorized user' do
         before do

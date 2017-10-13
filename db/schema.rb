@@ -616,12 +616,15 @@ ActiveRecord::Schema.define(version: 20171012070521) do
   create_table "epics", force: :cascade do |t|
     t.integer "iid"
     t.string "title", null: false
+    t.string "title_html", null: false
     t.text "description"
+    t.text "description_html"
     t.integer "author_id", null: false
     t.integer "group_id", null: false
     t.string "state", null: false
     t.date "start_date"
     t.date "end_date"
+    t.integer "cached_markdown_version"
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
   end
