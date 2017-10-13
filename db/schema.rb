@@ -614,6 +614,7 @@ ActiveRecord::Schema.define(version: 20171012070521) do
   add_index "environments", ["project_id", "slug"], name: "index_environments_on_project_id_and_slug", unique: true, using: :btree
 
   create_table "epics", force: :cascade do |t|
+    t.integer "iid"
     t.string "title", null: false
     t.text "description"
     t.integer "author_id", null: false

@@ -10,6 +10,7 @@ class CreateEpics < ActiveRecord::Migration
 
   def up
     create_table :epics do |t|
+      t.integer :iid # TODO index it
       t.string :title, null: false
       t.text :description
       t.integer :author_id, null: false
