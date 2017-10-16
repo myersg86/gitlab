@@ -1,8 +1,19 @@
 - @no_breadcrumb_container = false
 - @no_container = false
 - @content_class = "limit-container-width" unless fluid_layout
-- breadcrumb_title _("Epics")
-- page_title "Epics"
+
+-# TODO: Move this to @epic.to_reference
+- epic_reference = "&#{@epic.iid}"
+
+-# TODO: Add epics path
+- add_to_breadcrumbs _("Epics"), ''
+- breadcrumb_title epic_reference
+
+- page_title           "#{@epic.title} (#{epic_reference})", _("Epics")
+- page_description     @epic.description
+
+-# TODO: Add card_attributes
+-# page_card_attributes @epic.card_attributes
 
 -# TODO: Add Epic ID to page title
 -# TODO: Add Epic ID to breadcrumb
@@ -10,9 +21,5 @@
 - content_for :page_specific_javascripts do
   = webpack_bundle_tag 'common_vue'
   = webpack_bundle_tag 'epic_show'
-
-- puts @epic.created_at
-
--
 
 #epic-show-app{ data: { initial: epic_initial_data, meta: epic_meta_data } }
