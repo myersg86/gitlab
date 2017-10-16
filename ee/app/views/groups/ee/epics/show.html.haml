@@ -4,9 +4,7 @@
 
 -# TODO: Move this to @epic.to_reference
 - epic_reference = "&#{@epic.iid}"
-
--# TODO: Add epics path
-- add_to_breadcrumbs _("Epics"), ''
+- add_to_breadcrumbs _("Epics"), group_epics_path(@group)
 - breadcrumb_title epic_reference
 
 - page_title           "#{@epic.title} (#{epic_reference})", _("Epics")
@@ -14,9 +12,6 @@
 
 -# TODO: Add card_attributes
 -# page_card_attributes @epic.card_attributes
-
--# TODO: Add Epic ID to page title
--# TODO: Add Epic ID to breadcrumb
 
 - content_for :page_specific_javascripts do
   = webpack_bundle_tag 'common_vue'
