@@ -18,8 +18,9 @@
         required: true,
       },
       canUpdate: {
-        required: true,
+        required: false,
         type: Boolean,
+        default: false,
       },
       titleHtml: {
         type: String,

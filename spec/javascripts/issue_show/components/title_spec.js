@@ -80,13 +80,21 @@ describe('Title component', () => {
       expect(vm.$el.querySelector('.note-action-button')).toBeNull();
     });
 
-    it('should show if showInlineEditButton', () => {
+    it('should not show if canUpdate is false', () => {
       vm.showInlineEditButton = true;
+      vm.canUpdate = false;
+      expect(vm.$el.querySelector('.note-action-button')).toBeNull();
+    });
+
+    it('should show if showInlineEditButton and canUpdate', () => {
+      vm.showInlineEditButton = true;
+      vm.canUpdate = true;
       expect(vm.$el.querySelector('.note-action-button')).toBeDefined();
     });
 
     it('should trigger open.form event when clicked', () => {
       vm.showInlineEditButton = true;
+      vm.canUpdate = true;
 
       Vue.nextTick(() => {
         vm.$el.querySelector('.note-action-button').click();
