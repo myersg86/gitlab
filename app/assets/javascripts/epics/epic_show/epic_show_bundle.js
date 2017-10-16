@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
       props: {
         endpoint,
         canUpdate,
-        canDestroy,
+        // Current iteration does not enable users
+        // to delete epics
+        canDestroy: false,
         markdownPreviewPath,
         markdownDocsPath,
         groupPath,
