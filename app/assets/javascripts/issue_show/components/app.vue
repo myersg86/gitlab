@@ -228,6 +228,7 @@ export default {
     <div v-else>
       <title-component
         :issuable-ref="issuableRef"
+        :can-update="canUpdate"
         :title-html="state.titleHtml"
         :title-text="state.titleText"
         :show-inline-edit-button="showInlineEditButton"

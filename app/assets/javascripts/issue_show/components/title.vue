@@ -17,6 +17,10 @@
         type: String,
         required: true,
       },
+      canUpdate: {
+        required: true,
+        type: Boolean,
+      },
       titleHtml: {
         type: String,
         required: true,
@@ -71,7 +75,7 @@
     </h2>
     <button
       v-tooltip
-      v-if="showInlineEditButton"
+      v-if="showInlineEditButton && canUpdate"
       type="button"
       class="btn-blank btn-edit note-action-button"
       v-html="pencilIcon"
