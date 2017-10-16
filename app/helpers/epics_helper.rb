@@ -29,6 +29,7 @@ module EpicsHelper
       created: @epic.created_at,
       # Double check that author doesn't leak user info
       author: @epic.author,
+      avatar_url: avatar_icon(@epic.author)
     }
 
     data.to_json

@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initialDescriptionText,
         created,
         author,
+        avatar_url
       },
     }),
   })

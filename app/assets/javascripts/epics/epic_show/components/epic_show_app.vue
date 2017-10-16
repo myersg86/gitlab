@@ -58,6 +58,10 @@
       author: {
         type: Object,
         required: true,
+      },
+      avatar_url: {
+        type: String,
+        required: true,
       }
     },
     created() {
