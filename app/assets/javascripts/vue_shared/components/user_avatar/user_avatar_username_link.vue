@@ -87,6 +87,7 @@ export default {
       class="author"
       v-tooltip
       :title="tooltipText"
+      :tooltip-placement="tooltipPlacement"
     >{{text}}</span>
   </a>
 </template>
