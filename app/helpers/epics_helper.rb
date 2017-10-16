@@ -16,7 +16,7 @@ module EpicsHelper
       initialTitleHtml: markdown_field(@epic, :title),
       initialTitleText: @epic.title,
       initialDescriptionHtml: markdown_field(@epic, :description),
-      initialDescriptionText: @epic.description,
+      initialDescriptionText: @epic.description
     }
 
     # data.merge!(updated_at_by(@epic))
@@ -33,8 +33,8 @@ module EpicsHelper
         name: author.name,
         url: "/#{author.username}",
         username: "@#{author.username}",
-        src: avatar_icon(@epic.author),
-      },
+        src: avatar_icon(@epic.author)
+      }
     }
 
     data.to_json
