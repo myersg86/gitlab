@@ -9,7 +9,7 @@
       author: {
         type: Object,
         required: true,
-        validator: value => value.url && value.src && value.username && value.name,
+        validator: value => value.url && value.username && value.name,
       },
       created: {
         type: String,

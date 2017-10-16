@@ -23,4 +23,14 @@ module EpicsHelper
 
     data.to_json
   end
+
+  def epic_meta_data
+    data = {
+      created: @epic.created_at,
+      # Double check that author doesn't leak user info
+      author: @epic.author,
+    }
+
+    data.to_json
+  end
 end

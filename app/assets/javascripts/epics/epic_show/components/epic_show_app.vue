@@ -8,32 +8,72 @@
       epicHeader,
       issuableApp,
     },
+    props: {
+      endpoint: {
+        type: String,
+        required: true,
+      },
+      canUpdate: {
+        required: true,
+        type: Boolean,
+      },
+      canDestroy: {
+        required: true,
+        type: Boolean,
+      },
+      markdownPreviewPath: {
+        type: String,
+        required: true,
+      },
+      markdownDocsPath: {
+        type: String,
+        required: true,
+      },
+      groupPath: {
+        type: String,
+        required: true,
+      },
+      initialTitleHtml: {
+        type: String,
+        required: true,
+      },
+      initialTitleText: {
+        type: String,
+        required: true,
+      },
+      initialDescriptionHtml: {
+        type: String,
+        required: false,
+        default: '',
+      },
+      initialDescriptionText: {
+        type: String,
+        required: false,
+        default: '',
+      },
+      created: {
+        type: String,
+        required: true,
+      },
+      author: {
+        type: Object,
+        required: true,
+      }
+    },
     created() {
       // TODO: Get mock data from backend
-      this.author = {
-        url: 'test.com',
-        src: 'http://www.gravatar.com/avatar/e64c7d89f26bd1972efa854d13d7dd61?s=48&d=identicon',
-        username: '@root',
-        name: 'Administrator',
+      this.authorData = {
+        url: `/${this.author.username}`,
+        // TODO: Get avatar url
+        src: this.author.avatar.url,
+        username: `@${this.author.username}`,
+        name: this.author.name,
       };
-      this.created = (new Date()).toISOString();
 
-      this.canUpdate = true;
-      this.canDestroy = false;
-      this.endpoint = '/gitlab-org/gitlab-ce/issues/1';
+      // Needs to be stubbed
       this.issuableRef = '';
-      this.initialTitleHtml = '';
-      this.initialTitleText = '';
-      this.initialDescriptionHtml = '';
-      this.initialDescriptionText = '';
-      this.issuableTemplates = [];
-      this.markdownPreviewPath = '';
-      this.markdownDocsPath = '';
-      this.projectPath = '';
+      this.projectPath = this.groupPath;
       this.projectNamespace = '';
-      this.updatedAt = '';
-      this.updatedByName = '';
-      this.updatedByPath = '';
     },
   };
 </script>
@@ -41,7 +81,7 @@
 <template>
   <div>
     <epic-header
-      :author="author"
+      :author="authorData"
       :created="created"
     />
     <div class="issuable-details detail-page-description content-block">
@@ -54,14 +94,10 @@
         :initial-title-text="initialTitleText"
         :initial-description-html="initialDescriptionHtml"
         :initial-description-text="initialDescriptionText"
-        :issuable-templates="issuableTemplates"
         :markdown-preview-path="markdownPreviewPath"
         :markdown-docs-path="markdownDocsPath"
         :project-path="projectPath"
         :project-namespace="projectNamespace"
-        :updated-at="updatedAt"
-        :updated-by-name="updatedByName"
-        :updated-by-path="updatedByPath"
         :show-inline-edit-button="true"
       />
     </div>

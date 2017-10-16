@@ -11,4 +11,8 @@
   = webpack_bundle_tag 'common_vue'
   = webpack_bundle_tag 'epic_show'
 
-#epic-show-app
+- puts @epic.created_at
+
+-
+
+#epic-show-app{ data: { initial: epic_initial_data, meta: epic_meta_data } }
