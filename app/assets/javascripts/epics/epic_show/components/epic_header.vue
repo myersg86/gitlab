@@ -15,10 +15,6 @@
         type: String,
         required: true,
       },
-      avatar_url: {
-        type: String,
-        required: true,
-      },
     },
     directives: {
       tooltip,
@@ -40,7 +36,7 @@
      <strong>
       <user-avatar-link
         :link-href="author.url"
-        :img-src="avatar_url"
+        :img-src="author.src"
         :img-size="24"
         imgCssClasses="avatar-inline"
       >

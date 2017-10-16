@@ -25,11 +25,16 @@ module EpicsHelper
   end
 
   def epic_meta_data
+    author = @epic.author
+
     data = {
       created: @epic.created_at,
-      # Double check that author doesn't leak user info
-      author: @epic.author,
-      avatar_url: avatar_icon(@epic.author)
+      author: {
+        name: author.name,
+        url: "/#{author.username}",
+        username: "@#{author.username}",
+        src: avatar_icon(@epic.author),
+      },
     }
 
     data.to_json

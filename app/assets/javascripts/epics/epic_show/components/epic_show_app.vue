@@ -59,20 +59,9 @@
         type: Object,
         required: true,
       },
-      avatar_url: {
-        type: String,
-        required: true,
-      }
     },
     created() {
       // TODO: Get mock data from backend
-      this.authorData = {
-        url: `/${this.author.username}`,
-        // TODO: Get avatar url
-        src: this.author.avatar.url,
-        username: `@${this.author.username}`,
-        name: this.author.name,
-      };
 
       // Needs to be stubbed
       this.issuableRef = '';
@@ -85,7 +74,7 @@
 <template>
   <div>
     <epic-header
-      :author="authorData"
+      :author="author"
       :created="created"
     />
     <div class="issuable-details detail-page-description content-block">
