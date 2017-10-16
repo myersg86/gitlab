@@ -11,14 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const {
     endpoint,
     canUpdate,
-    canDestroy,
     markdownPreviewPath,
     markdownDocsPath,
     groupPath,
     initialTitleHtml,
     initialTitleText,
     initialDescriptionHtml,
-    initialDescriptionText
+    initialDescriptionText,
   } = initialData;
 
   return new Vue({
@@ -44,5 +43,5 @@ document.addEventListener('DOMContentLoaded', () => {
         author,
       },
     }),
-  })
+  });
 });
