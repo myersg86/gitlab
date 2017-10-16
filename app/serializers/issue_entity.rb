@@ -1,5 +1,5 @@
 class IssueEntity < IssuableEntity
-  include RequestAwareEntity
+  include RequestAwareEntity # TODO: move this to issuable
 
   expose :branch_name
   expose :confidential

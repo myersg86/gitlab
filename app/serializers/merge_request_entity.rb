@@ -1,5 +1,5 @@
 class MergeRequestEntity < IssuableEntity
-  include RequestAwareEntity
+  include RequestAwareEntity # TODO: move this to issuable
 
   expose :in_progress_merge_commit_sha
   expose :merge_commit_sha
