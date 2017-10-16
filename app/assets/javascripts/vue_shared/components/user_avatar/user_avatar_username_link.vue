@@ -1,26 +1,27 @@
 <script>
 
-/* This is a re-usable vue component for rendering a user avatar wrapped in
+/* This is a re-usable vue component for rendering a user avatar username wrapped in
   a clickable link (likely to the user's profile). The link, image, and
   tooltip can be configured by props passed to this component.
 
   Sample configuration:
 
-  <user-avatar-link
+  <user-avatar-username-link
     :link-href="userProfileUrl"
     :img-src="userAvatarSrc"
     :img-alt="tooltipText"
     :img-size="20"
     :tooltip-text="tooltipText"
-    tooltip-placement="top"
+    :text="text"
   />
 
 */
 
 import userAvatarImage from './user_avatar_image.vue';
+import tooltip from '../../directives/tooltip';
 
 export default {
-  name: 'UserAvatarLink',
+  name: 'UserAvatarUsernameLink',
   components: {
     userAvatarImage,
   },
@@ -60,6 +61,14 @@ export default {
       required: false,
       default: 'top',
     },
+    text: {
+      type: String,
+      required: false,
+      default: '',
+    },
+  },
+  directives: {
+    tooltip,
   },
 };
 </script>
@@ -73,8 +82,11 @@ export default {
       :img-alt="imgAlt"
       :css-classes="imgCssClasses"
       :size="imgSize"
-      :tooltip-text="tooltipText"
       :tooltip-placement="tooltipPlacement"
-    />
+    /><span
+      class="author"
+      v-tooltip
+      :title="tooltipText"
+    >{{text}}</span>
   </a>
 </template>
