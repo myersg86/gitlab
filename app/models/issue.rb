@@ -14,6 +14,8 @@ class Issue < ActiveRecord::Base
   include FasterCacheKeys
   include RelativePositioning
   include CreatedAtFilterable
+  include TimeTrackable
+  include BasicStateMachine
 
   WEIGHT_RANGE = 1..9
   WEIGHT_ALL = 'Everything'.freeze
@@ -68,23 +70,6 @@ class Issue < ActiveRecord::Base
   attr_spammable :description, spam_description: true
 
   participant :assignees
-
-  state_machine :state, initial: :opened do
-    event :close do
-      transition [:opened] => :closed
-    end
-
-    event :reopen do
-      transition closed: :opened
-    end
-
-    state :opened
-    state :closed
-
-    before_transition any => :closed do |issue|
-      issue.closed_at = Time.zone.now
-    end
-  end
 
   def hook_attrs
     assignee_ids = self.assignee_ids

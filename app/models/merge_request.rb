@@ -7,6 +7,7 @@ class MergeRequest < ActiveRecord::Base
   include Elastic::MergeRequestsSearch
   include IgnorableColumn
   include CreatedAtFilterable
+  include TimeTrackable
 
   ignore_column :locked_at
 

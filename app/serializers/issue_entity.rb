@@ -1,6 +1,4 @@
-class IssueEntity < IssuableEntity
-  include RequestAwareEntity # TODO: move this to issuable
-
+class IssueEntity < TimeTrackIssuableEntity
   expose :branch_name
   expose :confidential
   expose :discussion_locked

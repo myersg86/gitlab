@@ -59,12 +59,12 @@ describe Groups::EpicsController do
     end
   end
 
-  describe 'PUR #update' do
+  describe 'PUT #update' do
     before do
       group.add_user(user, :developer)
     end
 
-    subject { put :update, group_id: group, id: epic.to_param, epic: { title: 'New title'} }
+    subject { put :update, group_id: group, id: epic.to_param, epic: { title: 'New title' }, format: :json }
 
     it 'returns status 200' do
       subject
@@ -86,26 +86,19 @@ describe Groups::EpicsController do
       subject
 
       expect(response.content_type).to eq 'application/json'
-      expect(JSON.parse(response.body)).to eq(
-        {
-          'title_text' => epic.title,
-          'title' => epic.title_html,
-          'description' => epic.description_html,
-          'description_text' => epic.description
-        }
-      )
+      expect(JSON.parse(response.body)).to include('title_text', 'title', 'description', 'description_text')
     end
 
-      context 'with unauthorized user' do
-        before do
-          allow(Ability).to receive(:allowed?).with(user, :read_group, group).and_return(false)
-        end
-
-        it 'returns a not found 404 response' do
-          subject
-
-          expect(response).to have_http_status(404)
-        end
+    context 'with unauthorized user' do
+      before do
+        allow(Ability).to receive(:allowed?).with(user, :read_group, group).and_return(false)
       end
+
+      it 'returns a not found 404 response' do
+        subject
+
+        expect(response).to have_http_status(404)
+      end
+    end
   end
 end

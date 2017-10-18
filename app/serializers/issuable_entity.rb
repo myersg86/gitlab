@@ -1,4 +1,6 @@
 class IssuableEntity < Grape::Entity
+  include RequestAwareEntity
+
   expose :id
   expose :iid
   expose :author_id
@@ -11,10 +13,6 @@ class IssuableEntity < Grape::Entity
   expose :created_at
   expose :updated_at
   expose :deleted_at
-  expose :time_estimate
-  expose :total_time_spent
-  expose :human_time_estimate
-  expose :human_total_time_spent
   expose :milestone, using: API::Entities::Milestone
   expose :labels, using: LabelEntity
 end

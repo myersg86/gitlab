@@ -14,7 +14,6 @@ module Issuable
   include StripAttribute
   include Awardable
   include Taskable
-  include TimeTrackable
   include Importable
   include Editable
   include AfterCommitQueue

@@ -50,6 +50,7 @@ class GroupPolicy < BasePolicy
     enable :admin_label
     enable :create_epic
     enable :admin_epic
+    enable :update_epic
   end
 
   rule { master }.policy do

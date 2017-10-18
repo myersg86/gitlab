@@ -1,6 +1,4 @@
-class MergeRequestEntity < IssuableEntity
-  include RequestAwareEntity # TODO: move this to issuable
-
+class MergeRequestEntity < TimeTrackIssuableEntity
   expose :in_progress_merge_commit_sha
   expose :merge_commit_sha
   expose :merge_error
