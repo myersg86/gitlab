@@ -1,5 +1,5 @@
 <script>
-  import userAvatarUsernameLink from '../../../vue_shared/components/user_avatar/user_avatar_username_link.vue';
+  import userAvatarLink from '../../../vue_shared/components/user_avatar/user_avatar_link.vue';
   import timeagoTooltip from '../../../vue_shared/components/time_ago_tooltip.vue';
   import tooltip from '../../../vue_shared/directives/tooltip';
 
@@ -20,7 +20,7 @@
       tooltip,
     },
     components: {
-      userAvatarUsernameLink,
+      userAvatarLink,
       timeagoTooltip,
     },
   };
@@ -34,12 +34,12 @@
     />
      by
      <strong>
-      <user-avatar-username-link
+      <user-avatar-link
         :link-href="author.url"
         :img-src="author.src"
         :img-size="24"
         :tooltipText="author.username"
-        :text="author.name"
+        :username="author.name"
         imgCssClasses="avatar-inline"
       />
     </strong>
