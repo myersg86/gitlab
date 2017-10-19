@@ -1,9 +1,6 @@
-# TODO: most of the actions might be temporary before we start using Issuables for Epics
 module EpicsHelper
-  # this probably does not need to be here HOTPATCH
   include MarkupHelper
 
-  # TODO: use issuable_initial_data instead
   def epic_initial_data
     data = {
       endpoint: group_epic_path(@group, @epic),

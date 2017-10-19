@@ -10,7 +10,7 @@ class CreateEpics < ActiveRecord::Migration
 
   def up
     create_table :epics do |t|
-      t.integer :iid # TODO index it
+      t.integer :iid
       t.string :title, null: false
       t.string :title_html, null: false
       t.text :description
@@ -40,6 +40,7 @@ class CreateEpics < ActiveRecord::Migration
       t.timestamps_with_timezone
     end
 
+    add_index :epics, [:group_id, :iid], unique: true
     add_concurrent_foreign_key :epics, :namespaces, column: :group_id
     add_concurrent_foreign_key :epics, :users, column: :author_id
   end

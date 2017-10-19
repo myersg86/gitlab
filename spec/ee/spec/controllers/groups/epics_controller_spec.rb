@@ -40,7 +40,7 @@ describe Groups::EpicsController do
       it 'returns epic' do
         show_epic(:json)
 
-        # TODO create schema after the decision we'll use epic table is made
+        # TODO create schema
         # expect(response).to match_response_schema('epic')
       end
 
