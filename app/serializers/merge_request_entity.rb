@@ -56,6 +56,7 @@ class MergeRequestEntity < TimeTrackIssuableEntity
   expose :commits_count
   expose :cannot_be_merged?, as: :has_conflicts
   expose :can_be_merged?, as: :can_be_merged
+  expose :mergeable?, as: :mergeable
   expose :remove_source_branch?, as: :remove_source_branch
 
   expose :project_archived do |merge_request|

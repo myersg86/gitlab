@@ -1,21 +1,17 @@
 /* eslint-disable func-names, space-before-function-paren, no-var, prefer-arrow-callback, wrap-iife, no-shadow, consistent-return, one-var, one-var-declaration-per-line, camelcase, default-case, no-new, quotes, no-duplicate-case, no-case-declarations, no-fallthrough, max-len */
 /* global ProjectSelect */
-/* global ShortcutsNavigation */
 /* global IssuableIndex */
-/* global ShortcutsIssuable */
 /* global Milestone */
 /* global IssuableForm */
 /* global LabelsSelect */
 /* global MilestoneSelect */
-/* global Commit */
-/* global CommitsList */
-/* global NewCommitForm */
 /* global NewBranchForm */
 /* global NotificationsForm */
 /* global NotificationsDropdown */
 /* global GroupAvatar */
 /* global LineHighlighter */
-/* global BuildArtifacts */
+import BuildArtifacts from './build_artifacts';
+import CILintEditor from './ci_lint_editor';
 /* global GroupsSelect */
 /* global Search */
 /* global Admin */
@@ -32,14 +28,12 @@
 /* global ProjectNew */
 /* global ProjectShow */
 /* global ProjectImport */
-/* global Labels */
-/* global Shortcuts */
-/* global ShortcutsFindFile */
+import Labels from './labels';
+import LabelManager from './label_manager';
 /* global Sidebar */
 /* global WeightSelect */
 /* global AdminEmailSelect */
-/* global ShortcutsWiki */
-
+import CommitsList from './commits';
 import Issue from './issue';
 import BindInOut from './behaviors/bind_in_out';
 import DeleteModal from './branches/branches_delete_modal';
@@ -74,6 +68,7 @@ import initSettingsPanels from './settings_panels';
 import initExperimentalFlags from './experimental_flags';
 import OAuthRememberMe from './oauth_remember_me';
 import PerformanceBar from './performance_bar';
+import initBroadcastMessagesForm from './broadcast_message';
 import initNotes from './init_notes';
 import initLegacyFilters from './init_legacy_filters';
 import initIssuableSidebar from './init_issuable_sidebar';
@@ -81,7 +76,19 @@ import initProjectVisibilitySelector from './project_visibility';
 import GpgBadges from './gpg_badges';
 import UserFeatureHelper from './helpers/user_feature_helper';
 import initChangesDropdown from './init_changes_dropdown';
+import AbuseReports from './abuse_reports';
 import { ajaxGet, convertPermissionToBoolean } from './lib/utils/common_utils';
+import AjaxLoadingSpinner from './ajax_loading_spinner';
+import GlFieldErrors from './gl_field_errors';
+import GLForm from './gl_form';
+import Shortcuts from './shortcuts';
+import ShortcutsNavigation from './shortcuts_navigation';
+import ShortcutsFindFile from './shortcuts_find_file';
+import ShortcutsIssuable from './shortcuts_issuable';
+import U2FAuthenticate from './u2f/authenticate';
+import Members from './members';
+import memberExpirationDate from './member_expiration_date';
+import DueDateSelectors from './due_date_select';
 
 // EE-only
 import ApproversSelect from './approvers_select';
@@ -100,8 +107,8 @@ import initGroupAnalytics from './init_group_analytics';
     }
 
     Dispatcher.prototype.initPageScripts = function() {
-      var page, path, shortcut_handler, fileBlobPermalinkUrlElement, fileBlobPermalinkUrl;
-      page = $('body').attr('data-page');
+      var path, shortcut_handler, fileBlobPermalinkUrlElement, fileBlobPermalinkUrl;
+      const page = $('body').attr('data-page');
       if (!page) {
         return false;
       }
@@ -186,9 +193,6 @@ import initGroupAnalytics from './init_group_analytics';
             const filteredSearchManager = new gl.FilteredSearchManager(page === 'projects:issues:index' ? 'issues' : 'merge_requests');
             filteredSearchManager.setup();
           }
-          if (page === 'projects:merge_requests:index') {
-            new UserCallout({ setCalloutPerProject: true });
-          }
           const pagePrefix = page === 'projects:merge_requests:index' ? 'merge_request_' : 'issue_';
           IssuableIndex.init(pagePrefix);
 
@@ -253,8 +257,8 @@ import initGroupAnalytics from './init_group_analytics';
         case 'groups:milestones:edit':
         case 'groups:milestones:update':
           new ZenMode();
-          new gl.DueDateSelectors();
-          new gl.GLForm($('.milestone-form'), true);
+          new DueDateSelectors();
+          new GLForm($('.milestone-form'), true);
           break;
         case 'projects:compare:show':
           new gl.Diff();
@@ -265,13 +269,13 @@ import initGroupAnalytics from './init_group_analytics';
           new NewBranchForm($('.js-create-branch-form'), JSON.parse(document.getElementById('availableRefs').innerHTML));
           break;
         case 'projects:branches:index':
-          gl.AjaxLoadingSpinner.init();
+          AjaxLoadingSpinner.init();
           new DeleteModal();
           break;
         case 'projects:issues:new':
         case 'projects:issues:edit':
           shortcut_handler = new ShortcutsNavigation();
-          new gl.GLForm($('.issue-form'), true);
+          new GLForm($('.issue-form'), true);
           new IssuableForm($('.issue-form'));
           new LabelsSelect();
           new MilestoneSelect();
@@ -297,7 +301,7 @@ import initGroupAnalytics from './init_group_analytics';
         case 'projects:merge_requests:edit':
           new gl.Diff();
           shortcut_handler = new ShortcutsNavigation();
-          new gl.GLForm($('.merge-request-form'), true);
+          new GLForm($('.merge-request-form'), true);
           new IssuableForm($('.merge-request-form'));
           new LabelsSelect();
           new MilestoneSelect();
@@ -306,7 +310,7 @@ import initGroupAnalytics from './init_group_analytics';
           break;
         case 'projects:tags:new':
           new ZenMode();
-          new gl.GLForm($('.tag-form'), true);
+          new GLForm($('.tag-form'), true);
           new RefSelectDropdown($('.js-branch-select'));
           break;
         case 'projects:snippets:show':
@@ -316,17 +320,17 @@ import initGroupAnalytics from './init_group_analytics';
         case 'projects:snippets:edit':
         case 'projects:snippets:create':
         case 'projects:snippets:update':
-          new gl.GLForm($('.snippet-form'), true);
+          new GLForm($('.snippet-form'), true);
           break;
         case 'snippets:new':
         case 'snippets:edit':
         case 'snippets:create':
         case 'snippets:update':
-          new gl.GLForm($('.snippet-form'), false);
+          new GLForm($('.snippet-form'), false);
           break;
         case 'projects:releases:edit':
           new ZenMode();
-          new gl.GLForm($('.release-form'), true);
+          new GLForm($('.release-form'), true);
           break;
         case 'projects:merge_requests:show':
           new gl.Diff();
@@ -345,7 +349,6 @@ import initGroupAnalytics from './init_group_analytics';
           new gl.Activities();
           break;
         case 'projects:commit:show':
-          new Commit();
           new gl.Diff();
           new ZenMode();
           shortcut_handler = new ShortcutsNavigation();
@@ -377,7 +380,10 @@ import initGroupAnalytics from './init_group_analytics';
         case 'projects:show':
           shortcut_handler = new ShortcutsNavigation();
           new NotificationsForm();
-          new UserCallout({ setCalloutPerProject: true });
+          new UserCallout({
+            setCalloutPerProject: true,
+            className: 'js-autodevops-banner',
+          });
 
           if ($('#tree-slider').length) new TreeView();
           if ($('.blob-viewer').length) new BlobViewer();
@@ -403,9 +409,6 @@ import initGroupAnalytics from './init_group_analytics';
           break;
         case 'projects:pipelines:new':
           new NewBranchForm($('.js-new-pipeline-form'));
-          break;
-        case 'projects:pipelines:index':
-          new UserCallout({ setCalloutPerProject: true });
           break;
         case 'projects:pipelines:builds':
         case 'projects:pipelines:failures':
@@ -433,15 +436,15 @@ import initGroupAnalytics from './init_group_analytics';
           new ProjectsList();
           break;
         case 'groups:group_members:index':
-          new gl.MemberExpirationDate();
-          new gl.Members();
+          memberExpirationDate();
+          new Members();
           new UsersSelect();
           break;
         case 'projects:project_members:index':
-          new gl.MemberExpirationDate('.js-access-expiration-date-groups');
+          memberExpirationDate('.js-access-expiration-date-groups');
           new GroupsSelect();
-          new gl.MemberExpirationDate();
-          new gl.Members();
+          memberExpirationDate();
+          new Members();
           new UsersSelect();
           break;
         case 'groups:new':
@@ -472,7 +475,6 @@ import initGroupAnalytics from './init_group_analytics';
             );
           }
 
-          new UserCallout({ setCalloutPerProject: true });
           $('#tree-slider').waitForImages(function() {
             ajaxGet(document.querySelector('.js-tree-content').dataset.logsPath);
           });
@@ -504,7 +506,7 @@ import initGroupAnalytics from './init_group_analytics';
         case 'groups:labels:index':
         case 'projects:labels:index':
           if ($('.prioritized-labels').length) {
-            new gl.LabelManager();
+            new LabelManager();
           }
           $('.label-subscription').each((i, el) => {
             const $el = $(el);
@@ -565,7 +567,7 @@ import initGroupAnalytics from './init_group_analytics';
           break;
         case 'ci:lints:create':
         case 'ci:lints:show':
-          new gl.CILintEditor();
+          new CILintEditor();
           break;
         case 'users:show':
           new UserCallout();
@@ -583,7 +585,12 @@ import initGroupAnalytics from './init_group_analytics';
           break;
         case 'profiles:personal_access_tokens:index':
         case 'admin:impersonation_tokens:index':
-          new gl.DueDateSelectors();
+          new DueDateSelectors();
+          break;
+        case 'projects:clusters:show':
+          import(/* webpackChunkName: "clusters" */ './clusters')
+            .then(cluster => new cluster.default()) // eslint-disable-line new-cap
+            .catch(() => {});
           break;
         case 'admin:licenses:new':
           const $licenseFile = $('.license-file');
@@ -602,23 +609,27 @@ import initGroupAnalytics from './init_group_analytics';
         case 'groups:analytics:show':
           initGroupAnalytics();
           break;
-
       }
       switch (path[0]) {
         case 'sessions':
         case 'omniauth_callbacks':
           if (!gon.u2f) break;
-          gl.u2fAuthenticate = new gl.U2FAuthenticate(
+          const u2fAuthenticate = new U2FAuthenticate(
             $('#js-authenticate-u2f'),
             '#js-login-u2f-form',
             gon.u2f,
             document.querySelector('#js-login-2fa-device'),
             document.querySelector('.js-2fa-form'),
           );
-          gl.u2fAuthenticate.start();
+          u2fAuthenticate.start();
+          // needed in rspec
+          gl.u2fAuthenticate = u2fAuthenticate;
         case 'admin':
           new Admin();
           switch (path[1]) {
+            case 'broadcast_messages':
+              initBroadcastMessagesForm();
+              break;
             case 'cohorts':
               new UsagePing();
               break;
@@ -635,7 +646,7 @@ import initGroupAnalytics from './init_group_analytics';
                   new Labels();
               }
             case 'abuse_reports':
-              new gl.AbuseReports();
+              new AbuseReports();
               break;
             case 'geo_nodes':
               new GeoNodes($('.geo-nodes'));
@@ -682,7 +693,7 @@ import initGroupAnalytics from './init_group_analytics';
               new Wikis();
               shortcut_handler = new ShortcutsWiki();
               new ZenMode();
-              new gl.GLForm($('.wiki-form'), true);
+              new GLForm($('.wiki-form'), true);
               break;
             case 'snippets':
               shortcut_handler = new ShortcutsNavigation();
@@ -707,12 +718,6 @@ import initGroupAnalytics from './init_group_analytics';
               shortcut_handler = new ShortcutsNavigation();
           }
           break;
-        case 'users':
-          const action = path[1];
-          import(/* webpackChunkName: 'user_profile' */ './users')
-            .then(user => user.default(action))
-            .catch(() => {});
-          break;
       }
       // If we haven't installed a custom shortcut handler, install the default one
       if (!shortcut_handler) {
@@ -733,7 +738,7 @@ import initGroupAnalytics from './init_group_analytics';
 
     Dispatcher.prototype.initFieldErrors = function() {
       $('.gl-show-field-errors').each((i, form) => {
-        new gl.GlFieldErrors(form);
+        new GlFieldErrors(form);
       });
     };
 

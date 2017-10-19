@@ -45,6 +45,7 @@ module Gitlab
         usage_data
       end
 
+      # rubocop:disable Metrics/AbcSize
       def system_usage_data
         {
           counts: {
@@ -62,6 +63,9 @@ module Gitlab
             deploy_keys: DeployKey.count,
             deployments: Deployment.count,
             environments: ::Environment.count,
+            gcp_clusters: ::Gcp::Cluster.count,
+            gcp_clusters_enabled: ::Gcp::Cluster.enabled.count,
+            gcp_clusters_disabled: ::Gcp::Cluster.disabled.count,
             geo_nodes: GeoNode.count,
             in_review_folder: ::Environment.in_review_folder.count,
             groups: Group.count,

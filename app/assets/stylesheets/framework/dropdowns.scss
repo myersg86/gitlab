@@ -838,6 +838,7 @@
         a {
           padding: 8px 40px;
 
+          &.is-indeterminate::before,
           &.is-active::before {
             left: 16px;
           }
@@ -889,7 +890,7 @@
 @include new-style-dropdown('.breadcrumbs-list .dropdown ');
 @include new-style-dropdown('.js-namespace-select + ');
 
-header.navbar-gitlab-new .header-content .dropdown-menu.projects-dropdown-menu {
+header.header-content .dropdown-menu.projects-dropdown-menu {
   padding: 0;
 }
 

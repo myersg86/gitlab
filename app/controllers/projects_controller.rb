@@ -1,9 +1,11 @@
 class ProjectsController < Projects::ApplicationController
   include IssuableCollections
   include ExtractsPath
+  include PreviewMarkdown
   prepend EE::ProjectsController
 
   before_action :authenticate_user!, except: [:index, :show, :activity, :refs]
+  before_action :redirect_git_extension, only: [:show]
   before_action :project, except: [:index, :new, :create]
   before_action :repository, except: [:index, :new, :create]
   before_action :assign_ref_vars, only: [:show], if: :repo_exists?
@@ -261,18 +263,6 @@ class ProjectsController < Projects::ApplicationController
     render json: options.to_json
   end
 
-  def preview_markdown
-    result = PreviewMarkdownService.new(@project, current_user, params).execute
-
-    render json: {
-      body: view_context.markdown(result[:text]),
-      references: {
-        users: result[:users],
-        commands: view_context.markdown(result[:commands])
-      }
-    }
-  end
-
   private
 
   # Render project landing depending of which features are available
@@ -409,5 +399,14 @@ class ProjectsController < Projects::ApplicationController
 
   def project_export_enabled
     render_404 unless current_application_settings.project_export_enabled?
+  end
+
+  def redirect_git_extension
+    # Redirect from
+    #   localhost/group/project.git
+    # to
+    #   localhost/group/project
+    #
+    redirect_to request.original_url.sub(/\.git\/?\Z/, '') if params[:format] == 'git'
   end
 end

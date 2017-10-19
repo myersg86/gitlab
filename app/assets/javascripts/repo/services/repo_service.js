@@ -1,4 +1,3 @@
-/* global Flash */
 import axios from 'axios';
 import Store from '../stores/repo_store';
 import Api from '../../api';
@@ -63,6 +62,10 @@ const RepoService = {
     if (blobIndex > -1) urlArray[blobIndex] = 'tree';
 
     return urlArray.join('/');
+  },
+
+  getBranch() {
+    return Api.branchSingle(Store.projectId, Store.currentBranch);
   },
 
   commitFiles(payload) {

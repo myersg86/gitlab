@@ -71,6 +71,9 @@ describe Gitlab::UsageData do
         deploy_keys
         deployments
         environments
+        gcp_clusters
+        gcp_clusters_enabled
+        gcp_clusters_disabled
         geo_nodes
         in_review_folder
         groups

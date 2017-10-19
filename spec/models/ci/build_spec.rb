@@ -19,6 +19,7 @@ describe Ci::Build do
   it { is_expected.to belong_to(:erased_by) }
   it { is_expected.to have_many(:deployments) }
   it { is_expected.to have_many(:sourced_pipelines) }
+  it { is_expected.to have_many(:trace_sections)}
   it { is_expected.to validate_presence_of(:ref) }
   it { is_expected.to respond_to(:has_trace?) }
   it { is_expected.to respond_to(:trace) }
@@ -336,6 +337,17 @@ describe Ci::Build do
         expect(build.update_coverage).to be(true)
         expect(build.coverage).to eq(98.29)
       end
+    end
+  end
+
+  describe '#parse_trace_sections!' do
+    it 'calls ExtractSectionsFromBuildTraceService' do
+      expect(Ci::ExtractSectionsFromBuildTraceService)
+          .to receive(:new).with(project, build.user).once.and_call_original
+      expect_any_instance_of(Ci::ExtractSectionsFromBuildTraceService)
+        .to receive(:execute).with(build).once
+
+      build.parse_trace_sections!
     end
   end
 
@@ -1750,19 +1762,34 @@ describe Ci::Build do
   end
 
   describe 'state transition when build fails' do
-    context 'when build is configured to be retried' do
-      subject { create(:ci_build, :running, options: { retry: 3 }) }
+    let(:service) { MergeRequests::AddTodoWhenBuildFailsService.new(project, user) }
 
-      it 'retries builds and assigns a same user to it' do
+    before do
+      allow(MergeRequests::AddTodoWhenBuildFailsService).to receive(:new).and_return(service)
+      allow(service).to receive(:close)
+    end
+
+    context 'when build is configured to be retried' do
+      subject { create(:ci_build, :running, options: { retry: 3 }, project: project, user: user) }
+
+      it 'retries build and assigns the same user to it' do
         expect(described_class).to receive(:retry)
-          .with(subject, subject.user)
+          .with(subject, user)
+
+        subject.drop!
+      end
+
+      it 'does not try to create a todo' do
+        project.add_developer(user)
+
+        expect(service).not_to receive(:commit_status_merge_requests)
 
         subject.drop!
       end
     end
 
     context 'when build is not configured to be retried' do
-      subject { create(:ci_build, :running) }
+      subject { create(:ci_build, :running, project: project, user: user) }
 
       it 'does not retry build' do
         expect(described_class).not_to receive(:retry)
@@ -1774,6 +1801,14 @@ describe Ci::Build do
         expect(described_class).not_to receive(:retry)
         expect_any_instance_of(described_class)
           .not_to receive(:retries_count)
+
+        subject.drop!
+      end
+
+      it 'creates a todo' do
+        project.add_developer(user)
+
+        expect(service).to receive(:commit_status_merge_requests)
 
         subject.drop!
       end

@@ -131,6 +131,10 @@ class Issue < ActiveRecord::Base
               "id DESC")
   end
 
+  def hook_attrs
+    Gitlab::HookData::IssueBuilder.new(self).build
+  end
+
   # Returns a Hash of attributes to be used for Twitter card metadata
   def card_attributes
     {

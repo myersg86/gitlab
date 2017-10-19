@@ -1,4 +1,3 @@
-/* global Flash */
 import Helper from '../helpers/repo_helper';
 import Service from '../services/repo_service';
 
@@ -24,14 +23,21 @@ const RepoStore = {
     title: '',
     status: false,
   },
+  showNewBranchDialog: false,
   activeFile: Helper.getDefaultActiveFile(),
   activeFileIndex: 0,
-  activeLine: 0,
+  activeLine: -1,
   activeFileLabel: 'Raw',
   files: [],
   isCommitable: false,
   binary: false,
   currentBranch: '',
+  startNewMR: false,
+  currentHash: '',
+  currentShortHash: '',
+  customBranchURL: '',
+  newMrTemplateUrl: '',
+  branchChanged: false,
   commitMessage: '',
   binaryTypes: {
     png: false,
@@ -48,6 +54,17 @@ const RepoStore = {
     Object.keys(RepoStore.binaryTypes).forEach((key) => {
       RepoStore.binaryTypes[key] = false;
     });
+  },
+
+  setBranchHash() {
+    return Service.getBranch()
+      .then((data) => {
+        if (RepoStore.currentHash !== '' && data.commit.id !== RepoStore.currentHash) {
+          RepoStore.branchChanged = true;
+        }
+        RepoStore.currentHash = data.commit.id;
+        RepoStore.currentShortHash = data.commit.short_id;
+      });
   },
 
   // mutations
@@ -85,6 +102,7 @@ const RepoStore = {
 
     if (!file.loading) Helper.updateHistoryEntry(file.url, file.pageTitle || file.name);
     RepoStore.binary = file.binary;
+    RepoStore.setActiveLine(-1);
   },
 
   setFileActivity(file, openedFile, i) {
@@ -99,6 +117,10 @@ const RepoStore = {
   setActiveFile(activeFile, i) {
     RepoStore.activeFile = Object.assign({}, RepoStore.activeFile, activeFile);
     RepoStore.activeFileIndex = i;
+  },
+
+  setActiveLine(activeLine) {
+    if (!isNaN(activeLine)) RepoStore.activeLine = activeLine;
   },
 
   setActiveToRaw() {
