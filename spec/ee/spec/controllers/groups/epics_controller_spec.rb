@@ -101,4 +101,17 @@ describe Groups::EpicsController do
       end
     end
   end
+
+  describe 'POST #preview_markdown' do
+    let(:another_user) { create(:user) }
+    before do
+      sign_in(user)
+
+      post :preview_markdown, group_id: epic.group, text: "*Markdown* text #{another_user.to_reference}"
+    end
+
+    it 'renders json in a correct format' do
+      expect(JSON.parse(response.body).keys).to match_array(%w(body references))
+    end
+  end
 end

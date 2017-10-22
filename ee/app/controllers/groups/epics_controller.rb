@@ -1,22 +1,11 @@
 class Groups::EpicsController < Groups::ApplicationController
   include IssuableActions
+  include PreviewMarkdown
 
   before_action :epic
   before_action :authorize_update_issuable!, only: :update
 
   skip_before_action :labels
-
-  # TODO: we have 3 preview_markdown actions now (project, snippet, this) -> move into 1 if possible
-  def preview_markdown
-    result = PreviewMarkdownService.new(nil, current_user, params).execute
-
-    render json: {
-      body: view_context.markdown(result[:text], skip_project_check: true),
-      references: {
-        users: result[:users]
-      }
-    }
-  end
 
   private
 

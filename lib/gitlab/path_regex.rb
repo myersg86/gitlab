@@ -131,6 +131,7 @@ module Gitlab
       pipeline_quota
       projects
       subgroups
+      epics
     ].freeze
 
     ILLEGAL_PROJECT_PATH_WORDS = PROJECT_WILDCARD_ROUTES
