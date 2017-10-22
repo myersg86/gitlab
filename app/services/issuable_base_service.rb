@@ -288,6 +288,6 @@ class IssuableBaseService < BaseService
   end
 
   # override if needed
-  def execute_hooks(issuable, action)
+  def execute_hooks(issuable, action = 'open', params = {})
   end
 end

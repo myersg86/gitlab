@@ -45,6 +45,10 @@ module GitlabRoutingHelper
     project_merge_request_path(entity.project, entity, *args)
   end
 
+  def epic_path(entity, *args)
+    group_epic_path(entity.group, entity, *args)
+  end
+
   def pipeline_path(pipeline, *args)
     project_pipeline_path(pipeline.project, pipeline.id, *args)
   end
@@ -73,11 +77,13 @@ module GitlabRoutingHelper
     project_commit_url(entity.project, entity.sha, *args)
   end
 
-  def preview_markdown_path(project, *args)
+  def preview_markdown_path(parent, *args)
+    return group_preview_markdown_path(parent) if parent.is_a?(Group)
+
     if @snippet.is_a?(PersonalSnippet)
       preview_markdown_snippets_path
     else
-      preview_markdown_project_path(project, *args)
+      preview_markdown_project_path(parent, *args)
     end
   end
 

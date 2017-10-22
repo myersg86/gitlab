@@ -1,26 +1,4 @@
 module EpicsHelper
-  include MarkupHelper
-
-  def epic_initial_data
-    data = {
-      endpoint: group_epic_path(@group, @epic),
-      canUpdate: can?(current_user, :admin_epic, @group),
-      canDestroy: can?(current_user, :admin_epic, @group),
-      # issuableRef: @epic.to_reference,
-      markdownPreviewPath: preview_markdown_group_epics_path(@group),
-      markdownDocsPath: help_page_path('user/markdown'),
-      groupPath: group_path(@group),
-      initialTitleHtml: markdown_field(@epic, :title),
-      initialTitleText: @epic.title,
-      initialDescriptionHtml: markdown_field(@epic, :description),
-      initialDescriptionText: @epic.description
-    }
-
-    # data.merge!(updated_at_by(@epic))
-
-    data.to_json
-  end
-
   def epic_meta_data
     author = @epic.author
 
