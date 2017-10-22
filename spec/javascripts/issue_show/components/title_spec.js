@@ -76,6 +76,10 @@ describe('Title component', () => {
   });
 
   describe('show inline edit button', () => {
+    beforeEach(() => {
+      spyOn(eventHub, '$emit');
+    });
+
     it('should not show by default', () => {
       expect(vm.$el.querySelector('.note-action-button')).toBeNull();
     });

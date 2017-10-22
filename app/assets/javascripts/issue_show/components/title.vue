@@ -2,6 +2,7 @@
   import animateMixin from '../mixins/animate';
   import eventHub from '../event_hub';
   import tooltip from '../../vue_shared/directives/tooltip';
+  import { spriteIcon } from '../../lib/utils/common_utils';
 
   export default {
     mixins: [animateMixin],
@@ -47,7 +48,7 @@
     },
     computed: {
       pencilIcon() {
-        return gl.utils.spriteIcon('pencil', 'link-highlight');
+        return spriteIcon('pencil', 'link-highlight');
       },
     },
     methods: {

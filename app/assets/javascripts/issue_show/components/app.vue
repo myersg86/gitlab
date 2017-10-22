@@ -24,6 +24,11 @@ export default {
       required: true,
       type: Boolean,
     },
+    showInlineEditButton: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
     issuableRef: {
       type: String,
       required: true,
