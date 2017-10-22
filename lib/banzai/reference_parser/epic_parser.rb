@@ -1,4 +1,3 @@
-# for CE this is here only to make sure no other reference will use '&' as a prefix'
 module Banzai
   module ReferenceParser
     class EpicParser < BaseParser
