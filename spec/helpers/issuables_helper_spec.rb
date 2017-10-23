@@ -199,7 +199,7 @@ describe IssuablesHelper do
         'endpoint' => "/groups/#{@group.full_path}/epics/#{epic.iid}",
         'canUpdate' => true,
         'canDestroy' => true,
-        'issuableRef' => "&#{epic.iid}",
+        'issuableRef' => "@group1&#{epic.iid}",
         'markdownPreviewPath' => "/groups/#{@group.full_path}/preview_markdown",
         'markdownDocsPath' => '/help/user/markdown',
         'issuableTemplates' => nil,

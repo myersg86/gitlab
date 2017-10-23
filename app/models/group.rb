@@ -114,7 +114,7 @@ class Group < Namespace
     end
   end
 
-  def to_reference(_from_project = nil, full: nil)
+  def to_reference(from = nil, full: nil)
     "#{self.class.reference_prefix}#{full_path}"
   end
 

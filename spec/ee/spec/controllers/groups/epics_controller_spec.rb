@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 describe Groups::EpicsController do
-  let(:group) { create(:group, :public) }
+  let(:group) { create(:group, :private) }
   let(:epic) { create(:epic, group: group) }
-  let(:user)  { create(:user)}
+  let(:user)  { create(:user) }
 
   before do
     sign_in(user)
@@ -16,6 +16,7 @@ describe Groups::EpicsController do
 
     context 'when format is HTML' do
       it 'renders template' do
+        group.add_developer(user)
         show_epic
 
         expect(response.content_type).to eq 'text/html'
@@ -23,10 +24,6 @@ describe Groups::EpicsController do
       end
 
       context 'with unauthorized user' do
-        before do
-          allow(Ability).to receive(:allowed?).with(user, :read_group, group).and_return(false)
-        end
-
         it 'returns a not found 404 response' do
           show_epic
 
@@ -38,17 +35,14 @@ describe Groups::EpicsController do
 
     context 'when format is JSON' do
       it 'returns epic' do
+        group.add_developer(user)
         show_epic(:json)
 
-        # TODO create schema
-        # expect(response).to match_response_schema('epic')
+        expect(response).to have_http_status(200)
+        expect(response).to match_response_schema('entities/epic')
       end
 
       context 'with unauthorized user' do
-        before do
-          allow(Ability).to receive(:allowed?).with(user, :read_group, group).and_return(false)
-        end
-
         it 'returns a not found 404 response' do
           show_epic(:json)
 
@@ -62,27 +56,22 @@ describe Groups::EpicsController do
   describe 'PUT #update' do
     before do
       group.add_user(user, :developer)
+      put :update, group_id: group, id: epic.to_param, epic: { title: 'New title' }, format: :json
     end
 
-    subject { put :update, group_id: group, id: epic.to_param, epic: { title: 'New title' }, format: :json }
-
     it 'returns status 200' do
-      subject
-
       expect(response.status).to eq(200)
     end
 
     it 'updates the epic correctly' do
-      subject
-
       expect(epic.reload.title).to eq('New title')
     end
   end
 
   describe 'GET #realtime_changes' do
     subject { get :realtime_changes, group_id: group, id: epic.to_param }
-
     it 'returns epic' do
+      group.add_user(user, :developer)
       subject
 
       expect(response.content_type).to eq 'application/json'
@@ -90,28 +79,11 @@ describe Groups::EpicsController do
     end
 
     context 'with unauthorized user' do
-      before do
-        allow(Ability).to receive(:allowed?).with(user, :read_group, group).and_return(false)
-      end
-
       it 'returns a not found 404 response' do
         subject
 
         expect(response).to have_http_status(404)
       end
-    end
-  end
-
-  describe 'POST #preview_markdown' do
-    let(:another_user) { create(:user) }
-    before do
-      sign_in(user)
-
-      post :preview_markdown, group_id: epic.group, text: "*Markdown* text #{another_user.to_reference}"
-    end
-
-    it 'renders json in a correct format' do
-      expect(JSON.parse(response.body).keys).to match_array(%w(body references))
     end
   end
 end

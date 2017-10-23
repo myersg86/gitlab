@@ -43,10 +43,6 @@ constraints(GroupUrlConstrainer.new) do
     end
 
     resources :epics do
-      collection do
-        post :preview_markdown
-      end
-
       member do
         get :realtime_changes
       end

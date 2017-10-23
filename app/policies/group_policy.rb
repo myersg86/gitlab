@@ -32,13 +32,18 @@ class GroupPolicy < BasePolicy
 
   rule { public_group }.policy do
     enable :read_group
+    enable :read_epic
     enable :read_list
   end
 
-  rule { logged_in_viewable }.enable :read_group
+  rule { logged_in_viewable }.policy do
+    enable :read_group
+    enable :read_epic
+  end
 
   rule { guest }.policy do
     enable :read_group
+    enable :read_epic
     enable :read_list
   end
 

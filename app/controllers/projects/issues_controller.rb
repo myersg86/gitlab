@@ -16,7 +16,7 @@ class Projects::IssuesController < Projects::ApplicationController
   before_action :authorize_create_issue!, only: [:new, :create]
 
   # Allow modify issue
-  before_action :authorize_update_issuable!, only: [:move, :update]
+  before_action :authorize_update_issuable!, only: [:update, :move]
 
   # Allow create a new branch and empty WIP merge request from current issue
   before_action :authorize_create_merge_request!, only: [:create_merge_request]

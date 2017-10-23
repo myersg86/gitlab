@@ -1,6 +1,5 @@
 class Groups::EpicsController < Groups::ApplicationController
   include IssuableActions
-  include PreviewMarkdown
 
   before_action :epic
   before_action :authorize_update_issuable!, only: :update
@@ -11,6 +10,10 @@ class Groups::EpicsController < Groups::ApplicationController
 
   def epic
     @issuable = @epic ||= @group.epics.find_by(iid: params[:id])
+
+    return render_404 unless can?(current_user, :read_epic, @epic)
+
+    @epic
   end
   alias_method :issuable, :epic
 

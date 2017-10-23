@@ -13,7 +13,7 @@ module IssuableActions
         render show_view
       end
       format.json do
-        render json: serializer.represent(@issuable)
+        render json: serializer.represent(issuable)
       end
     end
   end
@@ -35,17 +35,17 @@ module IssuableActions
     Gitlab::PollingInterval.set_header(response, interval: 3_000)
 
     response = {
-      title: view_context.markdown_field(@issuable, :title),
-      title_text: @issuable.title,
-      description: view_context.markdown_field(@issuable, :description),
-      description_text: @issuable.description,
-      task_status: @issuable.task_status
+      title: view_context.markdown_field(issuable, :title),
+      title_text: issuable.title,
+      description: view_context.markdown_field(issuable, :description),
+      description_text: issuable.description,
+      task_status: issuable.task_status
     }
 
-    if @issuable.edited?
-      response[:updated_at] = @issuable.updated_at
-      response[:updated_by_name] = @issuable.last_edited_by.name
-      response[:updated_by_path] = user_path(@issuable.last_edited_by)
+    if issuable.edited?
+      response[:updated_at] = issuable.updated_at
+      response[:updated_by_name] = issuable.last_edited_by.name
+      response[:updated_by_path] = user_path(issuable.last_edited_by)
     end
 
     render json: response
