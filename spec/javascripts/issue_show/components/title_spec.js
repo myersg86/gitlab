@@ -7,7 +7,6 @@ describe('Title component', () => {
   let vm;
 
   beforeEach(() => {
-    spyOn(eventHub, '$emit');
     const Component = Vue.extend(titleComponent);
     const store = new Store({
       titleHtml: '',

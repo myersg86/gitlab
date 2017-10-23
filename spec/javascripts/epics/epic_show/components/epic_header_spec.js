@@ -32,10 +32,10 @@ describe('epicHeader', () => {
   });
 
   it('should render author name', () => {
-    expect(vm.$el.querySelector('.author').innerText.trim()).toEqual(author.name);
+    expect(vm.$el.querySelector('.user-avatar-link').innerText.trim()).toEqual(author.name);
   });
 
   it('should render username tooltip', () => {
-    expect(vm.$el.querySelector('.author').dataset.originalTitle).toEqual(author.username);
+    expect(vm.$el.querySelector('.user-avatar-link span').dataset.originalTitle).toEqual(author.username);
   });
 });
