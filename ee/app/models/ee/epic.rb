@@ -45,7 +45,7 @@ module EE
       # This pattern supports cross-group  references.
       def reference_pattern
         @reference_pattern ||= %r{
-          (#{Group.reference_pattern})?
+          (#{::Group.reference_pattern})?
           #{Regexp.escape(reference_prefix)}(?<epic>\d+)
         }x
       end
