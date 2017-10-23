@@ -56,6 +56,7 @@ class GroupPolicy < BasePolicy
     enable :create_epic
     enable :admin_epic
     enable :update_epic
+    enable :destroy_epic
   end
 
   rule { master }.policy do
