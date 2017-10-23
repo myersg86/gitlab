@@ -92,11 +92,6 @@ export default {
       type: String,
       required: true,
     },
-    showInlineEditButton: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
   },
   data() {
     const store = new Store({
