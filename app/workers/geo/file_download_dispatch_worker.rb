@@ -6,6 +6,10 @@ module Geo
       current_node.files_max_capacity
     end
 
+    def scheduler_jid_column
+      :file_download_scheduler_jid
+    end
+
     def schedule_job(object_db_id, object_type)
       job_id = GeoFileDownloadWorker.perform_async(object_type, object_db_id)
 

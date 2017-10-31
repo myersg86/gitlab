@@ -6,6 +6,10 @@ module Geo
       current_node.repos_max_capacity
     end
 
+    def scheduler_jid_column
+      :repository_scheduler_jid
+    end
+
     def schedule_job(project_id)
       job_id = Geo::ProjectSyncWorker.perform_async(project_id, Time.now)
 
