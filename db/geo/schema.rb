@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171009162209) do
+ActiveRecord::Schema.define(version: 20171030223207) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -48,5 +48,10 @@ ActiveRecord::Schema.define(version: 20171009162209) do
   add_index "project_registry", ["project_id"], name: "index_project_registry_on_project_id", unique: true, using: :btree
   add_index "project_registry", ["resync_repository"], name: "index_project_registry_on_resync_repository", using: :btree
   add_index "project_registry", ["resync_wiki"], name: "index_project_registry_on_resync_wiki", using: :btree
+
+  create_table "scheduler_workers", force: :cascade do |t|
+    t.text "file_download_scheduler_jid"
+    t.text "repository_scheduler_jid"
+  end
 
 end
