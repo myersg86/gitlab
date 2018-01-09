@@ -12,14 +12,6 @@ describe Geo::RepositoryDestroyService do
     stub_current_geo_node(secondary)
   end
 
-  describe '#async_execute' do
-    it 'starts the worker' do
-      expect(GeoRepositoryDestroyWorker).to receive(:perform_async)
-
-      subject.async_execute
-    end
-  end
-
   describe '#execute' do
     it 'delegates project removal to Projects::DestroyService' do
       expect_any_instance_of(EE::Projects::DestroyService).to receive(:geo_replicate)
