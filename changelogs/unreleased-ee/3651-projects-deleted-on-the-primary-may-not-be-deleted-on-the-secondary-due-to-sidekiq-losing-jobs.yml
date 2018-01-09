@@ -1,0 +1,5 @@
+---
+title: Geo - Destroy repositories synchronously when handling deleted events
+merge_request:
+author:
+type: fixed
