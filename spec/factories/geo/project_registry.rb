@@ -7,6 +7,7 @@ FactoryBot.define do
     last_wiki_successful_sync_at nil
     resync_repository true
     resync_wiki true
+    pending_delete false
 
     trait :dirty do
       resync_repository true

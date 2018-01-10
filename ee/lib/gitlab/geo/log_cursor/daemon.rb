@@ -115,6 +115,8 @@ module Gitlab
         end
 
         def handle_repository_deleted_event(event, created_at)
+          ::Geo::ProjectRegistry.where(project_id: event.project_id).update_all(pending_delete: true)
+
           job_id = ::Geo::RepositoryDestroyService
                      .new(event.project_id, event.deleted_project_name, event.deleted_path, event.repository_storage_name)
                      .async_execute
@@ -126,9 +128,6 @@ module Gitlab
             repository_storage_name: event.repository_storage_name,
             disk_path: event.deleted_path,
             job_id: job_id)
-
-          # No need to create a project entry if it doesn't exist
-          ::Geo::ProjectRegistry.where(project_id: event.project_id).delete_all
         end
 
         def handle_repositories_changed_event(event, created_at)

@@ -158,10 +158,12 @@ describe Gitlab::Geo::LogCursor::Daemon, :postgresql, :clean_gitlab_redis_shared
         daemon.run_once!
       end
 
-      it 'removes the tracking database entry if exist' do
-        create(:geo_project_registry, :synced, project: project)
+      it 'marks the tracking database entry as "pending deletion"' do
+        registry = create(:geo_project_registry, :synced, project: project, pending_delete: false)
 
-        expect { daemon.run_once! }.to change(Geo::ProjectRegistry, :count).by(-1)
+        daemon.run_once!
+
+        expect(registry.reload.pending_delete).to be true
       end
     end
 
