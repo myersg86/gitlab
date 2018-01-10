@@ -42,6 +42,7 @@ module EE
         flush_caches(project)
 
         trash_repositories!
+        remove_geo_project_registry!
 
         log_info("Project \"#{project.name}\" was removed")
       end
@@ -54,6 +55,10 @@ module EE
           project,
           action: :destroy
         ).for_project.security_event
+      end
+
+      def remove_geo_project_registry!
+        ::Geo::ProjectRegistry.where(project_id: project.id).delete_all
       end
     end
   end
