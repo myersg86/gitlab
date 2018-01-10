@@ -190,17 +190,15 @@ describe Geo::ProjectRegistryFinder, :geo do
   describe '#find_failed_project_registries' do
     let(:project_1_in_synced_group) { create(:project, group: synced_group) }
     let(:project_2_in_synced_group) { create(:project, group: synced_group) }
+    let(:project_3_in_synced_group) { create(:project, group: synced_group) }
+    let(:project_4_in_synced_group) { create(:project, group: synced_group) }
 
     let!(:synced) { create(:geo_project_registry, :synced) }
     let!(:sync_failed) { create(:geo_project_registry, :sync_failed, project: project_synced) }
     let!(:repository_sync_failed) { create(:geo_project_registry, :repository_sync_failed, project: project_1_in_synced_group) }
     let!(:wiki_sync_failed) { create(:geo_project_registry, :wiki_sync_failed, project: project_2_in_synced_group) }
-
-    it 'delegates to #find_failed_project_registries' do
-      expect(subject).to receive(:find_failed_project_registries).with('repository').and_call_original
-
-      subject.count_failed_repositories
-    end
+    let!(:repository_sync_failed_pending_delete) { create(:geo_project_registry, :repository_sync_failed, project: project_3_in_synced_group, pending_delete: true) }
+    let!(:wiki_sync_failed_pending_delete) { create(:geo_project_registry, :wiki_sync_failed, project: project_4_in_synced_group, pending_delete: true) }
 
     it 'returns only project registries that repository sync has failed' do
       expect(subject.find_failed_project_registries('repository')).to match_array([sync_failed, repository_sync_failed])

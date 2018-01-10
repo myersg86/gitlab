@@ -134,7 +134,7 @@ module Geo
     def legacy_find_unsynced_projects
       legacy_left_outer_join_registry_ids(
         current_node.projects,
-        Geo::ProjectRegistry.pluck(:project_id),
+        Geo::ProjectRegistry.without_deleted.pluck(:project_id),
         Project
       )
     end
@@ -176,7 +176,7 @@ module Geo
       legacy_inner_join_registry_ids(
         find_filtered_failed_project_registries(type),
         current_node.projects.pluck(:id),
-        Geo::ProjectRegistry,
+        Geo::ProjectRegistry.without_deleted,
         foreign_key: :project_id
       )
     end
