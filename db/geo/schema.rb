@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171115143841) do
+ActiveRecord::Schema.define(version: 20180110180140) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -52,10 +52,12 @@ ActiveRecord::Schema.define(version: 20171115143841) do
     t.boolean "force_to_redownload_wiki"
     t.string "last_repository_sync_failure"
     t.string "last_wiki_sync_failure"
+    t.boolean "pending_delete", default: false, null: false
   end
 
   add_index "project_registry", ["last_repository_successful_sync_at"], name: "index_project_registry_on_last_repository_successful_sync_at", using: :btree
   add_index "project_registry", ["last_repository_synced_at"], name: "index_project_registry_on_last_repository_synced_at", using: :btree
+  add_index "project_registry", ["pending_delete"], name: "index_project_registry_on_pending_delete", using: :btree
   add_index "project_registry", ["project_id"], name: "index_project_registry_on_project_id", unique: true, using: :btree
   add_index "project_registry", ["repository_retry_at"], name: "index_project_registry_on_repository_retry_at", using: :btree
   add_index "project_registry", ["resync_repository"], name: "index_project_registry_on_resync_repository", using: :btree
