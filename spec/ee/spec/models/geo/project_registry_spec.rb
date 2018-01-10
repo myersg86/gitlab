@@ -17,6 +17,32 @@ describe Geo::ProjectRegistry do
     it { is_expected.to validate_uniqueness_of(:project) }
   end
 
+  describe '.dirty' do
+    it 'returns projects that repository or wiki should be synced' do
+      create(:geo_project_registry, :synced)
+      create(:geo_project_registry, :synced, :repository_dirty, pending_delete: true)
+      create(:geo_project_registry, :synced, :wiki_dirty, pending_delete: true)
+      repository_dirty = create(:geo_project_registry, :synced, :repository_dirty)
+      wiki_dirty = create(:geo_project_registry, :synced, :wiki_dirty)
+
+      expect(described_class.dirty).to match_array([registry, repository_dirty, wiki_dirty])
+    end
+  end
+
+  describe '.failed' do
+    it 'returns projects that repository or wiki sync failed' do
+      create(:geo_project_registry, :synced)
+      create(:geo_project_registry, :synced, :dirty)
+      create(:geo_project_registry, :wiki_syncing)
+      create(:geo_project_registry, :repository_sync_failed, pending_delete: true)
+      create(:geo_project_registry, :wiki_sync_failed, pending_delete: true)
+      repository_sync_failed = create(:geo_project_registry, :repository_sync_failed)
+      wiki_sync_failed = create(:geo_project_registry, :wiki_sync_failed)
+
+      expect(described_class.failed).to match_array([repository_sync_failed, wiki_sync_failed])
+    end
+  end
+
   describe '.failed_repos' do
     it 'returns projects where last attempt to sync failed' do
       create(:geo_project_registry, :synced)
@@ -24,6 +50,7 @@ describe Geo::ProjectRegistry do
       create(:geo_project_registry, :repository_syncing)
       create(:geo_project_registry, :wiki_syncing)
       create(:geo_project_registry, :wiki_sync_failed)
+      create(:geo_project_registry, :repository_sync_failed, pending_delete: true)
 
       repository_sync_failed = create(:geo_project_registry, :repository_sync_failed)
 
@@ -38,6 +65,7 @@ describe Geo::ProjectRegistry do
       create(:geo_project_registry, :repository_syncing)
       create(:geo_project_registry, :wiki_syncing)
       create(:geo_project_registry, :repository_sync_failed)
+      create(:geo_project_registry, :wiki_sync_failed, pending_delete: true)
 
       wiki_sync_failed = create(:geo_project_registry, :wiki_sync_failed)
 
@@ -50,8 +78,32 @@ describe Geo::ProjectRegistry do
       create(:geo_project_registry, repository_retry_at: Date.yesterday, wiki_retry_at: Date.yesterday)
       tomorrow = create(:geo_project_registry, repository_retry_at: Date.tomorrow, wiki_retry_at: Date.tomorrow)
       create(:geo_project_registry)
+      pending_delete = create(:geo_project_registry, pending_delete: true)
 
-      expect(described_class.retry_due).not_to include(tomorrow)
+      expect(described_class.retry_due).not_to include(tomorrow, pending_delete)
+    end
+  end
+
+
+  describe '.synced_repos' do
+    it 'returns projects that repository is synced' do
+      synced = create(:geo_project_registry, :synced)
+      create(:geo_project_registry, :synced, pending_delete: true)
+      create(:geo_project_registry, :synced, :repository_dirty)
+      wiki_dirty = create(:geo_project_registry, :synced, :wiki_dirty)
+
+      expect(described_class.synced_repos).to match_array([synced, wiki_dirty])
+    end
+  end
+
+  describe '.synced_wikis' do
+    it 'returns projects that wiki repository is synced' do
+      synced = create(:geo_project_registry, :synced)
+      create(:geo_project_registry, :synced, pending_delete: true)
+      create(:geo_project_registry, :synced, :wiki_dirty)
+      repository_dirty = create(:geo_project_registry, :synced, :repository_dirty)
+
+      expect(described_class.synced_wikis).to match_array([synced, repository_dirty])
     end
   end
 

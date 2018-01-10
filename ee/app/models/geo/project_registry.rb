@@ -3,19 +3,20 @@ class Geo::ProjectRegistry < Geo::BaseRegistry
 
   validates :project, presence: true, uniqueness: true
 
-  scope :dirty, -> { where(arel_table[:resync_repository].eq(true).or(arel_table[:resync_wiki].eq(true))) }
-  scope :failed_repos, -> { where(arel_table[:repository_retry_count].gt(0)) }
-  scope :failed_wikis, -> { where(arel_table[:wiki_retry_count].gt(0)) }
+  scope :dirty, -> { without_deleted.where(arel_table[:resync_repository].eq(true).or(arel_table[:resync_wiki].eq(true))) }
+  scope :failed_repos, -> { without_deleted.where(arel_table[:repository_retry_count].gt(0)) }
+  scope :failed_wikis, -> { without_deleted.where(arel_table[:wiki_retry_count].gt(0)) }
+  scope :without_deleted, -> { where(pending_delete: false) }
 
   def self.failed
     repository_sync_failed = arel_table[:repository_retry_count].gt(0)
     wiki_sync_failed = arel_table[:wiki_retry_count].gt(0)
 
-    where(repository_sync_failed.or(wiki_sync_failed))
+    without_deleted.where(repository_sync_failed.or(wiki_sync_failed))
   end
 
   def self.retry_due
-    where(
+    without_deleted.where(
       arel_table[:repository_retry_at].lt(Time.now)
         .or(arel_table[:wiki_retry_at].lt(Time.now))
         .or(arel_table[:repository_retry_at].eq(nil))
@@ -24,13 +25,15 @@ class Geo::ProjectRegistry < Geo::BaseRegistry
   end
 
   def self.synced_repos
-    where.not(last_repository_synced_at: nil, last_repository_successful_sync_at: nil)
-        .where(resync_repository: false)
+    without_deleted
+      .where.not(last_repository_synced_at: nil, last_repository_successful_sync_at: nil)
+      .where(resync_repository: false)
   end
 
   def self.synced_wikis
-    where.not(last_wiki_synced_at: nil, last_wiki_successful_sync_at: nil)
-        .where(resync_wiki: false)
+    without_deleted
+      .where.not(last_wiki_synced_at: nil, last_wiki_successful_sync_at: nil)
+      .where(resync_wiki: false)
   end
 
   def repository_sync_due?(scheduled_time)
