@@ -16,8 +16,8 @@ export default {
   [types.RECEIVE_LOAD_SETTINGS](state, settings) {
     Object.assign(state, {
       settings,
-      approvers: state.approvers,
       isLoading: false,
+      isSaving: false,
     });
   },
   [types.RECEIVE_LOAD_SETTINGS_ERROR](state) {
@@ -37,5 +37,15 @@ export default {
   },
   [types.UPDATE_APPROVER_GROUPS](state, data) {
     updateList(state, data, 'approver_groups');
+  },
+  [types.RECEIVE_UPDATED_SETTINGS_ERROR](state) {
+    Object.assign(state, {
+      isSaving: false,
+    });
+  },
+  [types.REQUEST_UPDATED_SETTINGS](state) {
+    Object.assign(state, {
+      isSaving: true,
+    });
   },
 };

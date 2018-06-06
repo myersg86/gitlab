@@ -15,12 +15,12 @@ export default {
     },
   },
   mounted() {
-    new UsersSelect();
+    new UsersSelect(); // eslint-disable-line no-new
     const select = $(this.$refs.userSelect);
     select.on('change', e => {
       this.$emit('select', e);
     });
-    select.select2('val', this.users.map(user => user.id));
+    select.select2('data', this.users);
   },
 };
 </script>
@@ -39,5 +39,4 @@ export default {
     data-current-user="false"
     :data-project-id="projectId"
   />
-  <!--data-skip-users="[6,10,16,1]"-->
 </template>
