@@ -1,9 +1,16 @@
 module EE
   module ProjectsController
     extend ::Gitlab::Utils::Override
+    include ::API::Helpers::RelatedResourcesHelpers
 
     def project_params_attributes
       super + project_params_ee
+    end
+
+    override :edit
+    def edit
+      @approvals_api_endpoint = expose_url(api_v4_projects_approvals_path(id: @project.id))
+      super
     end
 
     private
