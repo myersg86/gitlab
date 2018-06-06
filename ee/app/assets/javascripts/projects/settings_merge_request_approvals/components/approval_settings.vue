@@ -1,12 +1,14 @@
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
+import UserSelect from './multi_user_select.vue';
 
 export default {
   name: 'ApprovalSettings',
   components: {
+    UserSelect,
   },
   computed: {
-    ...mapState(['settings', 'isLoading', 'kind']),
+    ...mapState(['settings', 'isLoading', 'projectId']),
     overridingApproversPerMergeRequest: {
       get() {
         return !this.settings.disable_overriding_approvers_per_merge_request;
@@ -16,12 +18,35 @@ export default {
       },
     },
   },
-  methods: {},
+  methods: {
+    ...mapActions(['updateUsers']),
+  },
 };
 </script>
 
 <template>
-  <div class="approval-settings">
+  <div
+    class="approval-settings"
+    v-if="!isLoading"
+  >
+    <div class="form-group">
+      <label
+        class="label-light"
+      >
+        Approvers
+      </label>
+    </div>
+    <div class="form-group">
+      <label for="approvers-select">
+        Choose approvers from users
+      </label>
+      <user-select
+        id="approvers-select"
+        :users="settings.approvers"
+        :project-id="projectId"
+        @select="updateUsers"
+      />
+    </div>
     <div class="form-group">
       <label
         for="approvals-before-merge"
@@ -81,5 +106,6 @@ export default {
         </label>
       </div>
     </div>
+    <pre>{{ JSON.stringify(settings,null,2) }}</pre>
   </div>
 </template>

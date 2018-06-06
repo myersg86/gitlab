@@ -4,6 +4,7 @@ export default {
   [types.RECEIVE_LOAD_SETTINGS](state, settings) {
     Object.assign(state, {
       settings,
+      approvers: state.approvers,
       isLoading: false,
     });
   },
@@ -14,10 +15,24 @@ export default {
   },
   [types.REQUEST_LOAD_SETTINGS](state, data) {
     Object.assign(state, {
-      kind: data.kind, // project or group
       apiEndpointUrl: data.apiEndpointUrl,
       docsUrl: data.docsUrl,
       isLoading: true,
     });
+  },
+  [types.UPDATE_APPROVERS](state, data) {
+    const settings = { ...state.settings };
+
+    let approvers = [...settings.approvers];
+
+    if (data.added) {
+      approvers.push(data.added);
+    }
+
+    approvers = approvers.filter(user => {
+      return data.val.includes(`${user.id}`);
+    });
+
+    Object.assign(state.settings, { approvers });
   },
 };

@@ -7,6 +7,7 @@ export default () => {
 
   store.dispatch('loadSettings', {
     apiEndpointUrl: approvalSettingsRootElement.dataset.endpoint,
+    projectId: approvalSettingsRootElement.dataset.projectId,
   });
 
   if (approvalSettingsRootElement) {
