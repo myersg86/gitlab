@@ -1,11 +1,13 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import UserSelect from './multi_user_select.vue';
+import GroupSelect from './multi_group_select.vue';
 
 export default {
   name: 'ApprovalSettings',
   components: {
     UserSelect,
+    GroupSelect,
   },
   computed: {
     ...mapState(['settings', 'isLoading', 'projectId']),
@@ -19,7 +21,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['updateUsers']),
+    ...mapActions(['updateUsers', 'updateGroups']),
   },
 };
 </script>
@@ -45,6 +47,15 @@ export default {
         :users="settings.approvers"
         :project-id="projectId"
         @select="updateUsers"
+      />
+      <label for="approver-groups-select">
+        Choose approvers from groups
+      </label>
+      <group-select
+        id="approver-groups-select"
+        :groups="settings.approver_groups"
+        :project-id="projectId"
+        @select="updateGroups"
       />
     </div>
     <div class="form-group">

@@ -3,15 +3,17 @@ import types from './mutation_types';
 
 const formatSettings = settings => {
   const approvers = settings.approvers.map(user => user.user);
-  console.warn(settings);
-  return { ...settings, approvers };
+  const approverGroups = settings.approver_groups.map(group => group.group);
+  return { ...settings, approvers, approver_groups: approverGroups };
 };
 
 export default {
   updateUsers({ commit }, event) {
     commit(types.UPDATE_APPROVERS, event);
   },
-
+  updateGroups({ commit }, event) {
+    commit(types.UPDATE_APPROVER_GROUPS, event);
+  },
   requestLoadSettings({ commit }, data) {
     commit(types.REQUEST_LOAD_SETTINGS, data);
   },

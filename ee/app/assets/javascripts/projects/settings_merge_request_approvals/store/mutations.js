@@ -1,5 +1,17 @@
 import types from './mutation_types';
 
+const updateList = (state, data, field) => {
+  let list = [...state.settings[field]];
+
+  if (data.added) {
+    list.push(data.added);
+  }
+
+  list = list.filter(entry => data.val.includes(`${entry.id}`));
+
+  Object.assign(state.settings, { [field]: list });
+};
+
 export default {
   [types.RECEIVE_LOAD_SETTINGS](state, settings) {
     Object.assign(state, {
@@ -21,18 +33,9 @@ export default {
     });
   },
   [types.UPDATE_APPROVERS](state, data) {
-    const settings = { ...state.settings };
-
-    let approvers = [...settings.approvers];
-
-    if (data.added) {
-      approvers.push(data.added);
-    }
-
-    approvers = approvers.filter(user => {
-      return data.val.includes(`${user.id}`);
-    });
-
-    Object.assign(state.settings, { approvers });
+    updateList(state, data, 'approvers');
+  },
+  [types.UPDATE_APPROVER_GROUPS](state, data) {
+    updateList(state, data, 'approver_groups');
   },
 };
