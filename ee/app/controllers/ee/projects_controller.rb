@@ -9,7 +9,11 @@ module EE
 
     override :edit
     def edit
-      @approvals_api_endpoint = expose_url(api_v4_projects_approvals_path(id: @project.id))
+      # rubocop:disable Gitlab/ModuleWithInstanceVariables
+      @approvals_api_endpoint = expose_url(api_v4_projects_approvals_path(id: project.id))
+      @approvers_api_endpoint = expose_url(api_v4_projects_approvers_path(id: project.id))
+      # rubocop:enable Gitlab/ModuleWithInstanceVariables
+
       super
     end
 

@@ -27,7 +27,7 @@ export default {
   },
   [types.REQUEST_LOAD_SETTINGS](state, data) {
     Object.assign(state, {
-      apiEndpointUrl: data.apiEndpointUrl,
+      approvalsApiUrl: data.approvalsApiUrl,
       docsUrl: data.docsUrl,
       isLoading: true,
     });

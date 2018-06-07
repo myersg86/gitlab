@@ -6,7 +6,8 @@ export default () => {
   const approvalSettingsRootElement = document.querySelector('.js-merge-request-approvals-root');
 
   store.dispatch('loadSettings', {
-    apiEndpointUrl: approvalSettingsRootElement.dataset.endpoint,
+    approvalsApiUrl: approvalSettingsRootElement.dataset.approvalsEndpoint,
+    approversApiUrl: approvalSettingsRootElement.dataset.approversEndpoint,
     projectId: approvalSettingsRootElement.dataset.projectId,
   });
 

@@ -1,5 +1,6 @@
 export default () => ({
-  apiEndpointUrl: null,
+  approvalsApiUrl: null,
+  approversApiUrl: null,
   settings: [],
   projectId: null,
   isEditing: false,

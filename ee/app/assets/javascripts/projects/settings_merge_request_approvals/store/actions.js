@@ -38,9 +38,8 @@ export default {
   },
   loadSettings({ dispatch, state }, data) {
     dispatch('requestLoadSettings', data);
-    const endpoint = state.apiEndpointUrl;
     return axios
-      .get(endpoint)
+      .get(state.approvalsApiUrl)
       .catch(error => {
         dispatch('receiveLoadSettingsError');
         throw error;
@@ -56,13 +55,14 @@ export default {
     commit(types.REQUEST_UPDATED_SETTINGS_ERROR);
   },
   saveSettings({ dispatch, state }) {
-    const endpoint = `${state.apiEndpointUrl}`;
     dispatch('requestUpdateSettings');
     return axios
-      .post(endpoint, getApprovalSettings(state.settings))
+      // Update Approval Settings
+      .post(state.approvalsApiUrl, getApprovalSettings(state.settings))
+      // Update Approvers
       .then(() =>
         axios.put(
-          endpoint.replace('approvals', 'approvers'),
+          state.approversApiUrl,
           getApproverGroupsAndApproversIds(state.settings),
         ),
       )
