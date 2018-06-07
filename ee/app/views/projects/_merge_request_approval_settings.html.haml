@@ -2,7 +2,7 @@
 - can_override_approvers = project.can_override_approvers?
 
 - expanded = Rails.env.test?
-%section.settings.merge-request-approvals.no-animate{ class: [('expanded' if true), ('hidden' if project.project_feature.send(:merge_requests_access_level) == 0)] }
+%section.settings.merge-request-approvals.no-animate{ class: [('expanded' if expanded), ('hidden' if project.project_feature.send(:merge_requests_access_level) == 0)] }
   .settings-header
     %h4
       Merge request approvals
@@ -11,4 +11,4 @@
     %p
       Enforce code review by enabling merge request approvals.
   .settings-content
-    .js-merge-request-approvals-root{ data: { approvalsEndpoint: @approvals_api_endpoint, approversEndpoint: @approvers_api_endpoint, projectId: project.id } }
+    .js-merge-request-approvals-root{ data: { approvals_endpoint: @approvals_api_endpoint, approvers_endpoint: @approvers_api_endpoint, projectId: project.id } }

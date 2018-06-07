@@ -53,7 +53,7 @@ export default {
       }
       return this.saveSettings()
         .then(() => {
-          createFlash(s__('ApprovalSettings|The badge was saved.'), 'notice');
+          createFlash(s__('ApprovalSettings|The approval settings were saved.'), 'notice');
         })
         .catch(error => {
           createFlash(s__('ApprovalSettings|Saving settings failed. Please try again.'));

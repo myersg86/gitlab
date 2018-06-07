@@ -28,7 +28,7 @@ export default {
   [types.REQUEST_LOAD_SETTINGS](state, data) {
     Object.assign(state, {
       approvalsApiUrl: data.approvalsApiUrl,
-      docsUrl: data.docsUrl,
+      approversApiUrl: data.approversApiUrl,
       isLoading: true,
     });
   },
