@@ -56,22 +56,21 @@ export default {
   },
   saveSettings({ dispatch, state }) {
     dispatch('requestUpdateSettings');
-    return axios
-      // Update Approval Settings
-      .post(state.approvalsApiUrl, getApprovalSettings(state.settings))
-      // Update Approvers
-      .then(() =>
-        axios.put(
-          state.approversApiUrl,
-          getApproverGroupsAndApproversIds(state.settings),
-        ),
-      )
-      .catch(error => {
-        dispatch('receiveUpdateSettingsError');
-        throw error;
-      })
-      .then(res => {
-        dispatch('receiveLoadSettings', formatSettings(res.data));
-      });
+    return (
+      axios
+        // Update Approval Settings
+        .post(state.approvalsApiUrl, getApprovalSettings(state.settings))
+        // Update Approvers
+        .then(() =>
+          axios.put(state.approversApiUrl, getApproverGroupsAndApproversIds(state.settings)),
+        )
+        .catch(error => {
+          dispatch('receiveUpdateSettingsError');
+          throw error;
+        })
+        .then(res => {
+          dispatch('receiveLoadSettings', formatSettings(res.data));
+        })
+    );
   },
 };
