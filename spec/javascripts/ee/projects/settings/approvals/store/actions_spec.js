@@ -1,21 +1,31 @@
 import axios from '~/lib/utils/axios_utils';
 import MockAdapter from 'axios-mock-adapter';
-import actions from 'ee/projects/settings_merge_request_approvals/store/actions';
+import actions, {
+  formatSettings,
+} from 'ee/projects/settings_merge_request_approvals/store/actions';
 import mutationTypes from 'ee/projects/settings_merge_request_approvals/store/mutation_types';
 import createState from 'ee/projects/settings_merge_request_approvals/store/state';
 import { TEST_HOST } from 'spec/test_constants';
 import testAction from 'spec/helpers/vuex_action_helper';
+import { generateDummyGroup, generateDummyUser } from '../dummy_settings';
 
 describe('Approvals store actions', () => {
   const dummyApprovalsUrl = `${TEST_HOST}/approvals`;
   const dummyApproversUrl = `${TEST_HOST}/approvers`;
-  const projectId = `8`;
+  const projectId = '8';
   const dummyUrlSettings = {
     approvalsApiUrl: dummyApprovalsUrl,
     approversApiUrl: dummyApproversUrl,
     projectId,
   };
-  const dummySettings = { approvers: [], approver_groups: [], other_setting: true };
+  const dummyAPIResponse = {
+    approvers: [{ user: generateDummyUser(7) }],
+    approver_groups: [{ group: generateDummyGroup(9) }],
+    other_setting: true,
+  };
+
+  const dummySettings = formatSettings(dummyAPIResponse);
+
   const dummySelectEvent = {
     val: ['3', '4'],
     added: { id: 4, name: 'test subject' },
@@ -53,9 +63,9 @@ describe('Approvals store actions', () => {
     it('commits RECEIVE_LOAD_SETTINGS', done => {
       testAction(
         actions.receiveLoadSettings,
-        dummySettings,
+        dummyAPIResponse,
         state,
-        [{ type: mutationTypes.RECEIVE_LOAD_SETTINGS, payload: dummySettings }],
+        [{ type: mutationTypes.RECEIVE_LOAD_SETTINGS, payload: dummyAPIResponse }],
         [],
         done,
       );
@@ -115,12 +125,12 @@ describe('Approvals store actions', () => {
   });
 
   describe('receiveUpdateSettingsError', () => {
-    it('commits REQUEST_UPDATED_SETTINGS_ERROR', done => {
+    it('commits RECEIVE_UPDATED_SETTINGS_ERROR', done => {
       testAction(
         actions.receiveUpdateSettingsError,
         null,
         state,
-        [{ type: mutationTypes.REQUEST_UPDATED_SETTINGS_ERROR }],
+        [{ type: mutationTypes.RECEIVE_UPDATED_SETTINGS_ERROR }],
         [],
         done,
       );
@@ -139,7 +149,7 @@ describe('Approvals store actions', () => {
       approvalEndpointMock.replyOnce(() => {
         expect(dispatch.calls.allArgs()).toEqual([['requestLoadSettings', dummyUrlSettings]]);
         dispatch.calls.reset();
-        return [200, dummySettings];
+        return [200, dummyAPIResponse];
       });
 
       actions
@@ -187,18 +197,60 @@ describe('Approvals store actions', () => {
       approvalEndpointMock.replyOnce(() => {
         expect(dispatch.calls.allArgs()).toEqual([['requestUpdateSettings']]);
         dispatch.calls.reset();
-        return [200, dummySettings];
+        return [200, dummyAPIResponse];
       });
 
-      approverEndpointMock.replyOnce(() => {
-        return [200, dummySettings];
-      });
+      approverEndpointMock.replyOnce(() => [200, dummyAPIResponse]);
 
       actions
         .saveSettings({ state, dispatch })
         .then(() => {
           expect(dispatch.calls.allArgs()).toEqual([['receiveLoadSettings', dummySettings]]);
         })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('request to the /approvals api should not contain users/groups', done => {
+      approvalEndpointMock.replyOnce(req => {
+        const requestObject = JSON.parse(req.data);
+
+        expect(Object.keys(requestObject)).toContain('other_setting');
+        expect(Object.keys(requestObject)).not.toContain('approvers');
+        expect(Object.keys(requestObject)).not.toContain('approver_groups');
+
+        return [200, dummyAPIResponse];
+      });
+
+      approverEndpointMock.replyOnce(() => [200, dummyAPIResponse]);
+
+      actions
+        .saveSettings({ state, dispatch })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('request to the /approvers api should only contain user and group ids', done => {
+      approvalEndpointMock.replyOnce(() => [200, dummyAPIResponse]);
+
+      approverEndpointMock.replyOnce(req => {
+        const requestObject = JSON.parse(req.data);
+
+        expect(Object.keys(requestObject)).not.toContain('other_setting');
+        expect(Object.keys(requestObject)).not.toContain('approvers');
+        expect(Object.keys(requestObject)).not.toContain('approver_groups');
+        expect(Object.keys(requestObject)).toContain('approver_ids');
+        expect(Object.keys(requestObject)).toContain('approver_group_ids');
+        expect(requestObject.approver_ids.length).toBe(1);
+        expect(requestObject.approver_ids[0]).toBe(7);
+        expect(requestObject.approver_group_ids.length).toBe(1);
+        expect(requestObject.approver_group_ids[0]).toBe(9);
+
+        return [200, dummyAPIResponse];
+      });
+
+      actions
+        .saveSettings({ state, dispatch })
         .then(done)
         .catch(done.fail);
     });
@@ -224,12 +276,10 @@ describe('Approvals store actions', () => {
       approvalEndpointMock.replyOnce(() => {
         expect(dispatch.calls.allArgs()).toEqual([['requestUpdateSettings']]);
         dispatch.calls.reset();
-        return [200, dummySettings];
+        return [200, dummyAPIResponse];
       });
 
-      approverEndpointMock.replyOnce(() => {
-        return [500, ''];
-      });
+      approverEndpointMock.replyOnce(() => [500, '']);
 
       actions
         .saveSettings({ state, dispatch })

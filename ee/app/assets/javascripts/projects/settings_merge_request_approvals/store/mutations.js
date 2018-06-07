@@ -25,10 +25,16 @@ export default {
       isLoading: false,
     });
   },
+  [types.RECEIVE_UPDATED_SETTINGS_ERROR](state) {
+    Object.assign(state, {
+      isSaving: false,
+    });
+  },
   [types.REQUEST_LOAD_SETTINGS](state, data) {
     Object.assign(state, {
       approvalsApiUrl: data.approvalsApiUrl,
       approversApiUrl: data.approversApiUrl,
+      projectId: data.projectId,
       isLoading: true,
     });
   },
@@ -37,11 +43,6 @@ export default {
   },
   [types.UPDATE_APPROVER_GROUPS](state, data) {
     updateList(state, data, 'approver_groups');
-  },
-  [types.RECEIVE_UPDATED_SETTINGS_ERROR](state) {
-    Object.assign(state, {
-      isSaving: false,
-    });
   },
   [types.REQUEST_UPDATED_SETTINGS](state) {
     Object.assign(state, {

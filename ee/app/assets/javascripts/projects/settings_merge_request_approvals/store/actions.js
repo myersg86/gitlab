@@ -1,7 +1,7 @@
 import axios from '~/lib/utils/axios_utils';
 import types from './mutation_types';
 
-const formatSettings = settings => {
+export const formatSettings = settings => {
   const approvers = settings.approvers.map(user => user.user);
   const approverGroups = settings.approver_groups.map(group => group.group);
   return { ...settings, approvers, approver_groups: approverGroups };
@@ -52,7 +52,7 @@ export default {
     commit(types.REQUEST_UPDATED_SETTINGS);
   },
   receiveUpdateSettingsError({ commit }) {
-    commit(types.REQUEST_UPDATED_SETTINGS_ERROR);
+    commit(types.RECEIVE_UPDATED_SETTINGS_ERROR);
   },
   saveSettings({ dispatch, state }) {
     dispatch('requestUpdateSettings');
