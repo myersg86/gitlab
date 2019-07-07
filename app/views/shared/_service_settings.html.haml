@@ -10,7 +10,8 @@
 .service-settings
   - if @service.show_active_box?
     .form-group.row
-      = form.label :active, "Active", class: "col-form-label col-sm-2"
+      .col-sm-2.col-form-label
+        = form.label :active, "Active"
       .col-sm-10
         = form.check_box :active, checked: @service.active || @service.new_record?, disabled: disable_fields_service?(@service)
 

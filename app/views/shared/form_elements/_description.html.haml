@@ -13,7 +13,8 @@
   - preview_url = preview_markdown_path(project)
 
 .form-group.row.detail-page-description
-  = form.label :description, 'Description', class: 'col-form-label col-sm-2'
+  .col-sm-2.col-form-label
+    = form.label :description, 'Description'
   .col-sm-10
 
     - if model.is_a?(Issuable)
