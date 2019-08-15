@@ -17868,6 +17868,9 @@ msgstr[1] ""
 msgid "deleted"
 msgstr ""
 
+msgid "design"
+msgstr ""
+
 msgid "detached"
 msgstr ""
 
