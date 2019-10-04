@@ -184,9 +184,42 @@ recommend:
 - [minikube](https://kubernetes.io/docs/setup/learning-environment/minikube/)
 
 Of the two, k3s tends to be the most viable. It is closer to a production style
-deployment.
+deployment. To deploy GitLab via k3s, the steps you should follow are:
 
-STEPS FOR K3S DEPLOYMENT HERE
+1. Install [k3sup](https://github.com/alexellis/k3sup) on your local computer.
+1. Install k3s on a server via the command (replace ip.add.re.ss with the
+   server's IP address):
+   `k3sup install --ip ip.add.re.ss --k3s-extra-args '--no-deploy servicelb --no-deploy traefik'`.
+1. Once that completes, set your env to read the `kubeconfig` file using the
+   command: `export KUBECONFIG=$(pwd)/kubeconfig`
+1. Setup [Local Path Provisioner](https://github.com/rancher/local-path-provisioner/tree/master/).
+1. Mark the `local-path` StorageClass as default using the command:
+   `kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'`
+1. Create the `metallb-system` namespace using the command
+   `kubectl create ns metallb-system`.
+1. Create the `metallb-system/config` ConfigMap using the command
+   `kubectl apply -f metallb-config.yaml`. For more information on the contents
+   of this file, see [metallb documentation](https://metallb.universe.tf/).
+1. Setup [metallb](https://metallb.universe.tf/) using the command
+   `kubectl apply -f metallb.yaml`.
+1. [Prepare Helm for RBAC](https://docs.gitlab.com/charts/installation/tools.html#preparing-for-helm-with-rbac)
+1. Setup the `base.yaml` and `values.yaml` files. For the `base.yaml` file, we
+   recommend going with our
+   [GKE minimum example](https://gitlab.com/gitlab-org/charts/gitlab/blob/master/examples/values-gke-minimum.yaml)
+   and setting gitlab.task-runner.enabled to `true`. For the `values.yaml` file,
+   you need to set the global.hosts.externalIP values to the IP address of your
+   server.
+1. Install the GitLab helm chart repo using the command
+   `helm repo add gitlab https://charts.gitlab.io/`.
+1. Update the GitLab helm chart repo using the command `helm repo update`.
+1. Deploy GitLab via helm using the command
+   `helm install gitlab/gitlab -n gitlab -f base.yaml -f values.yaml`.
+1. Check the status of the deployment via `helm status gitlab`. Once everything
+   is up and the external IP is allocated, you should be able to access your
+   GitLab install.
+
+We have a video on showing the process at our
+[GitLab Unfiltered channel](https://youtu.be/SAzzJsZMtmQ).
 
 You can read more using minkube via
 [Kubernetes documentation](https://kubernetes.io/docs/setup/learning-environment/minikube/).
