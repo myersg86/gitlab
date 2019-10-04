@@ -2,9 +2,9 @@
 
 Troubleshooting Kubernetes requires:
 
-* Knowledge of common terms.
-* Establishing which category the problem fits.
-* Knowledge of Kubernetes and related tools (kubectl).
+- Knowledge of common terms.
+- Establishing which category the problem fits.
+- Knowledge of Kubernetes and related tools (kubectl).
 
 ## Common Terminology
 
@@ -126,6 +126,7 @@ graph TD;
 ```
 
 ### Kubernetes integration Workflow
+
 ```mermaid
 graph LR;
   A --> |Yes| B
@@ -183,7 +184,7 @@ recommend:
 - [minikube](https://kubernetes.io/docs/setup/learning-environment/minikube/)
 
 Of the two, k3s tends to be the most viable. It is closer to a production style
-deployment. 
+deployment.
 
 STEPS FOR K3S DEPLOYMENT HERE
 
