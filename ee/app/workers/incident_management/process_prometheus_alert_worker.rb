@@ -31,10 +31,13 @@ module IncidentManagement
     end
 
     def create_issue(project, alert)
-      IncidentManagement::CreateIssueService
+      result = IncidentManagement::CreateIssueService
         .new(project, alert)
         .execute
-        .dig(:issue)
+
+      $stderr.puts result
+
+      result.dig(:issue)
     end
 
     def relate_issue_to_event(event, issue)

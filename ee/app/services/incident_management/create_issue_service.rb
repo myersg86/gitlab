@@ -19,7 +19,11 @@ module IncidentManagement
 
     def execute
       return error_with('setting disabled') unless incident_management_setting.create_issue?
-      return error_with('invalid alert') unless alert.valid?
+
+      unless alert.valid?
+        $stderr.puts alert.errors.full_messages
+        return error_with('invalid alert')
+      end
 
       issue = create_issue
       return error_with(issue_errors(issue)) unless issue.valid?

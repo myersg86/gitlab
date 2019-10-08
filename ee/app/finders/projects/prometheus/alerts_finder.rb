@@ -30,6 +30,8 @@ module Projects
         relation = by_metric(relation)
         relation = ordered(relation)
 
+        $stderr.puts relation.to_sql
+
         relation
       end
 

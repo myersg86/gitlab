@@ -22,6 +22,10 @@ describe IncidentManagement::ProcessPrometheusAlertWorker do
     end
 
     it 'creates an issue' do
+      $stderr.puts "Prometheus metric:"
+      $stderr.puts prometheus_alert.attributes
+      $stderr.puts prometheus_alert.persisted?
+
       expect { subject.perform(project.id, alert_params) }
         .to change(Issue, :count)
         .by(1)
