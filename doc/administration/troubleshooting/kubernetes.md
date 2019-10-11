@@ -221,5 +221,25 @@ deployment. To deploy GitLab via k3s, the steps you should follow are:
 We have a video on showing the process at our
 [GitLab Unfiltered channel](https://youtu.be/SAzzJsZMtmQ).
 
+For reference, this is the metal-config.yml used in the video:
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses:
+      - 165.22.38.200-165.22.38.200
+```
+
+If you use the above, remember to replace the values under `addresses` to match
+the IP range your metallb setup is going to use.
+
 You can read more using minkube via
 [Kubernetes documentation](https://kubernetes.io/docs/setup/learning-environment/minikube/).
