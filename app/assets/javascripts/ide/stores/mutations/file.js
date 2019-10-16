@@ -1,7 +1,7 @@
 import * as types from '../mutation_types';
-import { sortTree } from '../utils';
-import { diffModes } from '../../constants';
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
+import { sortTree, combineEntries, isModified } from '../utils';
+import { diffModes } from '../../constants';
 
 export default {
   [types.SET_FILE_ACTIVE](state, { path, active }) {
@@ -165,55 +165,61 @@ export default {
     });
   },
   [types.STAGE_CHANGE](state, path) {
+    const entry = state.entries[path];
     const stagedFile = state.stagedFiles.find(f => f.path === path);
 
     Object.assign(state, {
       changedFiles: state.changedFiles.filter(f => f.path !== path),
       entries: Object.assign(state.entries, {
-        [path]: Object.assign(state.entries[path], {
+        [path]: Object.assign(entry, {
           staged: true,
         }),
       }),
     });
 
     if (stagedFile) {
-      Object.assign(stagedFile, {
-        ...state.entries[path],
+      Object.assign(entry, combineEntries(stagedFile, entry));
+    }
+
+    if (!isModified(entry)) {
+      entry.staged = false;
+      Object.assign(state, {
+        stagedFiles: state.stagedFiles.filter(f => f.path !== path),
       });
+    } else if (stagedFile) {
+      Object.assign(stagedFile, entry);
     } else {
       Object.assign(state, {
         stagedFiles: state.stagedFiles.concat({
-          ...state.entries[path],
+          ...entry,
         }),
       });
     }
   },
   [types.UNSTAGE_CHANGE](state, path) {
-    const changedFile = state.changedFiles.find(f => f.path === path);
+    const entry = state.entries[path];
+    const { key, active, opened } = entry;
     const stagedFile = state.stagedFiles.find(f => f.path === path);
+    const changedFile = state.changedFiles.find(f => f.path === path);
 
-    if (!changedFile && stagedFile) {
-      Object.assign(state.entries[path], {
-        ...stagedFile,
-        key: state.entries[path].key,
-        active: state.entries[path].active,
-        opened: state.entries[path].opened,
-        changed: true,
-      });
+    if (stagedFile && changedFile) {
+      Object.assign(entry, combineEntries(stagedFile, changedFile));
+
+      if (!entry.changed) {
+        Object.assign(state, {
+          changedFiles: state.changedFiles.filter(f => f.path !== path),
+        });
+      }
+    } else if (stagedFile) {
+      Object.assign(entry, { ...stagedFile, changed: true });
 
       Object.assign(state, {
         changedFiles: state.changedFiles.concat(state.entries[path]),
       });
     }
 
-    Object.assign(state, {
-      stagedFiles: state.stagedFiles.filter(f => f.path !== path),
-      entries: Object.assign(state.entries, {
-        [path]: Object.assign(state.entries[path], {
-          staged: false,
-        }),
-      }),
-    });
+    state.stagedFiles = state.stagedFiles.filter(f => f.path !== path);
+    Object.assign(entry, { key, active, opened });
   },
   [types.TOGGLE_FILE_CHANGED](state, { file, changed }) {
     Object.assign(state.entries[file.path], {

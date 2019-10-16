@@ -269,3 +269,18 @@ export const pathsAreEqual = (a, b) => {
 
   return cleanA === cleanB;
 };
+
+export const combineEntries = (from, to) => {
+  if (from.deleted && to.tempFile) {
+    return {
+      deleted: false,
+      tempFile: false,
+      raw: from.raw,
+      changed: from.raw !== to.content,
+    };
+  }
+
+  return {};
+};
+
+export const isModified = file => file.changed || file.tempFile || file.deleted || file.prevPath;

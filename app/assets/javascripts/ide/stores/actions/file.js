@@ -238,14 +238,17 @@ export const unstageChange = ({ commit, dispatch, state }, path) => {
   if (openFile && openFile.active) {
     const file = state.changedFiles.find(f => f.path === path);
 
-    dispatch('openPendingTab', {
-      file,
-      keyPrefix: stageKeys.unstaged,
-    });
+    if (file) {
+      dispatch('openPendingTab', {
+        file,
+        keyPrefix: stageKeys.unstaged,
+      });
+    }
   }
 };
 
 export const openPendingTab = ({ commit, getters, state }, { file, keyPrefix }) => {
+  if (!file) return false;
   if (getters.activeFile && getters.activeFile.key === `${keyPrefix}-${file.key}`) return false;
 
   state.openFiles.forEach(f => eventHub.$emit(`editor.update.model.dispose.${f.key}`));
