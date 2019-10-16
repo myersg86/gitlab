@@ -189,7 +189,7 @@ deployment. To deploy GitLab via k3s, the steps you should follow are:
 1. Install [k3sup](https://github.com/alexellis/k3sup) on your local computer.
 1. Install k3s on a server via the command (replace ip.add.re.ss with the
    server's IP address):
-   `k3sup install --ip ip.add.re.ss --k3s-extra-args '--no-deploy servicelb --no-deploy traefik'`.
+   `k3sup install --ip ip.add.re.ss --k3s-extra-args '--no-deploy=servicelb --no-deploy=traefik'`.
 1. Once that completes, set your env to read the `kubeconfig` file using the
    command: `export KUBECONFIG=$(pwd)/kubeconfig`
 1. Setup [Local Path Provisioner](https://github.com/rancher/local-path-provisioner/tree/master/).
