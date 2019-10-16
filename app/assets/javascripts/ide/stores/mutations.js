@@ -79,10 +79,7 @@ export default {
         });
       } else if (foundEntry.deleted) {
         Object.assign(state.entries, {
-          [key]: {
-            ...entry,
-            replaces: true,
-          },
+          [key]: Object.assign(entry, { replaces: true }),
         });
       } else {
         const tree = entry.tree.filter(
