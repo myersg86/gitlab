@@ -18,6 +18,11 @@ namespace :gitlab do
 
     desc 'GitLab | Check if GraphQL docs are up to date'
     task check_docs: :environment do
+      unless Gitlab.ee?
+        puts "This rake task can only be run in EE."
+        next
+      end
+
       renderer = Gitlab::Graphql::Docs::Renderer.new(GitlabSchema.graphql_definition, render_options)
 
       doc = File.read(Rails.root.join(OUTPUT_DIR, 'index.md'))
