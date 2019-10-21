@@ -134,7 +134,7 @@ class WikiPage
   end
 
   def last_version
-    @last_version ||= versions(limit: 1).first
+    @last_version ||= versions.max_by(&:authored_date)
   end
 
   def last_commit_sha
