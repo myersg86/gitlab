@@ -2,6 +2,7 @@
 
 class Projects::WikiDirectoriesController < Projects::ApplicationController
   include ProjectWikiActions
+  include WikiHelper
 
   def self.local_prefixes
     [controller_path, 'shared/wiki']
