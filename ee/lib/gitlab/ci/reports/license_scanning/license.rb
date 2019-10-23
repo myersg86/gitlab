@@ -25,7 +25,8 @@ module Gitlab
           end
 
           def add_dependency(name)
-            @dependencies.add(::Gitlab::Ci::Reports::LicenseScanning::Dependency.new(name))
+            new_dependency = ::Gitlab::Ci::Reports::LicenseScanning::Dependency.new(name)
+            @dependencies.add(new_dependency) unless @dependencies.include?(new_dependency)
           end
 
           def dependencies

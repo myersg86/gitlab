@@ -53,4 +53,30 @@ describe Gitlab::Ci::Reports::LicenseScanning::License do
       it { expect(subject.canonical_id).to eql(subject.id) }
     end
   end
+
+  describe '#add_dependency' do
+    subject { license.add_dependency(dependency_name) }
+
+    let(:license) { described_class.new(id: 'MIT', name: 'MIT License', url: nil) }
+
+    before do
+      license.add_dependency('nokogiri')
+    end
+
+    context 'with uniq dependencies' do
+      let(:dependency_name) { 'rails' }
+
+      it 'adds new dependency' do
+        expect { subject }.to change { license.dependencies.size }.by(1)
+      end
+    end
+
+    context 'with repeating dependencies' do
+      let(:dependency_name) { 'nokogiri' }
+
+      it 'does not add new dependency' do
+        expect { subject }.not_to change { license.dependencies.size }
+      end
+    end
+  end
 end
