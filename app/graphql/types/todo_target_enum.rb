@@ -5,5 +5,6 @@ module Types
     value 'Issue'
     value 'MergeRequest'
     value 'Epic'
+    value 'DesignManagement::Design'
   end
 end
