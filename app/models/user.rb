@@ -1535,7 +1535,7 @@ class User < ApplicationRecord
   end
 
   def terms_accepted?
-    accepted_term_id.present?
+    Gitlab::CurrentSettings.current_application_settings.latest_terms.accepted_by_user?(self)
   end
 
   def required_terms_not_accepted?

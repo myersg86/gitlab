@@ -427,8 +427,8 @@ describe User do
         user_with_2fa = create(:user, :two_factor_via_otp, :two_factor_via_u2f)
 
         expect(described_class
-          .with_two_factor
-          .reorder_by_name).to eq([user_with_2fa])
+                 .with_two_factor
+                 .reorder_by_name).to eq([user_with_2fa])
       end
     end
 
@@ -550,7 +550,7 @@ describe User do
     end
 
     context 'when saving an external user' do
-      let(:user)          { create(:user) }
+      let(:user) { create(:user) }
       let(:external_user) { create(:user, external: true) }
 
       it "sets other properties aswell" do
@@ -561,7 +561,7 @@ describe User do
     end
 
     describe '#check_for_verified_email' do
-      let(:user)      { create(:user) }
+      let(:user) { create(:user) }
       let(:secondary) { create(:email, :confirmed, email: 'secondary@example.com', user: user) }
 
       it 'allows a verfied secondary email to be used as the primary without needing reconfirmation' do
@@ -915,7 +915,7 @@ describe User do
         stub_config_setting(default_can_create_group: true)
 
         expect { user.update(external: false) }.to change { user.can_create_group }.to(true)
-          .and change { user.projects_limit }.to(Gitlab::CurrentSettings.default_projects_limit)
+                                                     .and change { user.projects_limit }.to(Gitlab::CurrentSettings.default_projects_limit)
       end
     end
 
@@ -930,7 +930,7 @@ describe User do
 
       it 'ensures correct rights and limits for user' do
         expect { user.update(external: true) }.to change { user.can_create_group }.to(false)
-          .and change { user.projects_limit }.to(0)
+                                                    .and change { user.projects_limit }.to(0)
       end
     end
   end
@@ -1494,8 +1494,8 @@ describe User do
   describe '.search_with_secondary_emails' do
     delegate :search_with_secondary_emails, to: :described_class
 
-    let!(:user) { create(:user, name: 'John Doe', username: 'john.doe', email: 'john.doe@example.com' ) }
-    let!(:another_user) { create(:user, name: 'Albert Smith', username: 'albert.smith', email: 'albert.smith@example.com' ) }
+    let!(:user) { create(:user, name: 'John Doe', username: 'john.doe', email: 'john.doe@example.com') }
+    let!(:another_user) { create(:user, name: 'Albert Smith', username: 'albert.smith', email: 'albert.smith@example.com') }
     let!(:email) do
       create(:email, user: another_user, email: 'alias@example.com')
     end
@@ -1747,7 +1747,7 @@ describe User do
     let(:user) { create(:user) }
 
     it 'returns all emails' do
-      email_confirmed   = create :email, user: user, confirmed_at: Time.now
+      email_confirmed = create :email, user: user, confirmed_at: Time.now
       email_unconfirmed = create :email, user: user
       user.reload
 
@@ -2238,7 +2238,7 @@ describe User do
     it 'returns the last push event for the user' do
       expect_any_instance_of(Users::LastPushEventService)
         .to receive(:last_event_for_user)
-        .and_return(event)
+              .and_return(event)
 
       expect(user.recent_push).to eq(event)
     end
@@ -2246,7 +2246,7 @@ describe User do
     it 'returns the last push event for a project when one is given' do
       expect_any_instance_of(Users::LastPushEventService)
         .to receive(:last_event_for_project)
-        .and_return(event)
+              .and_return(event)
 
       expect(user.recent_push(project)).to eq(event)
     end
@@ -2359,15 +2359,15 @@ describe User do
     end
 
     it "includes user's personal projects" do
-      user    = create(:user)
+      user = create(:user)
       project = create(:project, :private, namespace: user.namespace)
 
       expect(user.authorized_projects).to include(project)
     end
 
     it "includes personal projects user has been given access to" do
-      user1   = create(:user)
-      user2   = create(:user)
+      user1 = create(:user)
+      user2 = create(:user)
       project = create(:project, :private, namespace: user1.namespace)
 
       project.add_developer(user2)
@@ -2376,9 +2376,9 @@ describe User do
     end
 
     it "includes projects of groups user has been added to" do
-      group   = create(:group)
+      group = create(:group)
       project = create(:project, group: group)
-      user    = create(:user)
+      user = create(:user)
 
       group.add_developer(user)
 
@@ -2386,9 +2386,9 @@ describe User do
     end
 
     it "does not include projects of groups user has been removed from" do
-      group   = create(:group)
+      group = create(:group)
       project = create(:project, group: group)
-      user    = create(:user)
+      user = create(:user)
 
       member = group.add_developer(user)
 
@@ -2400,9 +2400,9 @@ describe User do
     end
 
     it "includes projects shared with user's group" do
-      user    = create(:user)
+      user = create(:user)
       project = create(:project, :private)
-      group   = create(:group)
+      group = create(:group)
 
       group.add_reporter(user)
       project.project_group_links.create(group: group)
@@ -2411,8 +2411,8 @@ describe User do
     end
 
     it "does not include destroyed projects user had access to" do
-      user1   = create(:user)
-      user2   = create(:user)
+      user1 = create(:user)
+      user2 = create(:user)
       project = create(:project, :private, namespace: user1.namespace)
 
       project.add_developer(user2)
@@ -2425,9 +2425,9 @@ describe User do
     end
 
     it "does not include projects of destroyed groups user had access to" do
-      group   = create(:group)
+      group = create(:group)
       project = create(:project, namespace: group)
-      user    = create(:user)
+      user = create(:user)
 
       group.add_developer(user)
 
@@ -2443,7 +2443,7 @@ describe User do
     let(:user) { create(:user) }
 
     it 'includes projects for which the user access level is above or equal to reporter' do
-      reporter_project  = create(:project) { |p| p.add_reporter(user) }
+      reporter_project = create(:project) { |p| p.add_reporter(user) }
       developer_project = create(:project) { |p| p.add_developer(user) }
       maintainer_project = create(:project) { |p| p.add_maintainer(user) }
 
@@ -2621,7 +2621,7 @@ describe User do
 
     it 'returns the projects when using an ActiveRecord relation' do
       projects = user
-        .projects_with_reporter_access_limited_to(Project.select(:id))
+                   .projects_with_reporter_access_limited_to(Project.select(:id))
 
       expect(projects).to eq([project1])
     end
@@ -2673,10 +2673,10 @@ describe User do
 
       it 'returns all groups' do
         is_expected.to match_array [
-          group,
-          nested_group_1, nested_group_1_1,
-          nested_group_2, nested_group_2_1
-        ]
+                                     group,
+                                     nested_group_1, nested_group_1_1,
+                                     nested_group_2, nested_group_2_1
+                                   ]
       end
     end
 
@@ -2687,10 +2687,10 @@ describe User do
 
       it 'returns all groups' do
         is_expected.to match_array [
-          group,
-          nested_group_1, nested_group_1_1,
-          nested_group_2, nested_group_2_1
-        ]
+                                     group,
+                                     nested_group_1, nested_group_1_1,
+                                     nested_group_2, nested_group_2_1
+                                   ]
       end
     end
 
@@ -2701,9 +2701,9 @@ describe User do
 
       it 'returns the groups in the hierarchy' do
         is_expected.to match_array [
-          group,
-          nested_group_1, nested_group_1_1
-        ]
+                                     group,
+                                     nested_group_1, nested_group_1_1
+                                   ]
       end
     end
 
@@ -2714,9 +2714,9 @@ describe User do
 
       it 'returns the groups in the hierarchy' do
         is_expected.to match_array [
-          group,
-          nested_group_2, nested_group_2_1
-        ]
+                                     group,
+                                     nested_group_2, nested_group_2_1
+                                   ]
       end
     end
 
@@ -2727,9 +2727,9 @@ describe User do
 
       it 'returns the groups in the hierarchy' do
         is_expected.to match_array [
-          group,
-          nested_group_1, nested_group_1_1
-        ]
+                                     group,
+                                     nested_group_1, nested_group_1_1
+                                   ]
       end
     end
   end
@@ -3066,7 +3066,7 @@ describe User do
 
   describe '#assigned_open_merge_requests_count' do
     it 'returns number of open merge requests from non-archived projects' do
-      user    = create(:user)
+      user = create(:user)
       project = create(:project, :public)
       archived_project = create(:project, :public, :archived)
 
@@ -3080,7 +3080,7 @@ describe User do
 
   describe '#assigned_open_issues_count' do
     it 'returns number of open issues from non-archived projects' do
-      user    = create(:user)
+      user = create(:user)
       project = create(:project, :public)
       archived_project = create(:project, :public, :archived)
 
@@ -3560,6 +3560,27 @@ describe User do
 
       expect { create(:user, username: 'foo') }
         .to change { RedirectRoute.where(path: 'foo').count }.by(-1)
+    end
+  end
+
+  describe '#terms_accepted?' do
+    let(:user) { build(:user) }
+    subject { user.terms_accepted? }
+
+    before do
+      create(:term)
+    end
+
+    context "when terms are accepted by user" do
+      before do
+        accept_terms(user)
+      end
+
+      it { is_expected.to be_truthy }
+    end
+
+    context "when terms are not accepted by user" do
+      it { is_expected.to be_falsey }
     end
   end
 
