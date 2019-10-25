@@ -1,0 +1,5 @@
+---
+title: Add a validation to ensure an issue's closed_at is after created_at
+merge_request: 18404
+author:
+type: added

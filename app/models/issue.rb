@@ -43,6 +43,7 @@ class Issue < ApplicationRecord
   has_many :zoom_meetings
 
   validates :project, presence: true
+  validate :validate_closed_after_created, if: -> { Feature.enabled?(:validate_issues_closed_after_created, default_enabled: true) }
 
   alias_attribute :parent_ids, :project_id
   alias_method :issuing_parent, :project
@@ -313,6 +314,12 @@ class Issue < ApplicationRecord
   def expire_etag_cache
     key = Gitlab::Routing.url_helpers.realtime_changes_project_issue_path(project, self)
     Gitlab::EtagCaching::Store.new.touch(key)
+  end
+
+  def validate_closed_after_created
+    if created_at? && closed_at? && created_at > closed_at
+      errors.add(:closed_at, 'must be after created_at')
+    end
   end
 end
 

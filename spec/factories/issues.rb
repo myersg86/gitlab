@@ -21,7 +21,7 @@ FactoryBot.define do
 
     trait :closed do
       state_id { Issue.available_states[:closed] }
-      closed_at { Time.now }
+      closed_at { 1.day.from_now }
     end
 
     after(:build) do |issue, evaluator|

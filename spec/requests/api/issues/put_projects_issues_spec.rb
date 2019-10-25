@@ -403,7 +403,7 @@ describe API::Issues do
 
     context 'when an admin or owner makes the request' do
       it 'accepts the update date to be set' do
-        update_time = 2.weeks.ago
+        update_time = 2.weeks.from_now
         put api("/projects/#{project.id}/issues/#{issue.iid}", user),
           params: { labels: 'label3', state_event: 'close', updated_at: update_time }
 

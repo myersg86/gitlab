@@ -82,6 +82,15 @@ describe Issue do
     end
   end
 
+  describe 'validation' do
+    it 'fails if closed_at before created_at' do
+      subject.created_at = 1.day.ago
+      subject.closed_at = 3.days.ago
+      subject.valid?
+      expect(subject.errors[:closed_at].size).to eql(1)
+    end
+  end
+
   describe '#order_by_position_and_priority' do
     let(:project) { create :project }
     let(:p1) { create(:label, title: 'P1', project: project, priority: 1) }
