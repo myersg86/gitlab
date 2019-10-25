@@ -181,6 +181,8 @@ production: &base
     mailbox: "inbox"
     # The IDLE command timeout.
     idle_timeout: 60
+    # The default log file. To switch off structured logging, remove
+    log_path: "mail_room_structured.log"
 
   ## Build Artifacts
   artifacts:
