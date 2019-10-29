@@ -140,6 +140,11 @@ export default {
       required: false,
       default: '',
     },
+    currentDashboardEditPath: {
+      type: String,
+      required: false,
+      default: '/root/autodevops-deploy/blob/master/.gitlab/dashboards/anomaly_simple.yml',
+    },
     smallEmptyState: {
       type: Boolean,
       required: false,
@@ -382,7 +387,12 @@ export default {
         </template>
 
         <gl-form-group
-          v-if="addingMetricsAvailable || showRearrangePanelsBtn || externalDashboardUrl.length"
+          v-if="
+            addingMetricsAvailable ||
+              showRearrangePanelsBtn ||
+              currentDashboardEditPath ||
+              externalDashboardUrl.length
+          "
           label-for="prometheus-graphs-dropdown-buttons"
           class="dropdown-buttons col-md d-md-flex col-lg d-lg-flex align-items-end"
         >
@@ -428,6 +438,14 @@ export default {
                 </gl-button>
               </div>
             </gl-modal>
+
+            <gl-button
+              v-if="currentDashboardEditPath"
+              class="mt-1 js-dashboard-edit-path"
+              :href="currentDashboardEditPath"
+            >
+              {{ __('Edit dashboard') }}
+            </gl-button>
 
             <gl-button
               v-if="externalDashboardUrl.length"
