@@ -204,6 +204,12 @@ export default {
     alertWidgetAvailable() {
       return IS_EE && this.prometheusAlertsAvailable && this.alertsEndpoint;
     },
+    editDashboardPath() {
+      if (this.currentDashboard && this.currentDashboard.startsWith('.gitlab/')) {
+        return `${this.projectPath}/blob/master/${this.currentDashboard}`;
+      }
+      return null;
+    },
   },
   created() {
     this.setEndpoints({
@@ -390,7 +396,7 @@ export default {
           v-if="
             addingMetricsAvailable ||
               showRearrangePanelsBtn ||
-              currentDashboardEditPath ||
+              editDashboardPath ||
               externalDashboardUrl.length
           "
           label-for="prometheus-graphs-dropdown-buttons"
@@ -440,9 +446,9 @@ export default {
             </gl-modal>
 
             <gl-button
-              v-if="currentDashboardEditPath"
+              v-if="editDashboardPath"
               class="mt-1 js-dashboard-edit-path"
-              :href="currentDashboardEditPath"
+              :href="editDashboardPath"
             >
               {{ __('Edit dashboard') }}
             </gl-button>
