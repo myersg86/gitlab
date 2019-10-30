@@ -140,11 +140,6 @@ export default {
       required: false,
       default: '',
     },
-    currentDashboardEditPath: {
-      type: String,
-      required: false,
-      default: '/root/autodevops-deploy/blob/master/.gitlab/dashboards/anomaly_simple.yml',
-    },
     smallEmptyState: {
       type: Boolean,
       required: false,
