@@ -935,6 +935,13 @@ export const dashboardGitResponse = [
     path: '.gitlab/dashboards/super.yml',
     display_name: 'Custom Dashboard 1',
     default: false,
+    edit_path: `${mockProjectPath}/blob/master/dashboards/.gitlab/dashboards/super.yml`,
+  },
+  {
+    path: '.gitlab/dashboards/performance.yml',
+    display_name: 'Custom Dashboard 2 - Performance',
+    default: false,
+    edit_path: `${mockProjectPath}/blob/master/dashboards/.gitlab/dashboards/performance.yml`,
   },
 ];
 
