@@ -37,6 +37,21 @@ class ProductivityAnalytics
     end.to_h
   end
 
+  def stacked_bar_data(type:)
+    return {} unless type == 'type_of_work'
+
+    # It's a mock only. We'll replace it with real data logic in future
+    randomizer = Random.new(Time.now.beginning_of_day.to_i)
+    (1..10).to_a.map do |i|
+      data = {
+        new: randomizer.rand(10 * i),
+        churn: randomizer.rand(i**2 + 10 * i),
+        refactoring: randomizer.rand(100 * i)
+      }
+      [i.days.ago.to_date, data]
+    end.to_h
+  end
+
   def merge_requests_extended
     columns = METRIC_COLUMNS.map do |type, column|
       Arel::Nodes::As.new(Arel.sql(column), Arel.sql(type)).to_sql

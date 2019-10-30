@@ -147,6 +147,23 @@ describe ProductivityAnalytics do
     end
   end
 
+  describe '#stacked_bar_data' do
+    subject(:data) { analytics.stacked_bar_data(type: 'days_to_merge') }
+
+    it 'returns empty hash when type != "type_of_work"' do
+      expect(data).to eq({})
+    end
+
+    context 'when type is "type_of_work"' do
+      subject(:data) { analytics.stacked_bar_data(type: 'type_of_work') }
+
+      it 'returns data mock when type is "type_of_work"' do
+        expect(data).to be_a Hash
+        expect(data.size).to eq 10
+      end
+    end
+  end
+
   describe '#merge_requests_extended' do
     subject { analytics.merge_requests_extended }
 

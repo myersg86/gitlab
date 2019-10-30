@@ -177,6 +177,18 @@ describe Analytics::ProductivityAnalyticsController do
           expect(response.body).to eq 'histogram_data'
         end
       end
+
+      context 'for stacked bar charts' do
+        let(:params) { super().merge({ chart_type: 'stacked_bar', metric_type: 'type_of_work' }) }
+
+        it 'renders whatever analytics returns for stacked bar' do
+          allow(analytics_mock).to receive(:stacked_bar_data).with(type: 'type_of_work').and_return('stacked_bar_data')
+
+          subject
+
+          expect(response.body).to eq 'stacked_bar_data'
+        end
+      end
     end
   end
 end

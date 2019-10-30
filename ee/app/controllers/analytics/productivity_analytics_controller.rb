@@ -31,6 +31,8 @@ class Analytics::ProductivityAnalyticsController < Analytics::ApplicationControl
                  productivity_analytics.scatterplot_data(type: metric)
                when 'histogram'
                  productivity_analytics.histogram_data(type: metric)
+               when 'stacked_bar'
+                 productivity_analytics.stacked_bar_data(type: metric)
                else
                  include_relations(paginate(productivity_analytics.merge_requests_extended)).map do |merge_request|
                    serializer.represent(merge_request, {}, ProductivityAnalyticsMergeRequestEntity)
