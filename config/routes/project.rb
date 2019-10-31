@@ -187,9 +187,10 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         resource :import, only: [:new, :create, :show]
         resource :avatar, only: [:show, :destroy]
 
-        get 'grafana/proxy/:datasource_id/*proxy_path',
-            to: 'grafana_api#proxy',
-            as: :grafana_api
+        scope :grafana, as: :grafana_api do
+          get 'proxy/:datasource_id/*proxy_path', to: 'grafana_api#proxy'
+          get :metrics_dashboard, to: 'grafana_api#metrics_dashboard'
+        end
       end
       # End of the /-/ scope.
 
@@ -222,6 +223,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         resources :domains, except: :index, controller: 'pages_domains', constraints: { id: %r{[^/]+} } do
           member do
             post :verify
+            delete :clean_certificate
           end
         end
       end

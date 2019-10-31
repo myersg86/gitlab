@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 shared_examples 'languages and percentages JSON response' do
@@ -2680,6 +2682,22 @@ describe API::Projects do
         put api("/projects/#{project.id}/transfer", user)
 
         expect(response).to have_gitlab_http_status(400)
+      end
+    end
+
+    context 'when authenticated as developer' do
+      before do
+        group.add_developer(user)
+      end
+
+      context 'target namespace allows developers to create projects' do
+        let(:group) { create(:group, project_creation_level: ::Gitlab::Access::DEVELOPER_MAINTAINER_PROJECT_ACCESS) }
+
+        it 'fails transferring the project to the target namespace' do
+          put api("/projects/#{project.id}/transfer", user), params: { namespace: group.id }
+
+          expect(response).to have_gitlab_http_status(400)
+        end
       end
     end
   end

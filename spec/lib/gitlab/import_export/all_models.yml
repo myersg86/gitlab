@@ -29,6 +29,7 @@ issues:
 - prometheus_alerts
 - prometheus_alert_events
 - self_managed_prometheus_alert_events
+- zoom_meetings
 events:
 - author
 - project
@@ -422,6 +423,7 @@ project:
 - alerts_service
 - grafana_integration
 - remove_source_branch_after_merge
+- deleting_user
 award_emoji:
 - awardable
 - user
@@ -529,4 +531,6 @@ versions: &version
 - issue
 - designs
 - actions
+zoom_meetings:
+- issue
 design_versions: *version

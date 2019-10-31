@@ -328,6 +328,8 @@ When you tail the Gitaly logs on your Gitaly server you should see requests
 coming in. One sure way to trigger a Gitaly request is to clone a repository
 from your GitLab server over HTTP.
 
+DANGER: **Danger:** If you have [custom server-side Git hooks](../custom_hooks.md#custom-server-side-git-hooks) configured, either per repository or globally, you must move these to the Gitaly node. If you have multiple Gitaly nodes, copy your custom hook(s) to all nodes.
+
 ### Disabling the Gitaly service in a cluster environment
 
 If you are running Gitaly [as a remote
@@ -551,7 +553,7 @@ a few things that you need to do:
    to eliminate the need for a shared authorized_keys file.
 1. Configure [object storage for job artifacts](../job_artifacts.md#using-object-storage)
    including [incremental logging](../job_logs.md#new-incremental-logging-architecture).
-1. Configure [object storage for LFS objects](../../workflow/lfs/lfs_administration.md#storing-lfs-objects-in-remote-object-storage).
+1. Configure [object storage for LFS objects](../lfs/lfs_administration.md#storing-lfs-objects-in-remote-object-storage).
 1. Configure [object storage for uploads](../uploads.md#using-object-storage-core-only).
 
 NOTE: **Note:**

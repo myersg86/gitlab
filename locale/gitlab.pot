@@ -988,6 +988,9 @@ msgstr ""
 msgid "Add reaction"
 msgstr ""
 
+msgid "Add request manually"
+msgstr ""
+
 msgid "Add to Slack"
 msgstr ""
 
@@ -1401,9 +1404,6 @@ msgstr ""
 msgid "Allow group owners to manage LDAP-related settings"
 msgstr ""
 
-msgid "Allow mirrors to be set up for projects"
-msgstr ""
-
 msgid "Allow only the selected protocols to be used for Git access."
 msgstr ""
 
@@ -1414,6 +1414,9 @@ msgid "Allow public access to pipelines and job details, including output logs a
 msgstr ""
 
 msgid "Allow rendering of PlantUML diagrams in Asciidoc documents."
+msgstr ""
+
+msgid "Allow repository mirroring to be configured by project maintainers"
 msgstr ""
 
 msgid "Allow requests to the local network from hooks and services."
@@ -1758,10 +1761,10 @@ msgstr ""
 msgid "Appearance was successfully updated."
 msgstr ""
 
-msgid "Append the comment with %{TABLEFLIP}"
+msgid "Append the comment with %{shrug}"
 msgstr ""
 
-msgid "Append the comment with %{shrug}"
+msgid "Append the comment with %{tableflip}"
 msgstr ""
 
 msgid "Application"
@@ -2418,9 +2421,6 @@ msgstr ""
 msgid "BillingPlans|Learn more about each plan by reading our %{faq_link}, or start a free 30-day trial of GitLab.com Gold."
 msgstr ""
 
-msgid "BillingPlans|Learn more about each plan by reading our %{faq_link}."
-msgstr ""
-
 msgid "BillingPlans|Learn more about each plan by visiting our %{pricing_page_link}."
 msgstr ""
 
@@ -2439,16 +2439,13 @@ msgstr ""
 msgid "BillingPlans|To manage the plan for this group, visit the billing section of %{parent_billing_page_link}."
 msgstr ""
 
-msgid "BillingPlans|Your GitLab.com trial expired on %{expiration_date}. %{learn_more_text}"
+msgid "BillingPlans|Your GitLab.com Gold trial expired on %{expiration_date}. You can restore access to the Gold features at any time by upgrading below."
 msgstr ""
 
-msgid "BillingPlans|Your GitLab.com trial will <strong>expire after %{expiration_date}</strong>. You can learn more about GitLab.com Gold by reading about our %{features_link}."
+msgid "BillingPlans|Your GitLab.com Gold trial will <strong>expire after %{expiration_date}</strong>. You can retain access to the Gold features by upgrading below."
 msgstr ""
 
 msgid "BillingPlans|billed annually at %{price_per_year}"
-msgstr ""
-
-msgid "BillingPlans|features"
 msgstr ""
 
 msgid "BillingPlans|frequently asked questions"
@@ -2899,6 +2896,9 @@ msgid "Change assignee(s)"
 msgstr ""
 
 msgid "Change assignee(s)."
+msgstr ""
+
+msgid "Change branches"
 msgstr ""
 
 msgid "Change label"
@@ -4223,6 +4223,9 @@ msgstr ""
 msgid "Commits per weekday"
 msgstr ""
 
+msgid "Commits to"
+msgstr ""
+
 msgid "Commits|An error occurred while fetching merge requests data."
 msgstr ""
 
@@ -4325,7 +4328,7 @@ msgstr ""
 msgid "Configure paths to be protected by Rack Attack. A web server restart is required after changing these settings."
 msgstr ""
 
-msgid "Configure push mirrors."
+msgid "Configure repository mirroring."
 msgstr ""
 
 msgid "Configure storage path settings."
@@ -4386,6 +4389,9 @@ msgid "Container Registry"
 msgstr ""
 
 msgid "Container registry images"
+msgstr ""
+
+msgid "Container registry is not enabled on this GitLab instance. Ask an administrator to enable it in order for AutoDevOps to work."
 msgstr ""
 
 msgid "ContainerRegistry|Container Registry"
@@ -4502,18 +4508,6 @@ msgid "Contributions per group member"
 msgstr ""
 
 msgid "Contributors"
-msgstr ""
-
-msgid "ContributorsPage|%{startDate} – %{endDate}"
-msgstr ""
-
-msgid "ContributorsPage|Building repository graph."
-msgstr ""
-
-msgid "ContributorsPage|Commits to %{branch_name}, excluding merge commits. Limited to 6,000 commits."
-msgstr ""
-
-msgid "ContributorsPage|Please wait a moment, this page will automatically refresh when ready."
 msgstr ""
 
 msgid "Control emails linked to your account"
@@ -5637,9 +5631,6 @@ msgstr ""
 msgid "Disable"
 msgstr ""
 
-msgid "Disable email notifications"
-msgstr ""
-
 msgid "Disable for this project"
 msgstr ""
 
@@ -5743,6 +5734,9 @@ msgid "Do you want to customize how Google Code email addresses and usernames ar
 msgstr ""
 
 msgid "Dockerfile"
+msgstr ""
+
+msgid "Documentation"
 msgstr ""
 
 msgid "Documentation for popular identity providers"
@@ -6339,10 +6333,10 @@ msgstr ""
 msgid "Environments|This action will relaunch the job for commit %{linkStart}%{commitId}%{linkEnd}, putting the environment in a previous version. Are you sure you want to continue?"
 msgstr ""
 
-msgid "Environments|This action will run the job defined by %{name} for commit %{linkStart}%{commitId}%{linkEnd} putting the environment in a previous version. You can revert it by re-deploying the latest version of your application. Are you sure you want to continue?"
+msgid "Environments|This action will run the job defined by %{environment_name} for commit %{commit_id}, putting the environment in a previous version. You can revert it by re-deploying the latest version of your application. Are you sure you want to continue?"
 msgstr ""
 
-msgid "Environments|This action will run the job defined by staging for commit %{commit_id}, putting the environment in a previous version. You can revert it by re-deploying the latest version of your application. Are you sure you want to continue?"
+msgid "Environments|This action will run the job defined by %{name} for commit %{linkStart}%{commitId}%{linkEnd} putting the environment in a previous version. You can revert it by re-deploying the latest version of your application. Are you sure you want to continue?"
 msgstr ""
 
 msgid "Environments|Updated"
@@ -6457,9 +6451,6 @@ msgid "Error creating epic"
 msgstr ""
 
 msgid "Error deleting  %{issuableType}"
-msgstr ""
-
-msgid "Error fetching contributors data."
 msgstr ""
 
 msgid "Error fetching diverging counts for branches. Please try again."
@@ -6697,6 +6688,9 @@ msgid "Example: Usage = single query. (Requested) / (Capacity) = multiple querie
 msgstr ""
 
 msgid "Except policy:"
+msgstr ""
+
+msgid "Excluding merge commits. Limited to 6,000 commits."
 msgstr ""
 
 msgid "Existing"
@@ -7406,6 +7400,9 @@ msgstr ""
 msgid "From %{providerTitle}"
 msgstr ""
 
+msgid "From %{source_title} into"
+msgstr ""
+
 msgid "From Bitbucket"
 msgstr ""
 
@@ -8081,7 +8078,7 @@ msgstr ""
 msgid "Go back"
 msgstr ""
 
-msgid "Go back (while searching for files"
+msgid "Go back (while searching for files)"
 msgstr ""
 
 msgid "Go back to %{startTag}Open issues%{endTag} and select some issues to add to your board."
@@ -8210,6 +8207,24 @@ msgstr ""
 msgid "Grafana URL"
 msgstr ""
 
+msgid "GrafanaIntegration|API Token"
+msgstr ""
+
+msgid "GrafanaIntegration|Embed Grafana charts in GitLab issues."
+msgstr ""
+
+msgid "GrafanaIntegration|Enter the Grafana API Token."
+msgstr ""
+
+msgid "GrafanaIntegration|Enter the base URL of the Grafana instance."
+msgstr ""
+
+msgid "GrafanaIntegration|Grafana Authentication"
+msgstr ""
+
+msgid "GrafanaIntegration|Grafana URL"
+msgstr ""
+
 msgid "Grant access"
 msgstr ""
 
@@ -8271,6 +8286,9 @@ msgid "Group maintainers can register group runners in the %{link}"
 msgstr ""
 
 msgid "Group name"
+msgstr ""
+
+msgid "Group overview"
 msgstr ""
 
 msgid "Group overview content"
@@ -8480,6 +8498,9 @@ msgstr ""
 msgid "GroupSettings|cannot be disabled when the parent group \"Share with group lock\" is enabled, except by the owner of the parent group"
 msgstr ""
 
+msgid "GroupSettings|cannot change when group contains projects with NPM packages"
+msgstr ""
+
 msgid "GroupSettings|remove the share with group lock from %{ancestor_group_name}"
 msgstr ""
 
@@ -8650,6 +8671,9 @@ msgstr[1] ""
 msgid "Hide values"
 msgstr ""
 
+msgid "Hiding all labels"
+msgstr ""
+
 msgid "Highest number of requests per minute for each raw path, default to 300. To disable throttling set to 0."
 msgstr ""
 
@@ -8791,7 +8815,7 @@ msgstr ""
 msgid "If disabled, a diverged local branch will not be automatically updated with commits from its remote counterpart, to prevent local data loss. If the default branch (%{default_branch}) has diverged and cannot be updated, mirroring will fail. Other diverged branches are silently ignored."
 msgstr ""
 
-msgid "If disabled, only admins will be able to set up mirrors in projects."
+msgid "If disabled, only admins will be able to configure repository mirroring."
 msgstr ""
 
 msgid "If disabled, the access level will depend on the user's permissions in the project."
@@ -9799,8 +9823,18 @@ msgid_plural "LicenseCompliance|License Compliance detected %d licenses for the 
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "LicenseCompliance|License Compliance detected %d license for the source branch only; approval required"
+msgid_plural "LicenseCompliance|License Compliance detected %d licenses for the source branch only; approval required"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "LicenseCompliance|License Compliance detected %d new license"
 msgid_plural "LicenseCompliance|License Compliance detected %d new licenses"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "LicenseCompliance|License Compliance detected %d new license; approval required"
+msgid_plural "LicenseCompliance|License Compliance detected %d new licenses; approval required"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -10262,6 +10296,9 @@ msgstr ""
 msgid "Merge in progress"
 msgstr ""
 
+msgid "Merge options"
+msgstr ""
+
 msgid "Merge request"
 msgstr ""
 
@@ -10500,6 +10537,9 @@ msgid "Metrics|Show last"
 msgstr ""
 
 msgid "Metrics|There was an error fetching the environments data, please try again"
+msgstr ""
+
+msgid "Metrics|There was an error fetching the logs, please try again"
 msgstr ""
 
 msgid "Metrics|There was an error getting deployment information."
@@ -11181,9 +11221,6 @@ msgstr ""
 msgid "Note: Consider asking your GitLab administrator to configure %{github_integration_link}, which will allow login via GitHub and allow importing repositories without generating a Personal Access Token."
 msgstr ""
 
-msgid "Note: the container registry is always visible when a project is public"
-msgstr ""
-
 msgid "NoteForm|Note"
 msgstr ""
 
@@ -11311,6 +11348,9 @@ msgid "Number of changes (branches or tags) in a single push to determine whethe
 msgstr ""
 
 msgid "Number of changes (branches or tags) in a single push to determine whether webhooks and services will be fired or not. Webhooks and services won't be submitted if it surpasses that value."
+msgstr ""
+
+msgid "Number of commits"
 msgstr ""
 
 msgid "Number of commits per MR"
@@ -12728,6 +12768,9 @@ msgstr ""
 msgid "Project name"
 msgstr ""
 
+msgid "Project overview"
+msgstr ""
+
 msgid "Project slug"
 msgstr ""
 
@@ -12842,10 +12885,16 @@ msgstr ""
 msgid "ProjectSettings|All discussions must be resolved"
 msgstr ""
 
+msgid "ProjectSettings|Allow users to request access"
+msgstr ""
+
 msgid "ProjectSettings|Automatically resolve merge request diff discussions when they become outdated"
 msgstr ""
 
 msgid "ProjectSettings|Badges"
+msgstr ""
+
+msgid "ProjectSettings|Build, test, and deploy your changes"
 msgstr ""
 
 msgid "ProjectSettings|Choose your merge method, merge options, and merge checks."
@@ -12857,13 +12906,28 @@ msgstr ""
 msgid "ProjectSettings|Contact an admin to change this setting."
 msgstr ""
 
+msgid "ProjectSettings|Container registry"
+msgstr ""
+
 msgid "ProjectSettings|Customize your project badges."
+msgstr ""
+
+msgid "ProjectSettings|Disable email notifications"
 msgstr ""
 
 msgid "ProjectSettings|Enable 'Delete source branch' option by default"
 msgstr ""
 
 msgid "ProjectSettings|Every merge creates a merge commit"
+msgstr ""
+
+msgid "ProjectSettings|Every project can have its own space to store its Docker images"
+msgstr ""
+
+msgid "ProjectSettings|Every project can have its own space to store its packages"
+msgstr ""
+
+msgid "ProjectSettings|Everyone"
 msgstr ""
 
 msgid "ProjectSettings|Existing merge requests and protected branches are not affected"
@@ -12881,7 +12945,22 @@ msgstr ""
 msgid "ProjectSettings|Fast-forward merges only"
 msgstr ""
 
+msgid "ProjectSettings|Git Large File Storage"
+msgstr ""
+
+msgid "ProjectSettings|Internal"
+msgstr ""
+
+msgid "ProjectSettings|Issues"
+msgstr ""
+
 msgid "ProjectSettings|Learn more about badges."
+msgstr ""
+
+msgid "ProjectSettings|Lightweight issue tracking system for this project"
+msgstr ""
+
+msgid "ProjectSettings|Manages large files such as audio, video, and graphics files"
 msgstr ""
 
 msgid "ProjectSettings|Merge checks"
@@ -12902,10 +12981,28 @@ msgstr ""
 msgid "ProjectSettings|Merge pipelines will try to validate the post-merge result prior to merging"
 msgstr ""
 
+msgid "ProjectSettings|Merge requests"
+msgstr ""
+
 msgid "ProjectSettings|No merge commits are created"
 msgstr ""
 
+msgid "ProjectSettings|Note: the container registry is always visible when a project is public"
+msgstr ""
+
 msgid "ProjectSettings|Only signed commits can be pushed to this repository."
+msgstr ""
+
+msgid "ProjectSettings|Packages"
+msgstr ""
+
+msgid "ProjectSettings|Pages"
+msgstr ""
+
+msgid "ProjectSettings|Pages for project documentation"
+msgstr ""
+
+msgid "ProjectSettings|Pipelines"
 msgstr ""
 
 msgid "ProjectSettings|Pipelines must succeed"
@@ -12914,7 +13011,28 @@ msgstr ""
 msgid "ProjectSettings|Pipelines need to be configured to enable this feature."
 msgstr ""
 
+msgid "ProjectSettings|Private"
+msgstr ""
+
+msgid "ProjectSettings|Project visibility"
+msgstr ""
+
+msgid "ProjectSettings|Public"
+msgstr ""
+
+msgid "ProjectSettings|Repository"
+msgstr ""
+
+msgid "ProjectSettings|Share code pastes with others out of Git repository"
+msgstr ""
+
 msgid "ProjectSettings|Show link to create/view merge request when pushing from the command line"
+msgstr ""
+
+msgid "ProjectSettings|Snippets"
+msgstr ""
+
+msgid "ProjectSettings|Submit changes to be merged upstream"
 msgstr ""
 
 msgid "ProjectSettings|These checks must pass before merge requests can be merged"
@@ -12929,13 +13047,25 @@ msgstr ""
 msgid "ProjectSettings|This setting will be applied to all projects unless overridden by an admin."
 msgstr ""
 
+msgid "ProjectSettings|This setting will override user notification preferences for all project members."
+msgstr ""
+
 msgid "ProjectSettings|This will dictate the commit history when you merge a merge request"
 msgstr ""
 
 msgid "ProjectSettings|Users can only push commits to this repository that were committed with one of their own verified emails."
 msgstr ""
 
+msgid "ProjectSettings|View and edit files in this project"
+msgstr ""
+
 msgid "ProjectSettings|When conflicts arise the user is given the option to rebase"
+msgstr ""
+
+msgid "ProjectSettings|Wiki"
+msgstr ""
+
+msgid "ProjectSettings|With GitLab Pages you can host your static websites on GitLab"
 msgstr ""
 
 msgid "ProjectTemplates|.NET Core"
@@ -13945,7 +14075,7 @@ msgstr ""
 msgid "Repository maintenance"
 msgstr ""
 
-msgid "Repository mirror"
+msgid "Repository mirroring"
 msgstr ""
 
 msgid "Repository static objects"
@@ -14753,6 +14883,9 @@ msgstr ""
 msgid "Select an existing Kubernetes cluster or create a new one"
 msgstr ""
 
+msgid "Select branch"
+msgstr ""
+
 msgid "Select branch/tag"
 msgstr ""
 
@@ -14805,6 +14938,9 @@ msgid "Select timeframe"
 msgstr ""
 
 msgid "Select user"
+msgstr ""
+
+msgid "Select your role"
 msgstr ""
 
 msgid "Selected levels cannot be used by non-admin users for groups, projects or snippets. If the public level is restricted, user profiles are only visible to logged in users."
@@ -15170,6 +15306,9 @@ msgid "Showing Version #%{versionNumber}"
 msgstr ""
 
 msgid "Showing all issues"
+msgstr ""
+
+msgid "Showing all labels"
 msgstr ""
 
 msgid "Showing last %{size} of log -"
@@ -15829,6 +15968,9 @@ msgstr ""
 msgid "StorageSize|Unknown"
 msgstr ""
 
+msgid "Subgroup overview"
+msgstr ""
+
 msgid "SubgroupCreationLevel|Allowed to create subgroups"
 msgstr ""
 
@@ -15850,6 +15992,9 @@ msgstr ""
 msgid "Subkeys"
 msgstr ""
 
+msgid "Submit a review"
+msgstr ""
+
 msgid "Submit as spam"
 msgstr ""
 
@@ -15863,6 +16008,12 @@ msgid "Submit review"
 msgstr ""
 
 msgid "Submit search"
+msgstr ""
+
+msgid "Submit the current review."
+msgstr ""
+
+msgid "Submitted the current review."
 msgstr ""
 
 msgid "Subscribe"
@@ -16396,6 +16547,9 @@ msgid "The group and any public projects can be viewed without any authenticatio
 msgstr ""
 
 msgid "The group and its projects can only be viewed by members."
+msgstr ""
+
+msgid "The group has already been shared with this group"
 msgstr ""
 
 msgid "The group settings for %{group_links} require you to enable Two-Factor Authentication for your account. You can %{leave_group_links}."
@@ -16992,9 +17146,6 @@ msgstr ""
 msgid "This setting can be overridden in each project."
 msgstr ""
 
-msgid "This setting will override user notification preferences for all project members."
-msgstr ""
-
 msgid "This setting will update the hostname that is used to generate private commit emails. %{learn_more}"
 msgstr ""
 
@@ -17326,7 +17477,7 @@ msgstr ""
 msgid "To preserve performance only <strong>%{display_size} of %{real_size}</strong> files are displayed."
 msgstr ""
 
-msgid "To protect this issue's confidentiality, %{link_start}fork the project%{link_end} and set the forks visiblity to private."
+msgid "To protect this issue's confidentiality, %{link_start}fork the project%{link_end} and set the forks visibility to private."
 msgstr ""
 
 msgid "To protect this issue's confidentiality, a private fork of this project was selected."
@@ -17497,6 +17648,9 @@ msgstr ""
 msgid "TransferGroup|Database is not supported."
 msgstr ""
 
+msgid "TransferGroup|Group contains projects with NPM packages."
+msgstr ""
+
 msgid "TransferGroup|Group is already a root group."
 msgstr ""
 
@@ -17522,6 +17676,9 @@ msgid "TransferProject|Project cannot be transferred, because tags are present i
 msgstr ""
 
 msgid "TransferProject|Project with same name or path in target namespace already exists"
+msgstr ""
+
+msgid "TransferProject|Root namespace can't be updated if project has NPM packages"
 msgstr ""
 
 msgid "TransferProject|Transfer failed, please contact an admin."
@@ -17627,6 +17784,9 @@ msgid "URL"
 msgstr ""
 
 msgid "URL of the external storage that will serve the repository static objects (e.g. archives, blobs, ...)."
+msgstr ""
+
+msgid "URL or request ID"
 msgstr ""
 
 msgid "Unable to apply suggestions to a deleted line."
@@ -18672,6 +18832,9 @@ msgstr ""
 msgid "Welcome to GitLab"
 msgstr ""
 
+msgid "Welcome to GitLab %{username}!"
+msgstr ""
+
 msgid "Welcome to the Guided GitLab Tour"
 msgstr ""
 
@@ -19053,6 +19216,9 @@ msgid "You can specify notification level per group or per project."
 msgstr ""
 
 msgid "You can test your .gitlab-ci.yml in %{linkStart}CI Lint%{linkEnd}."
+msgstr ""
+
+msgid "You can try again using %{begin_link}basic search%{end_link}"
 msgstr ""
 
 msgid "You cannot access the raw file. Please wait a minute."
@@ -20034,9 +20200,6 @@ msgstr ""
 msgid "mrWidget|%{metricsLinkStart} Memory %{metricsLinkEnd} usage is %{emphasisStart} unchanged %{emphasisEnd} at %{memoryFrom}MB"
 msgstr ""
 
-msgid "mrWidget|Added to the merge train at position %{mergeTrainPosition}"
-msgstr ""
-
 msgid "mrWidget|Added to the merge train by"
 msgstr ""
 
@@ -20116,6 +20279,9 @@ msgid "mrWidget|If the %{branch} branch exists in your local repository, you can
 msgstr ""
 
 msgid "mrWidget|If the %{missingBranchName} branch exists in your local repository, you can merge this merge request manually using the command line"
+msgstr ""
+
+msgid "mrWidget|In the merge train at position %{mergeTrainPosition}"
 msgstr ""
 
 msgid "mrWidget|Loading deployment statistics"
@@ -20477,6 +20643,9 @@ msgid "syntax is correct"
 msgstr ""
 
 msgid "syntax is incorrect"
+msgstr ""
+
+msgid "tag name"
 msgstr ""
 
 msgid "this document"
