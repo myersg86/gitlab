@@ -21,7 +21,6 @@ class ProjectPresenter < Gitlab::View::Presenter::Delegated
 
   def statistics_anchors(show_auto_devops_callout:)
     [
-      license_anchor_data,
       commits_anchor_data,
       branches_anchor_data,
       tags_anchor_data,
@@ -31,6 +30,7 @@ class ProjectPresenter < Gitlab::View::Presenter::Delegated
 
   def statistics_buttons(show_auto_devops_callout:)
     [
+      license_anchor_data,
       readme_anchor_data,
       changelog_anchor_data,
       contribution_guide_anchor_data,
@@ -41,13 +41,12 @@ class ProjectPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def empty_repo_statistics_anchors
-    [
-      license_anchor_data
-    ].compact.select { |item| item.is_link }
+    [].compact.select { |item| item.is_link }
   end
 
   def empty_repo_statistics_buttons
     [
+      license_anchor_data,
       new_file_anchor_data,
       readme_anchor_data,
       changelog_anchor_data,
