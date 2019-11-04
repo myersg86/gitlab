@@ -1,0 +1,5 @@
+---
+title: Add btn-xs back to fix regression of clone button
+merge_request:
+author:
+type: fixed
