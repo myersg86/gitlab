@@ -210,6 +210,11 @@ msgstr ""
 msgid "%{count} more assignees"
 msgstr ""
 
+msgid "%{count} more release"
+msgid_plural "%{count} more releases"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "%{count} of %{required} approvals from %{name}"
 msgstr ""
 
@@ -409,9 +414,6 @@ msgid "%{value} ms"
 msgstr ""
 
 msgid "%{verb} %{time_spent_value} spent time."
-msgstr ""
-
-msgid "&middot;"
 msgstr ""
 
 msgid "'%{level}' is not a valid visibility level"
@@ -705,6 +707,18 @@ msgid "API Help"
 msgstr ""
 
 msgid "API Token"
+msgstr ""
+
+msgid "AWS Access Key"
+msgstr ""
+
+msgid "AWS Access Key.  Only required if not using role instance credentials"
+msgstr ""
+
+msgid "AWS Secret Access Key"
+msgstr ""
+
+msgid "AWS Secret Access Key.  Only required if not using role instance credentials"
 msgstr ""
 
 msgid "Abort"
@@ -3390,6 +3404,9 @@ msgstr ""
 msgid "ClusterIntegration|%{title} updated successfully."
 msgstr ""
 
+msgid "ClusterIntegration|A cluster management project can be used to run deployment jobs with Kubernetes <code>cluster-admin</code> privileges."
+msgstr ""
+
 msgid "ClusterIntegration|A service token scoped to %{code}kube-system%{end_code} with %{code}cluster-admin%{end_code} privileges."
 msgstr ""
 
@@ -3498,6 +3515,9 @@ msgstr ""
 msgid "ClusterIntegration|Cluster health"
 msgstr ""
 
+msgid "ClusterIntegration|Cluster management project (alpha)"
+msgstr ""
+
 msgid "ClusterIntegration|Cluster name is required."
 msgstr ""
 
@@ -3588,7 +3608,13 @@ msgstr ""
 msgid "ClusterIntegration|Every new Google Cloud Platform (GCP) account receives $300 in credit upon %{sign_up_link}. In partnership with Google, GitLab is able to offer an additional $200 for both new and existing GCP accounts to get started with GitLab's Google Kubernetes Engine Integration."
 msgstr ""
 
+msgid "ClusterIntegration|Failed to configure EKS provider: %{message}"
+msgstr ""
+
 msgid "ClusterIntegration|Failed to configure Google Kubernetes Engine Cluster: %{message}"
+msgstr ""
+
+msgid "ClusterIntegration|Failed to fetch CloudFormation stack: %{message}"
 msgstr ""
 
 msgid "ClusterIntegration|Failed to request to Google Cloud Platform: %{message}"
@@ -4801,6 +4827,12 @@ msgstr ""
 msgid "Created a branch and a merge request to resolve this issue."
 msgstr ""
 
+msgid "Created after"
+msgstr ""
+
+msgid "Created before"
+msgstr ""
+
 msgid "Created branch '%{branch_name}' and a merge request to resolve this issue."
 msgstr ""
 
@@ -5730,6 +5762,9 @@ msgstr ""
 msgid "Display name"
 msgstr ""
 
+msgid "Do not display offers from third parties within GitLab"
+msgstr ""
+
 msgid "Do you want to customize how Google Code email addresses and usernames are imported into GitLab?"
 msgstr ""
 
@@ -5916,6 +5951,9 @@ msgstr ""
 msgid "Elasticsearch"
 msgstr ""
 
+msgid "Elasticsearch AWS IAM credentials"
+msgstr ""
+
 msgid "Elasticsearch indexing restrictions"
 msgstr ""
 
@@ -6022,6 +6060,9 @@ msgid "Enable HTML emails"
 msgstr ""
 
 msgid "Enable Incident Management inbound alert limit"
+msgstr ""
+
+msgid "Enable PlantUML"
 msgstr ""
 
 msgid "Enable Pseudonymizer data collection"
@@ -7069,6 +7110,9 @@ msgid "FeatureFlags|Feature flags allow you to configure your code into differen
 msgstr ""
 
 msgid "FeatureFlags|Get started with feature flags"
+msgstr ""
+
+msgid "FeatureFlags|ID"
 msgstr ""
 
 msgid "FeatureFlags|Inactive"
@@ -8297,6 +8341,9 @@ msgstr ""
 msgid "Group pipeline minutes were successfully reset."
 msgstr ""
 
+msgid "Group variables (inherited)"
+msgstr ""
+
 msgid "Group was successfully updated."
 msgstr ""
 
@@ -8842,6 +8889,9 @@ msgstr ""
 msgid "If your HTTP repository is not publicly accessible, add your credentials."
 msgstr ""
 
+msgid "Iglu registry URL (optional)"
+msgstr ""
+
 msgid "ImageDiffViewer|2-up"
 msgstr ""
 
@@ -9151,6 +9201,9 @@ msgid "Invalid URL"
 msgstr ""
 
 msgid "Invalid date"
+msgstr ""
+
+msgid "Invalid date format. Please use UTC format as YYYY-MM-DD"
 msgstr ""
 
 msgid "Invalid feature"
@@ -9492,6 +9545,9 @@ msgstr ""
 msgid "June"
 msgstr ""
 
+msgid "Key"
+msgstr ""
+
 msgid "Key (PEM)"
 msgstr ""
 
@@ -9532,6 +9588,9 @@ msgid "Kubernetes deployment not found"
 msgstr ""
 
 msgid "Kubernetes error: %{error_code}"
+msgstr ""
+
+msgid "Kubernetes popover"
 msgstr ""
 
 msgid "LDAP"
@@ -11551,6 +11610,9 @@ msgid "Options"
 msgstr ""
 
 msgid "Or you can choose one of the suggested colors below"
+msgstr ""
+
+msgid "Origin"
 msgstr ""
 
 msgid "Other Labels"
@@ -13688,6 +13750,9 @@ msgstr ""
 msgid "Regex pattern"
 msgstr ""
 
+msgid "Region that Elasticsearch is configured"
+msgstr ""
+
 msgid "Register"
 msgstr ""
 
@@ -13743,7 +13808,9 @@ msgid "Related merge requests"
 msgstr ""
 
 msgid "Release"
-msgstr ""
+msgid_plural "Releases"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Release notes"
 msgstr ""
@@ -15542,6 +15609,9 @@ msgstr ""
 msgid "Something went wrong while fetching latest comments."
 msgstr ""
 
+msgid "Something went wrong while fetching projects"
+msgstr ""
+
 msgid "Something went wrong while fetching related merge requests."
 msgstr ""
 
@@ -16480,6 +16550,9 @@ msgstr ""
 msgid "The Issue Tracker is the place to add things that need to be improved or solved in a project. You can register or sign in to create issues for this project."
 msgstr ""
 
+msgid "The URL to use for connecting to Elasticsearch. Use a comma-separated list to support clustering (e.g., \"http://localhost:9200, http://localhost:9201\")."
+msgstr ""
+
 msgid "The X509 Certificate to use when mutual TLS is required to communicate with the external authorization service. If left blank, the server certificate is still validated when accessing over HTTPS."
 msgstr ""
 
@@ -16876,6 +16949,9 @@ msgstr ""
 msgid "These existing issues have a similar title. It might be better to comment there instead of creating another similar issue."
 msgstr ""
 
+msgid "These variables are configured in the parent group settings, and will be active in the current project in addition to the project variables."
+msgstr ""
+
 msgid "They can be managed using the %{link}."
 msgstr ""
 
@@ -17108,6 +17184,9 @@ msgid "This namespace has already been taken! Please choose another one."
 msgstr ""
 
 msgid "This option is disabled as you don't have write permissions for the current branch"
+msgstr ""
+
+msgid "This option is only available on GitLab.com"
 msgstr ""
 
 msgid "This page is unavailable because you are not allowed to read information across multiple projects."
@@ -18882,10 +18961,7 @@ msgstr ""
 msgid "Wiki pages"
 msgstr ""
 
-msgid "Wiki was successfully created"
-msgstr ""
-
-msgid "Wiki was successfully updated"
+msgid "Wiki was successfully updated."
 msgstr ""
 
 msgid "WikiClone|Clone your wiki"
@@ -18901,18 +18977,6 @@ msgid "WikiClone|It is recommended to install %{markdown} so that GFM features r
 msgstr ""
 
 msgid "WikiClone|Start Gollum and edit locally"
-msgstr ""
-
-msgid "WikiDirEmpty|A wiki is where you can store all the details about your project. This can include why you've created it, its principles, how to use it, and so on."
-msgstr ""
-
-msgid "WikiDirEmpty|Create a page"
-msgstr ""
-
-msgid "WikiDirEmpty|Create a page in this directory"
-msgstr ""
-
-msgid "WikiDirEmpty|This directory has no wiki pages"
 msgstr ""
 
 msgid "WikiEditPageTip|Tip: You can move this page by adding the path to the beginning of the title."
@@ -18933,9 +18997,6 @@ msgstr ""
 msgid "WikiEmpty|A wiki is where you can store all the details about your project. This can include why you've created it, its principles, how to use it, and so on."
 msgstr ""
 
-msgid "WikiEmpty|Create this page"
-msgstr ""
-
 msgid "WikiEmpty|Create your first page"
 msgstr ""
 
@@ -18943,9 +19004,6 @@ msgid "WikiEmpty|Suggest wiki improvement"
 msgstr ""
 
 msgid "WikiEmpty|The wiki lets you write documentation for your project"
-msgstr ""
-
-msgid "WikiEmpty|This page does not exist"
 msgstr ""
 
 msgid "WikiEmpty|This project has no wiki pages"
@@ -19002,9 +19060,6 @@ msgstr ""
 msgid "WikiPage|Write your content or drag files here…"
 msgstr ""
 
-msgid "Wiki|Contents"
-msgstr ""
-
 msgid "Wiki|Create New Page"
 msgstr ""
 
@@ -19015,9 +19070,6 @@ msgid "Wiki|Created date"
 msgstr ""
 
 msgid "Wiki|Edit Page"
-msgstr ""
-
-msgid "Wiki|Hide folder contents"
 msgstr ""
 
 msgid "Wiki|More Pages"
@@ -19038,13 +19090,10 @@ msgstr ""
 msgid "Wiki|Pages"
 msgstr ""
 
-msgid "Wiki|Show files separately"
-msgstr ""
-
-msgid "Wiki|Show folder contents"
-msgstr ""
-
 msgid "Wiki|Title"
+msgstr ""
+
+msgid "Wiki|Wiki Pages"
 msgstr ""
 
 msgid "Will deploy to"

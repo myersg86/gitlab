@@ -271,6 +271,14 @@ The API can be explored interactively using the [GraphiQL IDE](../index.md#graph
 | `createNote` | Boolean! | Whether or not a user can perform `create_note` on this resource |
 | `awardEmoji` | Boolean! | Whether or not a user can perform `award_emoji` on this resource |
 
+### EpicSetSubscriptionPayload
+
+| Name  | Type  | Description |
+| ---   |  ---- | ----------  |
+| `clientMutationId` | String | A unique identifier for the client performing the mutation. |
+| `errors` | String! => Array | Reasons why the mutation failed. |
+| `epic` | Epic | The epic after mutation |
+
 ### EpicTreeReorderPayload
 
 | Name  | Type  | Description |
@@ -465,6 +473,14 @@ The API can be explored interactively using the [GraphiQL IDE](../index.md#graph
 | `cherryPickOnCurrentMergeRequest` | Boolean! | Whether or not a user can perform `cherry_pick_on_current_merge_request` on this resource |
 | `revertOnCurrentMergeRequest` | Boolean! | Whether or not a user can perform `revert_on_current_merge_request` on this resource |
 
+### MergeRequestSetMilestonePayload
+
+| Name  | Type  | Description |
+| ---   |  ---- | ----------  |
+| `clientMutationId` | String | A unique identifier for the client performing the mutation. |
+| `errors` | String! => Array | Reasons why the mutation failed. |
+| `mergeRequest` | MergeRequest | The merge request after mutation |
+
 ### MergeRequestSetWipPayload
 
 | Name  | Type  | Description |
@@ -484,6 +500,7 @@ The API can be explored interactively using the [GraphiQL IDE](../index.md#graph
 
 | Name  | Type  | Description |
 | ---   |  ---- | ----------  |
+| `id` | ID! | ID of the milestone |
 | `description` | String | Description of the milestone |
 | `title` | String! | Title of the milestone |
 | `state` | String! | State of the milestone |

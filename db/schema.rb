@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_26_124116) do
+ActiveRecord::Schema.define(version: 2019_10_29_191901) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
@@ -338,6 +338,7 @@ ActiveRecord::Schema.define(version: 2019_10_26_124116) do
     t.boolean "throttle_incident_management_notification_enabled", default: false, null: false
     t.integer "throttle_incident_management_notification_period_in_seconds", default: 3600
     t.integer "throttle_incident_management_notification_per_period", default: 3600
+    t.string "snowplow_iglu_registry_url", limit: 255
     t.integer "push_event_hooks_limit", default: 3, null: false
     t.integer "push_event_activities_limit", default: 3, null: false
     t.string "custom_http_clone_url_root", limit: 511
@@ -1808,6 +1809,7 @@ ActiveRecord::Schema.define(version: 2019_10_26_124116) do
     t.string "encrypted_token", limit: 255, null: false
     t.string "encrypted_token_iv", limit: 255, null: false
     t.string "grafana_url", limit: 1024, null: false
+    t.boolean "enabled", default: false, null: false
     t.index ["project_id"], name: "index_grafana_integrations_on_project_id"
   end
 
@@ -4041,6 +4043,7 @@ ActiveRecord::Schema.define(version: 2019_10_26_124116) do
     t.string "url", limit: 255
     t.index ["issue_id", "issue_status"], name: "index_zoom_meetings_on_issue_id_and_issue_status", unique: true, where: "(issue_status = 1)"
     t.index ["issue_id"], name: "index_zoom_meetings_on_issue_id"
+    t.index ["issue_status"], name: "index_zoom_meetings_on_issue_status"
     t.index ["project_id"], name: "index_zoom_meetings_on_project_id"
   end
 

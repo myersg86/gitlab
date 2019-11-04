@@ -179,7 +179,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
-        resources :releases, only: [:index]
+        resources :releases, only: [:index, :edit], param: :tag, constraints: { tag: %r{[^/]+} }
         resources :starrers, only: [:index]
         resources :forks, only: [:index, :new, :create]
         resources :group_links, only: [:index, :create, :update, :destroy], constraints: { id: /\d+/ }
@@ -433,6 +433,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
           Gitlab.ee do
             get :logs
+            get '/pods/(:pod_name)/containers/(:container_name)/logs', to: 'environments#k8s_pod_logs', as: :k8s_pod_logs
           end
         end
 
@@ -617,7 +618,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
       end
 
       # Since both wiki and repository routing contains wildcard characters
-      # its preferable to keep them below all other project routes
+      # its preferable to keep it below all other project routes
       draw :wiki
       draw :repository
 
