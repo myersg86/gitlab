@@ -53,6 +53,8 @@ module Resolvers
       # https://gitlab.com/gitlab-org/gitlab-foss/issues/54520
       args[:project_id] = project.id
       args[:iids] ||= [args[:iid]].compact
+      # prevent use of CTEs, see https://gitlab.com/gitlab-org/gitlab/issues/34226
+      args[:attempt_project_search_optimizations] = true
 
       IssuesFinder.new(context[:current_user], args).execute
     end
