@@ -1,0 +1,5 @@
+---
+title: Fix bug crashing sidekiq workers
+merge_request: 19606
+author:
+type: fixed

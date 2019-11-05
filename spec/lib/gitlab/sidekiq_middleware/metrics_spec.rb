@@ -43,7 +43,8 @@ describe Gitlab::SidekiqMiddleware::Metrics do
   end
 
   describe '#call' do
-    let(:worker) { double(:worker) }
+    let(:worker_class) { double(:worker_class) }
+    let(:worker) { double(:worker, class: worker_class) }
 
     let(:job) { {} }
     let(:job_status) { :done }
@@ -79,11 +80,11 @@ describe Gitlab::SidekiqMiddleware::Metrics do
         allow(Gitlab::InstrumentationHelper).to receive(:queue_duration_for_job).with(job).and_return(queue_duration_for_job)
 
         # Attributes
-        allow(worker).to receive(:include?).with(WorkerAttributes).and_return(worker_has_attributes)
-        allow(worker).to receive(:latency_sensitive_worker?).and_return(worker_is_latency_sensitive)
-        allow(worker).to receive(:worker_has_external_dependencies?).and_return(worker_has_external_dependencies)
-        allow(worker).to receive(:get_worker_resource_boundary).and_return(worker_resource_boundary)
-        allow(worker).to receive(:get_feature_category).and_return(worker_feature_category)
+        allow(worker_class).to receive(:include?).with(WorkerAttributes).and_return(worker_has_attributes)
+        allow(worker_class).to receive(:latency_sensitive_worker?).and_return(worker_is_latency_sensitive)
+        allow(worker_class).to receive(:worker_has_external_dependencies?).and_return(worker_has_external_dependencies)
+        allow(worker_class).to receive(:get_worker_resource_boundary).and_return(worker_resource_boundary)
+        allow(worker_class).to receive(:get_feature_category).and_return(worker_feature_category)
 
         expect(running_jobs_metric).to receive(:increment).with(labels, 1)
         expect(running_jobs_metric).to receive(:increment).with(labels, -1)

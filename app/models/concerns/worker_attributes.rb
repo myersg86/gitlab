@@ -8,6 +8,10 @@ module WorkerAttributes
   VALID_RESOURCE_BOUNDARIES = [:memory, :cpu, :unknown].freeze
 
   class_methods do
+    def has_attributes?
+      worker_attributes.present?
+    end
+
     def feature_category(value)
       raise "Invalid category. Use `feature_category_not_owned!` to mark a worker as not owned" if value == :not_owned
 

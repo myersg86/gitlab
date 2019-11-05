@@ -14,7 +14,7 @@ module Gitlab
       end
 
       def call(worker, job, queue)
-        labels = create_labels(worker, queue)
+        labels = create_labels(worker.class, queue)
         queue_duration = ::Gitlab::InstrumentationHelper.queue_duration_for_job(job)
 
         @metrics[:sidekiq_jobs_queue_duration_seconds].observe(labels, queue_duration) if queue_duration
@@ -62,17 +62,17 @@ module Gitlab
         }
       end
 
-      def create_labels(worker, queue)
+      def create_labels(worker_class, queue)
         labels = { queue: queue }
-        return labels unless worker.include? WorkerAttributes
+        return labels unless worker_class.include? WorkerAttributes
 
-        labels[:latency_sensitive] = true if worker.latency_sensitive_worker?
-        labels[:external_deps] = true if worker.worker_has_external_dependencies?
+        labels[:latency_sensitive] = true if worker_class.latency_sensitive_worker?
+        labels[:external_deps] = true if worker_class.worker_has_external_dependencies?
 
-        feature_category = worker.get_feature_category
+        feature_category = worker_class.get_feature_category
         labels[:feat_cat] = feature_category if feature_category
 
-        resource_boundary = worker.get_worker_resource_boundary
+        resource_boundary = worker_class.get_worker_resource_boundary
         labels[:boundary] = resource_boundary if resource_boundary && resource_boundary != :unknown
 
         labels
