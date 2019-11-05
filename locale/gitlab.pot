@@ -2750,9 +2750,6 @@ msgstr ""
 msgid "CI / CD Charts"
 msgstr ""
 
-msgid "CI / CD Settings"
-msgstr ""
-
 msgid "CI Lint"
 msgstr ""
 
@@ -2774,12 +2771,6 @@ msgstr ""
 msgid "CI/CD settings"
 msgstr ""
 
-msgid "CICD|Auto DevOps"
-msgstr ""
-
-msgid "CICD|Auto DevOps will automatically build, test, and deploy your application based on a predefined Continuous Integration and Delivery configuration."
-msgstr ""
-
 msgid "CICD|Automatic deployment to staging, manual deployment to production"
 msgstr ""
 
@@ -2799,9 +2790,6 @@ msgid "CICD|Deployment strategy"
 msgstr ""
 
 msgid "CICD|Jobs"
-msgstr ""
-
-msgid "CICD|Learn more about Auto DevOps"
 msgstr ""
 
 msgid "CICD|The Auto DevOps pipeline will run if no alternative CI configuration file is found."
@@ -4978,9 +4966,6 @@ msgid "Customize language and region related settings."
 msgstr ""
 
 msgid "Customize name"
-msgstr ""
-
-msgid "Customize your pipeline configuration, view your pipeline status and coverage report."
 msgstr ""
 
 msgid "Customize your pipeline configuration."
@@ -11891,9 +11876,6 @@ msgstr ""
 msgid "Pipeline quota"
 msgstr ""
 
-msgid "Pipeline triggers"
-msgstr ""
-
 msgid "Pipeline: %{status}"
 msgstr ""
 
@@ -13793,9 +13775,6 @@ msgid "Register Universal Two-Factor (U2F) Device"
 msgstr ""
 
 msgid "Register and see your runners for this group."
-msgstr ""
-
-msgid "Register and see your runners for this project."
 msgstr ""
 
 msgid "Register for GitLab"
@@ -17874,9 +17853,6 @@ msgstr ""
 msgid "Triggerer"
 msgstr ""
 
-msgid "Triggers can force a specific branch or tag to get rebuilt with an API call.  These tokens will impersonate their associated user including their access to projects and their project permissions."
-msgstr ""
-
 msgid "Troubleshoot and monitor your application with tracing"
 msgstr ""
 
@@ -19334,6 +19310,9 @@ msgid "You can resolve the merge conflict using either the Interactive mode, by 
 msgstr ""
 
 msgid "You can see your chat accounts."
+msgstr ""
+
+msgid "You can set up as many Runners as you need to run your jobs."
 msgstr ""
 
 msgid "You can set up jobs to only use Runners with specific tags. Separate tags with commas."
