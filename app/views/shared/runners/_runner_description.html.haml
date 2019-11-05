@@ -1,6 +1,6 @@
 .light.prepend-top-default
   %p
-    = _("A 'Runner' is a process which runs a job. You can set up as many Runners as you need.")
+    = _("You can set up as many Runners as you need to run your jobs.")
     %br
     = _('Runners can be placed on separate users, servers, and even on your local machine.')
 
@@ -11,6 +11,7 @@
       %li
         %span.badge.badge-success active
         = _('- Runner is active and can process any new jobs')
+      %br
       %li
         %span.badge.badge-danger paused
         = _('- Runner is paused and will not receive any new jobs')
