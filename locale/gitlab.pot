@@ -324,6 +324,14 @@ msgstr ""
 msgid "%{percent}%% complete"
 msgstr ""
 
+msgid "%{primary} (%{secondary})"
+msgstr ""
+
+msgid "%{releases} release"
+msgid_plural "%{releases} releases"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "%{service_title} activated."
 msgstr ""
 
@@ -1517,6 +1525,9 @@ msgstr ""
 msgid "An error occurred when updating the issue weight"
 msgstr ""
 
+msgid "An error occurred while checking group path"
+msgstr ""
+
 msgid "An error occurred while deleting the approvers group"
 msgstr ""
 
@@ -1619,6 +1630,9 @@ msgstr ""
 msgid "An error occurred while loading filenames"
 msgstr ""
 
+msgid "An error occurred while loading issues"
+msgstr ""
+
 msgid "An error occurred while loading the file"
 msgstr ""
 
@@ -1677,6 +1691,9 @@ msgid "An error occurred while updating approvers"
 msgstr ""
 
 msgid "An error occurred while updating the comment"
+msgstr ""
+
+msgid "An error occurred while validating group path"
 msgstr ""
 
 msgid "An error occurred while validating username"
@@ -3045,6 +3062,9 @@ msgid "Checking approval status"
 msgstr ""
 
 msgid "Checking branch availability..."
+msgstr ""
+
+msgid "Checking group path availability..."
 msgstr ""
 
 msgid "Checking username availability..."
@@ -5269,6 +5289,9 @@ msgstr ""
 msgid "Dependencies"
 msgstr ""
 
+msgid "Dependencies help page link"
+msgstr ""
+
 msgid "Dependencies|%d additional vulnerability not shown"
 msgid_plural "Dependencies|%d additional vulnerabilities not shown"
 msgstr[0] ""
@@ -5765,6 +5788,9 @@ msgstr ""
 msgid "Display name"
 msgstr ""
 
+msgid "Displays dependencies and known vulnerabilities, based on the %{linkStart}latest pipeline%{linkEnd} scan"
+msgstr ""
+
 msgid "Do not display offers from third parties within GitLab"
 msgstr ""
 
@@ -6234,6 +6260,12 @@ msgid "Environment variables are configured by your administrator to be %{link_s
 msgstr ""
 
 msgid "Environment:"
+msgstr ""
+
+msgid "EnvironmentDashboard|API"
+msgstr ""
+
+msgid "EnvironmentDashboard|Created through the Deployment API"
 msgstr ""
 
 msgid "Environments"
@@ -8342,6 +8374,12 @@ msgid "Group overview"
 msgstr ""
 
 msgid "Group overview content"
+msgstr ""
+
+msgid "Group path is already taken. Suggestions: "
+msgstr ""
+
+msgid "Group path is available."
 msgstr ""
 
 msgid "Group pipeline minutes were successfully reset."
@@ -20595,6 +20633,9 @@ msgid "nounSeries|%{item}, %{nextItem}"
 msgstr ""
 
 msgid "nounSeries|%{item}, and %{lastItem}"
+msgstr ""
+
+msgid "opened %{timeAgoString} by %{user}"
 msgstr ""
 
 msgid "or %{link_start}create a new Google account%{link_end}"
