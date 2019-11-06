@@ -7,3 +7,38 @@
       = render 'shared/issuable/search_bar', type: :productivity_analytics
     .js-timeframe-container
   .js-productivity-analytics-app-container{ data: { endpoint: analytics_productivity_analytics_path, empty_state_svg_path: image_path('illustrations/productivity-analytics-empty-state.svg'), no_access_svg_path: image_path('illustrations/analytics/no-access.svg') } }
+- if @pipelines_info
+  .mr-table
+    .card
+      .card-header.border-bottom-0
+        .gl-responsive-table-row.table-row-header.d-flex.py-0{ role: 'row' }
+          .table-section.section-50.d-none.d-md-flex{ role: 'rowheader' } Title
+          .table-section.section-10.d-none.d-md-flex Pipelines count
+          .table-section.section-10.d-none.d-md-flex Pipelines per day
+          .table-section.section-10.d-none.d-md-flex Pipelines failure percentage
+      - @pipelines_info.each do |mr_info|
+        - mr = mr_info.merge_request
+        .card-body.py-0
+          .gl-responsive-table-row-layout.gl-responsive-table-row
+            .table-section.section-50.d-flex.flex-row-reverse.flex-md-row.justify-content-between.justify-content-md-start.js-mr-details
+              .d-flex.mr-md-2
+                %img.gl-avatar.gl-avatar-circle.gl-avatar-s16{src: mr.author&.avatar_url}
+              .d-flex.flex-column.flex-grow.mw-90p
+                %h5.item-title.mr-title.my-0.d-block.str-truncated
+                  = link_to(mr.title, project_merge_request_url(mr.target_project, mr))
+                %ul.horizontal-list.list-items-separated.text-secondary.mb-0
+                  %li="!#{mr.iid}"
+                  -#%li - commits
+                  -#%li - files touched
+            .table-section.section-10.d-flex.flex-row.align-items-start
+              .metric-col
+                %span.time
+                  = mr_info.total_completed_pipelines
+            .table-section.section-10.d-flex.flex-row.align-items-start
+              .metric-col
+                %span.time
+                  = mr_info.pipelines_per_day.round(2)
+            .table-section.section-10.d-flex.flex-row.align-items-start
+              .metric-col
+                %span.time
+                  = "#{mr_info.pipeline_failure_percentage.round}%"

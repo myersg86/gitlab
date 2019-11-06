@@ -48,6 +48,12 @@ class ProductivityAnalytics
     mrs
   end
 
+  def merge_requests_pipelines
+    Analytics::ProductivityAnalytics::Metrics
+      .joins(:merge_request)
+      .where(merge_request: merge_requests).order('pipelines_count + failed_pipelines_count DESC').limit(50)
+  end
+
   private
 
   def histogram_query(column)

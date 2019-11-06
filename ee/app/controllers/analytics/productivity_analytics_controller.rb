@@ -22,7 +22,9 @@ class Analytics::ProductivityAnalyticsController < Analytics::ApplicationControl
 
   def show
     respond_to do |format|
-      format.html
+      format.html do
+        @pipelines_info = productivity_analytics.merge_requests_pipelines if @project
+      end
       format.json do
         metric = params.fetch('metric_type', ProductivityAnalytics::DEFAULT_TYPE)
 
@@ -68,7 +70,7 @@ class Analytics::ProductivityAnalyticsController < Analytics::ApplicationControl
   end
 
   def productivity_analytics
-    @productivity_analytics ||= ProductivityAnalytics.new(merge_requests: finder.execute, sort: params[:sort])
+    @productivity_analytics ||= ::ProductivityAnalytics.new(merge_requests: finder.execute, sort: params[:sort])
   end
 
   # rubocop: disable CodeReuse/ActiveRecord

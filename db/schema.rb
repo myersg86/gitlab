@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_29_191901) do
+ActiveRecord::Schema.define(version: 2019_11_05_093934) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
@@ -91,6 +91,18 @@ ActiveRecord::Schema.define(version: 2019_10_29_191901) do
     t.date "snapshot_date", null: false
     t.index ["programming_language_id", "project_id", "snapshot_date"], name: "analytics_repository_languages_unique_index", unique: true
     t.index ["project_id"], name: "analytics_repository_languages_on_project_id"
+  end
+
+  create_table "analytics_productivity_analytics_metrics", force: :cascade do |t|
+    t.bigint "merge_request_id", null: false
+    t.datetime "merged_at", null: false
+    t.datetime "opened_at", null: false
+    t.integer "pipelines_count", default: 0, null: false
+    t.integer "failed_pipelines_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merge_request_id"], name: "index_pa_metrics_on_merge_request_id", unique: true
+    t.index ["merged_at"], name: "index_pa_metrics_on_merged_at"
   end
 
   create_table "analytics_repository_file_commits", force: :cascade do |t|
