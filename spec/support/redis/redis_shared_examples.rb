@@ -109,35 +109,57 @@ RSpec.shared_examples "redis_shared_examples" do
   end
 
   describe '.with' do
-    before do
-      clear_pool
+    let(:pool) { double('connection_pool').as_null_object }
+
+    it 'passes a Redis client instance to the given block' do
+      described_class.with { |redis| expect(redis).to be_an_instance_of(::Redis) }
     end
-    after do
-      clear_pool
+  end
+
+  describe '.pool_size' do
+    let(:config_with_pool_size) { "spec/fixtures/config/redis_config_with_pool_size.yml" }
+    let(:config_without_pool_size) { "spec/fixtures/config/redis_config_no_pool_size.yml" }
+
+    context 'when user specified pool_size is set' do
+      let(:config_file_name) { config_with_pool_size }
+
+      it 'uses the given pool size' do
+        expect(described_class.pool_size).to eq(42)
+      end
     end
 
-    context 'when running not on sidekiq workers' do
-      before do
-        allow(Sidekiq).to receive(:server?).and_return(false)
+    context 'when no user specified pool_size is set' do
+      let(:config_file_name) { config_without_pool_size }
+
+      context 'when running on unicorn' do
+        it 'uses a connection pool size of 1' do
+          expect(described_class.pool_size).to eq(1)
+        end
       end
 
-      it 'instantiates a connection pool with size 5' do
-        expect(ConnectionPool).to receive(:new).with(size: 5).and_call_original
+      context 'when running on puma' do
+        let(:puma) { double('puma') }
+        let(:puma_options) { { max_threads: 8 } }
 
-        described_class.with { |_redis_shared_example| true }
+        before do
+          allow(puma).to receive_message_chain(:cli_config, :options).and_return(puma_options)
+          stub_const("Puma", puma)
+        end
+
+        it 'uses a connection pool size based on the maximum number of puma threads' do
+          expect(described_class.pool_size).to eq(8)
+        end
       end
-    end
 
-    context 'when running on sidekiq workers' do
-      before do
-        allow(Sidekiq).to receive(:server?).and_return(true)
-        allow(Sidekiq).to receive(:options).and_return({ concurrency: 18 })
-      end
+      context 'when running on sidekiq' do
+        before do
+          allow(Sidekiq).to receive(:server?).and_return(true)
+          allow(Sidekiq).to receive(:options).and_return({ concurrency: 10 })
+        end
 
-      it 'instantiates a connection pool with a size based on the concurrency of the worker' do
-        expect(ConnectionPool).to receive(:new).with(size: 18 + 5).and_call_original
-
-        described_class.with { |_redis_shared_example| true }
+        it 'uses a connection pool size based on the concurrency of the worker' do
+          expect(described_class.pool_size).to eq(10)
+        end
       end
     end
   end
@@ -214,11 +236,5 @@ RSpec.shared_examples "redis_shared_examples" do
     described_class.remove_instance_variable(:@_raw_config)
   rescue NameError
     # raised if @_raw_config was not set; ignore
-  end
-
-  def clear_pool
-    described_class.remove_instance_variable(:@pool)
-  rescue NameError
-    # raised if @pool was not set; ignore
   end
 end

@@ -20,14 +20,18 @@ module Gitlab
         end
 
         def pool_size
-          # heuristic constant 5 should be a config setting somewhere -- related to CPU count?
-          size = 5
-          if Sidekiq.server?
-            # the pool will be used in a multi-threaded context
-            size += Sidekiq.options[:concurrency]
+          # Use user defined pool size if available, otherwise choose sensible default
+          # based on the multi-threaded'ness of the environment
+          concurrency_level = lambda do
+            if Sidekiq.server?
+              Sidekiq.options[:concurrency]
+            elsif defined?(::Puma)
+              Puma.cli_config.options[:max_threads]
+            else
+              1 # Unicorn
+            end
           end
-
-          size
+          params[:pool_size] || concurrency_level.call
         end
 
         def _raw_config

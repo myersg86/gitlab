@@ -1,0 +1,2 @@
+test:
+  url: redis://:mynewpassword@localhost:6379/99
