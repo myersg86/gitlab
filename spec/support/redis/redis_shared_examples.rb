@@ -109,8 +109,6 @@ RSpec.shared_examples "redis_shared_examples" do
   end
 
   describe '.with' do
-    let(:pool) { double('connection_pool').as_null_object }
-
     it 'passes a Redis client instance to the given block' do
       described_class.with { |redis| expect(redis).to be_an_instance_of(::Redis) }
     end
