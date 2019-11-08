@@ -273,12 +273,12 @@ module API
       expose(:jobs_enabled) { |project, options| project.feature_available?(:builds, options[:current_user]) }
       expose(:snippets_enabled) { |project, options| project.feature_available?(:snippets, options[:current_user]) }
 
-      expose(:issues_access_level) { |project, options| project.project_feature.string_access_level(:issues) }
-      expose(:repository_access_level) { |project, options| project.project_feature.string_access_level(:repository) }
-      expose(:merge_requests_access_level) { |project, options| project.project_feature.string_access_level(:merge_requests) }
-      expose(:wiki_access_level) { |project, options| project.project_feature.string_access_level(:wiki) }
-      expose(:builds_access_level) { |project, options| project.project_feature.string_access_level(:builds) }
-      expose(:snippets_access_level) { |project, options| project.project_feature.string_access_level(:snippets) }
+      expose(:issues_access_level) { |project, options| project.project_feature&.string_access_level(:issues) }
+      expose(:repository_access_level) { |project, options| project.project_feature&.string_access_level(:repository) }
+      expose(:merge_requests_access_level) { |project, options| project.project_feature&.string_access_level(:merge_requests) }
+      expose(:wiki_access_level) { |project, options| project.project_feature&.string_access_level(:wiki) }
+      expose(:builds_access_level) { |project, options| project.project_feature&.string_access_level(:builds) }
+      expose(:snippets_access_level) { |project, options| project.project_feature&.string_access_level(:snippets) }
 
       expose :shared_runners_enabled
       expose :lfs_enabled?, as: :lfs_enabled

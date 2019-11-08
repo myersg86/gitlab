@@ -1,0 +1,5 @@
+---
+title: Fix bug in api/projects when project has nil project_features
+merge_request: 19791
+author:
+type: fixed
