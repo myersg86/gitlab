@@ -145,11 +145,22 @@ export default {
           },
         },
       };
-      data.design.discussions.edges.push(newDiscussion);
-      data.design.notesCount += 1;
-      store.writeQuery({ query: getDesignQuery, data });
+      store.writeQuery({
+        query: getDesignQuery,
+        data: {
+          ...data,
+          design: {
+            ...data.design,
+            notesCount: data.design.notesCount + 1,
+            discussions: {
+              ...data.design.discussions,
+              edges: [...data.design.discussions.edges, newDiscussion],
+            },
+          },
+        },
+      });
     },
-    onError(e) {
+    onMutationError(e) {
       createFlash(s__('DesignManagement|Could not create new discussion, please try again.'));
       throw e;
     },
@@ -247,7 +258,7 @@ export default {
             }"
             :update="addImageDiffNote"
             @done="closeCommentForm"
-            @error="onError"
+            @error="onMutationError"
           >
             <design-reply-form
               v-model="comment"
