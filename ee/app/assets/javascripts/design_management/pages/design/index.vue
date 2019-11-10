@@ -1,5 +1,5 @@
 <script>
-import { ApolloMutation } from 'vue-apollo';
+import { ApolloQuery, ApolloMutation } from 'vue-apollo';
 import Mousetrap from 'mousetrap';
 import createFlash from '~/flash';
 import { s__ } from '~/locale';
@@ -17,6 +17,7 @@ import { extractDiscussions } from '../../utils/design_management_utils';
 
 export default {
   components: {
+    ApolloQuery,
     ApolloMutation,
     DesignImage,
     DesignOverlay,
@@ -45,27 +46,6 @@ export default {
       projectPath: '',
     };
   },
-  apollo: {
-    design: {
-      query: getDesignQuery,
-      variables() {
-        return {
-          id: this.id,
-          version: this.designsVersion,
-        };
-      },
-      result({ data }) {
-        if (!data) {
-          createFlash(s__('DesignManagement|Could not find design, please try again.'));
-          this.$router.push({ name: 'designs' });
-        }
-        if (this.$route.query.version && !this.hasValidVersion) {
-          createFlash(s__('DesignManagement|Requested design version does not exist'));
-          this.$router.push({ name: 'designs' });
-        }
-      },
-    },
-  },
   computed: {
     isLoading() {
       return this.$apollo.queries.design.loading;
@@ -84,6 +64,12 @@ export default {
     },
     renderDiscussions() {
       return this.discussions.length || this.annotationCoordinates;
+    },
+    designQueryVariables() {
+      return {
+        id: this.id,
+        version: this.designsVersion,
+      };
     },
     mutationPayload() {
       const { x, y, width, height } = this.annotationCoordinates;
@@ -160,6 +146,22 @@ export default {
         },
       });
     },
+    onQueryDone(result) {
+      const { data } = result;
+      this.design = data.design;
+      if (!data) {
+        createFlash(s__('DesignManagement|Could not find design, please try again.'));
+        this.$router.push({ name: 'designs' });
+      }
+      if (this.$route.query.version && !this.hasValidVersion) {
+        createFlash(s__('DesignManagement|Requested design version does not exist'));
+        this.$router.push({ name: 'designs' });
+      }
+    },
+    onQueryError(e) {
+      createFlash(s__('DesignManagement|Failed to load design, please try again.'));
+      throw e;
+    },
     onMutationError(e) {
       createFlash(s__('DesignManagement|Could not create new discussion, please try again.'));
       throw e;
@@ -194,6 +196,7 @@ export default {
     this.closeCommentForm();
     next();
   },
+  getDesignQuery,
   createImageDiffNoteMutation,
 };
 </script>
@@ -202,77 +205,85 @@ export default {
   <div
     class="design-detail fixed-top w-100 position-bottom-0 d-flex justify-content-center flex-column flex-lg-row"
   >
-    <gl-loading-icon v-if="isLoading" size="xl" class="align-self-center" />
-    <template v-else>
-      <div class="d-flex overflow-hidden flex-lg-grow-1 flex-column">
-        <design-destroyer
-          :filenames="[design.filename]"
-          :project-path="projectPath"
-          :iid="issueIid"
-          @done="$router.push({ name: 'designs' })"
-          @error="$router.push({ name: 'designs' })"
-        >
-          <template v-slot="{ mutate, loading, error }">
-            <toolbar
-              :id="id"
-              :is-deleting="loading"
-              :name="design.filename"
-              :updated-at="design.updatedAt"
-              :updated-by="design.updatedBy"
-              :is-latest-version="isLatestVersion"
-              @delete="mutate"
-            />
-          </template>
-        </design-destroyer>
-        <div class="d-flex flex-column h-100 mh-100 position-relative">
-          <design-image
-            :image="design.image"
-            :name="design.filename"
-            @setOverlayDimensions="setOverlayDimensions"
-          />
-          <design-overlay
-            :position="overlayDimensions"
-            :notes="discussionStartingNotes"
-            :current-comment-form="annotationCoordinates"
-            @openCommentForm="openCommentForm"
-          />
-        </div>
-      </div>
-      <div class="image-notes">
-        <template v-if="renderDiscussions">
-          <design-discussion
-            v-for="(discussion, index) in discussions"
-            :key="discussion.id"
-            :discussion="discussion"
-            :design-id="id"
-            :noteable-id="design.id"
-            :discussion-index="index + 1"
-            :markdown-preview-path="markdownPreviewPath"
-          />
-          <apollo-mutation
-            v-if="annotationCoordinates"
-            v-slot="{ mutate, loading, error }"
-            :mutation="$options.createImageDiffNoteMutation"
-            :variables="{
-              input: mutationPayload,
-            }"
-            :update="addImageDiffNote"
-            @done="closeCommentForm"
-            @error="onMutationError"
+    <apollo-query
+      v-slot="{ result: { error, data }, isLoading }"
+      :query="$options.getDesignQuery"
+      :variables="designQueryVariables"
+      @result="onQueryDone"
+      @error="onQueryError"
+    >
+      <gl-loading-icon v-if="isLoading" size="xl" class="align-self-center" />
+      <template v-else>
+        <div class="d-flex overflow-hidden flex-lg-grow-1 flex-column">
+          <design-destroyer
+            :filenames="[design.filename]"
+            :project-path="projectPath"
+            :iid="issueIid"
+            @done="$router.push({ name: 'designs' })"
+            @error="$router.push({ name: 'designs' })"
           >
-            <design-reply-form
-              v-model="comment"
-              :is-saving="loading"
-              :markdown-preview-path="markdownPreviewPath"
-              @submitForm="mutate"
-              @cancelForm="closeCommentForm"
+            <template v-slot="{ mutate, loading, error }">
+              <toolbar
+                :id="id"
+                :is-deleting="loading"
+                :name="design.filename"
+                :updated-at="design.updatedAt"
+                :updated-by="design.updatedBy"
+                :is-latest-version="isLatestVersion"
+                @delete="mutate"
+              />
+            </template>
+          </design-destroyer>
+          <div class="d-flex flex-column h-100 mh-100 position-relative">
+            <design-image
+              :image="design.image"
+              :name="design.filename"
+              @setOverlayDimensions="setOverlayDimensions"
             />
-          </apollo-mutation>
-        </template>
-        <h2 v-else class="new-discussion-disclaimer m-0">
-          {{ __("Click the image where you'd like to start a new discussion") }}
-        </h2>
-      </div>
-    </template>
+            <design-overlay
+              :position="overlayDimensions"
+              :notes="discussionStartingNotes"
+              :current-comment-form="annotationCoordinates"
+              @openCommentForm="openCommentForm"
+            />
+          </div>
+        </div>
+        <div class="image-notes">
+          <template v-if="renderDiscussions">
+            <design-discussion
+              v-for="(discussion, index) in discussions"
+              :key="discussion.id"
+              :discussion="discussion"
+              :design-id="id"
+              :noteable-id="design.id"
+              :discussion-index="index + 1"
+              :markdown-preview-path="markdownPreviewPath"
+            />
+            <apollo-mutation
+              v-if="annotationCoordinates"
+              v-slot="{ mutate, loading, error }"
+              :mutation="$options.createImageDiffNoteMutation"
+              :variables="{
+                input: mutationPayload,
+              }"
+              :update="addImageDiffNote"
+              @done="closeCommentForm"
+              @error="onMutationError"
+            >
+              <design-reply-form
+                v-model="comment"
+                :is-saving="loading"
+                :markdown-preview-path="markdownPreviewPath"
+                @submitForm="mutate"
+                @cancelForm="closeCommentForm"
+              />
+            </apollo-mutation>
+          </template>
+          <h2 v-else class="new-discussion-disclaimer m-0">
+            {{ __("Click the image where you'd like to start a new discussion") }}
+          </h2>
+        </div>
+      </template>
+    </apollo-query>
   </div>
 </template>
