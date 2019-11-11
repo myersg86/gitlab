@@ -47,9 +47,6 @@ export default {
     };
   },
   computed: {
-    isLoading() {
-      return this.$apollo.queries.design.loading;
-    },
     discussions() {
       return extractDiscussions(this.design.discussions);
     },
