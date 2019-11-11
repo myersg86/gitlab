@@ -202,15 +202,15 @@ export default {
 </script>
 
 <template>
-  <div
-    class="design-detail fixed-top w-100 position-bottom-0 d-flex justify-content-center flex-column flex-lg-row"
+  <apollo-query
+    v-slot="{ isLoading }"
+    :query="$options.getDesignQuery"
+    :variables="designQueryVariables"
+    @result="onQueryDone"
+    @error="onQueryError"
   >
-    <apollo-query
-      v-slot="{ result: { error, data }, isLoading }"
-      :query="$options.getDesignQuery"
-      :variables="designQueryVariables"
-      @result="onQueryDone"
-      @error="onQueryError"
+    <div
+      class="design-detail fixed-top w-100 position-bottom-0 d-flex justify-content-center flex-column flex-lg-row"
     >
       <gl-loading-icon v-if="isLoading" size="xl" class="align-self-center" />
       <template v-else>
@@ -284,6 +284,6 @@ export default {
           </h2>
         </div>
       </template>
-    </apollo-query>
-  </div>
+    </div>
+  </apollo-query>
 </template>
