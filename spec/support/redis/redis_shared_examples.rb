@@ -112,6 +112,28 @@ RSpec.shared_examples "redis_shared_examples" do
     it 'passes a Redis client instance to the given block' do
       described_class.with { |redis| expect(redis).to be_an_instance_of(::Redis) }
     end
+
+    context 'when passing config to Redis' do
+      let(:config_file_name) { "spec/fixtures/config/redis_config_with_pool_size.yml" }
+      let(:redis_pool_class) { class_double(Gitlab::Redis::Wrapper::RedisConnectionPool) }
+      let(:redis_pool) { instance_double(Gitlab::Redis::Wrapper::RedisConnectionPool) }
+
+      RSpec::Matchers.define :only_supported_config do
+        match { |actual| (Set.new(actual.keys) - Gitlab::Redis::Wrapper::REDIS_ALLOWED_CONFIG_KEYS).empty? }
+      end
+
+      before do
+        stub_const('Gitlab::Redis::Wrapper::RedisConnectionPool', redis_pool_class)
+        allow(redis_pool).to receive(:with_redis)
+      end
+
+      it 'strips out non-official configuration keys' do
+        expect(redis_pool_class).to receive(:new).with(anything, only_supported_config).and_return(redis_pool)
+        described_class.with(recreate_pool: true) do |params|
+          true
+        end
+      end
+    end
   end
 
   describe '.pool_size' do

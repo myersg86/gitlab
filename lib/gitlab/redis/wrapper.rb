@@ -11,13 +11,30 @@ module Gitlab
       DEFAULT_REDIS_URL = 'redis://localhost:6379'
       REDIS_CONFIG_ENV_VAR_NAME = 'GITLAB_REDIS_CONFIG_FILE'
       CONN_POOL_SIZE_FACTOR = 1.5
+      # See https://github.com/redis/redis-rb/blob/master/lib/redis.rb
+      REDIS_ALLOWED_CONFIG_KEYS = Set[:url, :host, :port, :path, :timeout, :connect_timeout, :password, :db, :driver,
+        :id, :tcp_keepalive, :reconnect_attempts, :inherit_socket, :sentinels, :role, :cluster, :replica, :connector]
+
+      class RedisConnectionPool
+        def initialize(pool_size, redis_params)
+          @conn_pool = ConnectionPool.new(size: pool_size) { ::Redis.new(redis_params) }
+        end
+
+        def with_redis
+          @conn_pool.with { |redis| yield redis }
+        end
+      end
 
       class << self
         delegate :params, :url, to: :new
 
-        def with
-          @pool ||= ConnectionPool.new(size: pool_size) { ::Redis.new(params) }
-          @pool.with { |redis| yield redis }
+        def with(recreate_pool: false)
+          if recreate_pool || @pool.nil?
+            valid_redis_params = params.select { |k, v| REDIS_ALLOWED_CONFIG_KEYS.include?(k) }
+            @pool = RedisConnectionPool.new(pool_size, valid_redis_params)
+          end
+
+          @pool.with_redis { |redis| yield redis }
         end
 
         def pool_size
