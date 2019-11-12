@@ -21,6 +21,8 @@ This file is called `resque.yml` for historical reasons. We are **NOT**
 using Resque at the moment. It is used to specify Redis configuration
 values when a single database instance of Redis is desired.
 
+See `resque.yml.example` for a set of possible configuration keys.
+
 # Advanced Redis configuration files
 
 In more advanced configurations of Redis key-value storage, it is desirable

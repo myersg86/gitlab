@@ -118,15 +118,27 @@ RSpec.shared_examples "redis_shared_examples" do
     let(:config_with_pool_size) { "spec/fixtures/config/redis_config_with_pool_size.yml" }
     let(:config_without_pool_size) { "spec/fixtures/config/redis_config_no_pool_size.yml" }
 
-    context 'when user specified pool_size is set' do
+    context 'when user specified connection_pool_size is set' do
       let(:config_file_name) { config_with_pool_size }
 
-      it 'uses the given pool size' do
-        expect(described_class.pool_size).to eq(42)
+      context 'for web based work loads' do
+        it 'uses the given pool size' do
+          expect(described_class.pool_size).to eq(5)
+        end
+      end
+
+      context 'for sidekiq work loads' do
+        before do
+          allow(Sidekiq).to receive(:server?).and_return(true)
+        end
+
+        it 'uses the given pool size' do
+          expect(described_class.pool_size).to eq(10)
+        end
       end
     end
 
-    context 'when no user specified pool_size is set' do
+    context 'when no user specified connection_pool_size is set' do
       let(:config_file_name) { config_without_pool_size }
 
       context 'when running on unicorn' do

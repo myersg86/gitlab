@@ -20,18 +20,7 @@ module Gitlab
         end
 
         def pool_size
-          # Use user defined pool size if available, otherwise choose sensible default
-          # based on the multi-threaded'ness of the environment
-          concurrency_level = lambda do
-            if Sidekiq.server?
-              Sidekiq.options[:concurrency]
-            elsif defined?(::Puma)
-              Puma.cli_config.options[:max_threads]
-            else
-              1 # Unicorn
-            end
-          end
-          params[:pool_size] || concurrency_level.call
+          user_specified_pool_size || default_pool_size
         end
 
         def _raw_config
@@ -72,6 +61,33 @@ module Gitlab
 
           # nil will force use of DEFAULT_REDIS_URL when config file is absent
           nil
+        end
+
+        private
+
+        # connection pool size as specified in resque.yml
+        def user_specified_pool_size
+          key = sidekiq? ? :sidekiq : :web
+          params[:connection_pool_size]&.fetch(key, nil)
+        end
+
+        # connection pool size based on the concurrency level of the current execution context
+        def default_pool_size
+          if sidekiq?
+            Sidekiq.options[:concurrency]
+          elsif puma?
+            Puma.cli_config.options[:max_threads]
+          else
+            1 # Unicorn
+          end
+        end
+
+        def sidekiq?
+          Sidekiq.server?
+        end
+
+        def puma?
+          defined?(::Puma)
         end
       end
 

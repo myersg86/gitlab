@@ -1,3 +1,5 @@
 test:
   url: redis://:mynewpassword@localhost:6379/99
-  pool_size: 42
+  connection_pool_size:
+    web: 5
+    sidekiq: 10

@@ -15,6 +15,13 @@ test:
 production:
   # Redis (single instance)
   url: unix:/var/run/redis/redis.sock
+  # The size of the connection pool when connecting to Redis from different execution contexts.
+  # Leave unset to let the application choose defaults for you based on the concurrency level of 
+  # those components. Values here are per-process.
+  #
+  # connection_pool_size:
+    # web: 5 # for rails-web processes (unicorn or puma)
+    # sidekiq: 5 # for sidekiq processes
   ##
   # Redis + Sentinel (for HA)
   #
