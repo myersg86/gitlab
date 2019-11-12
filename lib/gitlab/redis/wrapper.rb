@@ -10,6 +10,7 @@ module Gitlab
     class Wrapper
       DEFAULT_REDIS_URL = 'redis://localhost:6379'
       REDIS_CONFIG_ENV_VAR_NAME = 'GITLAB_REDIS_CONFIG_FILE'
+      CONN_POOL_SIZE_FACTOR = 1.5
 
       class << self
         delegate :params, :url, to: :new
@@ -20,7 +21,7 @@ module Gitlab
         end
 
         def pool_size
-          user_specified_pool_size || default_pool_size
+          user_specified_pool_size || (CONN_POOL_SIZE_FACTOR * default_pool_size).round
         end
 
         def _raw_config

@@ -142,8 +142,8 @@ RSpec.shared_examples "redis_shared_examples" do
       let(:config_file_name) { config_without_pool_size }
 
       context 'when running on unicorn' do
-        it 'uses a connection pool size of 1' do
-          expect(described_class.pool_size).to eq(1)
+        it 'uses a connection pool size of round(1 + 50%)' do
+          expect(described_class.pool_size).to eq(2)
         end
       end
 
@@ -156,8 +156,8 @@ RSpec.shared_examples "redis_shared_examples" do
           stub_const("Puma", puma)
         end
 
-        it 'uses a connection pool size based on the maximum number of puma threads' do
-          expect(described_class.pool_size).to eq(8)
+        it 'uses a size of round(worker_threads + 50%)' do
+          expect(described_class.pool_size).to eq(12)
         end
       end
 
@@ -167,8 +167,8 @@ RSpec.shared_examples "redis_shared_examples" do
           allow(Sidekiq).to receive(:options).and_return({ concurrency: 10 })
         end
 
-        it 'uses a connection pool size based on the concurrency of the worker' do
-          expect(described_class.pool_size).to eq(10)
+        it 'uses a size of round(worker_threads + 50%)' do
+          expect(described_class.pool_size).to eq(15)
         end
       end
     end
