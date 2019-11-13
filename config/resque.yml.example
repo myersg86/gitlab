@@ -20,8 +20,9 @@ production:
   # those components. Values here are per-process.
   #
   # connection_pool_size:
-    # web: 5 # for rails-web processes (unicorn or puma)
-    # sidekiq: 5 # for sidekiq processes
+    # unicorn: 1 # Unicorn is single-threaded; one connection per worker should be sufficient
+    # puma: 5 # Puma is multi-threaded; this should be tuned in line with Puma concurrency
+    # sidekiq: 5 # Sidekiq is multi-threaded; this should be tuned in line with Sidekiq concurrency
   ##
   # Redis + Sentinel (for HA)
   #

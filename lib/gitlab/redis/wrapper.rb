@@ -85,8 +85,16 @@ module Gitlab
 
         # connection pool size as specified in resque.yml
         def user_specified_pool_size
-          key = sidekiq? ? :sidekiq : :web
-          params[:connection_pool_size]&.fetch(key, nil)
+          config_key =
+            if sidekiq?
+              :sidekiq
+            elsif puma?
+              :puma
+            else
+              :unicorn
+            end
+
+          params[:connection_pool_size]&.fetch(config_key, nil)
         end
 
         # connection pool size based on the concurrency level of the current execution context
