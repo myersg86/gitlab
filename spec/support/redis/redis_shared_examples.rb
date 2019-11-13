@@ -119,7 +119,7 @@ RSpec.shared_examples "redis_shared_examples" do
       let(:redis_pool) { instance_double(Gitlab::Redis::Wrapper::RedisConnectionPool) }
 
       RSpec::Matchers.define :only_supported_config do
-        match { |actual| (Set.new(actual.keys) - Gitlab::Redis::Wrapper::REDIS_ALLOWED_CONFIG_KEYS).empty? }
+        match { |actual| actual.keys.none? { |k| Gitlab::Redis::Wrapper::CUSTOM_CONFIG_KEYS.include?(k) } }
       end
 
       before do
