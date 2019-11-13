@@ -2,7 +2,6 @@
 import { omit } from 'underscore';
 import { GlEmptyState, GlPagination, GlSkeletonLoading } from '@gitlab/ui';
 import flash from '~/flash';
-import axios from '~/lib/utils/axios_utils';
 import { scrollToElement, urlParamsToObject } from '~/lib/utils/common_utils';
 import { __ } from '~/locale';
 import initManualOrdering from '~/manual_ordering';
@@ -15,9 +14,11 @@ import {
   LOADING_LIST_ITEMS_LENGTH,
 } from '../constants';
 import issueableEventHub from '../eventhub';
+import store from '../store';
 
 export default {
   LOADING_LIST_ITEMS_LENGTH,
+  store,
   components: {
     GlEmptyState,
     GlPagination,
@@ -154,6 +155,14 @@ export default {
         this.$delete(this.selection, id);
       }
     },
+    generateParams(pageToFetch) {
+      return {
+        ...this.filters,
+        with_labels_details: true,
+        page: pageToFetch || this.page,
+        per_page: this.itemsPerPage,
+      };
+    },
     fetchIssuables(pageToFetch) {
       this.loading = true;
 
@@ -161,15 +170,10 @@ export default {
 
       this.setFilters();
 
-      return axios
-        .get(this.endpoint, {
-          params: {
-            ...this.filters,
-
-            with_labels_details: true,
-            page: pageToFetch || this.page,
-            per_page: this.itemsPerPage,
-          },
+      return this.$store
+        .dispatch('fetchIssuables', {
+          endpoint: this.endpoint,
+          params: this.generateParams(pageToFetch),
         })
         .then(response => {
           this.loading = false;
@@ -179,7 +183,6 @@ export default {
         })
         .catch(() => {
           this.loading = false;
-          return flash(__('An error occurred while loading issues'));
         });
     },
     getQueryObject() {
