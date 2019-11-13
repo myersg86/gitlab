@@ -47,8 +47,8 @@ in multiple ways:
 - Auto DevOps works with any Kubernetes cluster; you're not limited to running
   on GitLab's infrastructure. (Note that many features also work without Kubernetes).
 - There is no additional cost (no markup on the infrastructure costs), and you
-  can use a self-hosted Kubernetes cluster or Containers as a Service on any
-  public cloud (for example, [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/)).
+  can use a self-hosted Kubernetes cluster or Kubernetes Containers as a Service on any
+  public cloud (for example, [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/), [AWS Elastic Kubernetes Service](https://aws.amazon.com/eks/)).
 - Auto DevOps has more features including security testing, performance testing,
   and code quality testing.
 - Auto DevOps offers an incremental graduation path. If you need advanced customizations,
