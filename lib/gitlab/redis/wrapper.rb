@@ -25,6 +25,31 @@ module Gitlab
         end
       end
 
+      class PoolConfig
+        def user_specified_pool_size(params)
+          config_key = self.class.name.demodulize.gsub(/Config/, '').downcase.to_sym
+          params[:connection_pool_size]&.fetch(config_key, nil)
+        end
+      end
+
+      class SidekiqConfig < PoolConfig
+        def default_pool_size
+          Sidekiq.options[:concurrency]
+        end
+      end
+
+      class PumaConfig < PoolConfig
+        def default_pool_size
+          Puma.cli_config.options[:max_threads]
+        end
+      end
+
+      class UnicornConfig < PoolConfig
+        def default_pool_size
+          1
+        end
+      end
+
       class << self
         delegate :params, :url, to: :new
 
@@ -38,7 +63,8 @@ module Gitlab
         end
 
         def pool_size
-          user_specified_pool_size || (CONN_POOL_SIZE_FACTOR * default_pool_size).round
+          pool_config.user_specified_pool_size(params) ||
+            (CONN_POOL_SIZE_FACTOR * pool_config.default_pool_size).round
         end
 
         def _raw_config
@@ -83,37 +109,22 @@ module Gitlab
 
         private
 
-        # connection pool size as specified in resque.yml
-        def user_specified_pool_size
-          config_key =
-            if sidekiq?
-              :sidekiq
-            elsif puma?
-              :puma
-            else
-              :unicorn
-            end
-
-          params[:connection_pool_size]&.fetch(config_key, nil)
-        end
-
-        # connection pool size based on the concurrency level of the current execution context
-        def default_pool_size
-          if sidekiq?
-            Sidekiq.options[:concurrency]
-          elsif puma?
-            Puma.cli_config.options[:max_threads]
-          else
-            1 # Unicorn
-          end
-        end
-
         def sidekiq?
           Sidekiq.server?
         end
 
         def puma?
           defined?(::Puma)
+        end
+
+        def pool_config
+          if sidekiq?
+            SidekiqConfig.new
+          elsif puma?
+            PumaConfig.new
+          else
+            UnicornConfig.new
+          end
         end
       end
 
