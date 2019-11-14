@@ -4,7 +4,7 @@
 # please require all dependencies below:
 require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/module/delegation'
-require_relative 'redis_connection_pool'
+require_dependency 'lib/gitlab/redis/redis_connection_pool'
 
 module Gitlab
   module Redis
