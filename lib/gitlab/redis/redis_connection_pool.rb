@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'connection_pool_config'
+
 module Gitlab
   module Redis
     class RedisConnectionPool
@@ -19,13 +21,15 @@ module Gitlab
 
       # TODO: this should move out of here as part of
       # https://gitlab.com/gitlab-org/gitlab/issues/35170
-      def self.new_pool_config(connection_pool_config)
+      def self.new_pool_config(options)
         if Sidekiq.server?
-          SidekiqConfig.new(connection_pool_config)
+          Gitlab::Redis::SidekiqConfig.new(options)
+        elsif defined?(::Unicorn)
+          Gitlab::Redis::UnicornConfig.new(options)
         elsif defined?(::Puma)
-          PumaConfig.new(connection_pool_config)
+          Gitlab::Redis::PumaConfig.new(options)
         else
-          UnicornConfig.new(connection_pool_config)
+          Gitlab::Redis::DefaultConfig.new(options)
         end
       end
 
@@ -44,45 +48,6 @@ module Gitlab
 
       def with_redis
         @conn_pool.with { |redis| yield redis }
-      end
-    end
-
-    class PoolConfig
-      attr_reader :user_specified_pool_size
-
-      def initialize(options)
-        config_key = self.class.name.demodulize.gsub(/Config/, '').downcase.to_sym
-        @user_specified_pool_size = options[config_key]
-      end
-    end
-
-    class SidekiqConfig < PoolConfig
-      def initialize(options)
-        super
-      end
-
-      def default_pool_size
-        Sidekiq.options[:concurrency]
-      end
-    end
-
-    class PumaConfig < PoolConfig
-      def initialize(options)
-        super
-      end
-
-      def default_pool_size
-        Puma.cli_config.options[:max_threads]
-      end
-    end
-
-    class UnicornConfig < PoolConfig
-      def initialize(options)
-        super
-      end
-
-      def default_pool_size
-        1
       end
     end
   end

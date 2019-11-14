@@ -28,7 +28,8 @@ describe Gitlab::Redis::RedisConnectionPool do
       let(:options) do
         {
           connection_pool_size: {
-            unicorn: 1,
+            default: 1,
+            unicorn: 2,
             puma: 5,
             sidekiq: 10
           }
@@ -37,8 +38,12 @@ describe Gitlab::Redis::RedisConnectionPool do
       subject { described_class.new(options) }
 
       context 'for unicorn' do
+        before do
+          stub_unicorn
+        end
+
         it 'uses the given pool size' do
-          expect(subject.size).to eq(1)
+          expect(subject.size).to eq(2)
         end
       end
 
@@ -59,6 +64,12 @@ describe Gitlab::Redis::RedisConnectionPool do
 
         it 'uses the given pool size' do
           expect(subject.size).to eq(10)
+        end
+      end
+
+      context 'for default' do
+        it 'uses the given pool size' do
+          expect(subject.size).to eq(1)
         end
       end
     end
@@ -91,6 +102,12 @@ describe Gitlab::Redis::RedisConnectionPool do
           expect(subject.size).to eq(15)
         end
       end
+
+      context 'for all other cases' do
+        it 'uses a size of round(1 + 50%)' do
+          expect(subject.size).to eq(2)
+        end
+      end
     end
 
     private
@@ -108,6 +125,12 @@ describe Gitlab::Redis::RedisConnectionPool do
       allow(sidekiq).to receive(:options).and_return(options)
       stub_const("Sidekiq", sidekiq)
       sidekiq
+    end
+
+    def stub_unicorn(options = {})
+      unicorn = double('Unicorn') # can't use class_double, as Unicorn type not available in test env
+      stub_const("Unicorn", unicorn)
+      unicorn
     end
   end
 end
