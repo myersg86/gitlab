@@ -4,67 +4,23 @@
 # please require all dependencies below:
 require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/module/delegation'
+require_relative 'redis_connection_pool'
 
 module Gitlab
   module Redis
     class Wrapper
       DEFAULT_REDIS_URL = 'redis://localhost:6379'
       REDIS_CONFIG_ENV_VAR_NAME = 'GITLAB_REDIS_CONFIG_FILE'
-      CONN_POOL_SIZE_FACTOR = 1.5
-      # Config keys that are not understood by the redis-client gem and should be
-      # removed before passing configuration parsed from resque.yml
-      CUSTOM_CONFIG_KEYS = Set[:connection_pool_size]
-
-      class RedisConnectionPool
-        def initialize(pool_size, redis_params)
-          @conn_pool = ConnectionPool.new(size: pool_size) { ::Redis.new(redis_params) }
-        end
-
-        def with_redis
-          @conn_pool.with { |redis| yield redis }
-        end
-      end
-
-      class PoolConfig
-        def user_specified_pool_size(params)
-          config_key = self.class.name.demodulize.gsub(/Config/, '').downcase.to_sym
-          params[:connection_pool_size]&.fetch(config_key, nil)
-        end
-      end
-
-      class SidekiqConfig < PoolConfig
-        def default_pool_size
-          Sidekiq.options[:concurrency]
-        end
-      end
-
-      class PumaConfig < PoolConfig
-        def default_pool_size
-          Puma.cli_config.options[:max_threads]
-        end
-      end
-
-      class UnicornConfig < PoolConfig
-        def default_pool_size
-          1
-        end
-      end
 
       class << self
         delegate :params, :url, to: :new
 
         def with(recreate_pool: false)
           if recreate_pool || @pool.nil?
-            valid_redis_params = params.reject { |k, v| CUSTOM_CONFIG_KEYS.include?(k) }
-            @pool = RedisConnectionPool.new(pool_size, valid_redis_params)
+            @pool = Gitlab::Redis::RedisConnectionPool.new(params)
           end
 
           @pool.with_redis { |redis| yield redis }
-        end
-
-        def pool_size
-          pool_config.user_specified_pool_size(params) ||
-            (CONN_POOL_SIZE_FACTOR * pool_config.default_pool_size).round
         end
 
         def _raw_config
@@ -105,26 +61,6 @@ module Gitlab
 
           # nil will force use of DEFAULT_REDIS_URL when config file is absent
           nil
-        end
-
-        private
-
-        def sidekiq?
-          Sidekiq.server?
-        end
-
-        def puma?
-          defined?(::Puma)
-        end
-
-        def pool_config
-          if sidekiq?
-            SidekiqConfig.new
-          elsif puma?
-            PumaConfig.new
-          else
-            UnicornConfig.new
-          end
         end
       end
 
