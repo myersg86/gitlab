@@ -1,6 +1,7 @@
 <script>
 import { omit } from 'underscore';
 import { GlEmptyState, GlPagination, GlSkeletonLoading } from '@gitlab/ui';
+import { mapActions, mapState, mapGetters } from 'vuex';
 import flash from '~/flash';
 import { scrollToElement, urlParamsToObject } from '~/lib/utils/common_utils';
 import { __ } from '~/locale';
@@ -55,14 +56,16 @@ export default {
     return {
       filters: {},
       isBulkEditing: false,
-      issuables: [],
-      loading: false,
-      page: 1,
       selection: {},
-      totalItems: 0,
     };
   },
   computed: {
+    ...mapState([
+      'issuables',
+      'loading',
+      'totalItems',
+      'page',
+    ]),
     allIssuablesSelected() {
       // WARNING: Because we are only keeping track of selected values
       // this works, we will need to rethink this if we start tracking
@@ -156,6 +159,7 @@ export default {
       }
     },
     generateParams(pageToFetch) {
+      console.log(pageToFetch)
       return {
         ...this.filters,
         with_labels_details: true,
@@ -164,25 +168,15 @@ export default {
       };
     },
     fetchIssuables(pageToFetch) {
-      this.loading = true;
-
       this.clearSelection();
 
       this.setFilters();
-
+      // this is returning the same thing every time?
+      // console.log(this.generateParams(pageToFetch))
       return this.$store
         .dispatch('fetchIssuables', {
           endpoint: this.endpoint,
           params: this.generateParams(pageToFetch),
-        })
-        .then(response => {
-          this.loading = false;
-          this.issuables = response.data;
-          this.totalItems = Number(response.headers['x-total']);
-          this.page = Number(response.headers['x-page']);
-        })
-        .catch(() => {
-          this.loading = false;
         });
     },
     getQueryObject() {

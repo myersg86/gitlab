@@ -1,3 +1,6 @@
 export default () => ({
-  loading: false
+  loading: false,
+  issuables: [],
+  totalItems: 0,
+  page: 1,
 });
