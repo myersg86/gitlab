@@ -15,11 +15,12 @@ module Gitlab
       class << self
         delegate :params, :url, to: :new
 
-        def with(recreate_pool: false)
-          if recreate_pool || @pool.nil?
-            @pool = Gitlab::Redis::RedisConnectionPool.new(params)
-          end
+        def ensure_initialized!
+          @pool ||= Gitlab::Redis::RedisConnectionPool.new(params)
+        end
 
+        def with
+          ensure_initialized!
           @pool.with_redis { |redis| yield redis }
         end
 
