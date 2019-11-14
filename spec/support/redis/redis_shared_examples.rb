@@ -114,6 +114,12 @@ RSpec.shared_examples "redis_shared_examples" do
     end
   end
 
+  describe '.pool_size' do
+    it 'returns the size of the underlying connection pool' do
+      expect(described_class.pool_size).to be > 0
+    end
+  end
+
   describe '#sentinels' do
     subject { described_class.new(Rails.env).sentinels }
 

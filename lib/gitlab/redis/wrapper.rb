@@ -24,6 +24,11 @@ module Gitlab
           @pool.with_redis { |redis| yield redis }
         end
 
+        def pool_size
+          ensure_initialized!
+          @pool.size
+        end
+
         def _raw_config
           return @_raw_config if defined?(@_raw_config)
 
