@@ -55,17 +55,11 @@ export default {
   data() {
     return {
       filters: {},
-      selection: {},
     };
   },
   computed: {
-    ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing']),
-    allIssuablesSelected() {
-      // WARNING: Because we are only keeping track of selected values
-      // this works, we will need to rethink this if we start tracking
-      // [id]: false for not selected values.
-      return this.issuables.length === Object.keys(this.selection).length;
-    },
+    ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing', 'selection']),
+    ...mapGetters(['allIssuablesSelected']),
     emptyState() {
       if (this.issuables.length) {
         return {}; // Empty state shouldn't be shown here
@@ -134,24 +128,9 @@ export default {
     issueableEventHub.$off('issuables:toggleBulkEdit');
   },
   methods: {
-    ...mapActions(['setBulkEditing', 'getIssuables']),
+    ...mapActions(['setBulkEditing', 'getIssuables', 'clearSelection', 'selectAllOnPaginatedPage', 'setSelectId']),
     isSelected(issuableId) {
       return Boolean(this.selection[issuableId]);
-    },
-    setSelection(ids) {
-      ids.forEach(id => {
-        this.select(id, true);
-      });
-    },
-    clearSelection() {
-      this.selection = {};
-    },
-    select(id, isSelect = true) {
-      if (isSelect) {
-        this.$set(this.selection, id, true);
-      } else {
-        this.$delete(this.selection, id);
-      }
     },
     generateParams(pageToFetch) {
       return {
@@ -182,15 +161,15 @@ export default {
     },
     onSelectAll() {
       if (this.allIssuablesSelected) {
-        this.selection = {};
+        this.clearSelection();
       } else {
-        this.setSelection(this.issuables.map(({ id }) => id));
+        this.selectAllOnPaginatedPage();
       }
     },
     onSelectIssuable({ issuable, selected }) {
       if (!this.canBulkEdit) return;
 
-      this.select(issuable.id, selected);
+      this.setSelectId({ id: issuable.id, selected })
     },
     setFilters() {
       const {
