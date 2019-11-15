@@ -44,7 +44,7 @@ export default {
 };
 </script>
 <template>
-  <code class="job-log d-block">
+  <code class="job-log d-block js-build-trace qa-build-trace">
     <template v-for="(section, index) in trace">
       <collpasible-log-section
         v-if="section.isHeader"

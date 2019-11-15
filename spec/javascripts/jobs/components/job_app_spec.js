@@ -459,7 +459,13 @@ describe('Job App ', () => {
       it('appends the log content to the existing one', done => {
         setupAndMount({
           traceData: {
-            html: '<span>More<span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'More' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'running',
             state: 'newstate',
             append: true,
@@ -467,7 +473,13 @@ describe('Job App ', () => {
           },
         })
           .then(() => {
-            vm.$store.state.trace = 'Update';
+            vm.$store.state.trace = [
+              {
+                offset: 1,
+                content: [{ text: 'Update' }],
+                lineNumber: 1,
+              },
+            ];
 
             return vm.$nextTick();
           })
@@ -483,7 +495,13 @@ describe('Job App ', () => {
       it('replaces the trace', done => {
         setupAndMount({
           traceData: {
-            html: '<span>Different<span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Different' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'running',
             append: false,
             complete: true,
@@ -507,7 +525,13 @@ describe('Job App ', () => {
       describe('when size is less than total', () => {
         it('shows information about truncated log', done => {
           mock.onGet(`${props.pagePath}/trace.json`).reply(200, {
-            html: '<span>Update</span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Update' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'success',
             append: false,
             size: 50,
@@ -517,7 +541,13 @@ describe('Job App ', () => {
 
           setupAndMount({
             traceData: {
-              html: '<span>Update</span>',
+              lines: [
+                {
+                  offset: 0,
+                  content: [{ text: 'Update' }],
+                  lineNumber: 0,
+                },
+              ],
               status: 'success',
               append: false,
               size: 50,
@@ -539,7 +569,13 @@ describe('Job App ', () => {
         it('does not show the truncated information', done => {
           setupAndMount({
             traceData: {
-              html: '<span>Update</span>',
+              lines: [
+                {
+                  offset: 0,
+                  content: [{ text: 'Update' }],
+                  lineNumber: 0,
+                },
+              ],
               status: 'success',
               append: false,
               size: 100,
@@ -562,7 +598,13 @@ describe('Job App ', () => {
       beforeEach(done => {
         setupAndMount({
           traceData: {
-            html: '<span>Update</span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Update' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'success',
             append: false,
             size: 50,

@@ -5,7 +5,7 @@ module QA::Page
     class Show < QA::Page::Base
       include Component::CiBadgeLink
 
-      view 'app/assets/javascripts/jobs/components/job_log.vue' do
+      view 'app/assets/javascripts/jobs/components/log/log.vue' do
         element :build_trace
       end
 

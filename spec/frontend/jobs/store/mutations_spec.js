@@ -5,8 +5,12 @@ import * as types from '~/jobs/store/mutation_types';
 describe('Jobs Store Mutations', () => {
   let stateCopy;
 
-  const html =
-    'I, [2018-08-17T22:57:45.707325 #1841]  INFO -- : Writing /builds/ab89e95b0fa0b9272ea0c797b76908f24d36992630e9325273a4ce3.png<br>I';
+  const log = [
+    {
+      offset: 0,
+      content: [{ text: 'Running with gitlab-runner 12.5.0-rc1 (b295d93b)' }],
+    },
+  ];
 
   beforeEach(() => {
     stateCopy = state();
@@ -67,91 +71,74 @@ describe('Jobs Store Mutations', () => {
       });
     });
 
-    it('sets trace, trace size and isTraceComplete', () => {
+    it('sets trace size and isTraceComplete', () => {
       mutations[types.RECEIVE_TRACE_SUCCESS](stateCopy, {
         append: true,
-        html,
+        lines: log,
         size: 511846,
         complete: true,
-        lines: [],
       });
 
-      expect(stateCopy.trace).toEqual(html);
       expect(stateCopy.traceSize).toEqual(511846);
       expect(stateCopy.isTraceComplete).toEqual(true);
     });
 
-    describe('with new job log', () => {
-      let stateWithNewLog;
-      beforeEach(() => {
-        gon.features = gon.features || {};
-        gon.features.jobLogJson = true;
-
-        stateWithNewLog = state();
-      });
-
-      afterEach(() => {
-        gon.features.jobLogJson = false;
-      });
-
-      describe('log.lines', () => {
-        describe('when append is true', () => {
-          it('sets the parsed log ', () => {
-            mutations[types.RECEIVE_TRACE_SUCCESS](stateWithNewLog, {
-              append: true,
-              size: 511846,
-              complete: true,
-              lines: [
-                {
-                  offset: 1,
-                  content: [{ text: 'Running with gitlab-runner 11.12.1 (5a147c92)' }],
-                },
-              ],
-            });
-
-            expect(stateWithNewLog.trace).toEqual([
+    describe('log.lines', () => {
+      describe('when append is true', () => {
+        it('sets the parsed log ', () => {
+          mutations[types.RECEIVE_TRACE_SUCCESS](stateCopy, {
+            append: true,
+            size: 511846,
+            complete: true,
+            lines: [
               {
                 offset: 1,
                 content: [{ text: 'Running with gitlab-runner 11.12.1 (5a147c92)' }],
-                lineNumber: 0,
               },
-            ]);
+            ],
           });
+
+          expect(stateCopy.trace).toEqual([
+            {
+              offset: 1,
+              content: [{ text: 'Running with gitlab-runner 11.12.1 (5a147c92)' }],
+              lineNumber: 0,
+            },
+          ]);
         });
+      });
 
-        describe('when it is defined', () => {
-          it('sets the parsed log ', () => {
-            mutations[types.RECEIVE_TRACE_SUCCESS](stateWithNewLog, {
-              append: false,
-              size: 511846,
-              complete: true,
-              lines: [
-                { offset: 0, content: [{ text: 'Running with gitlab-runner 11.11.1 (5a147c92)' }] },
-              ],
-            });
-
-            expect(stateWithNewLog.trace).toEqual([
-              {
-                offset: 0,
-                content: [{ text: 'Running with gitlab-runner 11.11.1 (5a147c92)' }],
-                lineNumber: 0,
-              },
-            ]);
+      describe('when it is defined', () => {
+        it('sets the parsed log ', () => {
+          mutations[types.RECEIVE_TRACE_SUCCESS](stateCopy, {
+            append: false,
+            size: 511846,
+            complete: true,
+            lines: [
+              { offset: 0, content: [{ text: 'Running with gitlab-runner 11.11.1 (5a147c92)' }] },
+            ],
           });
+
+          expect(stateCopy.trace).toEqual([
+            {
+              offset: 0,
+              content: [{ text: 'Running with gitlab-runner 11.11.1 (5a147c92)' }],
+              lineNumber: 0,
+            },
+          ]);
         });
+      });
 
-        describe('when it is null', () => {
-          it('sets the default value', () => {
-            mutations[types.RECEIVE_TRACE_SUCCESS](stateWithNewLog, {
-              append: true,
-              html,
-              size: 511846,
-              complete: false,
-              lines: null,
-            });
-
-            expect(stateWithNewLog.trace).toEqual([]);
+      describe('when it is null', () => {
+        it('sets the default value', () => {
+          mutations[types.RECEIVE_TRACE_SUCCESS](stateCopy, {
+            append: true,
+            size: 511846,
+            complete: false,
+            lines: null,
           });
+
+          expect(stateCopy.trace).toEqual([]);
         });
       });
     });
