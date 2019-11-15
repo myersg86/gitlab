@@ -4,3 +4,5 @@ export const allIssuablesSelected = (state) => {
   // [id]: false for not selected values.
   return state.issuables.length === Object.keys(state.selection).length;
 };
+
+export const isSelectedIssuable = (state) => id => Boolean(state.selection[id]);

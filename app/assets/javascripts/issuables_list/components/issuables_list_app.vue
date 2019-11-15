@@ -59,7 +59,7 @@ export default {
   },
   computed: {
     ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing', 'selection']),
-    ...mapGetters(['allIssuablesSelected']),
+    ...mapGetters(['allIssuablesSelected', 'isSelectedIssuable']),
     emptyState() {
       if (this.issuables.length) {
         return {}; // Empty state shouldn't be shown here
@@ -129,9 +129,6 @@ export default {
   },
   methods: {
     ...mapActions(['setBulkEditing', 'getIssuables', 'clearSelection', 'selectAllOnPaginatedPage', 'setSelectId']),
-    isSelected(issuableId) {
-      return Boolean(this.selection[issuableId]);
-    },
     generateParams(pageToFetch) {
       return {
         ...this.filters,
@@ -218,7 +215,7 @@ export default {
         :class="{ 'user-can-drag': isManualOrdering }"
         :issuable="issuable"
         :is-bulk-editing="isBulkEditing"
-        :selected="isSelected(issuable.id)"
+        :selected="isSelectedIssuable(issuable.id)"
         :base-url="baseUrl"
         @select="onSelectIssuable"
       />
