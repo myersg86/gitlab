@@ -11,9 +11,6 @@ class Projects::JobsController < Projects::ApplicationController
   before_action :authorize_erase_build!, only: [:erase]
   before_action :authorize_use_build_terminal!, only: [:terminal, :terminal_websocket_authorize]
   before_action :verify_api_request!, only: :terminal_websocket_authorize
-  before_action only: [:show] do
-    push_frontend_feature_flag(:job_log_json, project, default_enabled: true)
-  end
 
   layout 'project'
 
@@ -51,17 +48,19 @@ class Projects::JobsController < Projects::ApplicationController
     build.trace.read do |stream|
       respond_to do |format|
         format.json do
+<<<<<<< HEAD
           build.trace.being_watched!
 
           # TODO: when the feature flag is removed we should not pass
           # content_format to serialize method.
           content_format = Feature.enabled?(:job_log_json, @project, default_enabled: true) ? :json : :html
 
+=======
+>>>>>>> Remove feature flag for new job log
           build_trace = Ci::BuildTrace.new(
             build: @build,
             stream: stream,
-            state: params[:state],
-            content_format: content_format)
+            state: params[:state])
 
           render json: BuildTraceSerializer
             .new(project: @project, current_user: @current_user)

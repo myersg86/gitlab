@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import { mountComponentWithStore } from 'spec/helpers/vue_mount_component_helper';
-import component from '~/jobs/components/job_log.vue';
+import component from '~/jobs/components/log/log.vue';
 import createStore from '~/jobs/store';
 import { resetStore } from '../store/helpers';
 

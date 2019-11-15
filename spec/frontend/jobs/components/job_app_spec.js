@@ -402,7 +402,13 @@ describe('Job App', () => {
       it('appends the log content to the existing one', () =>
         setupAndMount({
           traceData: {
-            html: '<span>More<span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'More' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'running',
             state: 'newstate',
             append: true,
@@ -428,7 +434,13 @@ describe('Job App', () => {
       it('replaces the trace', () =>
         setupAndMount({
           traceData: {
-            html: '<span>Different<span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Different' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'running',
             append: false,
             complete: true,
@@ -447,7 +459,13 @@ describe('Job App', () => {
       describe('when size is less than total', () => {
         it('shows information about truncated log', () => {
           mock.onGet(`${props.pagePath}/trace.json`).reply(200, {
-            html: '<span>Update</span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Update' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'success',
             append: false,
             size: 50,
@@ -457,7 +475,13 @@ describe('Job App', () => {
 
           return setupAndMount({
             traceData: {
-              html: '<span>Update</span>',
+              lines: [
+                {
+                  offset: 0,
+                  content: [{ text: 'Update' }],
+                  lineNumber: 0,
+                },
+              ],
               status: 'success',
               append: false,
               size: 50,
@@ -479,7 +503,13 @@ describe('Job App', () => {
         it('does not show the truncated information', () =>
           setupAndMount({
             traceData: {
-              html: '<span>Update</span>',
+              lines: [
+                {
+                  offset: 0,
+                  content: [{ text: 'Update' }],
+                  lineNumber: 0,
+                },
+              ],
               status: 'success',
               append: false,
               size: 100,
@@ -501,7 +531,13 @@ describe('Job App', () => {
       beforeEach(() =>
         setupAndMount({
           traceData: {
-            html: '<span>Update</span>',
+            lines: [
+              {
+                offset: 0,
+                content: [{ text: 'Update' }],
+                lineNumber: 0,
+              },
+            ],
             status: 'success',
             append: false,
             size: 50,
