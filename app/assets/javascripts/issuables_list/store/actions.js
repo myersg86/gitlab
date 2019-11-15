@@ -10,10 +10,18 @@ export const setIssuablesLoading = ({ commit }, bool) => {
   commit('SET_ISSUABLES_LOADING', bool)
 };
 
-export const fetchIssuables = ({ dispatch }, { endpoint, params }) => {
+export const setBulkEditing = ({ commit }, bool) => {
+  commit('SET_BULK_EDITING', bool)
+};
+
+export const clearSelection = ({ commit }) => {
+  commit('SET_SELECTION_EMPTY')
+};
+
+export const getIssuables = ({ dispatch }, { endpoint, params }) => {
   dispatch('setIssuablesLoading', true);
 
-  return axios.get(endpoint, params)
+  return axios.get(endpoint, { params })
     .then((data) => {
       dispatch('setIssuablesLoading', false);
       dispatch('fetchIssuabelsSuccess', data);

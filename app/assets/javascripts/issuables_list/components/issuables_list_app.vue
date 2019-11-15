@@ -55,17 +55,11 @@ export default {
   data() {
     return {
       filters: {},
-      isBulkEditing: false,
       selection: {},
     };
   },
   computed: {
-    ...mapState([
-      'issuables',
-      'loading',
-      'totalItems',
-      'page',
-    ]),
+    ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing']),
     allIssuablesSelected() {
       // WARNING: Because we are only keeping track of selected values
       // this works, we will need to rethink this if we start tracking
@@ -131,7 +125,7 @@ export default {
   mounted() {
     if (this.canBulkEdit) {
       this.unsubscribeToggleBulkEdit = issueableEventHub.$on('issuables:toggleBulkEdit', val => {
-        this.isBulkEditing = val;
+        this.setBulkEditing(val);
       });
     }
     this.fetchIssuables();
@@ -140,6 +134,7 @@ export default {
     issueableEventHub.$off('issuables:toggleBulkEdit');
   },
   methods: {
+    ...mapActions(['setBulkEditing', 'getIssuables']),
     isSelected(issuableId) {
       return Boolean(this.selection[issuableId]);
     },
@@ -159,7 +154,6 @@ export default {
       }
     },
     generateParams(pageToFetch) {
-      console.log(pageToFetch)
       return {
         ...this.filters,
         with_labels_details: true,
@@ -171,13 +165,11 @@ export default {
       this.clearSelection();
 
       this.setFilters();
-      // this is returning the same thing every time?
-      // console.log(this.generateParams(pageToFetch))
-      return this.$store
-        .dispatch('fetchIssuables', {
-          endpoint: this.endpoint,
-          params: this.generateParams(pageToFetch),
-        });
+
+      return this.getIssuables({
+        endpoint: this.endpoint,
+        params: this.generateParams(pageToFetch),
+      });
     },
     getQueryObject() {
       return urlParamsToObject(window.location.search);
