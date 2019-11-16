@@ -7,6 +7,7 @@ const SET_SELECTION_EMPTY = 'SET_SELECTION_EMPTY';
 const SET_SELECT = 'SET_SELECT';
 const SET_SELECTED_ID = 'SET_SELECTED_ID';
 const DELETE_SELECTED_ID = 'DELETE_SELECTED_ID';
+const SET_ISSUABLE_FILTERS = 'SET_ISSUABLE_FILTERS';
 
 export default {
   [SET_ISSUABLES_SUCCESS](state, resp) {
@@ -33,5 +34,8 @@ export default {
   },
   [DELETE_SELECTED_ID](state, id) {
     Vue.delete(state.selection, id);
+  },
+  [SET_ISSUABLE_FILTERS](state, filters) {
+    Object.assign(state.filters, { ...filters });
   },
 };

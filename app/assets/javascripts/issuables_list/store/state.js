@@ -5,4 +5,5 @@ export default () => ({
   page: 1,
   isBulkEditing: false,
   selection: {},
+  filters: {},
 });

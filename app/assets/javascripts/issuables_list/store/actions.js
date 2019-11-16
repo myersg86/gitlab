@@ -32,6 +32,28 @@ export const setSelectId = ({ commit }, { id, selected = true }) => {
   }
 };
 
+export const setFilters = ({ commit }, { queryObj, sort }) => {
+  const {
+    label_name: labels,
+    milestone_title: milestoneTitle,
+    ...filters
+  } = queryObj;
+
+  if (milestoneTitle) {
+    filters.milestone = milestoneTitle;
+  }
+  if (Array.isArray(labels)) {
+    filters.labels = labels.join(',');
+  }
+  if (!filters.state) {
+    filters.state = 'opened';
+  }
+
+  Object.assign(filters, sort);
+
+  commit('SET_ISSUABLE_FILTERS', filters)
+};
+
 export const getIssuables = ({ dispatch }, { endpoint, params }) => {
   dispatch('setIssuablesLoading', true);
 

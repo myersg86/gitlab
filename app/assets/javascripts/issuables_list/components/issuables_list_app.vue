@@ -52,13 +52,8 @@ export default {
       default: '',
     },
   },
-  data() {
-    return {
-      filters: {},
-    };
-  },
   computed: {
-    ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing', 'selection']),
+    ...mapState(['issuables', 'loading', 'totalItems', 'page', 'isBulkEditing', 'selection', 'filters']),
     ...mapGetters(['allIssuablesSelected', 'isSelectedIssuable']),
     emptyState() {
       if (this.issuables.length) {
@@ -128,7 +123,14 @@ export default {
     issueableEventHub.$off('issuables:toggleBulkEdit');
   },
   methods: {
-    ...mapActions(['setBulkEditing', 'getIssuables', 'clearSelection', 'selectAllOnPaginatedPage', 'setSelectId']),
+    ...mapActions([
+      'setBulkEditing',
+      'getIssuables',
+      'clearSelection',
+      'selectAllOnPaginatedPage',
+      'setSelectId',
+      'setFilters',
+    ]),
     generateParams(pageToFetch) {
       return {
         ...this.filters,
@@ -140,7 +142,11 @@ export default {
     fetchIssuables(pageToFetch) {
       this.clearSelection();
 
-      this.setFilters();
+      this.setFilters({
+        queryObj: this.getQueryObject(),
+        sort: sortOrderMap[this.sortKey],
+      });
+
 
       return this.getIssuables({
         endpoint: this.endpoint,
@@ -166,28 +172,7 @@ export default {
     onSelectIssuable({ issuable, selected }) {
       if (!this.canBulkEdit) return;
 
-      this.setSelectId({ id: issuable.id, selected })
-    },
-    setFilters() {
-      const {
-        label_name: labels,
-        milestone_title: milestoneTitle,
-        ...filters
-      } = this.getQueryObject();
-
-      if (milestoneTitle) {
-        filters.milestone = milestoneTitle;
-      }
-      if (Array.isArray(labels)) {
-        filters.labels = labels.join(',');
-      }
-      if (!filters.state) {
-        filters.state = 'opened';
-      }
-
-      Object.assign(filters, sortOrderMap[this.sortKey]);
-
-      this.filters = filters;
+      this.setSelectId({ id: issuable.id, selected });
     },
   },
 };
