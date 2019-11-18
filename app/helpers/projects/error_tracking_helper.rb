@@ -18,8 +18,9 @@ module Projects::ErrorTrackingHelper
     opts = [project, issue_id, { format: :json }]
 
     {
-      'issue-details-path' => details_project_error_tracking_index_path(*opts),
-      'issue-stack-trace-path' => stack_trace_project_error_tracking_index_path(*opts)
+      'issue-project-path' => new_namespace_project_issue_path(project),
+      'issue-details-path' => details_namespace_project_error_tracking_index_path(*opts),
+      'issue-stack-trace-path' => stack_trace_namespace_project_error_tracking_index_path(*opts)
     }
   end
 end

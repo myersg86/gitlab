@@ -24,6 +24,10 @@ export default {
   },
   mixins: [timeagoMixin],
   props: {
+    issueProjectPath: {
+      type: String,
+      required: true,
+    },
     issueDetailsPath: {
       type: String,
       required: true,
