@@ -118,7 +118,7 @@ export default class ProjectFindFile {
       }
       const blobItemUrl = `${this.options.blobUrlTemplate}/${filePath}`;
       const encodedBlobItemUrl = `${encodeURI(blobItemUrl)}`
-      const html = ProjectFindFile.makeHtml(filePath, matches, escapedBlobItemUrl);
+      const html = ProjectFindFile.makeHtml(filePath, matches, encodedBlobItemUrl);
       results.push(this.element.find('.tree-table > tbody').append(html));
     }
 
