@@ -204,7 +204,7 @@ module EE
 
     def project_vulnerabilities_endpoint_path(project)
       if ::Feature.enabled?(:first_class_vulnerabilities)
-        project_security_vulnerability_findings_path(project)
+        expose_url(api_v4_projects_vulnerabilities_path(id: @project.id))
       else
         project_security_vulnerabilities_path(project)
       end
