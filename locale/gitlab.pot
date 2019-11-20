@@ -21231,6 +21231,9 @@ msgstr ""
 msgid "already being used for another group or project milestone."
 msgstr ""
 
+msgid "already has a \"created\" issue link"
+msgstr ""
+
 msgid "already shared with this group"
 msgstr ""
 
@@ -21686,6 +21689,9 @@ msgid "from"
 msgstr ""
 
 msgid "group"
+msgstr ""
+
+msgid "has already been linked to another vulnerability"
 msgstr ""
 
 msgid "has already been taken"
