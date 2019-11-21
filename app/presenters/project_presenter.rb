@@ -345,14 +345,15 @@ class ProjectPresenter < Gitlab::View::Presenter::Delegated
     end
   end
 
-  def add_special_file_path(file_name:, commit_message: nil, branch_name: nil)
+  def add_special_file_path(file_name:, commit_message: nil, branch_name: nil, content: "")
     commit_message ||= s_("CommitMessage|Add %{file_name}") % { file_name: file_name }
     project_new_blob_path(
       project,
       project.default_branch || 'master',
       file_name:      file_name,
       commit_message: commit_message,
-      branch_name:    branch_name
+      branch_name:    branch_name,
+      content:        content
     )
   end
 end

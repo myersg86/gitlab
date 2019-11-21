@@ -513,6 +513,9 @@ msgstr[1] ""
 msgid "- show less"
 msgstr ""
 
+msgid ".npmrc"
+msgstr ""
+
 msgid "0 for unlimited"
 msgstr ""
 
@@ -925,6 +928,9 @@ msgid "Add %d issue"
 msgid_plural "Add %d issues"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Add .npmrc"
+msgstr ""
 
 msgid "Add CHANGELOG"
 msgstr ""

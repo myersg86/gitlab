@@ -1,0 +1,6 @@
+---
+title: Allows creation of .npmrc file from presenter page when a package.json file
+  exists
+merge_request: 20625
+author:
+type: added

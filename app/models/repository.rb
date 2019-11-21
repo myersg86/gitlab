@@ -43,7 +43,7 @@ class Repository
                       gitlab_ci_yml branch_names tag_names branch_count
                       tag_count avatar exists? root_ref has_visible_content?
                       issue_template_names merge_request_template_names
-                      metrics_dashboard_paths xcode_project?).freeze
+                      metrics_dashboard_paths xcode_project? npmrc).freeze
 
   # Methods that use cache_method but only memoize the value
   MEMOIZED_CACHED_METHODS = %i(license).freeze
@@ -62,7 +62,8 @@ class Repository
     issue_template: :issue_template_names,
     merge_request_template: :merge_request_template_names,
     metrics_dashboard: :metrics_dashboard_paths,
-    xcode_config: :xcode_project?
+    xcode_config: :xcode_project?,
+    npmrc: :npmrc
   }.freeze
 
   def initialize(full_path, project, disk_path: nil, repo_type: Gitlab::GlRepository::PROJECT)
@@ -656,6 +657,11 @@ class Repository
     file_on_head(:xcode_config, :tree).present?
   end
   cache_method :xcode_project?
+
+  def npmrc
+    file_on_head(:npmrc)
+  end
+  cache_method :npmrc
 
   def head_commit
     @head_commit ||= commit(self.root_ref)
