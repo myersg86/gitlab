@@ -26,6 +26,11 @@ class ServiceResponse
     status == :error
   end
 
+  # for ActiveRecord-related services
+  def record
+    payload[:record]
+  end
+
   private
 
   attr_writer :status, :message, :http_status, :payload
