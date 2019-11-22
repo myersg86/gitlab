@@ -3607,6 +3607,15 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.index ["reply_key"], name: "index_sent_notifications_on_reply_key", unique: true
   end
 
+  create_table "sentry_issues", force: :cascade do |t|
+    t.bigint "issue_id", null: false
+    t.bigint "project_id", null: false
+    t.integer "sentry_issue_identifier"
+    t.string "sentry_event_identifier"
+    t.index ["issue_id"], name: "index_sentry_issues_on_issue_id", unique: true
+    t.index ["project_id"], name: "index_sentry_issues_on_project_id"
+  end
+
   create_table "service_desk_settings", primary_key: "project_id", id: :bigint, default: nil, force: :cascade do |t|
     t.string "issue_template_key", limit: 255
   end
@@ -4660,6 +4669,8 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
   add_foreign_key "scim_oauth_access_tokens", "namespaces", column: "group_id", on_delete: :cascade
   add_foreign_key "self_managed_prometheus_alert_events", "environments", on_delete: :cascade
   add_foreign_key "self_managed_prometheus_alert_events", "projects", on_delete: :cascade
+  add_foreign_key "sentry_issues", "issues", on_delete: :cascade
+  add_foreign_key "sentry_issues", "projects", on_delete: :cascade
   add_foreign_key "service_desk_settings", "projects", on_delete: :cascade
   add_foreign_key "services", "projects", name: "fk_71cce407f9", on_delete: :cascade
   add_foreign_key "slack_integrations", "services", on_delete: :cascade
