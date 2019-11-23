@@ -190,6 +190,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         member do
           get :logs
           get '/pods/(:pod_name)/containers/(:container_name)/logs', to: 'environments#k8s_pod_logs', as: :k8s_pod_logs
+          get '/pods/logs', to: 'environments#k8s_pod_logs', as: :pod_logs
         end
 
         collection do

@@ -29,13 +29,14 @@ module EE
           ::Gitlab::Kubernetes::RolloutStatus.from_deployments(*deployments, pods: pods, legacy_deployments: legacy_deployments)
         end
 
-        def read_pod_logs(environment_id, pod_name, namespace, container: nil)
+        def read_pod_logs(environment_id, pod_names, namespace, container: nil)
           # environment_id is required for use in reactive_cache_updated(),
           # to invalidate the ETag cache.
+
           with_reactive_cache(
             CACHE_KEY_GET_POD_LOG,
             'environment_id' => environment_id,
-            'pod_name' => pod_name,
+            'pod_names' => pod_names,
             'namespace' => namespace,
             'container' => container
           ) do |result|
@@ -47,13 +48,12 @@ module EE
           case request
           when CACHE_KEY_GET_POD_LOG
             container = opts['container']
-            pod_name = opts['pod_name']
+            pod_names = opts['pod_names']
             namespace = opts['namespace']
+            handle_exceptions(_('Pod not found'), pod_names: pod_names, container_name: container) do
+              container ||= container_names_of(pod_names, namespace).first
 
-            handle_exceptions(_('Pod not found'), pod_name: pod_name, container_name: container) do
-              container ||= container_names_of(pod_name, namespace).first
-
-              pod_logs(pod_name, namespace, container: container)
+              pod_logs(pod_names, namespace, container: container)
             end
           end
         end
@@ -71,7 +71,7 @@ module EE
                 ::Gitlab::Routing.url_helpers.k8s_pod_logs_project_environment_path(
                   environment.project,
                   environment,
-                  opts['pod_name'],
+                  opts['pod_names'],
                   opts['container_name'],
                   format: :json
                 )
@@ -82,17 +82,17 @@ module EE
 
         private
 
-        def pod_logs(pod_name, namespace, container: nil)
+        def pod_logs(pod_names, namespace, container: nil)
           logs = if ::Feature.enabled?(:enable_cluster_application_elastic_stack) && elastic_stack_client
-                   elastic_stack_pod_logs(namespace, pod_name, container)
+                   elastic_stack_pod_logs(namespace, pod_names, container)
                  else
-                   platform_pod_logs(namespace, pod_name, container)
+                   platform_pod_logs(namespace, pod_names, container)
                  end
 
           {
             logs: logs,
             status: :success,
-            pod_name: pod_name,
+            pod_names: pod_names,
             container_name: container
           }
         end
@@ -136,12 +136,17 @@ module EE
           }.merge(opts)
         end
 
-        def container_names_of(pod_name, namespace)
-          return [] unless pod_name.present?
+        def container_names_of(pod_names, namespace)
+          return [] unless pod_names.empty?
 
-          pod_details = kubeclient.get_pod(pod_name, namespace)
+          container_names = []
+          pod_names.each do |pod_name|
+            pod_details = kubeclient.get_pod(pod_name, namespace)
 
-          pod_details.spec.containers.collect(&:name)
+            container_names << pod_details.spec.containers.collect(&:name)
+          end
+
+          container_names
         end
 
         def read_deployments(namespace)

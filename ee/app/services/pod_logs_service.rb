@@ -7,9 +7,9 @@ class PodLogsService < ::BaseService
 
   K8S_NAME_MAX_LENGTH = 253
 
-  PARAMS = %w(pod_name container_name).freeze
+  PARAMS = %w(pod_name pod_names container_name).freeze
 
-  SUCCESS_RETURN_KEYS = [:status, :logs, :pod_name, :container_name, :pods].freeze
+  SUCCESS_RETURN_KEYS = [:status, :logs, :pod_names, :container_name, :pods].freeze
 
   steps :check_param_lengths,
     :check_deployment_platform,
@@ -30,18 +30,20 @@ class PodLogsService < ::BaseService
   private
 
   def check_param_lengths(_result)
-    pod_name = params['pod_name'].presence
+    pod_names = Array(params['pod_name']) || params['pod_names']
     container_name = params['container_name'].presence
 
-    if pod_name&.length.to_i > K8S_NAME_MAX_LENGTH
-      return error(_('pod_name cannot be larger than %{max_length}'\
-        ' chars' % { max_length: K8S_NAME_MAX_LENGTH }))
-    elsif container_name&.length.to_i > K8S_NAME_MAX_LENGTH
-      return error(_('container_name cannot be larger than'\
-        ' %{max_length} chars' % { max_length: K8S_NAME_MAX_LENGTH }))
+    pod_names.each do |pod_name|
+      if pod_name&.length.to_i > K8S_NAME_MAX_LENGTH
+        return error(_('pod_name cannot be larger than %{max_length}'\
+          ' chars' % { max_length: K8S_NAME_MAX_LENGTH }))
+      elsif container_name&.length.to_i > K8S_NAME_MAX_LENGTH
+        return error(_('container_name cannot be larger than'\
+          ' %{max_length} chars' % { max_length: K8S_NAME_MAX_LENGTH }))
+      end
     end
 
-    success(pod_name: pod_name, container_name: container_name)
+    success(pod_names: pod_names, container_name: container_name)
   end
 
   def check_deployment_platform(result)
@@ -63,9 +65,11 @@ class PodLogsService < ::BaseService
   def check_pod_name(result)
     # If pod_name is not received as parameter, get the pod logs of the first
     # pod of this environment.
-    result[:pod_name] ||= result[:pods].first
+    if result[:pod_names].empty?
+      result[:pod_names] = Array(result[:pods].first)
+    end
 
-    unless result[:pod_name]
+    if result[:pod_names].empty?
       return error(_('No pods available'))
     end
 
@@ -75,14 +79,14 @@ class PodLogsService < ::BaseService
   def pod_logs(result)
     response = environment.deployment_platform.read_pod_logs(
       environment.id,
-      result[:pod_name],
+      result[:pod_names],
       namespace,
       container: result[:container_name]
     )
 
     return { status: :processing } unless response
 
-    result.merge!(response.slice(:pod_name, :container_name, :logs))
+    result.merge!(response.slice(:pod_names, :container_name, :logs))
 
     if response[:status] == :error
       error(response[:error]).reverse_merge(result)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_15_091425) do
+ActiveRecord::Schema.define(version: 2019_11_19_023952) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
@@ -498,6 +498,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.integer "project_id"
     t.integer "group_id"
     t.string "type", null: false
+    t.string "name", limit: 255
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
     t.index ["group_id"], name: "index_badges_on_group_id"
@@ -850,6 +851,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.index ["project_id", "sha"], name: "index_ci_pipelines_on_project_id_and_sha"
     t.index ["project_id", "source"], name: "index_ci_pipelines_on_project_id_and_source"
     t.index ["project_id", "status", "config_source"], name: "index_ci_pipelines_on_project_id_and_status_and_config_source"
+    t.index ["project_id", "status", "updated_at"], name: "index_ci_pipelines_on_project_id_and_status_and_updated_at"
     t.index ["project_id"], name: "index_ci_pipelines_on_project_id"
     t.index ["status"], name: "index_ci_pipelines_on_status"
     t.index ["user_id"], name: "index_ci_pipelines_on_user_id"
@@ -1435,7 +1437,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.index ["name"], name: "index_environments_on_name_varchar_pattern_ops", opclass: :varchar_pattern_ops
     t.index ["project_id", "name"], name: "index_environments_on_project_id_and_name", unique: true
     t.index ["project_id", "slug"], name: "index_environments_on_project_id_and_slug", unique: true
-    t.index ["project_id", "state"], name: "index_environments_on_project_id_and_state"
+    t.index ["project_id", "state", "environment_type"], name: "index_environments_on_project_id_state_environment_type"
   end
 
   create_table "epic_issues", id: :serial, force: :cascade do |t|
@@ -2049,6 +2051,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.integer "closed_by_id"
     t.integer "state_id", limit: 2, default: 1, null: false
     t.integer "duplicated_to_id"
+    t.integer "promoted_to_epic_id"
     t.index ["author_id"], name: "index_issues_on_author_id"
     t.index ["closed_by_id"], name: "index_issues_on_closed_by_id"
     t.index ["confidential"], name: "index_issues_on_confidential"
@@ -2065,6 +2068,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.index ["project_id", "relative_position", "state_id", "id"], name: "idx_issues_on_project_id_and_rel_position_and_state_id_and_id", order: { id: :desc }
     t.index ["project_id", "updated_at", "id", "state"], name: "index_issues_on_project_id_and_updated_at_and_id_and_state"
     t.index ["project_id", "updated_at", "id", "state_id"], name: "idx_issues_on_project_id_and_updated_at_and_id_and_state_id"
+    t.index ["promoted_to_epic_id"], name: "index_issues_on_promoted_to_epic_id", where: "(promoted_to_epic_id IS NOT NULL)"
     t.index ["relative_position"], name: "index_issues_on_relative_position"
     t.index ["state"], name: "index_issues_on_state"
     t.index ["state_id"], name: "idx_issues_on_state_id"
@@ -3184,7 +3188,6 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.bigint "pool_repository_id"
     t.string "runners_token_encrypted"
     t.string "bfg_object_map"
-    t.boolean "merge_requests_require_code_owner_approval"
     t.boolean "detected_repository_languages"
     t.boolean "merge_requests_disable_committers_approval"
     t.boolean "require_password_to_approve"
@@ -3196,7 +3199,6 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.date "marked_for_deletion_at"
     t.integer "marked_for_deletion_by_user_id"
     t.index "lower((name)::text)", name: "index_projects_on_lower_name"
-    t.index ["archived", "pending_delete", "merge_requests_require_code_owner_approval"], name: "projects_requiring_code_owner_approval", where: "((pending_delete = false) AND (archived = false) AND (merge_requests_require_code_owner_approval = true))"
     t.index ["created_at", "id"], name: "index_projects_on_created_at_and_id"
     t.index ["creator_id"], name: "index_projects_on_creator_id"
     t.index ["description"], name: "index_projects_on_description_trigram", opclass: :gin_trgm_ops, using: :gin
@@ -3628,6 +3630,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
     t.boolean "secret", default: false, null: false
     t.index ["author_id"], name: "index_snippets_on_author_id"
     t.index ["content"], name: "index_snippets_on_content_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["created_at"], name: "index_snippets_on_created_at"
     t.index ["file_name"], name: "index_snippets_on_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["project_id", "visibility_level"], name: "index_snippets_on_project_id_and_visibility_level"
     t.index ["title"], name: "index_snippets_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
@@ -4428,6 +4431,7 @@ ActiveRecord::Schema.define(version: 2019_11_15_091425) do
   add_foreign_key "issue_tracker_data", "services", on_delete: :cascade
   add_foreign_key "issue_user_mentions", "issues", on_delete: :cascade
   add_foreign_key "issue_user_mentions", "notes", on_delete: :cascade
+  add_foreign_key "issues", "epics", column: "promoted_to_epic_id", name: "fk_df75a7c8b8", on_delete: :nullify
   add_foreign_key "issues", "issues", column: "duplicated_to_id", name: "fk_9c4516d665", on_delete: :nullify
   add_foreign_key "issues", "issues", column: "moved_to_id", name: "fk_a194299be1", on_delete: :nullify
   add_foreign_key "issues", "milestones", name: "fk_96b1dd429c", on_delete: :nullify
