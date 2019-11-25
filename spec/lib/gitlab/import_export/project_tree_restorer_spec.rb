@@ -234,6 +234,12 @@ describe Gitlab::ImportExport::ProjectTreeRestorer do
         expect(meetings.first.url).to eq('https://zoom.us/j/123456789')
       end
 
+      it 'restores sentry issues' do
+        sentry_issue = @project.issues.first.sentry_issue
+
+        expect(sentry_issue.sentry_event_identifier).to eq('c5d686df6c741984da5f590aa245ce38')
+      end
+
       context 'Merge requests' do
         it 'always has the new project as a target' do
           expect(MergeRequest.find_by_title('MR1').target_project).to eq(@project)

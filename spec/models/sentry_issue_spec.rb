@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ErrorTracking::SentryIssue do
+describe SentryIssue do
   set(:project) { create(:project) }
   set(:issue) { create(:issue) }
 

@@ -31,8 +31,6 @@ class Issue < ApplicationRecord
   belongs_to :duplicated_to, class_name: 'Issue'
   belongs_to :closed_by, class_name: 'User'
 
-  has_one :sentry_issue, class_name: 'ErrorTracking::SentryIssue'
-
   has_internal_id :iid, scope: :project, init: ->(s) { s&.project&.issues&.maximum(:iid) }
 
   has_many :events, as: :target, dependent: :delete_all # rubocop:disable Cop/ActiveRecordDependent
@@ -44,6 +42,7 @@ class Issue < ApplicationRecord
   has_many :issue_assignees
   has_many :assignees, class_name: "User", through: :issue_assignees
   has_many :zoom_meetings
+  has_one :sentry_issue
 
   validates :project, presence: true
 

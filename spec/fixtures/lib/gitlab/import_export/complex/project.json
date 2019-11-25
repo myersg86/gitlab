@@ -366,7 +366,14 @@
             "type": "ProjectLabel"
           }
         }
-      ]
+      ],
+      "sentry_issue": {
+        "id": 1,
+        "issue_id": 40,
+        "project_id": 5,
+        "sentry_issue_identifier": 1234567891,
+        "sentry_event_identifier": "c5d686df6c741984da5f590aa245ce38"
+      }
     },
     {
       "id": 39,

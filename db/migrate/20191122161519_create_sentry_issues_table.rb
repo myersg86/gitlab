@@ -12,7 +12,7 @@ class CreateSentryIssuesTable < ActiveRecord::Migration[5.2]
       t.references :project,
         foreign_key: { on_delete: :cascade },
         null: false
-      t.integer :sentry_issue_identifier
+      t.bigint :sentry_issue_identifier
       # this is the id of the latest sentry event at the time of gitlab issue creation
       t.string :sentry_event_identifier
     end
