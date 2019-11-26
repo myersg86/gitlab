@@ -96,6 +96,7 @@ schedule:review-build-cng:
     DOMAIN: "-${CI_ENVIRONMENT_SLUG}.${REVIEW_APPS_DOMAIN}"
     GITLAB_HELM_CHART_REF: "v2.5.1"
     GITLAB_EDITION: "ce"
+    HELM_VERSION: "2.14.3"
   environment:
     name: review/${CI_COMMIT_REF_NAME}
     url: https://gitlab-${CI_ENVIRONMENT_SLUG}.${REVIEW_APPS_DOMAIN}
