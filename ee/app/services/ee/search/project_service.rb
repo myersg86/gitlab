@@ -18,6 +18,7 @@ module EE
         )
       end
 
+      override :elasticsearchable_scope
       def elasticsearchable_scope
         project
       end

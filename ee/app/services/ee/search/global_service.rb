@@ -20,6 +20,7 @@ module EE
         )
       end
 
+      override :elasticsearchable_scope
       def elasticsearchable_scope
         nil
       end
