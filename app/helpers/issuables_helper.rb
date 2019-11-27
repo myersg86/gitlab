@@ -282,7 +282,7 @@ module IssuablesHelper
 
     data[:hasClosingMergeRequest] = issuable.merge_requests_count(current_user) != 0 if issuable.is_a?(Issue)
     data[:zoomMeetingUrl] = ZoomMeeting.canonical_meeting_url(issuable) if issuable.is_a?(Issue)
-    data[:sentryIssueIdentifier] = issuable&.sentry_issue&.sentry_issue_identifier if issuable.is_a?(Issue)
+    data[:sentryIssueIdentifier] = SentryIssue.where(issue: issuable).take&.sentry_issue_identifier if issuable.is_a?(Issue)
 
     if parent.is_a?(Group)
       data[:groupPath] = parent.path
