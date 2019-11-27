@@ -692,9 +692,7 @@ ErrorTracking::ProjectErrorTrackingSetting:
 SentryIssue:
 - id
 - issue_id
-- project_id
 - sentry_issue_identifier
-- sentry_event_identifier
 Suggestion:
 - id
 - note_id

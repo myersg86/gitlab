@@ -3610,7 +3610,6 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
   create_table "sentry_issues", force: :cascade do |t|
     t.bigint "issue_id", null: false
     t.bigint "sentry_issue_identifier", null: false
-    t.string "sentry_event_identifier", limit: 255, null: false
     t.index ["issue_id"], name: "index_sentry_issues_on_issue_id", unique: true
   end
 

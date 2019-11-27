@@ -237,7 +237,7 @@ describe Gitlab::ImportExport::ProjectTreeRestorer do
       it 'restores sentry issues' do
         sentry_issue = @project.issues.first.sentry_issue
 
-        expect(sentry_issue.sentry_event_identifier).to eq('c5d686df6c741984da5f590aa245ce38')
+        expect(sentry_issue.sentry_issue_identifier).to eq(1234567891)
       end
 
       context 'Merge requests' do

@@ -37,24 +37,5 @@ describe SentryIssue do
         expect(sentry_issue).not_to be_valid
       end
     end
-
-    describe 'sentry_event_identifier' do
-      it 'passes validation with alphanumeric string' do
-        expect(sentry_issue).to be_valid
-      end
-
-      it 'fails validation when sentry_event_identifier includes non-alphanumeric characters' do
-        sentry_issue.sentry_event_identifier = '-/321<script>/?-/$%'
-        sentry_issue.save
-
-        expect(sentry_issue.errors.messages[:sentry_event_identifier]).to include('alphanumeric characters only')
-      end
-
-      it 'validates sentry_event_identifier presence' do
-        sentry_issue.sentry_event_identifier = nil
-
-        expect(subject).not_to be_valid
-      end
-    end
   end
 end
