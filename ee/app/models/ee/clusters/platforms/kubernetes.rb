@@ -33,7 +33,7 @@ module EE
           # environment_id is required for use in reactive_cache_updated(),
           # to invalidate the ETag cache.
 
-          with_reactive_cache(
+          without_reactive_cache(
             CACHE_KEY_GET_POD_LOG,
             'environment_id' => environment_id,
             'pod_names' => pod_names,
@@ -50,6 +50,7 @@ module EE
             container = opts['container']
             pod_names = opts['pod_names']
             namespace = opts['namespace']
+
             handle_exceptions(_('Pod not found'), pod_names: pod_names, container_name: container) do
               container ||= container_names_of(pod_names, namespace).first
 
@@ -137,7 +138,7 @@ module EE
         end
 
         def container_names_of(pod_names, namespace)
-          return [] unless pod_names.empty?
+          return [] if pod_names.empty?
 
           container_names = []
           pod_names.each do |pod_name|

@@ -124,6 +124,11 @@ module ReactiveCaching
       end
     end
 
+    def without_reactive_cache(*args, &blk)
+      data = self.class.reactive_cache_worker_finder.call(id, *args).calculate_reactive_cache(*args)
+      yield data
+    end
+
     def clear_reactive_cache!(*args)
       Rails.cache.delete(full_reactive_cache_key(*args))
       Rails.cache.delete(alive_reactive_cache_key(*args))
@@ -147,14 +152,6 @@ module ReactiveCaching
     end
 
     private
-
-    def reactive_cache_pry(*args, &blk)
-      data = Rails.cache.fetch(full_reactive_cache_key(*args), expires_in: 5.seconds) do
-        self.class.reactive_cache_worker_finder.call(id, *args).calculate_reactive_cache(*args)
-      end
-
-      yield data
-    end
 
     def refresh_reactive_cache!(*args)
       clear_reactive_cache!(*args)
