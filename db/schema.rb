@@ -506,9 +506,9 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.integer "project_id"
     t.integer "group_id"
     t.string "type", null: false
-    t.string "name", limit: 255
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
+    t.string "name", limit: 255
     t.index ["group_id"], name: "index_badges_on_group_id"
     t.index ["project_id"], name: "index_badges_on_project_id"
   end
@@ -3609,11 +3609,9 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
 
   create_table "sentry_issues", force: :cascade do |t|
     t.bigint "issue_id", null: false
-    t.bigint "project_id", null: false
-    t.bigint "sentry_issue_identifier"
-    t.string "sentry_event_identifier"
+    t.bigint "sentry_issue_identifier", null: false
+    t.string "sentry_event_identifier", limit: 255, null: false
     t.index ["issue_id"], name: "index_sentry_issues_on_issue_id", unique: true
-    t.index ["project_id"], name: "index_sentry_issues_on_project_id"
   end
 
   create_table "service_desk_settings", primary_key: "project_id", id: :bigint, default: nil, force: :cascade do |t|
@@ -4670,7 +4668,6 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
   add_foreign_key "self_managed_prometheus_alert_events", "environments", on_delete: :cascade
   add_foreign_key "self_managed_prometheus_alert_events", "projects", on_delete: :cascade
   add_foreign_key "sentry_issues", "issues", on_delete: :cascade
-  add_foreign_key "sentry_issues", "projects", on_delete: :cascade
   add_foreign_key "service_desk_settings", "projects", on_delete: :cascade
   add_foreign_key "services", "projects", name: "fk_71cce407f9", on_delete: :cascade
   add_foreign_key "slack_integrations", "services", on_delete: :cascade
