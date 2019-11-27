@@ -79,6 +79,42 @@ describe Namespace do
     end
   end
 
+  describe '#in_elasticsearch_index?' do
+    let(:namespace) { create(:group) }
+
+    subject { namespace.in_elasticsearch_index? }
+
+    it 'is false when there is a project with no index_status' do
+      create(:project, namespace: namespace, index_status: nil)
+
+      expect(subject).to be_falsy
+    end
+
+    it 'is false when there is a project with index_status.records_initially_indexed false' do
+      create(:project, namespace: namespace, index_status: IndexStatus.new(records_initially_indexed: false))
+
+      expect(subject).to be_falsy
+    end
+
+    it 'is true when all projects have index_status.records_initially_indexed true' do
+      create(:project, namespace: namespace, index_status: IndexStatus.new(records_initially_indexed: true))
+      create(:project, namespace: namespace, index_status: IndexStatus.new(records_initially_indexed: true))
+
+      expect(subject).to be_truthy
+    end
+
+    it 'is true when there are no projects' do
+      expect(subject).to be_truthy
+    end
+
+    it 'respects subgroup projects' do
+      subgroup = create(:group, parent: namespace)
+      create(:project, namespace: subgroup, index_status: IndexStatus.new(records_initially_indexed: false))
+
+      expect(subject).to be_falsy
+    end
+  end
+
   describe 'custom validations' do
     describe '#validate_plan_name' do
       let(:group) { build(:group) }

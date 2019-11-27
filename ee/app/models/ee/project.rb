@@ -147,6 +147,14 @@ module EE
       scope :with_repos_templates, -> { where(namespace_id: ::Gitlab::CurrentSettings.current_application_settings.custom_project_templates_group_id) }
       scope :with_groups_level_repos_templates, -> { joins("INNER JOIN namespaces ON projects.namespace_id = namespaces.custom_project_templates_group_id") }
 
+      scope :not_in_elasticsearch_index, -> do
+        # We use `left_outer_joins` here and check for `nil` in the joined
+        # table as absence of an index_status indicates it has never been
+        # indexed.
+        left_outer_joins(:index_status)
+        .where(index_statuses: { project_id: nil })
+      end
+
       delegate :shared_runners_minutes, :shared_runners_seconds, :shared_runners_seconds_last_reset,
         to: :statistics, allow_nil: true
 
@@ -693,6 +701,10 @@ module EE
       return false unless feature_available?(:packages)
 
       packages.where(package_type: package_type).exists?
+    end
+
+    def in_elasticsearch_index?
+      IndexStatus.exists?(project: self)
     end
 
     def find_or_create_index_status!

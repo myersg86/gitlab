@@ -307,6 +307,14 @@ module EE
       actual_plan_name == Plan::GOLD
     end
 
+    def in_elasticsearch_index?
+      all_projects
+        .non_archived
+        .without_deleted
+        .not_in_elasticsearch_index
+        .none?
+    end
+
     def use_elasticsearch?
       ::Gitlab::CurrentSettings.elasticsearch_indexes_namespace?(self)
     end

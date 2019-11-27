@@ -170,6 +170,17 @@ describe Project do
         expect(described_class.with_active_prometheus_service).not_to include(project_without_active_prometheus_service)
       end
     end
+
+    describe '.not_in_elasticsearch_index' do
+      it 'returns projects where index_status does not exist' do
+        _project_with_index_status = create(:project, index_status: IndexStatus.new)
+        project_without_index_status = create(:project, index_status: nil)
+
+        expect(described_class.not_in_elasticsearch_index).to eq([
+          project_without_index_status
+        ])
+      end
+    end
   end
 
   describe 'validations' do
@@ -2381,6 +2392,20 @@ describe Project do
 
     it 'counts group level templates' do
       expect(described_class.with_groups_level_repos_templates.count).to eq(4)
+    end
+  end
+
+  describe '#in_elasticsearch_index?' do
+    subject { project.in_elasticsearch_index? }
+
+    it 'is false when there is no index_status' do
+      expect(subject).to be_falsy
+    end
+
+    it 'is true when index_status is present' do
+      project.create_index_status!
+
+      expect(subject).to be_truthy
     end
   end
 

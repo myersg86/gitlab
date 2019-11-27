@@ -366,4 +366,13 @@ describe Elastic::IndexRecordService, :elastic do
       end
     end
   end
+
+  context 'when indexing a project', :sidekiq_inline do
+    it 'creates the index_status record' do
+      project = create(:project)
+      expect(subject.execute(project, true)).to eq(true)
+
+      expect(project.index_status).to be_present
+    end
+  end
 end

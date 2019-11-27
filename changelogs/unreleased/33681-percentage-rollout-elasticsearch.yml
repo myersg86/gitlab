@@ -1,0 +1,5 @@
+---
+title: Only use Elasticsearch if all projects in search scope have been initially indexed
+merge_request: 20760
+author:
+type: changed

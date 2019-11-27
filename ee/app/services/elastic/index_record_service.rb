@@ -17,7 +17,10 @@ module Elastic
 
       import(record, indexing)
 
-      initial_index_project(record) if record.class == Project && indexing
+      if record.class == Project
+        initial_index_project(record) if indexing
+        record.find_or_create_index_status!
+      end
 
       update_issue_notes(record, options["changed_fields"]) if record.class == Issue
 
