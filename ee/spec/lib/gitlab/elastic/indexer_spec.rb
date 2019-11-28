@@ -182,7 +182,7 @@ describe Gitlab::Elastic::Indexer do
 
       indexer.run(project.repository.commit('HEAD~1'))
 
-      expect(project.index_status).to be_nil
+      expect(project.index_status.last_commit).to be_nil
     end
 
     it 'leaves the index status untouched when the indexing fails' do

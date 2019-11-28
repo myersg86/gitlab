@@ -695,6 +695,12 @@ module EE
       packages.where(package_type: package_type).exists?
     end
 
+    def find_or_create_index_status!
+      IndexStatus.safe_find_or_create_by!(project: self)
+    rescue ActiveRecord::RecordNotUnique
+      retry
+    end
+
     def license_compliance
       strong_memoize(:license_compliance) { SCA::LicenseCompliance.new(self) }
     end
