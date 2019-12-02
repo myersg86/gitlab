@@ -214,11 +214,11 @@ describe IssuablesHelper do
           .to be_nil
       end
 
-      it 'sets sentryIssueIdentifier to sentry_issue_identifier with sentry issue ' do
-        create(:sentry_issue)
+      it 'sets sentryIssueIdentifier to sentry_issue_identifier' do
+        sentry_issue = create(:sentry_issue, issue: issue)
 
         expect(helper.issuable_initial_data(issue)[:sentryIssueIdentifier])
-          .to be_nil
+          .to eq(sentry_issue.sentry_issue_identifier)
       end
     end
 
