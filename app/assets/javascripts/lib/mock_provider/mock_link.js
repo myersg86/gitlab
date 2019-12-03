@@ -22,7 +22,7 @@ export class MockLink extends ApolloLink {
   addTypename = true;
   mockedResponsesByKey = {};
 
-  constructor(mockedResponses, addTypename = true) {
+  constructor(mockedResponses, addTypename) {
     super();
     this.addTypename = addTypename;
     if (mockedResponses)
