@@ -506,9 +506,9 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.integer "project_id"
     t.integer "group_id"
     t.string "type", null: false
+    t.string "name", limit: 255
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
-    t.string "name", limit: 255
     t.index ["group_id"], name: "index_badges_on_group_id"
     t.index ["project_id"], name: "index_badges_on_project_id"
   end

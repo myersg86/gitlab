@@ -3,39 +3,15 @@
 require 'spec_helper'
 
 describe SentryIssue do
-  set(:issue) { create(:issue) }
-
-  let(:sentry_issue) { build(:sentry_issue, issue: issue) }
-
-  describe 'Associations' do
+  describe 'associations' do
     it { is_expected.to belong_to(:issue) }
   end
 
-  describe 'Validations' do
-    describe 'issue' do
-      it 'validates issue presence' do
-        sentry_issue.issue = nil
+  describe 'validations' do
+    let!(:sentry_issue) { create(:sentry_issue) }
 
-        expect(subject).not_to be_valid
-      end
-
-      context 'with existing gitlab issue link' do
-        before do
-          create(:sentry_issue, issue: issue)
-        end
-
-        it 'validates uniqueness' do
-          expect(subject).not_to be_valid
-        end
-      end
-    end
-
-    describe 'sentry_issue_identifier' do
-      it 'validates sentry_issue_identifier presence' do
-        sentry_issue.sentry_issue_identifier = nil
-
-        expect(sentry_issue).not_to be_valid
-      end
-    end
+    it { is_expected.to validate_presence_of(:issue) }
+    it { is_expected.to validate_uniqueness_of(:issue) }
+    it { is_expected.to validate_presence_of(:sentry_issue_identifier) }
   end
 end
