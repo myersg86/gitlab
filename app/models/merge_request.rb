@@ -242,7 +242,7 @@ class MergeRequest < ApplicationRecord
   # Only remove after 2019-12-22 and with %12.7
   self.ignored_columns += %i[state]
 
-  after_save :keep_around_commit
+  after_save :keep_around_commit, unless: :importing?
 
   alias_attribute :project, :target_project
   alias_attribute :project_id, :target_project_id
