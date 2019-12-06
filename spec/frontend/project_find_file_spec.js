@@ -70,7 +70,7 @@ describe('ProjectFindFile', () => {
       expect(findFiles()).toEqual(
         files.map(text => ({
           text,
-          href: `${BLOB_URL_TEMPLATE}/${encodeURIComponent(text)}`,
+          href: `${BLOB_URL_TEMPLATE}/${encodeURIComponent(text).replace(/%2F/g, '/')}`,
         })),
       );
 
