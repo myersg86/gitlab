@@ -56,6 +56,9 @@ module GitalyTest
   end
 
   def check_gitaly_config!
+    puts "Checking Gemfile existence..."
+    abort "#{gemfile} does not exist" unless File.exist?(gemfile)
+
     puts 'Checking gitaly-ruby bundle...'
     abort 'bundle check failed' unless system(env, 'bundle', 'check', chdir: File.dirname(gemfile))
   end
