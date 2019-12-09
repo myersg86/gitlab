@@ -709,8 +709,6 @@ module EE
 
     def find_or_create_index_status!
       IndexStatus.safe_find_or_create_by!(project: self)
-    rescue ActiveRecord::RecordNotUnique
-      retry
     end
 
     def license_compliance
