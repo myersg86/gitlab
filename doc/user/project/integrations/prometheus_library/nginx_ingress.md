@@ -27,6 +27,7 @@ For other deployments, there is [some configuration](#manually-setting-up-nginx-
 - NGINX Ingress should be version 0.16.0 or above, with metrics enabled.
 - NGINX Ingress should be annotated for Prometheus monitoring.
 - Prometheus should be configured to monitor annotated pods.
+- Pods that receive routed traffic from NGINX should be deployed into namespace matching default [KUBE_NAMESPACE](https://docs.gitlab.com/ee/user/project/clusters/index.html#deployment-variables) format.
 
 ### About managed NGINX Ingress deployments
 
