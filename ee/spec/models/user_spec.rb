@@ -698,4 +698,28 @@ describe User do
       end
     end
   end
+
+  describe 'projects_limit' do
+    before do
+      subject.projects_limit = 5
+    end
+
+    context 'for non group managed accounts' do
+      it 'returns stored value' do
+        expect(subject.projects_limit).to eq(5)
+      end
+    end
+
+    context 'for group managed accounts' do
+      let(:managing_group) { create(:saml_provider, :enforced_group_managed_accounts).group }
+
+      before do
+        subject.managing_group = managing_group
+      end
+
+      it 'returns 0' do
+        expect(subject.projects_limit).to eq(0)
+      end
+    end
+  end
 end

@@ -73,6 +73,7 @@ When this option is enabled:
 - All existing and new users in the group will be required to log in via the SSO URL associated with the group.
 - On successfully authenticating, GitLab will prompt the user to create a new, dedicated account using the email address received from the configured identity provider.
 - After the group-managed account has been created, group activity will require the use of this user account.
+- Group-managed accounts can't create personal projects or fork to a personal namespace. All existing personal projects won't be affected and should be addressed manually if needed after group-managed accounts feature is enabled.
 
 Since use of the group-managed account requires the use of SSO, users of group-managed accounts will lose access to these accounts when they are no longer able to authenticate with the connected identity provider. In the case of an offboarded employee who has been removed from your identity provider:
 

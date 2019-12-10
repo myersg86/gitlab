@@ -178,4 +178,28 @@ describe SamlProvider do
       end
     end
   end
+
+  describe 'personal_projects_disabled?' do
+    context 'when enforced_group_managed_accounts is disabled' do
+      before do
+        subject.enforced_group_managed_accounts = false
+      end
+
+      it 'is not disabled' do
+        expect(subject.personal_projects_disabled?).to be_falsey
+      end
+    end
+
+    context 'when enforced_group_managed_accounts is enabled' do
+      before do
+        subject.enabled = true
+        subject.enforced_sso = true
+        subject.enforced_group_managed_accounts = true
+      end
+
+      it 'is enabled' do
+        expect(subject.personal_projects_disabled?).to be_truthy
+      end
+    end
+  end
 end

@@ -325,6 +325,12 @@ module EE
       read_attribute(:support_bot)
     end
 
+    def projects_limit
+      return 0 if managing_group&.saml_provider&.personal_projects_disabled?
+
+      super
+    end
+
     protected
 
     override :password_required?
