@@ -82,7 +82,7 @@ module EE
 
       with_scope :subject
       condition(:licenses_list_enabled) do
-        @subject.feature_available?(:licenses_list)
+        @subject.beta_feature_available?(:licenses_list)
       end
 
       with_scope :subject
@@ -93,6 +93,10 @@ module EE
       with_scope :subject
       condition(:design_management_disabled) do
         !@subject.design_management_enabled?
+      end
+
+      condition(:group_timelogs_available) do
+        @subject.feature_available?(:group_timelogs)
       end
 
       rule { admin }.enable :change_repository_storage
@@ -120,6 +124,8 @@ module EE
         prevent :admin_issue_link
       end
 
+      rule { ~group_timelogs_available }.prevent :read_group_timelogs
+
       rule { can?(:read_issue) }.policy do
         enable :read_issue_link
         enable :read_design
@@ -131,6 +137,7 @@ module EE
         enable :admin_issue_link
         enable :admin_epic_issue
         enable :read_package
+        enable :read_group_timelogs
       end
 
       rule { can?(:developer_access) }.policy do

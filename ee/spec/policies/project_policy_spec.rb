@@ -815,7 +815,8 @@ describe ProjectPolicy do
     context 'when licenses list feature available' do
       context 'when license management feature available' do
         before do
-          stub_licensed_features(licenses_list: true, license_management: true)
+          stub_feature_flags(licenses_list: true)
+          stub_licensed_features(license_management: true)
         end
 
         context 'with public project' do
@@ -851,11 +852,23 @@ describe ProjectPolicy do
         end
       end
 
+      context "when the licenses_list feature is enabled for a specific project" do
+        let(:current_user) { create(:user) }
+
+        before do
+          stub_feature_flags(licenses_list: { enabled: true, thing: project })
+          stub_licensed_features(license_management: true)
+        end
+
+        it { is_expected.to be_allowed(:read_licenses_list) }
+      end
+
       context 'when license management feature in not available' do
         let(:current_user) { admin }
 
         before do
-          stub_licensed_features(licenses_list: true)
+          stub_feature_flags(licenses_list: true)
+          stub_licensed_features(license_management: false)
         end
 
         it { is_expected.to be_disallowed(:read_licenses_list) }
@@ -864,6 +877,10 @@ describe ProjectPolicy do
 
     context 'when licenses list feature not available' do
       let(:current_user) { admin }
+
+      before do
+        stub_feature_flags(licenses_list: false)
+      end
 
       it { is_expected.to be_disallowed(:read_licenses_list) }
     end
@@ -1101,5 +1118,63 @@ describe ProjectPolicy do
       it { is_expected.not_to be_allowed(:change_reject_unsigned_commits) }
       it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
     end
+  end
+
+  context 'when timelogs report feature is enabled' do
+    before do
+      stub_licensed_features(group_timelogs: true)
+    end
+
+    context 'admin' do
+      let(:current_user) { admin }
+
+      it { is_expected.to be_allowed(:read_group_timelogs) }
+    end
+
+    context 'with owner' do
+      let(:current_user) { owner }
+
+      it { is_expected.to be_allowed(:read_group_timelogs) }
+    end
+
+    context 'with maintainer' do
+      let(:current_user) { maintainer }
+
+      it { is_expected.to be_allowed(:read_group_timelogs) }
+    end
+
+    context 'with reporter' do
+      let(:current_user) { reporter }
+
+      it { is_expected.to be_allowed(:read_group_timelogs) }
+    end
+
+    context 'with guest' do
+      let(:current_user) { guest }
+
+      it { is_expected.to be_disallowed(:read_group_timelogs) }
+    end
+
+    context 'with non member' do
+      let(:current_user) { create(:user) }
+
+      it { is_expected.to be_disallowed(:read_group_timelogs) }
+    end
+
+    context 'with anonymous' do
+      let(:current_user) { nil }
+
+      it { is_expected.to be_disallowed(:read_group_timelogs) }
+    end
+  end
+
+  context 'when timelogs report feature is disabled' do
+    let(:current_user) { admin }
+
+    before do
+      stub_licensed_features(group_timelogs: false)
+    end
+
+    it { is_expected.to be_disallowed(:read_group_timelogs) }
   end
 end

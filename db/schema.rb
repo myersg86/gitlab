@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_04_093410) do
+ActiveRecord::Schema.define(version: 2019_12_06_122926) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
@@ -575,6 +575,7 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.text "message_html", null: false
     t.integer "cached_markdown_version"
     t.string "target_path", limit: 255
+    t.integer "broadcast_type", limit: 2, default: 1, null: false
     t.index ["starts_at", "ends_at", "id"], name: "index_broadcast_messages_on_starts_at_and_ends_at_and_id"
   end
 
@@ -2969,7 +2970,7 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.integer "source_project_id"
     t.index ["disk_path"], name: "index_pool_repositories_on_disk_path", unique: true
     t.index ["shard_id"], name: "index_pool_repositories_on_shard_id"
-    t.index ["source_project_id"], name: "index_pool_repositories_on_source_project_id", unique: true
+    t.index ["source_project_id", "shard_id"], name: "index_pool_repositories_on_source_project_id_and_shard_id", unique: true
   end
 
   create_table "programming_languages", id: :serial, force: :cascade do |t|
@@ -3818,6 +3819,7 @@ ActiveRecord::Schema.define(version: 2019_12_04_093410) do
     t.datetime "spent_at"
     t.index ["issue_id"], name: "index_timelogs_on_issue_id"
     t.index ["merge_request_id"], name: "index_timelogs_on_merge_request_id"
+    t.index ["spent_at"], name: "index_timelogs_on_spent_at", where: "(spent_at IS NOT NULL)"
     t.index ["user_id"], name: "index_timelogs_on_user_id"
   end
 
