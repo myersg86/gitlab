@@ -2,7 +2,7 @@
 
 module Gitlab
   module BackgroundMigration
-    class PopulateIndexStatus
+    class PopulateIndexStatusForProjects
 
       class Namespace < ActiveRecord::Base
         def all_projects
@@ -11,16 +11,11 @@ module Gitlab
       end
 
       class Project < ActiveRecord::Base
+        has_one :index_status
+
         scope :not_in_elasticsearch_index, -> do
           left_outer_joins(:index_status)
             .where(index_statuses: { project_id: nil })
-        end
-
-        scope :inside_path, ->(path) do
-          # We need routes alias rs for JOIN so it does not conflict with
-          # includes(:route) which we use in ProjectsFinder.
-          joins("INNER JOIN routes rs ON rs.source_id = projects.id AND rs.source_type = 'Project'")
-            .where('rs.path LIKE ?', "#{sanitize_sql_like(path)}/%")
         end
 
         def find_or_create_index_status!
@@ -32,22 +27,19 @@ module Gitlab
         belongs_to :project
       end
 
-      class ElasticsearchIndexedNamespace < ActiveRecord::Base
-        #self.primary_key = :namespace_id
+      class ApplicationSetting < ActiveRecord::Base
       end
 
-      class ElasticsearchIndexedProject < ActiveRecord::Base
-        #self.primary_key = :namespace_id
-      end
+      def perform(from_id, to_id)
+        projects = Project
+          .where(id: from_id..to_id)
+          .not_in_elasticsearch_index
 
-      def perform
-        ElasticsearchIndexedNamespace.find_each do |namespace|
-          namespace.all_projects.not_in_elasticsearch_index.find_each do |project|
-            project.find_or_create_index_status!
-          end
+        if ApplicationSetting.first.elasticsearch_limit_indexing?
+          projects = projects.where(id: ElasticsearchIndexedProject.select(:project_id))
         end
 
-        ElasticsearchIndexedProject.find_each do |project|
+        projects.each do |project|
           project.find_or_create_index_status!
         end
       end

@@ -8,37 +8,79 @@ class PopulateIndexStatus < ActiveRecord::Migration[5.2]
 
   DOWNTIME = false
   BATCH_SIZE = 5_000
-  MIGRATION = 'PopulateIndexStatus'
+  DELAY_INTERVAL = 8.minutes.to_i
 
   disable_ddl_transaction!
 
-  class ElasticsearchIndexedNamespace < ActiveRecord::Base
-    include EachBatch
+  class Namespace < ActiveRecord::Base
+    def all_projects
+      Project.inside_path(full_path)
+    end
+  end
 
-    self.primary_key = :namespace_id
+  class Project < ActiveRecord::Base
+    scope :not_in_elasticsearch_index, -> do
+      left_outer_joins(:index_status)
+        .where(index_statuses: { project_id: nil })
+    end
+
+    scope :inside_path, ->(path) do
+      # We need routes alias rs for JOIN so it does not conflict with
+      # includes(:route) which we use in ProjectsFinder.
+      joins("INNER JOIN routes rs ON rs.source_id = projects.id AND rs.source_type = 'Project'")
+        .where('rs.path LIKE ?', "#{sanitize_sql_like(path)}/%")
+    end
+
+    def find_or_create_index_status!
+      IndexStatus.safe_find_or_create_by!(project: self)
+    end
+  end
+
+  class IndexStatus < ActiveRecord::Base
+    belongs_to :project
+  end
+
+  class ElasticsearchIndexedNamespace < ActiveRecord::Base
+    #self.primary_key = :namespace_id
   end
 
   class ElasticsearchIndexedProject < ActiveRecord::Base
-    include EachBatch
+    #self.primary_key = :project_id
+  end
 
-    self.primary_key = :project_id
+  class ApplicationSetting < ActiveRecord::Base
   end
 
   def up
     return unless Gitlab.ee?
+    return unless ApplicationSetting.first.elasticsearch_indexing?
 
-    say "Scheduling `#{MIGRATION}` jobs for indexed namespaces"
+    projects = Project.all
 
-    ElasticsearchIndexedNamespace.each do |namespace|
-      neach_batch(column: :created_at) do |indexed_projects|
-      Gitlab::BackgroundMigration::PopulateIndexStatus.perform_async(indexed_projects.pluck(:project_id))
+    if ApplicationSetting.first.elasticsearch_limit_indexing?
+      projects = projects.where(id: ElasticsearchIndexedProject.select(:project_id))
+
+      namespace_ids = ElasticsearchIndexedNamespace.pluck(:namespace_id)
+
+      namespace_ids.each do |namespace_id|
+        Gitlab::BackgroundMigration::PopulateIndexStatusForNamespace.perform_async(namespace_id)
+      end
+
+      queue_background_migration_jobs_by_range_at_intervals(
+        namespaces,
+        'Gitlab::BackgroundMigration::PopulateIndexStatusForNamespace',
+        DELAY_INTERVAL,
+        batch_size: BATCH_SIZE
+      )
     end
 
-    say "Scheduling `#{MIGRATION}` jobs for indexed projects"
+    queue_background_migration_jobs_by_range_at_intervals(
+      projects,
+      'Gitlab::BackgroundMigration::PopulateIndexStatusForProjects',
+      DELAY_INTERVAL,
+      batch_size: BATCH_SIZE
+    )
 
-    ElasticsearchIndexedProject.each_batch(column: :created_at) do |indexed_projects|
-      Gitlab::BackgroundMigration::PopulateIndexStatus.perform_async(indexed_projects.pluck(:project_id))
-    end
   end
 
   def down
