@@ -28,15 +28,13 @@ module Geo
     #
     # @see ::Gitlab::Geo::ProjectLogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         upload_id: upload.id,
         file_path: upload.path,
         model_id: upload.model_id,
         model_type: upload.model_type,
-        uploader: upload.uploader,
-        message: message
-      }
+        uploader: upload.uploader
+      }).compact
     end
   end
 end

@@ -67,13 +67,11 @@ module Geo
     #
     # @see ::Gitlab::Geo::LogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         project_id: project.id,
         project_path: project.full_path,
-        project_old_path: old_full_path,
-        message: message
-      }
+        project_old_path: old_full_path
+      }).compact
     end
   end
 end

@@ -45,12 +45,10 @@ module Geo
     end
 
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         object_type: object_type,
-        object_db_id: object_db_id,
-        message: message
-      }
+        object_db_id: object_db_id
+      }).compact
     end
   end
 end

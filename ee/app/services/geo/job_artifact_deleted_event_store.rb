@@ -25,16 +25,18 @@ module Geo
       job_artifact.file.relative_path if job_artifact.file.present?
     end
 
+    def project
+      job_artifact.project
+    end
+
     # This is called by ProjectLogHelpers to build json log with context info
     #
     # @see ::Gitlab::Geo::ProjectLogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         job_artifact_id: job_artifact.id,
-        file_path: job_artifact.file.path,
-        message: message
-      }
+        file_path: job_artifact.file.path
+      }).compact
     end
   end
 end

@@ -20,12 +20,10 @@ module Geo
     #
     # @see ::Gitlab::Geo::ProjectLogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         cache_key: key.to_s,
-        job_id: get_sidekiq_job_id,
-        message: message
-      }.compact
+        job_id: get_sidekiq_job_id
+      }).compact
     end
   end
 end

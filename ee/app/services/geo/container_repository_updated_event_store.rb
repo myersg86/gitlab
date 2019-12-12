@@ -18,15 +18,17 @@ module Geo
       )
     end
 
+    def project
+      repository.try(:project)
+    end
+
     # This is called by ProjectLogHelpers to build json log with context info
     #
     # @see ::Gitlab::Geo::ProjectLogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
-        container_repository_id: repository.try(:id),
-        message: message
-      }.compact
+      super.merge({
+        container_repository_id: repository.try(:id)
+      }).compact
     end
   end
 end

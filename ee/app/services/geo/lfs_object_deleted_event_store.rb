@@ -30,12 +30,10 @@ module Geo
     #
     # @see ::Gitlab::Geo::ProjectLogHelpers
     def base_log_data(message)
-      {
-        class: self.class.name,
+      super.merge({
         lfs_object_id: lfs_object.id,
-        file_path: lfs_object.file.path,
-        message: message
-      }
+        file_path: lfs_object.file.path
+      }).compact
     end
   end
 end
