@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require_dependency Rails.root.join('lib/gitlab/database/bulk_ops/bulk_insert_support')
+
 class ApplicationRecord < ActiveRecord::Base
+  include ::Gitlab::Database::BulkInsertSupport
+
   self.abstract_class = true
 
   alias_method :reset, :reload
