@@ -38,12 +38,8 @@ dast:
   artifacts:
     reports:
       dast: gl-dast-report.json
-  only:
-    refs:
-      - branches
-    variables:
-      - $GITLAB_FEATURES =~ /\bdast\b/
-  except:
-    variables:
-      - $DAST_DISABLED
-      - $DAST_DISABLED_FOR_DEFAULT_BRANCH && $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME
+  rules:
+    - if: $DAST_DISABLED || ($DAST_DISABLED_FOR_DEFAULT_BRANCH && $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME)
+      when: never
+    - if: $GITLAB_FEATURES =~ /\bdast\b/ && ($CI_COMMIT_TAG == null && $CI_MERGE_REQUEST_ID == null)
+      when: always
