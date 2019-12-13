@@ -44,6 +44,7 @@ describe ProjectPresenter do
     context 'when user can push and .npmrc does not exist' do
       it 'returns anchor data to add an npmrc file' do
         project.add_developer(user)
+        allow(project.repository).to receive(:file_on_head).with(:package_json).and_return(true)
         allow(project.repository).to receive(:npmrc).and_return(nil)
 
         expect(presenter.npmrc_anchor_data).to have_attributes(is_link: false,

@@ -47,7 +47,7 @@ describe 'Projects > Show > User sees setup shortcut buttons' do
         project.creator,
         start_branch: 'master',
         branch_name: 'master',
-        commit_message: "Add package.json",
+        commit_message: "Add .npmrc",
         file_path: '.npmrc',
         file_content: "@{package-scope}:registry=foo"
       ).execute

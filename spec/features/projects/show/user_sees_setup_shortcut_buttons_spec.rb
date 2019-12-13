@@ -34,7 +34,6 @@ describe 'Projects > Show > User sees setup shortcut buttons' do
           expect(page).not_to have_link('Auto DevOps enabled')
           expect(page).not_to have_link('Add Kubernetes cluster')
           expect(page).not_to have_link('Kubernetes configured')
-          expect(page).not_to have_link('Add .npmrc')
         end
       end
     end
