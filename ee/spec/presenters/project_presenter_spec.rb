@@ -10,32 +10,22 @@ describe ProjectPresenter do
   let_it_be(:presenter) { described_class.new(project, current_user: user) }
 
   describe '#extra_statistics_buttons' do
-    let(:pipeline) { create(:ci_pipeline, project: project) }
-
-    let(:security_dashboard_data) do
-      OpenStruct.new(is_link: false,
-                     label: a_string_including('Security Dashboard'),
-                     link: project_security_dashboard_path(project),
-                     class_modifier: 'default')
-    end
-
     context 'user is allowed to read security dashboard' do
-      before do
-        allow(Ability).to receive(:allowed?).with(user, :read_project_security_dashboard, project).and_return(true)
-      end
-
       it 'has security dashboard link' do
-        expect(presenter.extra_statistics_buttons.find { |button| button[:link] == project_security_dashboard_path(project) }).not_to be_nil
+        allow(Ability).to receive(:allowed?).with(user, :read_project_security_dashboard, project).and_return(true)
+
+        expect(presenter.security_dashboard_data).to have_attributes(is_link: false,
+                                                                     label: a_string_including('Security Dashboard'),
+                                                                     link: project_security_dashboard_path(project),
+                                                                     class_modifier: 'default')
       end
     end
 
     context 'user is not allowed to read security dashboard' do
-      before do
-        allow(Ability).to receive(:allowed?).with(user, :read_project_security_dashboard, project).and_return(false)
-      end
-
       it 'has no security dashboard link' do
-        expect(presenter.extra_statistics_buttons.find { |button| button[:link] == project_security_dashboard_path(project) }).to be_nil
+        allow(Ability).to receive(:allowed?).with(user, :read_project_security_dashboard, project).and_return(false)
+
+        expect(presenter.security_dashboard_data).to be_nil
       end
     end
   end
@@ -48,8 +38,8 @@ describe ProjectPresenter do
         allow(project.repository).to receive(:npmrc).and_return(nil)
 
         expect(presenter.npmrc_anchor_data).to have_attributes(is_link: false,
-                                                                label: a_string_including('Add .npmrc'),
-                                                                link: presenter.add_npmrc_path)
+                                                               label: a_string_including('Add .npmrc'),
+                                                               link: presenter.add_npmrc_path)
       end
     end
 
@@ -58,8 +48,8 @@ describe ProjectPresenter do
         allow(project.repository).to receive(:npmrc).and_return(double(name: 'npmrc'))
 
         expect(presenter.npmrc_anchor_data).to have_attributes(is_link: false,
-                                                                label: a_string_including('.npmrc'),
-                                                                link: presenter.npmrc_path)
+                                                               label: a_string_including('.npmrc'),
+                                                               link: presenter.npmrc_path)
       end
     end
   end

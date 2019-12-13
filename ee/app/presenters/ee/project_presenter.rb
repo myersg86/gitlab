@@ -12,15 +12,10 @@ module EE
     end
 
     def extra_statistics_buttons
-      buttons = []
-
-      if can?(current_user, :read_project_security_dashboard, project)
-        buttons << security_dashboard_data
-      end
-
-      buttons << npmrc_anchor_data
-
-      buttons.compact
+      [
+        security_dashboard_data,
+        npmrc_anchor_data
+      ].compact
     end
 
     def approver_groups
@@ -50,13 +45,13 @@ module EE
       end
     end
 
-    private
-
     def security_dashboard_data
-      OpenStruct.new(is_link: false,
-                     label: statistic_icon('lock') + _('Security Dashboard'),
-                     link: project_security_dashboard_path(project),
-                     class_modifier: 'default')
+      if can?(current_user, :read_project_security_dashboard, project)
+        OpenStruct.new(is_link: false,
+                      label: statistic_icon('lock') + _('Security Dashboard'),
+                      link: project_security_dashboard_path(project),
+                      class_modifier: 'default')
+      end
     end
   end
 end
