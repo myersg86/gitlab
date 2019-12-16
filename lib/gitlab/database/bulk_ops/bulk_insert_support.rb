@@ -29,7 +29,7 @@ module Gitlab
       end
 
       class_methods do
-        def with_bulk_inserts(&block)
+        def save_all!(*items)
           raise AlreadyActiveError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
 
           self.transaction do
@@ -38,7 +38,11 @@ module Gitlab
             _gl_set_bulk_insert_state
             _gl_delay_callbacks
 
-            yield
+            items.each do |item|
+              raise "Wrong instance type %s, expected T < %s" % [item.class, self] unless item.is_a? self
+
+              item.save!
+            end
 
             _gl_bulk_insert
             _gl_restore_callbacks
@@ -46,7 +50,6 @@ module Gitlab
 
             p "END TRANSACTION"
           end
-
         ensure
           _gl_release_bulk_insert_state
         end
