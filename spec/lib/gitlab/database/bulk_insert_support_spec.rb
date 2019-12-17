@@ -8,31 +8,63 @@ describe Gitlab::Database::BulkInsertSupport do
   end
 
   class BulkInsertItem < ApplicationRecord
-    attr_reader :after, :before_save_count, :after_save_count
-    attr_writer :fail_before_save
-    attr_writer :fail_after_save
+    attr_reader :after, :callback_invocations
+    attr_writer :fail_before_save, :fail_after_save, :fail_after_commit
 
     after_initialize do
-      @before_save_count = 0
-      @after_save_count = 0
+      @callback_invocations = {
+        before_save: 0,
+        before_create: 0,
+        after_create: 0,
+        after_save: 0,
+        after_commit: 0,
+        sequence: []
+      }
     end
 
     has_one :item_dependency
 
+    after_commit -> {
+      @callback_invocations[:after_commit] += 1
+      @callback_invocations[:sequence] << :after_commit
+
+      raise "`id` must be set in after_commit" unless self.id
+    }
+
+    before_create -> {
+      @callback_invocations[:before_create] += 1
+      @callback_invocations[:sequence] << :before_create
+    }
+
     before_save -> {
-      @before_save_count += 1
+      @callback_invocations[:before_save] += 1
+      @callback_invocations[:sequence] << :before_save
 
       raise "failed in before_save" if @fail_before_save
+
+      # create something within the outer transaction so
+      # we can test rollbacks
+      ItemDependency.create!(name: 'before_save')
 
       self.before = "#{name} set from before_save"
     }
 
     after_save -> {
-      @after_save_count += 1
+      @callback_invocations[:after_save] += 1
+      @callback_invocations[:sequence] << :after_save
+      raise "`id` must be set in after_save" unless self.id
 
       raise "failed in after_save" if @fail_after_save
 
       @after = "#{name} set from after_save"
+    }
+
+    after_create -> {
+      @callback_invocations[:after_create] += 1
+      @callback_invocations[:sequence] << :after_create
+      raise "`id` must be set in after_create" unless self.id
+
+      raise "failed in after_commit" if @fail_after_commit
     }
   end
 
@@ -87,15 +119,29 @@ describe Gitlab::Database::BulkInsertSupport do
       expect(inserted.last.name).to eq('two')
     end
 
+    it 'maintains correct AR callback order' do
+      items = [new_item(name: "one"), new_item(name: "two")]
+
+      BulkInsertItem.save_all!(items)
+
+      expect(items.map { |i| i.callback_invocations[:sequence] }).to all(eq([
+        :before_save,
+        :before_create,
+        :after_create,
+        :after_save,
+        :after_commit
+      ]))
+    end
+
     context 'before_save action' do
-      it 'runs once before INSERT' do
+      it 'runs once for each item before INSERT' do
         item1 = new_item(name: "one")
         item2 = new_item(name: "two")
 
         BulkInsertItem.save_all!(item1, item2)
 
-        expect(item1.before_save_count).to eq(1)
-        expect(item2.before_save_count).to eq(1)
+        expect(item1.callback_invocations[:before_save]).to eq(1)
+        expect(item2.callback_invocations[:before_save]).to eq(1)
 
         expect(item1.before).to eq("one set from before_save")
         expect(item2.before).to eq("two set from before_save")
@@ -105,7 +151,7 @@ describe Gitlab::Database::BulkInsertSupport do
         expect(item2.reload.before).to eq("two set from before_save")
       end
 
-      it 'rolls back INSERT when failed' do
+      it 'rolls back changes when failed' do
         item1 = new_item(name: "one")
         item2 = new_item(name: "two")
         item2.fail_before_save = true
@@ -113,25 +159,35 @@ describe Gitlab::Database::BulkInsertSupport do
         expect do
           BulkInsertItem.save_all!(item1, item2)
         rescue
-        end.not_to change { BulkInsertItem.count }
+        end.not_to change { ItemDependency.count }
+      end
+    end
+
+    context 'before_create action' do
+      it 'runs once for each item before INSERT' do
+        items = [new_item(name: "one"), new_item(name: "two")]
+
+        BulkInsertItem.save_all!(items)
+
+        expect(items.map { |i| i.callback_invocations[:before_create] }).to all(eq(1))
       end
     end
 
     context 'after_save action' do
-      it 'runs once after INSERT' do
+      it 'runs once for each item after INSERT' do
         item1 = new_item(name: "one")
         item2 = new_item(name: "two")
 
         BulkInsertItem.save_all!(item1, item2)
 
-        expect(item1.after_save_count).to eq(1)
-        expect(item2.after_save_count).to eq(1)
+        expect(item1.callback_invocations[:before_save]).to eq(1)
+        expect(item2.callback_invocations[:after_save]).to eq(1)
 
         expect(item1.after).to eq("one set from after_save")
         expect(item2.after).to eq("two set from after_save")
       end
 
-      it 'rolls back INSERT when failed' do
+      it 'rolls back changes when failed' do
         item1 = new_item(name: "one")
         item2 = new_item(name: "two")
         item2.fail_after_save = true
@@ -140,6 +196,29 @@ describe Gitlab::Database::BulkInsertSupport do
           BulkInsertItem.save_all!(item1, item2)
         rescue
         end.not_to change { BulkInsertItem.count }
+        expect(ItemDependency.count).to eq(0)
+      end
+    end
+
+    context 'after_create action' do
+      it 'runs once for each item before INSERT' do
+        items = [new_item(name: "one"), new_item(name: "two")]
+
+        BulkInsertItem.save_all!(items)
+
+        expect(items.map { |i| i.callback_invocations[:after_create] }).to all(eq(1))
+      end
+
+      it 'rolls back changes when failed' do
+        item1 = new_item(name: "one")
+        item2 = new_item(name: "two")
+        item2.fail_after_commit = true
+
+        expect do
+          BulkInsertItem.save_all!(item1, item2)
+        rescue
+        end.not_to change { BulkInsertItem.count }
+        expect(ItemDependency.count).to eq(0)
       end
     end
 
@@ -166,7 +245,7 @@ describe Gitlab::Database::BulkInsertSupport do
 
       it 'allows calls for other types' do
         expect { WithLegalNestedCall.save_all!(WithLegalNestedCall.new(name: 'ok')) }.to(
-          change { ItemDependency.count }.from(0).to(1)
+          change { ItemDependency.count }.from(0).to(2) # count the extra insertion from before_save
         )
       end
     end

@@ -8,6 +8,8 @@ module Gitlab
       NestedCallError = Class.new(StandardError)
       TargetTypeError = Class.new(StandardError)
 
+      DELAYED_CALLBACKS = [:save, :create].freeze
+
       class BulkInsertState
         attr_reader :captures, :callbacks
 
@@ -33,13 +35,15 @@ module Gitlab
         end
       end
 
+      # We currently reach into internal APIs, which requires __send__
+      # rubocop: disable GitlabSecurity/PublicSend
       class_methods do
         def save_all!(*items)
           raise NestedCallError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
 
           self.transaction do
             _gl_set_bulk_insert_state
-            _gl_delay_callbacks
+            _gl_delay_after_callbacks
 
             items.flatten.each do |item|
               unless item.is_a?(self)
@@ -93,12 +97,14 @@ module Gitlab
           Thread.current[:_gl_bulk_insert_state] = nil
         end
 
-        def _gl_delay_callbacks
+        def _gl_delay_after_callbacks
           # make backup of original callback chain
           _gl_bulk_insert_state.store_callbacks(__callbacks)
 
-          # remove after_save callbacks, so that they won't be invoked
-          _save_callbacks.__send__(:chain).reject! { |c| c.kind == :after }
+          # remove after_* callbacks, so that they won't be invoked
+          DELAYED_CALLBACKS.each do |cb|
+            _gl_suppress_callbacks(_gl_get_callback_chain(cb)) { |cb| cb.kind == :after }
+          end
         end
 
         def _gl_restore_callbacks
@@ -107,15 +113,17 @@ module Gitlab
           stored_callbacks = _gl_bulk_insert_state.callbacks
 
           if stored_callbacks&.any?
-            _save_callbacks = stored_callbacks[:save]
-            __callbacks[:save] = stored_callbacks[:save]
+            DELAYED_CALLBACKS.each do |cb|
+              _gl_set_callback_chain(stored_callbacks[cb], cb)
+            end
           end
         end
 
         def _gl_replay_callbacks
           _gl_bulk_insert_state.captures.each do |capture|
             target = capture[:target]
-            _gl_run_save_callback(target, :after)
+            _gl_run_callback(target, :after, :create)
+            _gl_run_callback(target, :after, :save)
           end
         end
 
@@ -125,19 +133,35 @@ module Gitlab
         # TODO: this is currently hacky and inefficient, since it involves a lot
         # of copying of callback structures. This only needs to happen once per
         # replay, not for every item.
-        def _gl_run_save_callback(target, kind)
+        def _gl_run_callback(target, kind, name)
           # obtain a copy of the stored/original save callbacks
-          requested_callbacks = _gl_bulk_insert_state.callbacks_for(:save)
+          requested_callbacks = _gl_bulk_insert_state.callbacks_for(name)
 
           # retain only callback hooks of the requested kind
-          requested_callbacks.__send__(:chain).reject! { |c| c.kind != kind }
-          _save_callbacks = requested_callbacks
-          __callbacks[:save] = requested_callbacks
+          _gl_suppress_callbacks(requested_callbacks) { |cb| cb.kind != kind }
+          _gl_set_callback_chain(requested_callbacks, name)
 
-          target.run_callbacks :save
+          target.run_callbacks name
 
           # restore callbacks to previous state
           _gl_restore_callbacks
+        end
+
+        def _gl_get_callback_chain(name)
+          __send__("_#{name}_callbacks")
+        end
+
+        # `callback_chain`: ActiveSupport::Callbacks::CallbackChain
+        # `name`: :save, :create, ...
+        def _gl_set_callback_chain(callback_chain, name)
+          __send__("_#{name}_callbacks=", callback_chain)
+          __callbacks[name] = callback_chain
+        end
+
+        # `callback_chain`: ActiveSupport::Callbacks::CallbackChain
+        # `kind`: :before, :after, ...
+        def _gl_suppress_callbacks(callback_chain, &block)
+          callback_chain.__send__(:chain).reject!(&block)
         end
 
         def _gl_bulk_insert
