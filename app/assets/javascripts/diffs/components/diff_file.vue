@@ -34,13 +34,18 @@ export default {
       required: false,
       default: '',
     },
+    initiallyVisible: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
     return {
       isLoadingCollapsedDiff: false,
       forkMessageVisible: false,
       isCollapsed: this.file.viewer.collapsed || false,
-      visible: false,
+      visible: this.initiallyVisible,
     };
   },
   computed: {
@@ -155,9 +160,7 @@ export default {
     :id="file.file_hash"
     v-observe-visibility="{
       callback: visibilityChanged,
-      throttle: 300,
-      once: true,
-      intersection: { threshhold: 0.0 },
+      intersection: { threshhold: 0.0, rootMargin: '50px' },
     }"
     :class="{
       'is-active': isActive,

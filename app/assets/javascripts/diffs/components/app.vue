@@ -412,8 +412,9 @@ export default {
           <div v-if="isBatchLoading" class="loading"><gl-loading-icon size="lg" /></div>
           <template v-else-if="renderDiffFiles">
             <diff-file
-              v-for="file in diffFiles"
+              v-for="(file, index) in diffFiles"
               :key="file.newPath"
+              :initially-visible="index === 0"
               :file="file"
               :help-page-path="helpPagePath"
               :can-current-user-fork="canCurrentUserFork"
