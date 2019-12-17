@@ -41,27 +41,36 @@ module Gitlab
         def save_all!(*items)
           raise NestedCallError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
 
-          self.transaction do
-            _gl_set_bulk_insert_state
-            _gl_delay_after_callbacks
+          # Until we find a better way to delay AR callbacks than rewriting them,
+          # we need to protect the entire transaction from other threads. Since
+          # callbacks are class-level instances, they might otherwise interfere
+          # with each other.
+          # This essentially means that bulk inserts are entirely sequential even
+          # in multi-threaded setups.
+          @_gl_bulk_insert_lock ||= Mutex.new
+          @_gl_bulk_insert_lock.synchronize do
+            self.transaction do
+              _gl_set_bulk_insert_state
+              _gl_delay_after_callbacks
 
-            items.flatten.each do |item|
-              unless item.is_a?(self)
-                raise TargetTypeError.new("Wrong instance type %s, expected T <= %s" % [item.class, self])
+              items.flatten.each do |item|
+                unless item.is_a?(self)
+                  raise TargetTypeError.new("Wrong instance type %s, expected T <= %s" % [item.class, self])
+                end
+
+                item.save!
               end
 
-              item.save!
+              _gl_bulk_insert
+              _gl_restore_callbacks
+              _gl_replay_callbacks
             end
-
-            _gl_bulk_insert
+          ensure
+            # might be called redundantly, but if we terminated abnormally anywhere
+            # due to an exception, we must restore the class' callback structure
             _gl_restore_callbacks
-            _gl_replay_callbacks
+            _gl_release_bulk_insert_state
           end
-        ensure
-          # might be called redundantly, but if we terminated abnormally anywhere
-          # due to an exception, we must restore the class' callback structure
-          _gl_restore_callbacks
-          _gl_release_bulk_insert_state
         end
 
         def _gl_bulk_inserts_requested?
