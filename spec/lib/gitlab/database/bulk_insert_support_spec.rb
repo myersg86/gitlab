@@ -222,6 +222,41 @@ describe Gitlab::Database::BulkInsertSupport do
       end
     end
 
+    context 'with concurrency' do
+      let(:num_threads) { 10 }
+
+      it 'works when called from multiple threads for same class' do
+        threads = Array.new(num_threads) { Thread.new {
+          new_item.tap { |i| BulkInsertItem.save_all!(i) }
+        }}
+        
+        saved_items = threads.map(&:value)
+
+        expect(BulkInsertItem.count).to eq(num_threads)
+        expect(saved_items.map { |i| i.callback_invocations[:sequence] }).to all(eq([
+          :before_save,
+          :before_create,
+          :after_create,
+          :after_save,
+          :after_commit
+        ]))
+      end
+      
+      it 'works when called from multiple threads for different classes' do
+        threads = [
+          Thread.new { BulkInsertItem.save_all!(new_item) },
+          Thread.new { ItemDependency.save_all!(new_item_dep) },
+          Thread.new { BulkInsertItem.save_all!(new_item) },
+          Thread.new { ItemDependency.save_all!(new_item_dep) }
+        ]
+        
+        threads.each(&:join)
+
+        expect(BulkInsertItem.count).to eq(2)
+        expect(ItemDependency.count).to eq(2 + 2) # also created from before_save
+      end
+    end
+
     it 'throws when some or all items are not of the specified type' do
       expect { BulkInsertItem.save_all!(good_item, "not a `BulkInsertItem`") }.to(
         raise_error(Gitlab::Database::BulkInsertSupport::TargetTypeError)
@@ -268,5 +303,9 @@ describe Gitlab::Database::BulkInsertSupport do
 
   def new_item(name: 'item', dep: nil)
     BulkInsertItem.new(name: name, item_dependency: dep)
+  end
+
+  def new_item_dep(name: 'item_dep')
+    ItemDependency.new(name: name)
   end
 end
