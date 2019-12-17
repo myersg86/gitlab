@@ -4621,6 +4621,9 @@ msgstr ""
 msgid "Commit message"
 msgstr ""
 
+msgid "Commit message (optional)"
+msgstr ""
+
 msgid "Commit statistics for %{ref} %{start_time} - %{end_time}"
 msgstr ""
 
@@ -7908,6 +7911,9 @@ msgid "File mode changed from %{a_mode} to %{b_mode}"
 msgstr ""
 
 msgid "File moved"
+msgstr ""
+
+msgid "File name"
 msgstr ""
 
 msgid "File templates"
@@ -11469,6 +11475,9 @@ msgstr ""
 msgid "Metrics|Check out the CI/CD documentation on deploying to an environment"
 msgstr ""
 
+msgid "Metrics|Create custom dashboard %{fileName}"
+msgstr ""
+
 msgid "Metrics|Create metric"
 msgstr ""
 
@@ -11476,6 +11485,12 @@ msgid "Metrics|Delete metric"
 msgstr ""
 
 msgid "Metrics|Delete metric?"
+msgstr ""
+
+msgid "Metrics|Duplicate"
+msgstr ""
+
+msgid "Metrics|Duplicate dashboard"
 msgstr ""
 
 msgid "Metrics|Edit metric"
@@ -11511,7 +11526,16 @@ msgstr ""
 msgid "Metrics|Prometheus Query Documentation"
 msgstr ""
 
+msgid "Metrics|Saving..."
+msgstr ""
+
 msgid "Metrics|Show last"
+msgstr ""
+
+msgid "Metrics|There was an error creating the dashboard."
+msgstr ""
+
+msgid "Metrics|There was an error creating the dashboard. %{error}"
 msgstr ""
 
 msgid "Metrics|There was an error fetching the environments data, please try again"
@@ -18069,6 +18093,9 @@ msgstr ""
 msgid "The file has been successfully deleted."
 msgstr ""
 
+msgid "The file name should have a .yml extension"
+msgstr ""
+
 msgid "The following items will NOT be exported:"
 msgstr ""
 
@@ -20906,6 +20933,9 @@ msgid "You can only transfer the project to namespaces you manage."
 msgstr ""
 
 msgid "You can resolve the merge conflict using either the Interactive mode, by choosing %{use_ours} or %{use_theirs} buttons, or by editing the files directly. Commit these changes into %{branch_name}"
+msgstr ""
+
+msgid "You can save a copy of this dashboard to your repository so it can be customized. Select a file name and branch to save it."
 msgstr ""
 
 msgid "You can see your chat accounts."

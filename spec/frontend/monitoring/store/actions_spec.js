@@ -18,6 +18,7 @@ import {
   fetchPrometheusMetric,
   setEndpoints,
   setGettingStartedEmptyState,
+  duplicateSystemDashboard,
 } from '~/monitoring/stores/actions';
 import storeState from '~/monitoring/stores/state';
 import {
@@ -543,5 +544,54 @@ describe('Monitoring store actions', () => {
         done();
       });
     });
+  });
+
+  describe('duplicateSystemDashboard', () => {
+    let state;
+
+    beforeEach(() => {
+      state = storeState();
+      state.dashboardsEndpoint = '/dashboards.json';
+    });
+
+    it('call to POST a new duplicated dashboard', done => {
+      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED);
+
+      testAction(duplicateSystemDashboard, {}, state, [], [])
+        .then(() => {
+          expect(mock.history.post).toHaveLength(1);
+          done();
+        })
+        .catch(done.fail);
+    });
+
+    it('call to POST a new duplicated dashboard with parameters', done => {
+      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED);
+
+      const params = {
+        dashboard: 'my-dashboard',
+        fileName: 'file-name.yml',
+        branch: 'my-new-branch',
+        commitMessage: 'A new commit message',
+      };
+
+      const expectedPayload = JSON.stringify({
+        dashboard: 'my-dashboard',
+        file_name: 'file-name.yml',
+        branch: 'my-new-branch',
+        commit_message: 'A new commit message',
+      });
+
+      testAction(duplicateSystemDashboard, params, state, [], [])
+        .then(() => {
+          expect(mock.history.post).toHaveLength(1);
+
+          expect(mock.history.post[0].data).toEqual(expectedPayload);
+          done();
+        })
+        .catch(done.fail);
+    });
+
+    // TODO Handle catch/errors...
   });
 });
