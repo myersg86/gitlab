@@ -5,7 +5,8 @@ module Gitlab
     module BulkInsertSupport
       extend ActiveSupport::Concern
 
-      AlreadyActiveError = Class.new(StandardError)
+      NestedCallError = Class.new(StandardError)
+      TargetTypeError = Class.new(StandardError)
 
       class BulkInsertState
         attr_reader :captures, :callbacks
@@ -24,22 +25,26 @@ module Gitlab
         end
 
         def store_callbacks(callbacks)
-          @callbacks = callbacks
+          @callbacks = callbacks.deep_dup
+        end
+
+        def callbacks_for(name)
+          @callbacks[name].deep_dup
         end
       end
 
       class_methods do
         def save_all!(*items)
-          raise AlreadyActiveError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
+          raise NestedCallError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
 
           self.transaction do
-            p "BEGIN TRANSACTION"
-
             _gl_set_bulk_insert_state
             _gl_delay_callbacks
 
-            items.each do |item|
-              raise "Wrong instance type %s, expected T < %s" % [item.class, self] unless item.is_a? self
+            items.flatten.each do |item|
+              unless item.is_a?(self)
+                raise TargetTypeError.new("Wrong instance type %s, expected T <= %s" % [item.class, self])
+              end
 
               item.save!
             end
@@ -47,10 +52,11 @@ module Gitlab
             _gl_bulk_insert
             _gl_restore_callbacks
             _gl_replay_callbacks
-
-            p "END TRANSACTION"
           end
         ensure
+          # might be called redundantly, but if we terminated abnormally anywhere
+          # due to an exception, we must restore the class' callback structure
+          _gl_restore_callbacks
           _gl_release_bulk_insert_state
         end
 
@@ -65,7 +71,6 @@ module Gitlab
         # Overrides ActiveRecord::Persistence::ClassMethods._insert_record
         def _insert_record(values)
           if _gl_bulk_inserts_requested?
-            p "!! delaying row #{values} for bulk insert"
             _gl_bulk_insert_state.inject_last_values!(values)
           else
             super
@@ -75,12 +80,12 @@ module Gitlab
         private
 
         def _gl_bulk_insert_state
-          Thread.current[:_gl_bulk_insert_state]&.fetch(self.class, nil)
+          Thread.current[:_gl_bulk_insert_state]&.fetch(self, nil)
         end
 
         def _gl_set_bulk_insert_state
           Thread.current[:_gl_bulk_insert_state] = {
-            self.class => BulkInsertState.new
+            self => BulkInsertState.new
           }
         end
 
@@ -90,21 +95,24 @@ module Gitlab
 
         def _gl_delay_callbacks
           # make backup of original callback chain
-          _gl_bulk_insert_state.store_callbacks(_save_callbacks.deep_dup)
+          _gl_bulk_insert_state.store_callbacks(__callbacks)
 
           # remove after_save callbacks, so that they won't be invoked
-          _save_callbacks.send(:chain).reject! { |c| c.kind == :after }
+          _save_callbacks.__send__(:chain).reject! { |c| c.kind == :after }
         end
 
         def _gl_restore_callbacks
+          return unless _gl_bulk_insert_state
+
           stored_callbacks = _gl_bulk_insert_state.callbacks
 
-          _save_callbacks = stored_callbacks
-          __callbacks[:save] = stored_callbacks
+          if stored_callbacks&.any?
+            _save_callbacks = stored_callbacks[:save]
+            __callbacks[:save] = stored_callbacks[:save]
+          end
         end
 
         def _gl_replay_callbacks
-          p "REPLAYING after_save"
           _gl_bulk_insert_state.captures.each do |capture|
             target = capture[:target]
             _gl_run_save_callback(target, :after)
@@ -113,28 +121,32 @@ module Gitlab
 
         # Because `run_callbacks` will run _all_ callbacks for e.g. `save`,
         # we need to filter out anything that is not of the given `kind` first.
+        #
+        # TODO: this is currently hacky and inefficient, since it involves a lot
+        # of copying of callback structures. This only needs to happen once per
+        # replay, not for every item.
         def _gl_run_save_callback(target, kind)
-          current_callbacks = _save_callbacks.deep_dup
+          # obtain a copy of the stored/original save callbacks
+          requested_callbacks = _gl_bulk_insert_state.callbacks_for(:save)
 
-          requested_chain = _save_callbacks.send(:chain)
-          requested_chain.reject! { |c| c.kind != kind }
+          # retain only callback hooks of the requested kind
+          requested_callbacks.__send__(:chain).reject! { |c| c.kind != kind }
+          _save_callbacks = requested_callbacks
+          __callbacks[:save] = requested_callbacks
 
           target.run_callbacks :save
 
-          _save_callbacks = current_callbacks
-          __callbacks[:save] = current_callbacks
+          # restore callbacks to previous state
+          _gl_restore_callbacks
         end
 
         def _gl_bulk_insert
-          p "BULK INSERT"
-
           # obtains all captured model instances & row values
           captures = _gl_bulk_insert_state.captures
 
           values = captures.map { |c| c[:values] }
 
           ids = Gitlab::Database.bulk_insert(table_name, values, return_ids: true)
-          p "--> row IDs: #{ids.inspect}"
 
           # inject row IDs back into model instances
           if ids && ids.any?
