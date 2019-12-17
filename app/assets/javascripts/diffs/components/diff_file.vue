@@ -7,13 +7,17 @@ import createFlash from '~/flash';
 import { hasDiff } from '~/helpers/diffs_helper';
 import eventHub from '../../notes/event_hub';
 import DiffFileHeader from './diff_file_header.vue';
+import DiffFileHeaderStatic from './diff_file_header_static.vue';
 import DiffContent from './diff_content.vue';
+import DiffContentStatic from './diff_content_static.vue';
 import { diffViewerErrors } from '~/ide/constants';
 
 export default {
   components: {
     DiffFileHeader,
+    DiffFileHeaderStatic,
     DiffContent,
+    DiffContentStatic,
     GlLoadingIcon,
   },
   props: {
@@ -36,6 +40,7 @@ export default {
       isLoadingCollapsedDiff: false,
       forkMessageVisible: false,
       isCollapsed: this.file.viewer.collapsed || false,
+      visible: false,
     };
   },
   computed: {
@@ -138,6 +143,9 @@ export default {
     hideForkMessage() {
       this.forkMessageVisible = false;
     },
+    visibilityChanged(isVisible) {
+      this.visible = isVisible;
+    },
   },
 };
 </script>
@@ -145,12 +153,19 @@ export default {
 <template>
   <div
     :id="file.file_hash"
+    v-observe-visibility="{
+      callback: visibilityChanged,
+      throttle: 300,
+      once: true,
+      intersection: { threshhold: 0.0 },
+    }"
     :class="{
       'is-active': isActive,
     }"
     class="diff-file file-holder"
   >
     <diff-file-header
+      v-if="visible"
       :can-current-user-fork="canCurrentUserFork"
       :diff-file="file"
       :collapsible="true"
@@ -161,6 +176,7 @@ export default {
       @toggleFile="handleToggle"
       @showForkMessage="showForkMessage"
     />
+    <diff-file-header-static v-else :diff-file="file" />
 
     <div v-if="forkMessageVisible" class="js-file-fork-suggestion-section file-fork-suggestion">
       <span class="file-fork-suggestion-note" v-html="forkMessage"></span>
@@ -183,19 +199,26 @@ export default {
         <div v-if="errorMessage" class="diff-viewer">
           <div class="nothing-here-block" v-html="errorMessage"></div>
         </div>
-        <template v-else>
-          <div v-show="isCollapsed" class="nothing-here-block diff-collapsed">
-            {{ __('This diff is collapsed.') }}
-            <a class="click-to-expand js-click-to-expand" href="#" @click.prevent="handleToggle">{{
-              __('Click to expand it.')
-            }}</a>
-          </div>
+        <div v-else-if="isCollapsed" class="nothing-here-block diff-collapsed">
+          {{ __('This diff is collapsed.') }}
+          <a class="click-to-expand js-click-to-expand" href="#" @click.prevent="handleToggle">{{
+            __('Click to expand it.')
+          }}</a>
+        </div>
+        <div v-else>
           <diff-content
-            v-show="!isCollapsed && !isFileTooLarge"
+            v-if="visible"
+            :class="{ hidden: isCollapsed || isFileTooLarge }"
             :diff-file="file"
             :help-page-path="helpPagePath"
           />
-        </template>
+          <diff-content-static
+            v-else
+            :class="{ hidden: isCollapsed || isFileTooLarge }"
+            :diff-file="file"
+            :help-page-path="helpPagePath"
+          />
+        </div>
       </div>
     </template>
   </div>

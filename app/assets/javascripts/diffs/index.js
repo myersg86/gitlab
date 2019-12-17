@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import { mapActions, mapState, mapGetters } from 'vuex';
+import VueObserveVisibility from 'vue-observe-visibility';
 import { parseBoolean } from '~/lib/utils/common_utils';
 import { getParameterValues } from '~/lib/utils/url_utility';
 import FindFile from '~/vue_shared/components/file_finder/index.vue';
@@ -9,6 +10,8 @@ import { TREE_LIST_STORAGE_KEY } from './constants';
 
 export default function initDiffsApp(store) {
   const fileFinderEl = document.getElementById('js-diff-file-finder');
+  Vue.use(VueObserveVisibility);
+  Vue.config.performance = true;
 
   if (fileFinderEl) {
     // eslint-disable-next-line no-new
