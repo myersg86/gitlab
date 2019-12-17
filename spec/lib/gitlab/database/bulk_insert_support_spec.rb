@@ -24,19 +24,19 @@ describe Gitlab::Database::BulkInsertSupport do
 
     has_one :item_dependency
 
-    after_commit -> {
+    after_commit do
       @callback_invocations[:after_commit] += 1
       @callback_invocations[:sequence] << :after_commit
 
-      raise "`id` must be set in after_commit" unless self.id
-    }
+      raise "'id' must be set in after_commit" unless self.id
+    end
 
-    before_create -> {
+    before_create do
       @callback_invocations[:before_create] += 1
       @callback_invocations[:sequence] << :before_create
-    }
+    end
 
-    before_save -> {
+    before_save do
       @callback_invocations[:before_save] += 1
       @callback_invocations[:sequence] << :before_save
 
@@ -47,25 +47,25 @@ describe Gitlab::Database::BulkInsertSupport do
       ItemDependency.create!(name: 'before_save')
 
       self.before = "#{name} set from before_save"
-    }
+    end
 
-    after_save -> {
+    after_save do
       @callback_invocations[:after_save] += 1
       @callback_invocations[:sequence] << :after_save
-      raise "`id` must be set in after_save" unless self.id
+      raise "'id' must be set in after_save" unless self.id
 
       raise "failed in after_save" if @fail_after_save
 
       @after = "#{name} set from after_save"
-    }
+    end
 
-    after_create -> {
+    after_create do
       @callback_invocations[:after_create] += 1
       @callback_invocations[:sequence] << :after_create
-      raise "`id` must be set in after_create" unless self.id
+      raise "'id' must be set in after_create" unless self.id
 
       raise "failed in after_commit" if @fail_after_commit
-    }
+    end
   end
 
   before(:all) do
