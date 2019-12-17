@@ -11,7 +11,6 @@ import { TREE_LIST_STORAGE_KEY } from './constants';
 export default function initDiffsApp(store) {
   const fileFinderEl = document.getElementById('js-diff-file-finder');
   Vue.use(VueObserveVisibility);
-  Vue.config.performance = true;
 
   if (fileFinderEl) {
     // eslint-disable-next-line no-new
