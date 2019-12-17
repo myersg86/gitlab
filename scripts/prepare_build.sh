@@ -6,7 +6,7 @@ export BUNDLE_INSTALL_FLAGS="--without=production --jobs=$(nproc) --path=vendor 
 
 if [ "$USE_BUNDLE_INSTALL" != "false" ]; then
   bundle --version
-  bundle install --clean $BUNDLE_INSTALL_FLAGS && bundle check
+  time bundle install --clean $BUNDLE_INSTALL_FLAGS && bundle check
 fi
 
 # Only install knapsack after bundle install! Otherwise oddly some native

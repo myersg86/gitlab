@@ -39,9 +39,9 @@
       - public/assets/
   script:
     - node --version
-    - retry yarn install --frozen-lockfile --production --cache-folder .yarn-cache --prefer-offline
+    - retry time yarn install --frozen-lockfile --production --cache-folder .yarn-cache --prefer-offline
     - free -m
-    - retry bundle exec rake gitlab:assets:compile
+    - retry time bundle exec rake gitlab:assets:compile
     - time scripts/build_assets_image
     - scripts/clean-old-cached-assets
     - rm -f /etc/apt/sources.list.d/google*.list  # We don't need to update Chrome here
