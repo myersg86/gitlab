@@ -160,7 +160,9 @@ export default {
     :id="file.file_hash"
     v-observe-visibility="{
       callback: visibilityChanged,
-      intersection: { threshhold: 0.0, rootMargin: '50px' },
+      throttle: 300,
+      once: true,
+      intersection: { threshhold: 0.0 },
     }"
     :class="{
       'is-active': isActive,
