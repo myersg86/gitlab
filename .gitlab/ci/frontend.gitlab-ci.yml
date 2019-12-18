@@ -13,9 +13,7 @@
     - .default-before_script
     - .only:changes-code-backstage-qa
   image: caalberts/cache-bundle-yarn
-  stage: test
-  dependencies: ["setup-test-env"]
-  needs: ["setup-test-env"]
+  stage: prepare
   services:
     - docker:19.03.0-dind
   variables:
