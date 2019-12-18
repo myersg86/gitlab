@@ -11,9 +11,8 @@
     - .default-retry
     - .default-only
     - .default-before_script
-    - .assets-compile-cache
     - .only:changes-code-backstage-qa
-  image: registry.gitlab.com/gitlab-org/gitlab-build-images:ruby-2.6.3-git-2.24-lfs-2.9-chrome-73.0-node-12.x-yarn-1.16-graphicsmagick-1.3.33-docker-19.03.1
+  image: caalberts/cache-bundle-yarn
   stage: test
   dependencies: ["setup-test-env"]
   needs: ["setup-test-env"]
@@ -29,8 +28,6 @@
     NODE_OPTIONS: --max_old_space_size=3584
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375
-  cache:
-    key: "assets-compile:production:vendor_ruby:.yarn-cache:tmp_cache_assets_sprockets:v6"
   artifacts:
     name: webpack-report
     expire_in: 31d

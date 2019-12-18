@@ -4,6 +4,11 @@ export SETUP_DB=${SETUP_DB:-true}
 export USE_BUNDLE_INSTALL=${USE_BUNDLE_INSTALL:-true}
 export BUNDLE_INSTALL_FLAGS="--without=production --jobs=$(nproc) --path=vendor --retry=3" # TODO: Removing `--quiet` for debugging, revert this line before merging
 
+# Copy bundler and yarn caches if exist
+if [ -d "/tmp/cache/" ]; then
+  cp -r /tmp/cache/. $CI_PROJECT_DIR
+fi
+
 if [ "$USE_BUNDLE_INSTALL" != "false" ]; then
   bundle --version
   time bundle install --clean $BUNDLE_INSTALL_FLAGS && bundle check
