@@ -5,12 +5,18 @@
       - .yarn-cache/
       - tmp/cache/assets/sprockets
 
+.gitlab:assets:compile-cache:
+  cache:
+    paths:
+      - tmp/cache/assets/sprockets
+
 .gitlab:assets:compile-metadata:
   extends:
     - .default-tags
     - .default-retry
     - .default-only
     - .default-before_script
+    - .gitlab:assets:compile-cache
     - .only:changes-code-backstage-qa
   image: caalberts/cache-bundle-yarn
   stage: prepare
@@ -26,6 +32,8 @@
     NODE_OPTIONS: --max_old_space_size=3584
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375
+  cache:
+    key: "gitlab:assets-compile:production:tmp_cache_assets_sprockets:v7"
   artifacts:
     name: webpack-report
     expire_in: 31d
