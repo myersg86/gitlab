@@ -180,7 +180,7 @@ describe Gitlab::Database::BulkInsertSupport do
 
         BulkInsertItem.save_all!(item1, item2)
 
-        expect(item1.callback_invocations[:before_save]).to eq(1)
+        expect(item1.callback_invocations[:after_save]).to eq(1)
         expect(item2.callback_invocations[:after_save]).to eq(1)
 
         expect(item1.after).to eq("one set from after_save")
