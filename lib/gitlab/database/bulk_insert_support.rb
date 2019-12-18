@@ -38,7 +38,7 @@ module Gitlab
       # We currently reach into internal APIs, which requires __send__
       # rubocop: disable GitlabSecurity/PublicSend
       class_methods do
-        def save_all!(*items)
+        def save_all!(*items, batch_size: 100)
           raise NestedCallError.new("Cannot nest bulk inserts") if _gl_bulk_inserts_requested?
 
           # Until we find a better way to delay AR callbacks than rewriting them,
@@ -49,21 +49,23 @@ module Gitlab
           # in multi-threaded setups.
           @_gl_bulk_insert_lock ||= Mutex.new
           @_gl_bulk_insert_lock.synchronize do
-            self.transaction do
-              _gl_set_bulk_insert_state
-              _gl_delay_after_callbacks
+            items.flatten.each_slice(batch_size) do |item_batch|
+              self.transaction do
+                _gl_set_bulk_insert_state
+                _gl_delay_after_callbacks
 
-              items.flatten.each do |item|
-                unless item.is_a?(self)
-                  raise TargetTypeError.new("Wrong instance type %s, expected T <= %s" % [item.class, self])
+                item_batch.each do |item|
+                  unless item.is_a?(self)
+                    raise TargetTypeError.new("Wrong instance type %s, expected T <= %s" % [item.class, self])
+                  end
+
+                  item.save!
                 end
 
-                item.save!
+                _gl_bulk_insert
+                _gl_restore_callbacks
+                _gl_replay_callbacks
               end
-
-              _gl_bulk_insert
-              _gl_restore_callbacks
-              _gl_replay_callbacks
             end
           ensure
             # might be called redundantly, but if we terminated abnormally anywhere

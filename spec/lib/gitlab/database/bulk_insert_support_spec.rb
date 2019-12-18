@@ -257,6 +257,26 @@ describe Gitlab::Database::BulkInsertSupport do
       end
     end
 
+    context 'with batch size' do
+      it 'performs bulk insert for each batch' do
+        allow(Gitlab::Database).to receive(:bulk_insert).and_call_original
+        items = Array.new(5) { |n| new_item(name: "item#{n}") }
+        item_values = items.map do |i|
+          { "before": "#{i.name} set from before_save", "name": i.name }.stringify_keys
+        end
+
+        BulkInsertItem.save_all!(items, batch_size: 2)
+
+        # should produce 3 INSERTs: [one, two], [three, four], [five]
+        expect(Gitlab::Database).to have_received(:bulk_insert)
+          .with('bulk_insert_items', item_values[0..1], return_ids: true)
+        expect(Gitlab::Database).to have_received(:bulk_insert)
+          .with('bulk_insert_items', item_values[2..3], return_ids: true)
+        expect(Gitlab::Database).to have_received(:bulk_insert)
+          .with('bulk_insert_items', item_values[4..-1], return_ids: true)
+      end
+    end
+
     it 'throws when some or all items are not of the specified type' do
       expect { BulkInsertItem.save_all!(good_item, "not a `BulkInsertItem`") }.to(
         raise_error(Gitlab::Database::BulkInsertSupport::TargetTypeError)
