@@ -58,9 +58,11 @@
 
 gitlab:assets:compile pull-push-cache:
   extends: .gitlab:assets:compile-metadata
+  stage: sync
   only:
     refs:
       - master
+      - merge_requests
   cache:
     policy: pull-push
 
