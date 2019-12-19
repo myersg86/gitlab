@@ -181,7 +181,19 @@ module Gitlab
 
           values = captures.map { |c| c[:values] }
 
-          ids = Gitlab::Database.bulk_insert(table_name, values, return_ids: true)
+          all_keys = values.inject(Set.new) do |key_set, attributes|
+            key_set.merge(attributes.keys)
+          end
+
+          # backfill nulls for missing keys
+          values.each do |row|
+            all_keys.each do |key|
+              row[key] ||= nil
+            end
+          end
+
+          result = insert_all!(values, returning: [:id])
+          ids = result.map { |row| row['id'] }
 
           # inject row IDs back into model instances
           if ids && ids.any?

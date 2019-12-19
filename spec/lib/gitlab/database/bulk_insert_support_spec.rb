@@ -259,21 +259,24 @@ describe Gitlab::Database::BulkInsertSupport do
 
     context 'with batch size' do
       it 'performs bulk insert for each batch' do
-        allow(Gitlab::Database).to receive(:bulk_insert).and_call_original
         items = Array.new(5) { |n| new_item(name: "item#{n}") }
         item_values = items.map do |i|
           { "before": "#{i.name} set from before_save", "name": i.name }.stringify_keys
         end
 
-        BulkInsertItem.save_all!(items, batch_size: 2)
+        expect(ActiveRecord::InsertAll).to receive(:new)
+          .with(BulkInsertItem, item_values[0..1], on_duplicate: :raise, returning: [:id])
+          .and_call_original
+        expect(ActiveRecord::InsertAll).to receive(:new)
+          .with(BulkInsertItem, item_values[2..3], on_duplicate: :raise, returning: [:id])
+          .and_call_original
+        expect(ActiveRecord::InsertAll).to receive(:new)
+          .with(BulkInsertItem, item_values[4..-1], on_duplicate: :raise, returning: [:id])
+          .and_call_original
 
-        # should produce 3 INSERTs: [one, two], [three, four], [five]
-        expect(Gitlab::Database).to have_received(:bulk_insert)
-          .with('bulk_insert_items', item_values[0..1], return_ids: true)
-        expect(Gitlab::Database).to have_received(:bulk_insert)
-          .with('bulk_insert_items', item_values[2..3], return_ids: true)
-        expect(Gitlab::Database).to have_received(:bulk_insert)
-          .with('bulk_insert_items', item_values[4..-1], return_ids: true)
+        expect { BulkInsertItem.save_all!(items, batch_size: 2) }.to(
+          change { BulkInsertItem.count }.from(0).to(5)
+        )
       end
     end
 
