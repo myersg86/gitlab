@@ -18,7 +18,7 @@
     - .default-before_script
     - .gitlab:assets:compile-cache
     - .only:changes-code-backstage-qa
-  image: caalberts/cache-bundle-yarn
+  image: registry.gitlab.com/gitlab-org/gitlab/gitlab-ee-build-cache:master
   stage: prepare
   services:
     - docker:19.03.0-dind

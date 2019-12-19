@@ -31,3 +31,27 @@ cache-repo:
     - tar cf $TAR_FILENAME .
     - gzip $TAR_FILENAME
     - gsutil cp $TAR_FILENAME.gz gs://gitlab-ci-git-repo-cache/project-$CI_PROJECT_ID/gitlab-master.tar.gz
+
+cache-bundler-yarn:
+  image: docker:19.03.0-dind
+  services:
+    - docker:19.03.0-dind
+  tags:
+    - gitlab-org
+    - docker
+  stage: sync
+  only:
+    refs:
+      # FIXME: currently on merge_requests for for development, use .only:variables_refs-canonical-dot-com-schedules
+      - merge_requests
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+    GITLAB_EDITION: "ce"
+  script:
+    - '[[ ! -d "ee/" ]] || export GITLAB_EDITION="ee"'
+    - export BUILD_CACHE_IMAGE="${CI_REGISTRY}/${CI_PROJECT_PATH}/gitlab-${GITLAB_EDITION}-build-cache:master"
+    - time docker pull "${BUILD_CACHE_IMAGE}"
+    - time docker build --cache-from "${BUILD_CACHE_IMAGE}" --tag ${BUILD_CACHE_IMAGE} --file ./Dockerfile.build-cache .
+    - echo "${CI_JOB_TOKEN}" | docker login --username gitlab-ci-token --password-stdin ${CI_REGISTRY}
+    - time docker push ${BUILD_CACHE_IMAGE}
