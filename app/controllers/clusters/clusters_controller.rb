@@ -19,6 +19,45 @@ class Clusters::ClustersController < Clusters::BaseController
 
   helper_method :token_in_session
 
+  content_security_policy do |p|
+    next if p.directives.blank?
+
+    connect_src_policy = p.directives['connect-src'].to_a | %w(
+      https://iam.amazonaws.com
+      https://ec2.eu-north-1.amazonaws.com
+      https://ec2.ap-south-1.amazonaws.com
+      https://ec2.eu-west-3.amazonaws.com
+      https://ec2.eu-west-2.amazonaws.com
+      https://ec2.eu-west-1.amazonaws.com
+      https://ec2.ap-northeast-2.amazonaws.com
+      https://ec2.ap-northeast-1.amazonaws.com
+      https://ec2.sa-east-1.amazonaws.com
+      https://ec2.ca-central-1.amazonaws.com
+      https://ec2.ap-southeast-1.amazonaws.com
+      https://ec2.ap-southeast-2.amazonaws.com
+      https://ec2.eu-central-1.amazonaws.com
+      https://ec2.us-east-1.amazonaws.com
+      https://ec2.us-east-2.amazonaws.com
+      https://ec2.us-west-1.amazonaws.com
+      https://ec2.us-west-2.amazonaws.com
+    )
+
+    frame_src_policy = p.directives['frame-src'].to_a | %w(
+      https://content.googleapis.com
+      https://content-cloudresourcemanager.googleapis.com
+      https://content-compute.googleapis.com
+      https://content-cloudbilling.googleapis.com
+    )
+
+    script_src_policy = p.directives['script-src'].to_a | %w(
+      https://apis.google.com
+    )
+
+    p.connect_src(*connect_src_policy)
+    p.frame_src(*frame_src_policy)
+    p.script_src(*script_src_policy)
+  end
+
   STATUS_POLLING_INTERVAL = 10_000
 
   def index
