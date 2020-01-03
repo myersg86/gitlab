@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+# Copies system dashboard definition in .yml file into designated
+# .yml file inside `.gitlab/dashboards`
 module EE
-  module Projects
-    module PerformanceMonitoring
-      module DashboardsController
+  module Metrics
+    module Dashboard
+      module CloneDashboardService
         extend ::Gitlab::Utils::Override
 
         DASHBOARD_TEMPLATES = {
@@ -13,9 +15,9 @@ module EE
 
         private
 
-        override :dashboard_templates
-        def dashboard_templates
-          DASHBOARD_TEMPLATES
+        override :dashboard_template
+        def dashboard_template
+          DASHBOARD_TEMPLATES[params[:dashboard]]
         end
       end
     end

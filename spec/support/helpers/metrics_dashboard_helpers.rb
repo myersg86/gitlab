@@ -30,13 +30,14 @@ module MetricsDashboardHelpers
     PrometheusMetricEnums.group_details[:business][:group_title]
   end
 
-  shared_examples_for 'misconfigured dashboard service response' do |status_code|
-    it 'returns an appropriate message and status code' do
+  shared_examples_for 'misconfigured dashboard service response' do |status_code, message = nil|
+    it 'returns an appropriate message and status code', :aggregate_failures do
       result = service_call
 
       expect(result.keys).to contain_exactly(:message, :http_status, :status)
       expect(result[:status]).to eq(:error)
       expect(result[:http_status]).to eq(status_code)
+      expect(result[:message]).to eq(message) if message
     end
   end
 
