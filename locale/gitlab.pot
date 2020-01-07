@@ -11493,6 +11493,9 @@ msgstr ""
 msgid "Metrics|Duplicate dashboard"
 msgstr ""
 
+msgid "Metrics|Duplicating..."
+msgstr ""
+
 msgid "Metrics|Edit metric"
 msgstr ""
 
@@ -11524,9 +11527,6 @@ msgid "Metrics|PromQL query is valid"
 msgstr ""
 
 msgid "Metrics|Prometheus Query Documentation"
-msgstr ""
-
-msgid "Metrics|Saving..."
 msgstr ""
 
 msgid "Metrics|Show last"

@@ -6,6 +6,7 @@ import {
   GlDropdownItem,
   GlDropdownDivider,
   GlModal,
+  GlLoadingIcon,
   GlModalDirective,
 } from '@gitlab/ui';
 import DuplicateDashboardForm from './duplicate_dashboard_form.vue';
@@ -21,6 +22,7 @@ export default {
     GlDropdownItem,
     GlDropdownDivider,
     GlModal,
+    GlLoadingIcon,
     DuplicateDashboardForm,
   },
   directives: {
@@ -84,6 +86,9 @@ export default {
           this.alert = error;
         });
     },
+    hide() {
+      this.alert = null;
+    },
     formChange(form) {
       this.form = form;
     },
@@ -113,8 +118,9 @@ export default {
         ref="duplicateDashboardModal"
         modal-id="duplicateDashboardModal"
         title="Duplicate this dashboard"
-        :ok-title="!loading ? s__('Metrics|Duplicate') : s__('Metrics|Saving...')"
+        ok-variant="success"
         @ok="ok"
+        @hide="hide"
       >
         <gl-alert v-if="alert" class="mb-3" variant="danger" @dismiss="alert = null">
           {{ alert }}
@@ -124,6 +130,10 @@ export default {
           :default-branch="defaultBranch"
           @change="formChange"
         />
+        <template v-slot:modal-ok>
+          <gl-loading-icon v-if="loading" inline color="light" />
+          {{ loading ? s__('Metrics|Duplicating...') : s__('Metrics|Duplicate') }}
+        </template>
       </gl-modal>
 
       <gl-dropdown-item ref="duplicateDashboardItem" v-gl-modal="'duplicateDashboardModal'">
