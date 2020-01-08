@@ -112,6 +112,19 @@ module API
 
         present issues, options
       end
+
+      desc "Get specified issue" do
+        success Entities::Issue
+      end
+      params do
+        requires :id, type: String, desc: 'The ID of the Issue'
+      end
+      get ":id" do
+        authenticate!
+        issue = Issue.find(params['id'])
+
+        present issue
+      end
     end
 
     params do

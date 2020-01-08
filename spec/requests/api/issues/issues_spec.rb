@@ -84,6 +84,37 @@ RSpec.describe API::Issues do
     end
   end
 
+  describe 'GET /issues/:id' do
+    context 'when unauthorized' do
+      it 'returns the unauthorized' do
+        get api("/issues/#{issue.id}" )
+
+        expect(response).to have_gitlab_http_status(:unauthorized)
+      end
+    end
+
+    context 'when authorized' do
+      context 'when issue exists' do
+        it 'returns the issue' do
+          get api("/issues/#{issue.id}", user)
+
+          expect(response).to have_gitlab_http_status(:ok)
+          expect(json_response['author_id']).to eq(issue.author.id)
+          expect(json_response['description']).to eq(issue.description)
+        end
+      end
+
+      context 'when issue does not exist' do
+        it 'returns the 404' do
+          get api("/issues/0", user)
+
+          expect(response).to have_gitlab_http_status(:not_found)
+        end
+      end
+
+    end
+  end
+
   describe 'GET /issues' do
     context 'when unauthenticated' do
       it 'returns an array of all issues' do
@@ -123,6 +154,11 @@ RSpec.describe API::Issues do
 
         expect(response).to have_gitlab_http_status(:ok)
         expect_paginated_array_response([issue.id, closed_issue.id])
+      end
+
+      it 'responds with a 401 instead of the specified issue' do
+        get api("/issues/#{issue.id}")
+        expect(response).to have_http_status(401)
       end
 
       context 'issues_statistics' do
@@ -350,6 +386,20 @@ RSpec.describe API::Issues do
         get api('/issues', user), params: { search: issue.description }
 
         expect_paginated_array_response(issue.id)
+      end
+
+      it 'returns the user\'s specified issue' do
+        get api("/issues/#{issue.id}", user)
+        expect(response).to have_http_status(200)
+        expect(json_response.empty?).to be false
+        expect(json_response["title"]).to eq issue.title
+      end
+
+      it 'returns another user\'s specified issue' do
+        get api("/issues/#{issue.id}", user2)
+        expect(response).to have_http_status(200)
+        expect(json_response.empty?).to be false
+        expect(json_response["title"]).to eq issue.title
       end
 
       context 'filtering before a specific date' do
