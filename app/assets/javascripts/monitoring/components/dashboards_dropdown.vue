@@ -117,7 +117,7 @@ export default {
       <gl-modal
         ref="duplicateDashboardModal"
         modal-id="duplicateDashboardModal"
-        title="Duplicate this dashboard"
+        :title="s__('Metrics|Duplicate dashboard')"
         ok-variant="success"
         @ok="ok"
         @hide="hide"
