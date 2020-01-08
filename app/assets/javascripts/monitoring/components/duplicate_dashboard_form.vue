@@ -102,10 +102,11 @@ export default {
       label-size="sm"
       label-for="fileName"
     >
-      <gl-form-input id="fileName" v-model="form.fileName" :required="true" />
+      <gl-form-input id="fileName" ref="fileName" v-model="form.fileName" :required="true" />
     </gl-form-group>
     <gl-form-group :label="s__('Branch')" label-size="sm" label-for="branch">
       <gl-form-radio-group
+        ref="branchOption"
         v-model="branchOption"
         :checked="branchOptions[0].value"
         :stacked="true"
@@ -121,6 +122,7 @@ export default {
     >
       <gl-form-textarea
         id="commitMessage"
+        ref="commitMessage"
         v-model="form.commitMessage"
         :placeholder="defaultCommitMsg"
       />
