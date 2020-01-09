@@ -90,13 +90,13 @@ export default {
   <form @change="change">
     <p class="text-muted">
       {{
-        s__(`You can save a copy of this dashboard to your repository
+        s__(`Metrics|You can save a copy of this dashboard to your repository
       so it can be customized. Select a file name and branch to 
       save it.`)
       }}
     </p>
     <gl-form-group
-      :label="s__('File name')"
+      :label="__('File name')"
       :state="fileNameState"
       :invalid-feedback="fileNameFeedback"
       label-size="sm"
@@ -104,7 +104,7 @@ export default {
     >
       <gl-form-input id="fileName" ref="fileName" v-model="form.fileName" :required="true" />
     </gl-form-group>
-    <gl-form-group :label="s__('Branch')" label-size="sm" label-for="branch">
+    <gl-form-group :label="__('Branch')" label-size="sm" label-for="branch">
       <gl-form-radio-group
         ref="branchOption"
         v-model="branchOption"
@@ -116,7 +116,7 @@ export default {
       <gl-form-input id="branchName" ref="branchName" v-model="branchName" />
     </gl-form-group>
     <gl-form-group
-      :label="s__('Commit message (optional)')"
+      :label="__('Commit message (optional)')"
       label-size="sm"
       label-for="commitMessage"
     >

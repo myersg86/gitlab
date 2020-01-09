@@ -1,5 +1,5 @@
 <script>
-import { mapActions } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 import {
   GlAlert,
   GlDropdown,
@@ -29,10 +29,6 @@ export default {
     GlModal: GlModalDirective,
   },
   props: {
-    allDashboards: {
-      type: Array,
-      required: true,
-    },
     selectedDashboard: {
       type: Object,
       required: false,
@@ -51,6 +47,7 @@ export default {
     };
   },
   computed: {
+    ...mapState('monitoringDashboard', ['allDashboards']),
     isSystemDashboard() {
       return this.selectedDashboard.system_dashboard;
     },
@@ -96,11 +93,7 @@ export default {
 };
 </script>
 <template>
-  <gl-dropdown
-    class="mb-0 d-flex js-dashboards-dropdown"
-    toggle-class="dropdown-menu-toggle"
-    :text="selectedDashboardText"
-  >
+  <gl-dropdown toggle-class="dropdown-menu-toggle" :text="selectedDashboardText">
     <gl-dropdown-item
       v-for="dashboard in allDashboards"
       :key="dashboard.path"
@@ -130,7 +123,7 @@ export default {
           :default-branch="defaultBranch"
           @change="formChange"
         />
-        <template v-slot:modal-ok>
+        <template #modal-ok>
           <gl-loading-icon v-if="loading" inline color="light" />
           {{ loading ? s__('Metrics|Duplicating...') : s__('Metrics|Duplicate') }}
         </template>

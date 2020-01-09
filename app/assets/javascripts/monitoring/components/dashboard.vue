@@ -214,9 +214,6 @@ export default {
     selectedDashboard() {
       return this.allDashboards.find(d => d.path === this.currentDashboard) || this.firstDashboard;
     },
-    selectedDashboardText() {
-      return this.selectedDashboard.display_name;
-    },
     showRearrangePanelsBtn() {
       return !this.showEmptyState && this.rearrangePanelsAvailable;
     },
@@ -358,9 +355,8 @@ export default {
           >
             <dashboards-dropdown
               id="monitor-dashboards-dropdown"
-              class="mb-0 d-flex js-dashboards-dropdown"
+              class="mb-0 d-flex"
               toggle-class="dropdown-menu-toggle"
-              :all-dashboards="allDashboards"
               :default-branch="defaultBranch"
               :selected-dashboard="selectedDashboard"
               @selectDashboard="selectDashboard($event)"

@@ -7,18 +7,24 @@ import { GlDropdownItem, GlModal, GlLoadingIcon, GlAlert } from '@gitlab/ui';
 
 import { dashboardGitResponse } from '../mock_data';
 
-function createComponent(props, options = {}) {
-  return shallowMount(DashboardsDropdown, {
-    propsData: {
-      ...props,
-      allDashboards: dashboardGitResponse,
-      defaultBranch: 'master',
-    },
+function createComponent(props, opts = {}) {
+  const storeOpts = {
     methods: {
       duplicateSystemDashboard: jest.fn(),
     },
+    computed: {
+      allDashboards: () => dashboardGitResponse,
+    },
+  };
+
+  return shallowMount(DashboardsDropdown, {
+    propsData: {
+      ...props,
+      defaultBranch: 'master',
+    },
     sync: false,
-    ...options,
+    ...storeOpts,
+    ...opts,
   });
 }
 
