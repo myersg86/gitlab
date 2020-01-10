@@ -95,7 +95,7 @@ describe Projects::PerformanceMonitoring::DashboardsController do
                 expect(response).to redirect_to "/-/ide/project/#{namespace.path}/#{project.name}/edit/#{branch_name}/-/.gitlab/dashboards/#{file_name}"
               end
 
-              context 'Metrics::Dashboard::CloneDashboardService failure' do
+              context 'Metrics::Dashboard::CloneDashboardService failure', :aggregate_failures do
                 it 'redirects back and sets alert' do
                   allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: false, message: 'something went wrong', http_status: :bad_request }))
 
@@ -105,14 +105,30 @@ describe Projects::PerformanceMonitoring::DashboardsController do
                   expect(response).to redirect_to namespace_project_environments_path
                 end
               end
-            end
-          end
 
-          context 'missing branch' do
-            let(:branch_name) { nil }
+              %w(commit_message file_name dashboard).each do |param|
+                context "param #{param} is missing" do
+                  let(param.to_s) { nil }
 
-            it 'raises ActionController::ParameterMissing' do
-              expect { post :create, params: params }.to raise_error ActionController::ParameterMissing
+                  it 'raises ActionController::ParameterMissing', :aggregate_failures do
+                    post :create, params: params
+
+                    expect(response).to set_flash[:alert].to eq("Request parameter #{param} is missing.")
+                    expect(response).to redirect_to namespace_project_environments_path
+                  end
+                end
+              end
+
+              context "param branch_name is missing" do
+                let(:branch_name) { nil }
+
+                it 'raises ActionController::ParameterMissing', :aggregate_failures do
+                  post :create, params: params
+
+                  expect(response).to set_flash[:alert].to eq("Request parameter branch is missing.")
+                  expect(response).to redirect_to namespace_project_environments_path
+                end
+              end
             end
           end
         end

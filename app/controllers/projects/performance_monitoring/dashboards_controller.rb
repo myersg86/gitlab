@@ -8,6 +8,10 @@ module Projects
       before_action :check_repository_available!
       before_action :validate_required_params!
 
+      rescue_from ActionController::ParameterMissing do |exception|
+        respond_error(http_status: :bad_request, message: "Request parameter #{exception.param} is missing.")
+      end
+
       USER_DASHBOARDS_DIR = ::Metrics::Dashboard::ProjectDashboardService::DASHBOARD_ROOT
 
       def create
@@ -40,7 +44,7 @@ module Projects
       end
 
       def validate_required_params!
-        params.require(%i(branch file_name dashboard))
+        params.require(%i(branch file_name dashboard commit_message))
       end
 
       def new_dashboard_path
