@@ -28,18 +28,13 @@ module Projects
 
       def respond_success(result)
         respond_to do |format|
-          format.html { redirect_to ide_edit_path(project, redirect_safe_branch_name, new_dashboard_path) }
-          format.json { render json: { redirect_to: ide_edit_path(project, redirect_safe_branch_name, new_dashboard_path) }, status: result[:http_status] }
+          format.json { render status: result.delete(:http_status), json: result }
         end
       end
 
       def respond_error(result)
         respond_to do |format|
           format.json { render json: { error: result[:message] }, status: result[:http_status] }
-          format.html do
-            flash[:alert] = result[:message]
-            redirect_back_or_default(default: namespace_project_environments_path)
-          end
         end
       end
 

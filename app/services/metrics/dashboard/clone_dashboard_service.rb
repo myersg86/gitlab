@@ -22,7 +22,7 @@ module Metrics
         return wrap_error(result) unless result[:status] == :success
 
         repository.refresh_method_caches([:metrics_dashboard])
-        success(result.merge(http_status: :created))
+        success(result.merge(http_status: :created, dashboard: dashboard_details))
       end
 
       private
@@ -85,6 +85,15 @@ module Metrics
         else
           result
         end
+      end
+
+      def dashboard_details
+        {
+          path: new_dashboard_path,
+          display_name: ::Metrics::Dashboard::ProjectDashboardService.name_for_path(new_dashboard_path),
+          default: false,
+          system_dashboard: false
+        }
       end
     end
   end

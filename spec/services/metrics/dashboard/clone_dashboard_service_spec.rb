@@ -166,9 +166,18 @@ describe Metrics::Dashboard::CloneDashboardService, :use_clean_rails_memory_stor
             service_call
           end
 
-          it 'returns success' do
+          it 'returns success', :aggregate_failures do
             result = service_call
+            dashboard_details = {
+              path: '.gitlab/dashboards/custom_dashboard.yml',
+              display_name: 'custom_dashboard.yml',
+              default: false,
+              system_dashboard: false
+            }
+
             expect(result[:status]).to be :success
+            expect(result[:http_status]).to be :created
+            expect(result[:dashboard]).to match dashboard_details
           end
         end
 

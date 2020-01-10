@@ -55,16 +55,13 @@ describe Projects::PerformanceMonitoring::DashboardsController do
             end
 
             context 'request format json' do
-              it 'returns path to new file' do
-                allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: :success, http_status: :created }))
-                allow(controller).to receive(:repository).and_return(repository)
-
-                expect(repository).to receive(:find_branch).with(branch_name).and_return(branch)
+              it 'returns services response' do
+                allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: :success, dashboard: {}, http_status: :created }))
 
                 post :create, params: params
 
                 expect(response).to have_gitlab_http_status :created
-                expect(json_response).to eq('redirect_to' => "/-/ide/project/#{namespace.path}/#{project.name}/edit/#{branch_name}/-/.gitlab/dashboards/#{file_name}")
+                expect(json_response).to eq('status' => 'success', 'dashboard' => {})
               end
 
               context 'Metrics::Dashboard::CloneDashboardService failure' do
@@ -77,34 +74,6 @@ describe Projects::PerformanceMonitoring::DashboardsController do
                   expect(json_response).to eq('error' => 'something went wrong')
                 end
               end
-            end
-
-            context 'request format html' do
-              before do
-                params.delete(:format)
-              end
-
-              it 'redirects to ide with new file' do
-                allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: :success, http_status: :created }))
-                allow(controller).to receive(:repository).and_return(repository)
-
-                expect(repository).to receive(:find_branch).with(branch_name).and_return(branch)
-
-                post :create, params: params
-
-                expect(response).to redirect_to "/-/ide/project/#{namespace.path}/#{project.name}/edit/#{branch_name}/-/.gitlab/dashboards/#{file_name}"
-              end
-
-              context 'Metrics::Dashboard::CloneDashboardService failure', :aggregate_failures do
-                it 'redirects back and sets alert' do
-                  allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: false, message: 'something went wrong', http_status: :bad_request }))
-
-                  post :create, params: params
-
-                  expect(response).to set_flash[:alert].to eq('something went wrong')
-                  expect(response).to redirect_to namespace_project_environments_path
-                end
-              end
 
               %w(commit_message file_name dashboard).each do |param|
                 context "param #{param} is missing" do
@@ -113,8 +82,8 @@ describe Projects::PerformanceMonitoring::DashboardsController do
                   it 'raises ActionController::ParameterMissing', :aggregate_failures do
                     post :create, params: params
 
-                    expect(response).to set_flash[:alert].to eq("Request parameter #{param} is missing.")
-                    expect(response).to redirect_to namespace_project_environments_path
+                    expect(response).to have_gitlab_http_status :bad_request
+                    expect(json_response).to eq('error' => "Request parameter #{param} is missing.")
                   end
                 end
               end
@@ -125,8 +94,8 @@ describe Projects::PerformanceMonitoring::DashboardsController do
                 it 'raises ActionController::ParameterMissing', :aggregate_failures do
                   post :create, params: params
 
-                  expect(response).to set_flash[:alert].to eq("Request parameter branch is missing.")
-                  expect(response).to redirect_to namespace_project_environments_path
+                  expect(response).to have_gitlab_http_status :bad_request
+                  expect(json_response).to eq('error' => "Request parameter branch is missing.")
                 end
               end
             end
