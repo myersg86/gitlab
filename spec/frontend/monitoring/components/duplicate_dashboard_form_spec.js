@@ -56,7 +56,7 @@ describe('DuplicateDashboardForm', () => {
     it('with the inital form values', () => {
       expect(wrapper.emitted().change).toHaveLength(1);
       expect(lastChange()).resolves.toEqual({
-        branch: defaultBranch,
+        branch: '',
         commitMessage: expect.any(String),
         dashboard: dashboardGitResponse[0].path,
         fileName: 'common_metrics.yml',

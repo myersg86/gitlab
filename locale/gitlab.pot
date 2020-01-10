@@ -11577,6 +11577,9 @@ msgstr ""
 msgid "Metrics|Y-axis label"
 msgstr ""
 
+msgid "Metrics|You can save a copy of this dashboard to your repository so it can be customized. Select a file name and branch to save it."
+msgstr ""
+
 msgid "Metrics|You're about to permanently delete this metric. This cannot be undone."
 msgstr ""
 
@@ -20933,9 +20936,6 @@ msgid "You can only transfer the project to namespaces you manage."
 msgstr ""
 
 msgid "You can resolve the merge conflict using either the Interactive mode, by choosing %{use_ours} or %{use_theirs} buttons, or by editing the files directly. Commit these changes into %{branch_name}"
-msgstr ""
-
-msgid "You can save a copy of this dashboard to your repository so it can be customized. Select a file name and branch to save it."
 msgstr ""
 
 msgid "You can see your chat accounts."

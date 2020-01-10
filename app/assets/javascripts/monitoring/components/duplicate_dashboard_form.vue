@@ -4,9 +4,6 @@ import { GlFormGroup, GlFormInput, GlFormRadioGroup, GlFormTextarea } from '@git
 
 const defaultFileName = dashboard => dashboard.path.split('/').reverse()[0];
 
-const DEFAULT = 'DEFAULT';
-const NEW = 'NEW';
-
 export default {
   components: {
     GlFormGroup,
@@ -24,6 +21,12 @@ export default {
       required: true,
     },
   },
+  radioVals: {
+    /* Use the default branch (e.g. master) */
+    DEFAULT: 'DEFAULT',
+    /* Create a new branch */
+    NEW: 'NEW',
+  },
   data() {
     return {
       form: {
@@ -32,10 +35,10 @@ export default {
         commitMessage: '',
       },
       branchName: '',
-      branchOption: DEFAULT,
+      branchOption: this.$options.radioVals.NEW,
       branchOptions: [
         {
-          value: DEFAULT,
+          value: this.$options.radioVals.DEFAULT,
           html: sprintf(
             __('Commit to %{branchName} branch'),
             {
@@ -44,7 +47,7 @@ export default {
             false,
           ),
         },
-        { value: NEW, text: __('Create new branch') },
+        { value: this.$options.radioVals.NEW, text: __('Create new branch') },
       ],
     };
   },
@@ -75,12 +78,17 @@ export default {
       this.$emit('change', {
         ...this.form,
         commitMessage: this.form.commitMessage ? this.form.commitMessage : this.defaultCommitMsg,
-        branch: this.branchOption === NEW ? this.branchName : this.defaultBranch,
+        branch:
+          this.branchOption === this.$options.radioVals.NEW
+            ? this.branchName
+            : this.defaultBranch,
       });
     },
     focus(option) {
-      if (option === NEW) {
-        this.$refs.branchName.$el.focus();
+      if (option === this.$options.radioVals.NEW) {
+        this.$nextTick(() => {
+          this.$refs.branchName.$el.focus();
+        });
       }
     },
   },
@@ -108,12 +116,17 @@ export default {
       <gl-form-radio-group
         ref="branchOption"
         v-model="branchOption"
-        :checked="branchOptions[0].value"
+        :checked="$options.radioVals.NEW"
         :stacked="true"
         :options="branchOptions"
         @change="focus"
       />
-      <gl-form-input id="branchName" ref="branchName" v-model="branchName" />
+      <gl-form-input
+        v-show="branchOption === $options.radioVals.NEW"
+        id="branchName"
+        ref="branchName"
+        v-model="branchName"
+      />
     </gl-form-group>
     <gl-form-group
       :label="__('Commit message (optional)')"

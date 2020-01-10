@@ -555,7 +555,9 @@ describe('Monitoring store actions', () => {
     });
 
     it('call to POST a new duplicated dashboard', done => {
-      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED);
+      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED, {
+        dashboard: dashboardGitResponse[1],
+      });
 
       testAction(duplicateSystemDashboard, {}, state, [], [])
         .then(() => {
@@ -565,8 +567,8 @@ describe('Monitoring store actions', () => {
         .catch(done.fail);
     });
 
-    it('call to POST a new duplicated dashboard with parameters', done => {
-      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED);
+    it('call to POST a new duplicated dashboard with parameters resolves', done => {
+      const mockCreatedDashboard = dashboardGitResponse[1];
 
       const params = {
         dashboard: 'my-dashboard',
@@ -582,14 +584,22 @@ describe('Monitoring store actions', () => {
         commit_message: 'A new commit message',
       });
 
+      mock.onPost(state.dashboardsEndpoint).reply(statusCodes.CREATED, {
+        dashboard: mockCreatedDashboard,
+      });
+
       testAction(duplicateSystemDashboard, params, state, [], [])
-        .then(() => {
+        .then(result => {
           expect(mock.history.post).toHaveLength(1);
 
           expect(mock.history.post[0].data).toEqual(expectedPayload);
+
+          expect(result).toEqual(mockCreatedDashboard);
+
           done();
         })
         .catch(done.fail);
+      // console.log(result);
     });
 
     // TODO Handle catch/errors...

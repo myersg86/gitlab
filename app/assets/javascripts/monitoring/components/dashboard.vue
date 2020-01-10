@@ -90,8 +90,7 @@ export default {
     },
     defaultBranch: {
       type: String,
-      required: false, // TODO Obtain this data from the backend
-      default: 'master',
+      required: true,
     },
     metricsEndpoint: {
       type: String,

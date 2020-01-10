@@ -84,6 +84,7 @@ describe('Dashboard', () => {
       settingsPath: '/path/to/settings',
       clustersPath: '/path/to/clusters',
       projectPath: '/path/to/project',
+      defaultBranch: 'master',
       metricsEndpoint: mockApiEndpoint,
       tagsPath: '/path/to/tags',
       emptyGettingStartedSvgPath: '/path/to/getting-started.svg',

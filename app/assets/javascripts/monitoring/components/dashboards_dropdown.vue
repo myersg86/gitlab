@@ -66,17 +66,19 @@ export default {
       this.loading = true;
       this.alert = null;
       this.duplicateSystemDashboard(this.form)
-        .then(() => {
+        .then(createdDashboard => {
           this.loading = false;
           this.alert = null;
 
           this.$refs.duplicateDashboardModal.hide();
 
-          this.$emit(events.selectDashboard, {
-            // TODO This should only happen if this is master or the default branch!
-            // TODO This path or full dashboard object should be returned from the backend
-            path: `.gitlab/dashboards/${this.form.fileName}`,
-          });
+          if (this.form.branch === this.defaultBranch) {
+            // Dashboards in the default branch become availale immediately
+            this.$emit(events.selectDashboard, createdDashboard);
+          } else {
+            // Dashboards in other branches cannot be shown yet
+            this.$emit(events.selectDashboard, this.selectedDashboard);
+          }
         })
         .catch(error => {
           this.loading = false;
