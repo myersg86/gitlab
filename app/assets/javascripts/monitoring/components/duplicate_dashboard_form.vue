@@ -79,9 +79,7 @@ export default {
         ...this.form,
         commitMessage: this.form.commitMessage ? this.form.commitMessage : this.defaultCommitMsg,
         branch:
-          this.branchOption === this.$options.radioVals.NEW
-            ? this.branchName
-            : this.defaultBranch,
+          this.branchOption === this.$options.radioVals.NEW ? this.branchName : this.defaultBranch,
       });
     },
     focus(option) {

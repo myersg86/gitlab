@@ -88,7 +88,6 @@ describe('DuplicateDashboardForm', () => {
     });
 
     it('containing an inputted branch name', () => {
-      setChecked('NEW');
       setValue('branchName', 'a-new-branch');
 
       expect(lastChange()).resolves.toMatchObject({
@@ -97,7 +96,7 @@ describe('DuplicateDashboardForm', () => {
     });
 
     it('containing a default branch selection and ignoring the define branch', () => {
-      setChecked('DEFAULT');
+      setChecked(wrapper.vm.$options.radioVals.DEFAULT);
       setValue('branchName', 'a-new-branch');
 
       expect(lastChange()).resolves.toMatchObject({

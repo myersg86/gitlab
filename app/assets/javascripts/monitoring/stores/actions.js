@@ -222,19 +222,20 @@ export const duplicateSystemDashboard = ({ state }, payload) => {
     commit_message: payload.commitMessage,
   };
 
-  return axios.post(state.dashboardsEndpoint, params)
-  .then((response) => response.data)
-  .then((data) => data.dashboard)
-  .catch(error => {
-    const { response } = error;
-    if (response && response.data && response.data.error) {
-      throw sprintf(s__('Metrics|There was an error creating the dashboard. %{error}'), {
-        error: response.data.error,
-      });
-    } else {
-      throw s__('Metrics|There was an error creating the dashboard.');
-    }
-  });
+  return axios
+    .post(state.dashboardsEndpoint, params)
+    .then(response => response.data)
+    .then(data => data.dashboard)
+    .catch(error => {
+      const { response } = error;
+      if (response && response.data && response.data.error) {
+        throw sprintf(s__('Metrics|There was an error creating the dashboard. %{error}'), {
+          error: response.data.error,
+        });
+      } else {
+        throw s__('Metrics|There was an error creating the dashboard.');
+      }
+    });
 };
 
 // prevent babel-plugin-rewire from generating an invalid default during karma tests
