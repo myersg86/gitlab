@@ -27,6 +27,8 @@ module Projects
       private
 
       def respond_success(result)
+        flash[:notice] = "Your dashboard has been copied. You can #{view_context.link_to('edit it here', ide_edit_path(project, redirect_safe_branch_name, new_dashboard_path))}.".html_safe
+
         respond_to do |format|
           format.json { render status: result.delete(:http_status), json: result }
         end

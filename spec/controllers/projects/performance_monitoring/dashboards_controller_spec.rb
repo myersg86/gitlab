@@ -57,10 +57,13 @@ describe Projects::PerformanceMonitoring::DashboardsController do
             context 'request format json' do
               it 'returns services response' do
                 allow(::Metrics::Dashboard::CloneDashboardService).to receive(:new).and_return(double(execute: { status: :success, dashboard: {}, http_status: :created }))
+                allow(controller).to receive(:repository).and_return(repository)
+                allow(repository).to receive(:find_branch).and_return(branch)
 
                 post :create, params: params
 
                 expect(response).to have_gitlab_http_status :created
+                expect(response).to set_flash[:notice].to eq("Your dashboard has been copied. You can <a href=\"/-/ide/project/#{namespace.path}/#{project.name}/edit/#{branch_name}/-/.gitlab/dashboards/#{file_name}\">edit it here</a>.")
                 expect(json_response).to eq('status' => 'success', 'dashboard' => {})
               end
 
