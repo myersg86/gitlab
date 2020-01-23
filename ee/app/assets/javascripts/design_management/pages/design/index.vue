@@ -53,7 +53,7 @@ export default {
     return {
       design: {},
       comment: '',
-      annotationCoordinates: null,
+      annotationPosition: null,
       projectPath: '',
       errorMessage: '',
       issueIid: '',
@@ -106,7 +106,7 @@ export default {
       return this.comment.trim().length === 0;
     },
     renderDiscussions() {
-      return this.discussions.length || this.annotationCoordinates;
+      return this.discussions.length || this.annotationPosition;
     },
     designVariables() {
       return {
@@ -116,8 +116,8 @@ export default {
         atVersion: this.designsVersion,
       };
     },
-    mutationPayload() {
-      const { x, y, width, height } = this.annotationCoordinates;
+    createImageDiffMutationPayload() {
+      const { x, y, width, height } = this.annotationPosition;
       return {
         noteableId: this.design.id,
         body: this.comment,
@@ -142,7 +142,7 @@ export default {
       };
     },
     isAnnotating() {
-      return Boolean(this.annotationCoordinates);
+      return Boolean(this.annotationPosition);
     },
   },
   mounted() {
@@ -179,12 +179,9 @@ export default {
       this.errorMessage = designDeletionError({ singular: true });
       throw e;
     },
-    openCommentForm(annotationCoordinates) {
-      this.annotationCoordinates = annotationCoordinates;
-    },
     closeCommentForm() {
       this.comment = '';
-      this.annotationCoordinates = null;
+      this.annotationPosition = null;
     },
     closeDesign() {
       this.$router.push({
@@ -238,7 +235,7 @@ export default {
           :discussions="discussions"
           :is-annotating="isAnnotating"
           :scale="scale"
-          @openCommentForm="openCommentForm"
+          @setAnnotationPosition="annotationPosition = $event"
         />
         <div class="design-scaler-wrapper position-absolute w-100 mb-4 d-flex-center">
           <design-scaler @scale="scale = $event" />
@@ -266,11 +263,11 @@ export default {
             @error="onDiffNoteError"
           />
           <apollo-mutation
-            v-if="annotationCoordinates"
+            v-if="annotationPosition"
             v-slot="{ mutate, loading }"
             :mutation="$options.createImageDiffNoteMutation"
             :variables="{
-              input: mutationPayload,
+              input: createImageDiffMutationPayload,
             }"
             :update="addImageDiffNoteToStore"
             @done="closeCommentForm"

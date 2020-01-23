@@ -38,7 +38,7 @@ export default {
     return {
       overlayDimensions: null,
       overlayPosition: null,
-      currentAnnotationCoordinates: null,
+      currentAnnotationPosition: null,
       zoomFocalPoint: {
         x: 0,
         y: 0,
@@ -53,7 +53,7 @@ export default {
       return this.discussions.map(discussion => discussion.notes[0]);
     },
     currentCommentForm() {
-      return (this.isAnnotating && this.currentAnnotationCoordinates) || null;
+      return (this.isAnnotating && this.currentAnnotationPosition) || null;
     },
   },
   beforeDestroy() {
@@ -174,16 +174,23 @@ export default {
         }
       });
     },
-    openCommentForm(position) {
-      const { x, y } = position;
+    getAnnotationPositon(coordinates) {
+      const { x, y } = coordinates;
       const { width, height } = this.overlayDimensions;
-      this.currentAnnotationCoordinates = {
+      return {
         x,
         y,
         width,
         height,
       };
-      this.$emit('openCommentForm', this.currentAnnotationCoordinates);
+    },
+    setAnnotationPosition(coordinates) {
+      this.currentAnnotationPosition = this.getAnnotationPositon(coordinates);
+      this.$emit('setAnnotationPosition', this.currentAnnotationPosition);
+    },
+    moveNote(coordinates) {
+      const position = this.getAnnotationPositon(coordinates);
+      this.$emit('moveNote', position);
     },
   },
 };
@@ -208,7 +215,8 @@ export default {
         :position="overlayPosition"
         :notes="discussionStartingNotes"
         :current-comment-form="currentCommentForm"
-        @openCommentForm="openCommentForm"
+        @setAnnotationPosition="setAnnotationPosition"
+        @moveNote="moveNote"
       />
     </div>
   </div>
