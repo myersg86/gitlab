@@ -188,9 +188,9 @@ export default {
       this.currentAnnotationPosition = this.getAnnotationPositon(coordinates);
       this.$emit('setAnnotationPosition', this.currentAnnotationPosition);
     },
-    moveNote(coordinates) {
+    moveNote({ notableId, coordinates }) {
       const position = this.getAnnotationPositon(coordinates);
-      this.$emit('moveNote', position);
+      this.$emit('moveNote', { notableId, position });
     },
   },
 };
@@ -215,7 +215,7 @@ export default {
         :position="overlayPosition"
         :notes="discussionStartingNotes"
         :current-comment-form="currentCommentForm"
-        @setAnnotationPosition="setAnnotationPosition"
+        @setAnnotationCoordinates="setAnnotationPosition"
         @moveNote="moveNote"
       />
     </div>

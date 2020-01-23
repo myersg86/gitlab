@@ -15,6 +15,7 @@ import DesignPresentation from '../../components/design_presentation.vue';
 import getDesignQuery from '../../graphql/queries/getDesign.query.graphql';
 import appDataQuery from '../../graphql/queries/appData.query.graphql';
 import createImageDiffNoteMutation from '../../graphql/mutations/createImageDiffNote.mutation.graphql';
+import updateImageDiffNoteMutation from '../../graphql/mutations/updateImageDiffNote.mutation.graphql';
 import {
   extractDiscussions,
   extractDesign,
@@ -23,6 +24,8 @@ import {
 import { updateStoreAfterAddImageDiffNote } from '../../utils/cache_update';
 import {
   ADD_DISCUSSION_COMMENT_ERROR,
+  ADD_IMAGE_DIFF_NOTE_ERROR,
+  UPDATE_IMAGE_DIFF_NOTE_ERROR,
   DESIGN_NOT_FOUND_ERROR,
   DESIGN_NOT_EXIST_ERROR,
   designDeletionError,
@@ -165,19 +168,50 @@ export default {
         this.designVariables,
       );
     },
+    updateImageDiffNoteInStore(
+      store,
+      {
+        data: { updateImageDiffNote },
+      },
+    ) {
+      // TODO add cache_update for this mutation
+    },
+    onNoteMove({ noteableId, position }) {
+      const mutationPayload = {
+        // TODO provide optimistic response
+        variables: {
+          noteableId,
+          position
+        },
+        mutation: updateImageDiffNoteMutation,
+        update: this.updateImageDiffNoteInStore,
+      };
+
+      return this.$apollo
+        .mutate(mutationPayload)
+        .catch((e) => this.onUpdateImageDiffNoteError(e));
+    },
     onQueryError(message) {
       // because we redirect user to /designs (the issue page),
       // we want to create these flashes on the issue page
       createFlash(message);
       this.$router.push({ name: this.$options.DESIGNS_ROUTE_NAME });
     },
-    onDiffNoteError(e) {
-      this.errorMessage = ADD_DISCUSSION_COMMENT_ERROR;
+    onError(message, e) {
+      this.errorMessage = message;
       throw e;
     },
+    onCreateImageDiffNoteError(e) {
+      this.onError(ADD_IMAGE_DIFF_NOTE_ERROR, e);
+    },
+    onDesignDiscussionError(e) {
+      this.onError(ADD_DISCUSSION_COMMENT_ERROR, e);
+    },
+    onUpdateImageDiffNoteError(e) {
+      this.onError(UPDATE_IMAGE_DIFF_NOTE_ERROR, e);
+    },
     onDesignDeleteError(e) {
-      this.errorMessage = designDeletionError({ singular: true });
-      throw e;
+      this.onError(designDeletionError({ singular: true }), e);
     },
     closeCommentForm() {
       this.comment = '';
@@ -236,6 +270,7 @@ export default {
           :is-annotating="isAnnotating"
           :scale="scale"
           @setAnnotationPosition="annotationPosition = $event"
+          @moveNote="onNoteMove"
         />
         <div class="design-scaler-wrapper position-absolute w-100 mb-4 d-flex-center">
           <design-scaler @scale="scale = $event" />
@@ -260,7 +295,7 @@ export default {
             :noteable-id="design.id"
             :discussion-index="index + 1"
             :markdown-preview-path="markdownPreviewPath"
-            @error="onDiffNoteError"
+            @error="onDesignDiscussionError"
           />
           <apollo-mutation
             v-if="annotationPosition"
@@ -271,7 +306,7 @@ export default {
             }"
             :update="addImageDiffNoteToStore"
             @done="closeCommentForm"
-            @error="onDiffNoteError"
+            @error="onCreateImageDiffNoteError"
           >
             <design-reply-form
               v-model="comment"

@@ -36,8 +36,8 @@ export default {
     },
   },
   methods: {
-    setAnnotationPosition(x, y) {
-      this.$emit('setAnnotationPosition', { x, y });
+    setAnnotationCoordinates(x, y) {
+      this.$emit('setAnnotationCoordinates', { x, y });
     },
     getNotePosition(data) {
       const { x, y, width, height } = data;
@@ -47,6 +47,12 @@ export default {
         left: `${Math.round(x * widthRatio)}px`,
         top: `${Math.round(y * heightRatio)}px`,
       };
+    },
+    onNoteMove(notableId, coordinates) {
+      this.$emit('moveNote', {
+        notableId,
+        coordinates,
+      });
     },
   },
 };
@@ -58,20 +64,20 @@ export default {
       type="button"
       class="btn-transparent position-absolute image-diff-overlay-add-comment w-100 h-100 js-add-image-diff-note-button"
       data-qa-selector="design_image_button"
-      @click="setAnnotationPosition($event.offsetX, $event.offsetY)"
+      @click="setAnnotationCoordinates($event.offsetX, $event.offsetY)"
     ></button>
     <design-comment-pin
       v-for="(note, index) in notes"
       :key="note.id"
       :index="index"
       :position="getNotePosition(note.position)"
-      @move="$emit('moveNote', $event)"
+      @move="onNoteMove(note.id, $event)"
     />
     <design-comment-pin
       v-if="currentCommentForm"
       :key="note.id"
       :position="getNotePosition(currentCommentForm)"
-      @move="setAnnotationPosition"
+      @move="setAnnotationCoordinates"
     />
   </div>
 </template>
