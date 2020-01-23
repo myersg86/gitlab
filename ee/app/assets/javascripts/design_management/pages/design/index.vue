@@ -20,8 +20,12 @@ import {
   extractDiscussions,
   extractDesign,
   extractParticipants,
+  updateImageDiffOptimisticResponse,
 } from '../../utils/design_management_utils';
-import { updateStoreAfterAddImageDiffNote } from '../../utils/cache_update';
+import {
+  updateStoreAfterAddImageDiffNote,
+  updateStoreAfterUpdateImageDiffNote,
+} from '../../utils/cache_update';
 import {
   ADD_DISCUSSION_COMMENT_ERROR,
   ADD_IMAGE_DIFF_NOTE_ERROR,
@@ -174,22 +178,26 @@ export default {
         data: { updateImageDiffNote },
       },
     ) {
-      // TODO add cache_update for this mutation
+      return updateStoreAfterUpdateImageDiffNote(
+        store,
+        updateImageDiffNote,
+        getDesignQuery,
+        this.designVariables,
+      );
     },
     onNoteMove({ noteableId, position }) {
       const mutationPayload = {
-        // TODO provide optimistic response
+        // TODO(tq) update args for optimistic response as needed
+        optimisticResponse: updateImageDiffOptimisticResponse({ noteableId, position }),
         variables: {
           noteableId,
-          position
+          position,
         },
         mutation: updateImageDiffNoteMutation,
         update: this.updateImageDiffNoteInStore,
       };
 
-      return this.$apollo
-        .mutate(mutationPayload)
-        .catch((e) => this.onUpdateImageDiffNoteError(e));
+      return this.$apollo.mutate(mutationPayload).catch(e => this.onUpdateImageDiffNoteError(e));
     },
     onQueryError(message) {
       // because we redirect user to /designs (the issue page),
