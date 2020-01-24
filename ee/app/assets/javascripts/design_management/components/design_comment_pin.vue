@@ -19,7 +19,7 @@ export default {
   },
   computed: {
     inProgress() {
-      return this.index !== null;
+      return this.index === null;
     },
   },
 };
@@ -27,8 +27,7 @@ export default {
 
 <template>
   <button
-    v-if="currentCommentForm"
-    :style="notePosition"
+    :style="position"
     :aria-label="__('Comment form position')"
     :class="{
       'btn-transparent comment-indicator': inProgress,
@@ -36,8 +35,11 @@ export default {
     }"
     class=" position-absolute"
     type="button"
+    @mousedown="$emit('mousedown', $event)"
+    @mouseup="$emit('mouseup', $event)"
+    @click="$emit('click', $event)"
   >
-    <icon v-if="inProgess" name="image-comment-dark" />
+    <icon v-if="inProgress" name="image-comment-dark" />
     <template v-else>
       {{ index + 1 }}
     </template>
