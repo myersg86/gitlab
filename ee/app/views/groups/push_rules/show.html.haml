@@ -1,0 +1,15 @@
+- page_title "Push Rules"
+%h3
+  Pre-defined push rules.
+%p.light
+  Rules that define what git pushes are accepted for a project. All newly created projects will use this settings.
+
+%hr.clearfix
+
+= form_for @push_rule, url: admin_push_rule_path, method: :put do |f|
+  - if @push_rule.errors.any?
+    .alert.alert-danger
+      - @push_rule.errors.full_messages.each do |msg|
+        %p= msg
+  = render "shared/push_rules/form", f: f
+
