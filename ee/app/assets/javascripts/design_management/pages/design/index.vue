@@ -196,8 +196,8 @@ export default {
         mutation: updateImageDiffNoteMutation,
         update: this.updateImageDiffNoteInStore,
       };
-
-      return this.$apollo.mutate(mutationPayload).catch(e => this.onUpdateImageDiffNoteError(e));
+      // TODO(tq) actually commit a mutation
+      // return this.$apollo.mutate(mutationPayload).catch(e => this.onUpdateImageDiffNoteError(e));
     },
     onQueryError(message) {
       // because we redirect user to /designs (the issue page),

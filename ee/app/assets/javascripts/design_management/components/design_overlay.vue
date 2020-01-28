@@ -117,13 +117,21 @@ export default {
     },
     onNewNoteMouseup() {
       this.onNoteMouseup();
+
       const { x, y } = this.newNotePosition;
       this.setNewNoteCoordinates({ x, y });
+
       this.newNotePosition = null;
     },
     onExistingNoteMouseup() {
       this.onNoteMouseup();
-      // TODO(tq) commit mutation, i.e. send an event for this note
+
+      const { x, y } = this.movingNotePosition;
+      this.$emit('moveNote', {
+        notableId: this.movingNote.noteId,
+        coordinates: { x, y },
+      });
+
       this.movingNotePosition = null;
     },
     getNotePositionStyle(data) {
