@@ -28,13 +28,9 @@ export default {
   },
   data() {
     return {
-      newNoteCoordinates: null,
-      newNoteInitialCoordinates: null,
-      newNoteClientCoordinates: null,
-      noteCoordinates: null,
-      noteClientCoordinates: null,
+      newNotePosition: null,
       movingNotePosition: null,
-      movingNoteId: null,
+      movingNote: null,
     };
   },
   computed: {
@@ -45,78 +41,92 @@ export default {
         ...this.position,
       };
     },
-    newNotePosition() {
-      const pos = this.newNoteCoordinates
-        ? this.getNotePosition({ ...this.newNoteCoordinates, ...this.dimensions })
-        : this.getNotePosition(this.currentCommentForm);
+    newNotePositionStyle() {
+      const pos = this.newNotePosition
+        ? this.getNotePositionStyle(this.newNotePosition)
+        : this.getNotePositionStyle(this.currentCommentForm);
 
       return pos;
     },
   },
   methods: {
     setNewNoteCoordinates(newNoteCoordinates) {
-      this.newNoteCoordinates = newNoteCoordinates;
-      this.newNoteInitialCoordinates = newNoteCoordinates;
       this.$emit('setAnnotationCoordinates', newNoteCoordinates);
     },
     findNotePosition(noteId) {
       return (this.notes.find(({ id }) => id === noteId) || {}).position;
     },
     isMovingNote(noteId) {
-      return this.movingNoteId === noteId;
+      return this.movingNote?.noteId === noteId;
+    },
+    onNewNoteMove(e) {
+      const { initClientX, initClientY } = this.movingNote;
+      const deltaX = e.clientX - initClientX;
+      const deltaY = e.clientY - initClientY;
+
+      const x = this.currentCommentForm.x + deltaX;
+      const y = this.currentCommentForm.y + deltaY;
+
+      this.newNotePosition = {
+        x,
+        y,
+        width: this.dimensions.width,
+        height: this.dimensions.height,
+      };
+    },
+    onExistingNoteMove(e) {
+      const notePosition = this.findNotePosition(this.movingNote.noteId);
+      const { width, height } = notePosition;
+
+      const widthRatio = this.dimensions.width / width;
+      const heightRatio = this.dimensions.height / height;
+
+      const { initClientX, initClientY } = this.movingNote;
+      const deltaX = e.clientX - initClientX;
+      const deltaY = e.clientY - initClientY;
+
+      const x = notePosition.x * widthRatio + deltaX;
+      const y = notePosition.y * heightRatio + deltaY;
+
+      this.movingNotePosition = {
+        x,
+        y,
+        width: this.dimensions.width,
+        height: this.dimensions.height,
+      };
     },
     onMousemove(e) {
-      if (this.newNoteClientCoordinates) {
-        const deltaX = e.clientX - this.newNoteClientCoordinates.x;
-        const deltaY = e.clientY - this.newNoteClientCoordinates.y;
-        const x = this.newNoteInitialCoordinates.x + deltaX;
-        const y = this.newNoteInitialCoordinates.y + deltaY;
+      if (!this.movingNote) return;
 
-        this.newNoteCoordinates = {
-          x,
-          y,
-        };
-        return;
-      }
-
-      if (this.movingNoteId) {
-        const notePosition = this.findNotePosition(this.movingNoteId);
-        const { width, height } = notePosition;
-        const widthRatio = this.dimensions.width / width;
-        const heightRatio = this.dimensions.height / height;
-
-        const deltaX = e.clientX - this.noteClientCoordinates.x;
-        const deltaY = e.clientY - this.noteClientCoordinates.y;
-
-        const x = notePosition.x * widthRatio + deltaX;
-        const y = notePosition.y * heightRatio + deltaY;
-
-        this.movingNotePosition = {
-          x,
-          y,
-          width: this.dimensions.width,
-          height: this.dimensions.height,
-        };
+      const { noteId } = this.movingNote;
+      if (!noteId) {
+        this.onNewNoteMove(e);
+      } else {
+        this.onExistingNoteMove(e);
       }
     },
-    onNewNoteMousedown(e) {
-      this.newNoteClientCoordinates = { x: e.clientX, y: e.clientY };
-    },
-    onNewNoteMouseup() {
-      this.newNoteClientCoordinates = null;
-      this.setNewNoteCoordinates(this.newNoteCoordinates);
-    },
-    onNoteMousedown(noteId, e) {
-      this.movingNoteId = noteId;
-      this.noteClientCoordinates = { x: e.clientX, y: e.clientY };
+    onNoteMousedown(e, noteId) {
+      this.movingNote = {
+        noteId,
+        initClientX: e.clientX,
+        initClientY: e.clientY,
+      };
     },
     onNoteMouseup() {
-      this.noteClientCoordinates = null;
-      this.movingNoteId = null;
-      this.movingNotePosition = null;
-      // this.$emit('setAnnotationCoordinates', this.noteCoordinates);
+      this.movingNote = null;
     },
-    getNotePosition(data) {
+    onNewNoteMouseup() {
+      this.onNoteMouseup();
+      const { x, y } = this.newNotePosition;
+      this.setNewNoteCoordinates({ x, y });
+      this.newNotePosition = null;
+    },
+    onExistingNoteMouseup() {
+      this.onNoteMouseup();
+      // TODO(tq) commit mutation, i.e. send an event for this note
+      this.movingNotePosition = null;
+    },
+    getNotePositionStyle(data) {
       const { x, y, width, height } = data;
 
       const widthRatio = this.dimensions.width / width;
@@ -155,17 +165,17 @@ export default {
       :repositioning="isMovingNote(note.id)"
       :position="
         isMovingNote(note.id) && movingNotePosition
-          ? getNotePosition(movingNotePosition)
-          : getNotePosition(note.position)
+          ? getNotePositionStyle(movingNotePosition)
+          : getNotePositionStyle(note.position)
       "
-      @mousedown="onNoteMousedown(note.id, $event)"
-      @mouseup="onNoteMouseup(note.id, $event)"
+      @mousedown="onNoteMousedown($event, note.id)"
+      @mouseup="onExistingNoteMouseup($event, note.id)"
     />
     <design-comment-pin
       v-if="currentCommentForm"
-      :position="newNotePosition"
-      :repositioning="Boolean(newNoteClientCoordinates)"
-      @mousedown="onNewNoteMousedown"
+      :position="newNotePositionStyle"
+      :repositioning="Boolean(newNotePosition)"
+      @mousedown="onNoteMousedown"
       @mouseup="onNewNoteMouseup"
     />
   </div>
