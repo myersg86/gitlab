@@ -29,12 +29,14 @@ export default {
   data() {
     return {
       newNoteCoordinates: null,
-      newNoteClientCoordinates: null,
-      newNoteCoordinatesDelta: {},
       newNoteInitialCoordinates: null,
+      newNoteClientCoordinates: null,
+      noteCoordinates: null,
+      noteClientCoordinates: null,
+      movingNotePosition: null,
+      movingNoteId: null,
     };
   },
-
   computed: {
     overlayStyle() {
       return {
@@ -47,8 +49,7 @@ export default {
       const pos = this.newNoteCoordinates
         ? this.getNotePosition({ ...this.newNoteCoordinates, ...this.dimensions })
         : this.getNotePosition(this.currentCommentForm);
-      // console.log('setting annotation postiion');
-      // // const pos = this.getNotePosition(this.currentCommentForm);
+
       return pos;
     },
   },
@@ -57,6 +58,12 @@ export default {
       this.newNoteCoordinates = newNoteCoordinates;
       this.newNoteInitialCoordinates = newNoteCoordinates;
       this.$emit('setAnnotationCoordinates', newNoteCoordinates);
+    },
+    findNotePosition(noteId) {
+      return (this.notes.find(({ id }) => id === noteId) || {}).position;
+    },
+    isMovingNote(noteId) {
+      return this.movingNoteId === noteId;
     },
     onMousemove(e) {
       if (this.newNoteClientCoordinates) {
@@ -69,6 +76,27 @@ export default {
           x,
           y,
         };
+        return;
+      }
+
+      if (this.movingNoteId) {
+        const notePosition = this.findNotePosition(this.movingNoteId);
+        const { width, height } = notePosition;
+        const widthRatio = this.dimensions.width / width;
+        const heightRatio = this.dimensions.height / height;
+
+        const deltaX = e.clientX - this.noteClientCoordinates.x;
+        const deltaY = e.clientY - this.noteClientCoordinates.y;
+
+        const x = notePosition.x * widthRatio + deltaX;
+        const y = notePosition.y * heightRatio + deltaY;
+
+        this.movingNotePosition = {
+          x,
+          y,
+          width: this.dimensions.width,
+          height: this.dimensions.height,
+        };
       }
     },
     onNewNoteMousedown(e) {
@@ -77,6 +105,16 @@ export default {
     onNewNoteMouseup() {
       this.newNoteClientCoordinates = null;
       this.setNewNoteCoordinates(this.newNoteCoordinates);
+    },
+    onNoteMousedown(noteId, e) {
+      this.movingNoteId = noteId;
+      this.noteClientCoordinates = { x: e.clientX, y: e.clientY };
+    },
+    onNoteMouseup() {
+      this.noteClientCoordinates = null;
+      this.movingNoteId = null;
+      this.movingNotePosition = null;
+      // this.$emit('setAnnotationCoordinates', this.noteCoordinates);
     },
     getNotePosition(data) {
       const { x, y, width, height } = data;
@@ -114,7 +152,14 @@ export default {
       v-for="(note, index) in notes"
       :key="note.id"
       :index="index"
-      :position="getNotePosition(note.position)"
+      :repositioning="isMovingNote(note.id)"
+      :position="
+        isMovingNote(note.id) && movingNotePosition
+          ? getNotePosition(movingNotePosition)
+          : getNotePosition(note.position)
+      "
+      @mousedown="onNoteMousedown(note.id, $event)"
+      @mouseup="onNoteMouseup(note.id, $event)"
     />
     <design-comment-pin
       v-if="currentCommentForm"
