@@ -28,10 +28,10 @@ export default {
   },
   data() {
     return {
-      annotationCoordinates: null,
-      annotationPinMousedown: null,
-      annotationOffset: {},
-      startingAnnotationCoordinates: null,
+      newNoteCoordinates: null,
+      newNoteClientCoordinates: null,
+      newNoteCoordinatesDelta: {},
+      newNoteInitialCoordinates: null,
     };
   },
 
@@ -43,52 +43,41 @@ export default {
         ...this.position,
       };
     },
-    annotationPosition() {
-      const pos = this.annotationCoordinates
-        ? this.getNotePosition({ ...this.annotationCoordinates, ...this.dimensions })
+    newNotePosition() {
+      const pos = this.newNoteCoordinates
+        ? this.getNotePosition({ ...this.newNoteCoordinates, ...this.dimensions })
         : this.getNotePosition(this.currentCommentForm);
       // console.log('setting annotation postiion');
       // // const pos = this.getNotePosition(this.currentCommentForm);
       return pos;
     },
   },
-  watch: {
-    annotationOffset(val, prevVal) {
-      if (val.x === prevVal.x && val.y === prevVal.y) return;
-      const x = this.startingAnnotationCoordinates.x + val.x;
-      const y = this.startingAnnotationCoordinates.y + val.y;
-
-      this.annotationCoordinates = {
-        x,
-        y,
-      };
-    },
-  },
   methods: {
-    setAnnotationCoordinates(annotationCoordinates) {
-      this.annotationCoordinates = annotationCoordinates;
-      this.startingAnnotationCoordinates = annotationCoordinates;
-      this.$emit('setAnnotationCoordinates', annotationCoordinates);
+    setNewNoteCoordinates(newNoteCoordinates) {
+      this.newNoteCoordinates = newNoteCoordinates;
+      this.newNoteInitialCoordinates = newNoteCoordinates;
+      this.$emit('setAnnotationCoordinates', newNoteCoordinates);
     },
     onMousemove(e) {
-      if (this.annotationPinMousedown) {
-        const deltaX = e.clientX - this.annotationPinMousedown.x;
-        const deltaY = e.clientY - this.annotationPinMousedown.y;
-        this.annotationOffset = {
-          x: deltaX,
-          y: deltaY,
+      if (this.newNoteClientCoordinates) {
+        const deltaX = e.clientX - this.newNoteClientCoordinates.x;
+        const deltaY = e.clientY - this.newNoteClientCoordinates.y;
+        const x = this.newNoteInitialCoordinates.x + deltaX;
+        const y = this.newNoteInitialCoordinates.y + deltaY;
+
+        this.newNoteCoordinates = {
+          x,
+          y,
         };
       }
     },
-    onMousedown(e) {
-      this.annotationPinMousedown = { x: e.clientX, y: e.clientY };
+    onNewNoteMousedown(e) {
+      this.newNoteClientCoordinates = { x: e.clientX, y: e.clientY };
     },
-    onMouseup() {
-      this.annotationPinMousedown = null;
-      this.startingAnnotationCoordinates = this.annotationCoordinates;
-      this.$emit('setAnnotationCoordinates', this.annotationCoordinates);
+    onNewNoteMouseup() {
+      this.newNoteClientCoordinates = null;
+      this.setNewNoteCoordinates(this.newNoteCoordinates);
     },
-
     getNotePosition(data) {
       const { x, y, width, height } = data;
 
@@ -119,7 +108,7 @@ export default {
       type="button"
       class="btn-transparent position-absolute image-diff-overlay-add-comment w-100 h-100 js-add-image-diff-note-button"
       data-qa-selector="design_image_button"
-      @click="setAnnotationCoordinates({ x: $event.offsetX, y: $event.offsetY })"
+      @click="setNewNoteCoordinates({ x: $event.offsetX, y: $event.offsetY })"
     ></button>
     <design-comment-pin
       v-for="(note, index) in notes"
@@ -129,9 +118,10 @@ export default {
     />
     <design-comment-pin
       v-if="currentCommentForm"
-      :position="annotationPosition"
-      @mousedown="onMousedown"
-      @mouseup="onMouseup"
+      :position="newNotePosition"
+      :repositioning="Boolean(newNoteClientCoordinates)"
+      @mousedown="onNewNoteMousedown"
+      @mouseup="onNewNoteMouseup"
     />
   </div>
 </template>

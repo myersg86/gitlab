@@ -16,10 +16,21 @@ export default {
       required: false,
       default: null,
     },
+    repositioning: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   computed: {
     inProgress() {
       return this.index === null;
+    },
+    pinStyle() {
+      return {
+        ...this.position,
+        cursor: this.repositioning ? 'move' : 'auto',
+      };
     },
   },
 };
@@ -27,13 +38,13 @@ export default {
 
 <template>
   <button
-    :style="position"
+    :style="pinStyle"
     :aria-label="__('Comment form position')"
     :class="{
       'btn-transparent comment-indicator': inProgress,
       'js-image-badge badge badge-pill': !inProgress,
     }"
-    class=" position-absolute"
+    class="position-absolute"
     type="button"
     @mousedown="$emit('mousedown', $event)"
     @mouseup="$emit('mouseup', $event)"
