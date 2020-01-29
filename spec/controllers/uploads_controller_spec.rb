@@ -648,8 +648,8 @@ describe UploadsController do
         it 'successfully returns the file' do
           get :show, params: { model: 'appearance', mounted_as: 'favicon', id: appearance.id, filename: 'dk.png' }
 
-          expect(response).to have_gitlab_http_status(200)
-          expect(response.header['Content-Disposition']).to end_with 'filename="dk.png"'
+          expect(response).to have_gitlab_http_status(:ok)
+          expect(response.header['Content-Disposition']).to include('filename="dk.png"')
         end
       end
 
