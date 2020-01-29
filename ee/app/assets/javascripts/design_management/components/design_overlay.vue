@@ -49,6 +49,11 @@ export default {
       return pos;
     },
   },
+  watch: {
+    currentCommentForm() {
+      this.movingNotePosition = null;
+    },
+  },
   methods: {
     setNewNoteCoordinates(newNoteCoordinates) {
       this.$emit('setAnnotationCoordinates', newNoteCoordinates);
@@ -105,9 +110,10 @@ export default {
         this.onExistingNoteMove(e);
       }
     },
-    onNoteMousedown(e, noteId) {
+    onNoteMousedown(e, note = {}) {
       this.movingNote = {
-        noteId,
+        noteableId: note.id,
+        discussionId: note.discussion?.id,
         initClientX: e.clientX,
         initClientY: e.clientY,
       };
@@ -128,6 +134,7 @@ export default {
 
       const { x, y } = this.movingNotePosition;
       this.$emit('moveNote', {
+        discussionId: this.movingNote.discussionId,
         notableId: this.movingNote.noteId,
         coordinates: { x, y },
       });
@@ -143,12 +150,6 @@ export default {
         left: `${Math.round(x * widthRatio)}px`,
         top: `${Math.round(y * heightRatio)}px`,
       };
-    },
-    onNoteMove(notableId, coordinates) {
-      this.$emit('moveNote', {
-        notableId,
-        coordinates,
-      });
     },
   },
 };
@@ -176,7 +177,7 @@ export default {
           ? getNotePositionStyle(movingNotePosition)
           : getNotePositionStyle(note.position)
       "
-      @mousedown="onNoteMousedown($event, note.id)"
+      @mousedown="onNoteMousedown($event, note)"
       @mouseup="onExistingNoteMouseup($event, note.id)"
     />
     <design-comment-pin

@@ -150,7 +150,41 @@ const addImageDiffNoteToStore = (store, createImageDiffNote, query, variables) =
 };
 
 const updateImageDiffNoteInStore = (store, updateImageDiffNote, query, variables) => {
-  // TODO(tq)
+  // TODO(tq) fix this as necessary
+  const data = store.readQuery({
+    query,
+    variables,
+  });
+
+  const design = extractDesign(data);
+  const discussion = extractCurrentDiscussion(
+    design.discussions,
+    updateImageDiffNote.note.discussion.id,
+  );
+
+  discussion.node = {
+    ...discussion.node,
+    notes: {
+      ...discussion.node.notes,
+      edges: [
+        // the first note is original discussion, and includes the pin `position`
+        {
+          __typename: 'NoteEdge',
+          node: updateImageDiffNote.note,
+        },
+        ...discussion.node.notes.slice(1),
+      ],
+    },
+  };
+
+  store.writeQuery({
+    query,
+    variables,
+    data: {
+      ...data,
+      design,
+    },
+  });
 };
 
 const addNewDesignToStore = (store, designManagementUpload, query) => {
