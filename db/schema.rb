@@ -2008,6 +2008,26 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
     t.index ["shared_with_group_id"], name: "index_group_group_links_on_shared_with_group_id"
   end
 
+  create_table "group_push_rules", force: :cascade do |t|
+    t.integer "group_id", null: false
+    t.string "force_push_regex"
+    t.string "delete_branch_regex"
+    t.string "commit_message_regex"
+    t.boolean "deny_delete_tag"
+    t.string "author_email_regex"
+    t.boolean "member_check", default: false, null: false
+    t.string "file_name_regex"
+    t.integer "max_file_size", default: 0, null: false
+    t.boolean "prevent_secrets", default: false, null: false
+    t.string "branch_name_regex"
+    t.boolean "reject_unsigned_commits"
+    t.boolean "commit_committer_check"
+    t.boolean "regexp_uses_re2", default: true
+    t.datetime_with_timezone "created_at", null: false
+    t.datetime_with_timezone "updated_at", null: false
+    t.index ["group_id"], name: "index_group_push_rules_on_group_id"
+  end
+
   create_table "historical_data", id: :serial, force: :cascade do |t|
     t.date "date", null: false
     t.integer "active_user_count"
@@ -4758,6 +4778,7 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
   add_foreign_key "group_deploy_tokens", "namespaces", column: "group_id", on_delete: :cascade
   add_foreign_key "group_group_links", "namespaces", column: "shared_group_id", on_delete: :cascade
   add_foreign_key "group_group_links", "namespaces", column: "shared_with_group_id", on_delete: :cascade
+  add_foreign_key "group_push_rules", "namespaces", column: "group_id", on_delete: :cascade
   add_foreign_key "identities", "saml_providers", name: "fk_aade90f0fc", on_delete: :cascade
   add_foreign_key "import_export_uploads", "namespaces", column: "group_id", name: "fk_83319d9721", on_delete: :cascade
   add_foreign_key "import_export_uploads", "projects", on_delete: :cascade
