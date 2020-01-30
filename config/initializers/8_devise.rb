@@ -81,7 +81,7 @@ Devise.setup do |config|
   # You can use this to let your user access some features of your application
   # without confirming the account, but blocking it after a certain period
   # (ie 2 days).
-  config.allow_unconfirmed_access_for = 30.days
+  config.allow_unconfirmed_access_for = 3.days
 
   # A period that the user is allowed to confirm their account before their
   # token becomes invalid. For example, if set to 3.days, the user can confirm
