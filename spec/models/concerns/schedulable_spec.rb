@@ -68,7 +68,7 @@ describe Schedulable do
     end
 
     it 'works' do
-      expect { schedulable_instance.set_next_run_at }.to raise_error(NotImplementedError)
+      expect { schedulable_instance.send(:set_next_run_at) }.to raise_error(NotImplementedError)
     end
   end
 end

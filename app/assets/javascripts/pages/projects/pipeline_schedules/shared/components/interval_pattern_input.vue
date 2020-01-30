@@ -8,13 +8,15 @@ export default {
     },
   },
   data() {
+    const randomMinute = _.random(0, 59);
+
     return {
       inputNameAttribute: 'schedule[cron]',
       cronInterval: this.initialCronInterval,
       cronIntervalPresets: {
-        everyDay: '0 4 * * *',
-        everyWeek: '0 4 * * 0',
-        everyMonth: '0 4 1 * *',
+        everyDay: `${randomMinute} 4 * * *`,
+        everyWeek: `${randomMinute} 4 * * 0`,
+        everyMonth: `${randomMinute} 4 1 * *`,
       },
       cronSyntaxUrl: 'https://en.wikipedia.org/wiki/Cron',
       customInputEnabled: false,
@@ -89,7 +91,7 @@ export default {
         @click="toggleCustomInput(false)"
       />
 
-      <label class="label-bold" for="every-day"> {{ __('Every day (at 4:00am)') }} </label>
+      <label class="label-bold" for="every-day"> {{ __('Every day (at 4 am)') }} </label>
     </div>
 
     <div class="cron-preset-radio-input">
@@ -104,7 +106,7 @@ export default {
       />
 
       <label class="label-bold" for="every-week">
-        {{ __('Every week (Sundays at 4:00am)') }}
+        {{ __('Every week (Sundays at 4 am)') }}
       </label>
     </div>
 
@@ -120,7 +122,7 @@ export default {
       />
 
       <label class="label-bold" for="every-month">
-        {{ __('Every month (on the 1st at 4:00am)') }}
+        {{ __('Every month (on the 1st at 4 am)') }}
       </label>
     </div>
 

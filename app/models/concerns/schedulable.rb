@@ -15,6 +15,8 @@ module Schedulable
     update_column(:next_run_at, nil) # update without validation
   end
 
+  private
+
   def set_next_run_at
     raise NotImplementedError
   end

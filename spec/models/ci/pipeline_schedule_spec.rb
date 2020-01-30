@@ -110,6 +110,29 @@ describe Ci::PipelineSchedule do
       end
     end
 
+    context 'when PipelineScheduleWorker runs every 5 minutes' do
+      before do
+        allow(Settings).to receive(:cron_jobs) do
+          { 'pipeline_schedule_worker' => { 'cron' => '*/5 * * * *' } }
+        end
+      end
+
+      context 'when pipeline_schedule runs at 4 am' do
+        let(:pipeline_schedule) { create(:ci_pipeline_schedule, cron: '18 4 * * *') }
+
+        it "updates next_run_at according to worker's execution time" do
+          Timecop.travel(Time.parse("2019-06-01 12:22:00+0000")) do
+            expect(pipeline_schedule.next_run_at).to eq(Time.parse("2019-06-02 04:20:00+0000"))
+          end
+
+          Timecop.travel(Time.parse("2019-06-02 04:20:00+0000")) do
+            pipeline_schedule.schedule_next_run!
+            expect(pipeline_schedule.next_run_at).to eq(Time.parse("2019-06-03 04:20:00+0000"))
+          end
+        end
+      end
+    end
+
     context 'when pipeline schedule runs every minute' do
       let(:pipeline_schedule) { create(:ci_pipeline_schedule, :every_minute) }
 

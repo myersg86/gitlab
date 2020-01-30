@@ -45,6 +45,12 @@ module Ci
       update_attribute(:active, false)
     end
 
+    def job_variables
+      variables&.map(&:to_runner_variable) || []
+    end
+
+    private
+
     ##
     # The `next_run_at` column is set to the actual execution date of `PipelineScheduleWorker`.
     # This way, a schedule like `*/1 * * * *` won't be triggered in a short interval
@@ -59,12 +65,6 @@ module Ci
                            cron_worker_next_run_from(ideal_next_run)
                          end
     end
-
-    def job_variables
-      variables&.map(&:to_runner_variable) || []
-    end
-
-    private
 
     def ideal_next_run_from(start_time)
       Gitlab::Ci::CronParser.new(cron, cron_timezone)

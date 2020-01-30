@@ -8065,13 +8065,13 @@ msgstr ""
 msgid "Every day"
 msgstr ""
 
-msgid "Every day (at 4:00am)"
+msgid "Every day (at 4 am)"
 msgstr ""
 
 msgid "Every month"
 msgstr ""
 
-msgid "Every month (on the 1st at 4:00am)"
+msgid "Every month (on the 1st at 4 am)"
 msgstr ""
 
 msgid "Every three months"
@@ -8083,7 +8083,7 @@ msgstr ""
 msgid "Every week"
 msgstr ""
 
-msgid "Every week (Sundays at 4:00am)"
+msgid "Every week (Sundays at 4 am)"
 msgstr ""
 
 msgid "Everyone"
