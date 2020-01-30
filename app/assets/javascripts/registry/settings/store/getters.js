@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { findDefaultOption } from '../utils';
+import { findDefaultOption } from '../../shared/utils';
 
 export const getCadence = state =>
   state.settings.cadence || findDefaultOption(state.formOptions.cadence);
