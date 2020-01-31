@@ -42,9 +42,7 @@ class Groups::PushRulesController < Groups::ApplicationController
     params.require(:push_rule).permit(allowed_fields)
   end
 
-  # rubocop: disable CodeReuse/ActiveRecord
   def push_rule
-    @push_rule ||= PushRule.find_or_initialize_by(is_sample: true)
+    @push_rule ||= group.predefined_push_rule
   end
-  # rubocop: enable CodeReuse/ActiveRecord
 end
