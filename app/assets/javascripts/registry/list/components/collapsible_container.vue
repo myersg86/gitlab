@@ -13,6 +13,7 @@ import Tracking from '~/tracking';
 import ClipboardButton from '~/vue_shared/components/clipboard_button.vue';
 import Icon from '~/vue_shared/components/icon.vue';
 import TableRegistry from './table_registry.vue';
+import ExpirationPolicy from './expiration_policy.vue';
 import { DELETE_REPO_ERROR_MESSAGE } from '../constants';
 import { __, sprintf } from '~/locale';
 
@@ -26,6 +27,7 @@ export default {
     Icon,
     GlModal,
     GlEmptyState,
+    ExpirationPolicy,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -98,7 +100,8 @@ export default {
         css-class="btn-default btn-transparent btn-clipboard"
       />
 
-      <div class="controls d-none d-sm-block float-right">
+      <div class="d-none d-sm-flex float-right justify-content-center align-items-center">
+        <expiration-policy class="mr-2" />
         <gl-button
           v-if="canDeleteRepo"
           v-gl-tooltip
