@@ -57,11 +57,17 @@ module EE
         return unless project.feature_available?(:push_rules)
 
         predefined_push_rule = PushRule.find_by(is_sample: true)
-
-        if predefined_push_rule
+        if project.group && project.group.group_push_rule
+          create_push_rule_from_group
+        elsif predefined_push_rule
           push_rule = predefined_push_rule.dup.tap { |gh| gh.is_sample = false }
           project.push_rule = push_rule
         end
+      end
+
+      def create_push_rule_from_group
+        push_rule = project.group.group_push_rule.attributes.except("group_id", "id")
+        project.create_push_rule(push_rule.merge(is_sample: false))
       end
 
       # When using a project template from a Group, the new project can only be created
