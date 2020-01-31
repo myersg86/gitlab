@@ -15,6 +15,10 @@ module Gitlab
           'repositories/git_http' => %w{git_upload_pack git_receive_pack}
         }.freeze
 
+        WHITELISTED_GIT_READ_ONLY_ROUTES = {
+          'repositories/git_http' => %w{git_upload_pack}
+        }.freeze
+
         WHITELISTED_GIT_LFS_ROUTES = {
           'repositories/lfs_api' => %w{batch},
           'repositories/lfs_locks_api' => %w{verify create unlock}
@@ -54,6 +58,10 @@ module Gitlab
         end
 
         private
+
+        def read_only_mode?
+          Gitlab.config.gitlab.read_only?
+        end
 
         def disallowed_request?
           DISALLOWED_METHODS.include?(@env['REQUEST_METHOD']) &&
@@ -97,6 +105,10 @@ module Gitlab
           # Calling route_hash may be expensive. Only do it if we think there's a possible match
           return false unless
             request.path.end_with?('.git/git-upload-pack', '.git/git-receive-pack')
+
+          if read_only_mode?
+            return WHITELISTED_GIT_READ_ONLY_ROUTES[route_hash[:controller]]&.include?(route_hash[:action])
+          end
 
           WHITELISTED_GIT_ROUTES[route_hash[:controller]]&.include?(route_hash[:action])
         end

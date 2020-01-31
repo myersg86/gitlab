@@ -56,7 +56,7 @@ module Gitlab
     end
 
     def self.read_only?
-      false
+      Gitlab.config.gitlab.read_only?
     end
 
     def self.read_write?

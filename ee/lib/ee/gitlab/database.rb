@@ -10,7 +10,7 @@ module EE
 
         override :read_only?
         def read_only?
-          ::Gitlab::Geo.secondary?
+          ::Gitlab::Geo.secondary? || Gitlab.config.gitlab.read_only?
         end
 
         def healthy?
