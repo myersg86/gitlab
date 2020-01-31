@@ -28,6 +28,22 @@
   }
 }
 
+@each $index, $size in $size-scale {
+  #{'.gl-w-#{$index}'} {
+    width: $size;
+  }
+}
+
+@for $i from 0 to 11 {
+  #{'.gl-z-#{$i}'} {
+    z-index: $i
+  }
+}
+
+.gl-right-0 {
+  right: 0;
+}
+
 .border-width-1px { border-width: 1px; }
 .border-bottom-width-1px { border-bottom-width: 1px; }
 .border-style-dashed { border-style: dashed; }
