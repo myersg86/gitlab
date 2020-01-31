@@ -1,4 +1,5 @@
 <script>
+import { uniqueId } from 'lodash';
 import {
   GlFormGroup,
   GlToggle,
@@ -50,6 +51,11 @@ export default {
       required: false,
       default: false,
     },
+  },
+  data() {
+    return {
+      uniqueId: uniqueId(),
+    };
   },
   computed: {
     ...mapComputedToEvent(['enabled', 'cadence', 'older_than', 'keep_n', 'name_regex'], 'value'),
@@ -104,8 +110,7 @@ export default {
       this.$emit('submit');
     },
     idGenerator(id) {
-      // eslint-disable-next-line no-underscore-dangle
-      return `${id}_${this._uid}`;
+      return `${id}_${this.uniqueId}`;
     },
   },
 };
