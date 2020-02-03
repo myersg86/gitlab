@@ -1,6 +1,7 @@
 #import "./designNote.fragment.graphql"
 #import "./designList.fragment.graphql"
 #import "./diffRefs.fragment.graphql"
+#import "./notePermissions.fragment.graphql"
 
 fragment DesignItem on Design {
   ...DesignListItem
@@ -17,6 +18,9 @@ fragment DesignItem on Design {
           edges {
             node {
               ...DesignNote
+              userPermissions {
+                ...DesignNotePermissions
+              }
             }
           }
         }
