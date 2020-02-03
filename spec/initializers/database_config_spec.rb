@@ -3,12 +3,10 @@
 require 'spec_helper'
 
 describe 'Database config initializer' do
+  let(:connection_pool) { instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool) }
+
   subject do
     load Rails.root.join('config/initializers/database_config.rb')
-  end
-
-  before do
-    allow(ActiveRecord::Base).to receive(:establish_connection)
   end
 
   context "when using multi-threaded runtime" do
@@ -48,6 +46,20 @@ describe 'Database config initializer' do
         expect { subject }.not_to change { Gitlab::Database.config['pool'] }
       end
     end
+
+    context "when running on staging or canary" do
+      context "and the resulting pool size remains smaller than the original pool size" do
+        before do
+          stub_rails_env('staging')
+          stub_database_config(pool_size: 5)
+          allow(connection_pool).to receive(:size).and_return(4)
+        end
+
+        it "raises an exception" do
+          expect { subject }.to raise_error(RuntimeError)
+        end
+      end
+    end
   end
 
   context "when using single-threaded runtime" do
@@ -63,6 +75,8 @@ describe 'Database config initializer' do
       'pool' => pool_size
     }.compact
 
+    allow(connection_pool).to receive(:size).and_return(pool_size)
+    allow(ActiveRecord::Base).to receive(:establish_connection).and_return(connection_pool)
     allow(Gitlab::Database).to receive(:config).and_return(config)
   end
 end

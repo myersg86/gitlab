@@ -3,11 +3,15 @@
 require 'spec_helper'
 
 describe 'Database config initializer for GitLab EE' do
+  let(:geo_pool) { instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool) }
+
   subject do
     load Rails.root.join('config/initializers/database_config.rb')
   end
 
   before do
+    allow(Gitlab::Geo).to receive(:enabled?).and_return(true)
+    stub_main_database_config # we're not interested in this here
     stub_geo_database_config(pool_size: 1)
   end
 
@@ -17,9 +21,6 @@ describe 'Database config initializer for GitLab EE' do
     before do
       allow(Gitlab::Runtime).to receive(:multi_threaded?).and_return(true)
       allow(Gitlab::Runtime).to receive(:max_threads).and_return(max_threads)
-      allow(ActiveRecord::Base).to receive(:establish_connection)
-
-      expect(Geo::TrackingBase).to receive(:establish_connection)
     end
 
     context "and the runtime is Sidekiq" do
@@ -30,6 +31,20 @@ describe 'Database config initializer for GitLab EE' do
       it "sets Geo DB connection pool size to the max number of worker threads" do
         expect { subject }.to change { Rails.configuration.geo_database['pool'] }.from(1).to(max_threads)
       end
+
+      context "when running on staging or canary" do
+        context "and the resulting pool size remains smaller than the original pool size" do
+          before do
+            stub_rails_env('staging')
+            stub_geo_database_config(pool_size: 5)
+            allow(geo_pool).to receive(:size).and_return(4)
+          end
+
+          it "raises an exception" do
+            expect { subject }.to raise_error(RuntimeError)
+          end
+        end
+      end
     end
   end
 
@@ -39,6 +54,12 @@ describe 'Database config initializer for GitLab EE' do
     end
   end
 
+  def stub_main_database_config
+    pool = instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool)
+    allow(pool).to receive(:size).and_return(5)
+    allow(ActiveRecord::Base).to receive(:establish_connection).and_return(pool)
+  end
+
   def stub_geo_database_config(pool_size:)
     config = {
       'adapter' => 'postgresql',
@@ -46,6 +67,8 @@ describe 'Database config initializer for GitLab EE' do
       'pool' => pool_size
     }.compact
 
+    allow(geo_pool).to receive(:size).and_return(pool_size)
+    allow(Geo::TrackingBase).to receive(:establish_connection).and_return(geo_pool)
     allow(Rails.configuration).to receive(:geo_database).and_return(config)
   end
 end
