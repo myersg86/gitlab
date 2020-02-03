@@ -185,7 +185,7 @@ export default {
         this.designVariables,
       );
     },
-    onNoteMove({ noteableId, discussionId, position }) {
+    onNoteMove({ noteableId, position }) {
       const note = {}; // TODO get the current note from cache (using noteableId, discussionId)
       const mutationPayload = {
         // TODO(tq) update args for optimistic response as needed
@@ -193,14 +193,14 @@ export default {
           position,
         }),
         variables: {
-          noteableId,
+          id: noteableId,
           position,
         },
         mutation: updateImageDiffNoteMutation,
         update: this.updateImageDiffNoteInStore,
       };
       // TODO(tq) actually commit a mutation
-      // return this.$apollo.mutate(mutationPayload).catch(e => this.onUpdateImageDiffNoteError(e));
+      return this.$apollo.mutate(mutationPayload).catch(e => this.onUpdateImageDiffNoteError(e));
     },
     onQueryError(message) {
       // because we redirect user to /designs (the issue page),

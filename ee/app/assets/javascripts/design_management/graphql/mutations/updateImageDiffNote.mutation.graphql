@@ -2,19 +2,9 @@
 
 mutation updateImageDiffNote($input: UpdateImageDiffNoteInput!) {
   updateImageDiffNote(input: $input) {
+    errros
     note {
       ...DesignNote
-      discussion {
-        id
-        replyId
-        notes {
-          edges {
-            node {
-              ...DesignNote
-            }
-          }
-        }
-      }
     }
   }
 }
