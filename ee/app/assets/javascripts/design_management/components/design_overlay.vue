@@ -28,9 +28,8 @@ export default {
   },
   data() {
     return {
-      newNotePosition: null,
-      movingNotePosition: null,
-      movingNote: null,
+      movingNoteNewPosition: null,
+      movingNoteStartPosition: null,
     };
   },
   computed: {
@@ -41,17 +40,21 @@ export default {
         ...this.position,
       };
     },
-    newNotePositionStyle() {
-      const pos = this.newNotePosition
-        ? this.getNotePositionStyle(this.newNotePosition)
-        : this.getNotePositionStyle(this.currentCommentForm);
+    isMovingCurrentComment() {
+      return this.movingNoteStartPosition && !this.movingNoteStartPosition.noteId;
+    },
+    currentCommentPositionStyle() {
+      const pos =
+        this.movingNoteNewPosition && this.isMovingCurrentComment
+          ? this.getNotePositionStyle(this.movingNoteNewPosition)
+          : this.getNotePositionStyle(this.currentCommentForm);
 
       return pos;
     },
   },
   watch: {
     currentCommentForm() {
-      this.movingNotePosition = null;
+      this.movingNoteNewPosition = null;
     },
   },
   methods: {
@@ -62,17 +65,17 @@ export default {
       return (this.notes.find(({ id }) => id === noteId) || {}).position;
     },
     isMovingNote(noteId) {
-      return this.movingNote?.noteId === noteId;
+      return this.movingNoteStartPosition?.noteId === noteId;
     },
     onNewNoteMove(e) {
-      const { initClientX, initClientY } = this.movingNote;
+      const { initClientX, initClientY } = this.movingNoteStartPosition;
       const deltaX = e.clientX - initClientX;
       const deltaY = e.clientY - initClientY;
 
       const x = this.currentCommentForm.x + deltaX;
       const y = this.currentCommentForm.y + deltaY;
 
-      this.newNotePosition = {
+      this.movingNoteNewPosition = {
         x,
         y,
         width: this.dimensions.width,
@@ -80,7 +83,7 @@ export default {
       };
     },
     onExistingNoteMove(e) {
-      const notePosition = this.findNotePosition(this.movingNote.noteId);
+      const notePosition = this.findNotePosition(this.movingNoteStartPosition.noteId);
       const { width, height } = notePosition;
 
       const widthRatio = this.dimensions.width / width;
@@ -93,7 +96,7 @@ export default {
       const x = notePosition.x * widthRatio + deltaX;
       const y = notePosition.y * heightRatio + deltaY;
 
-      this.movingNotePosition = {
+      this.movingNoteNewPosition = {
         x,
         y,
         width: this.dimensions.width,
@@ -101,45 +104,38 @@ export default {
       };
     },
     onMousemove(e) {
-      if (!this.movingNote) return;
-
-      const { noteId } = this.movingNote;
-      if (!noteId) {
+      if (!this.movingNoteStartPosition) return;
+      if (this.isMovingCurrentComment) {
         this.onNewNoteMove(e);
       } else {
         this.onExistingNoteMove(e);
       }
     },
     onNoteMousedown(e, note = {}) {
-      this.movingNote = {
+      this.movingNoteStartPosition = {
         noteableId: note.id,
-        discussionId: note.discussion?.id,
         initClientX: e.clientX,
         initClientY: e.clientY,
       };
     },
     onNoteMouseup() {
-      this.movingNote = null;
+      this.movingNoteStartPosition = null;
+      this.movingNoteNewPosition = null;
     },
     onNewNoteMouseup() {
-      this.onNoteMouseup();
-
-      const { x, y } = this.newNotePosition;
+      const { x, y } = this.movingNoteNewPosition;
       this.setNewNoteCoordinates({ x, y });
 
-      this.newNotePosition = null;
+      this.onNoteMouseup();
     },
     onExistingNoteMouseup() {
-      this.onNoteMouseup();
-
-      const { x, y } = this.movingNotePosition;
+      const { x, y } = this.movingNoteNewPosition;
       this.$emit('moveNote', {
-        discussionId: this.movingNote.discussionId,
-        notableId: this.movingNote.noteId,
+        notableId: this.movingNoteStartPosition.noteId,
         coordinates: { x, y },
       });
 
-      this.movingNotePosition = null;
+      this.onNoteMouseup();
     },
     getNotePositionStyle(data) {
       const { x, y, width, height } = data;
@@ -167,23 +163,23 @@ export default {
       data-qa-selector="design_image_button"
       @click="setNewNoteCoordinates({ x: $event.offsetX, y: $event.offsetY })"
     ></button>
-    <design-comment-pin
+    <!-- <design-comment-pin
       v-for="(note, index) in notes"
       :key="note.id"
       :index="index"
       :repositioning="isMovingNote(note.id)"
       :position="
-        isMovingNote(note.id) && movingNotePosition
-          ? getNotePositionStyle(movingNotePosition)
+        isMovingNote(note.id) && movingNoteNewPosition
+          ? getNotePositionStyle(movingNoteNewPosition)
           : getNotePositionStyle(note.position)
       "
       @mousedown="onNoteMousedown($event, note)"
       @mouseup="onExistingNoteMouseup($event, note.id)"
-    />
+    /> -->
     <design-comment-pin
       v-if="currentCommentForm"
-      :position="newNotePositionStyle"
-      :repositioning="Boolean(newNotePosition)"
+      :position="currentCommentPositionStyle"
+      :repositioning="isMovingCurrentComment"
       @mousedown="onNoteMousedown"
       @mouseup="onNewNoteMouseup"
     />
