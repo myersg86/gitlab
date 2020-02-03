@@ -188,9 +188,9 @@ export default {
       this.currentAnnotationPosition = this.getAnnotationPositon(coordinates);
       this.$emit('setAnnotationPosition', this.currentAnnotationPosition);
     },
-    moveNote({ notableId, coordinates }) {
+    moveNote({ noteId, coordinates }) {
       const position = this.getAnnotationPositon(coordinates);
-      this.$emit('moveNote', { notableId, position });
+      this.$emit('moveNote', { noteId, position });
     },
   },
 };

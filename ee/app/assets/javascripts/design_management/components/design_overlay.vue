@@ -54,6 +54,7 @@ export default {
   },
   watch: {
     currentCommentForm() {
+      // ensure currentCurrentForm is the source of truth
       this.movingNoteNewPosition = null;
     },
   },
@@ -67,11 +68,23 @@ export default {
     isMovingNote(noteId) {
       return this.movingNoteStartPosition?.noteId === noteId;
     },
-    onNewNoteMove(e) {
-      const { initClientX, initClientY } = this.movingNoteStartPosition;
-      const deltaX = e.clientX - initClientX;
-      const deltaY = e.clientY - initClientY;
+    getMovingNotePositionDelta(e) {
+      let deltaX = 0;
+      let deltaY = 0;
 
+      if (this.movingNoteStartPosition && this.movingNoteNewPosition) {
+        const { initClientX, initClientY } = this.movingNoteStartPosition;
+        deltaX = e.clientX - initClientX;
+        deltaY = e.clientY - initClientY;
+      }
+
+      return {
+        deltaX,
+        deltaY,
+      };
+    },
+    onNewNoteMove(e) {
+      const { deltaX, deltaY } = this.getMovingNotePositionDelta(e);
       const x = this.currentCommentForm.x + deltaX;
       const y = this.currentCommentForm.y + deltaY;
 
@@ -89,10 +102,7 @@ export default {
       const widthRatio = this.dimensions.width / width;
       const heightRatio = this.dimensions.height / height;
 
-      const { initClientX, initClientY } = this.movingNote;
-      const deltaX = e.clientX - initClientX;
-      const deltaY = e.clientY - initClientY;
-
+      const { deltaX, deltaY } = this.getMovingNotePositionDelta(e);
       const x = notePosition.x * widthRatio + deltaX;
       const y = notePosition.y * heightRatio + deltaY;
 
@@ -103,25 +113,6 @@ export default {
         height: this.dimensions.height,
       };
     },
-    onMousemove(e) {
-      if (!this.movingNoteStartPosition) return;
-      if (this.isMovingCurrentComment) {
-        this.onNewNoteMove(e);
-      } else {
-        this.onExistingNoteMove(e);
-      }
-    },
-    onNoteMousedown(e, note = {}) {
-      this.movingNoteStartPosition = {
-        noteableId: note.id,
-        initClientX: e.clientX,
-        initClientY: e.clientY,
-      };
-    },
-    onNoteMouseup() {
-      this.movingNoteStartPosition = null;
-      this.movingNoteNewPosition = null;
-    },
     onNewNoteMouseup() {
       const { x, y } = this.movingNoteNewPosition;
       this.setNewNoteCoordinates({ x, y });
@@ -131,11 +122,31 @@ export default {
     onExistingNoteMouseup() {
       const { x, y } = this.movingNoteNewPosition;
       this.$emit('moveNote', {
-        notableId: this.movingNoteStartPosition.noteId,
+        noteId: this.movingNoteStartPosition.noteId,
         coordinates: { x, y },
       });
 
       this.onNoteMouseup();
+    },
+    onMousemove(e) {
+      if (!this.movingNoteStartPosition) return;
+
+      if (this.isMovingCurrentComment) {
+        this.onNewNoteMove(e);
+      } else {
+        this.onExistingNoteMove(e);
+      }
+    },
+    onNoteMousedown(e, note = {}) {
+      this.movingNoteStartPosition = {
+        noteId: note.id,
+        initClientX: e.clientX,
+        initClientY: e.clientY,
+      };
+    },
+    onNoteMouseup() {
+      this.movingNoteStartPosition = null;
+      this.movingNoteNewPosition = null;
     },
     getNotePositionStyle(data) {
       const { x, y, width, height } = data;
@@ -163,7 +174,7 @@ export default {
       data-qa-selector="design_image_button"
       @click="setNewNoteCoordinates({ x: $event.offsetX, y: $event.offsetY })"
     ></button>
-    <!-- <design-comment-pin
+    <design-comment-pin
       v-for="(note, index) in notes"
       :key="note.id"
       :index="index"
@@ -175,7 +186,7 @@ export default {
       "
       @mousedown="onNoteMousedown($event, note)"
       @mouseup="onExistingNoteMouseup($event, note.id)"
-    /> -->
+    />
     <design-comment-pin
       v-if="currentCommentForm"
       :position="currentCommentPositionStyle"
