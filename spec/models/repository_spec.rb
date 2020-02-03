@@ -1025,6 +1025,16 @@ describe Repository do
       expect(repository.license).to be_nil
     end
 
+    it 'returns nil when Gitaly is down' do
+      expect_any_instance_of(Gitlab::GitalyClient::RepositoryService).to receive(:license_short_name).and_raise(Gitlab::Git::CommandError)
+
+      expect(repository.license).to be_nil
+
+      expect(Gitlab::ErrorTracking).to receive(:track_exception).with(
+        an_instance_of(Gitlab::Git::CommandError)
+      )
+    end
+
     it 'returns the license' do
       license = Licensee::License.new('mit')
       repository.create_file(user, 'LICENSE',

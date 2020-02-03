@@ -641,6 +641,9 @@ class Repository
     return unless license_key
 
     Licensee::License.new(license_key)
+  rescue GRPC::Unavailable, GRPC::DeadlineExceeded, Gitlab::Git::CommandError => e
+    Gitlab::ErrorTracking.track_exception(e)
+    return nil
   end
   memoize_method :license
 
