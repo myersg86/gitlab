@@ -68,6 +68,12 @@ export default {
     isMovingNote(noteId) {
       return this.movingNoteStartPosition?.noteId === noteId;
     },
+    canMoveNote(note) {
+      const { userPermissions } = note;
+      const { adminNote } = userPermissions || {};
+
+      return Boolean(adminNote);
+    },
     getMovingNotePositionDelta(e) {
       let deltaX = 0;
       let deltaY = 0;
@@ -96,15 +102,17 @@ export default {
       };
     },
     onExistingNoteMove(e) {
-      const notePosition = this.findNotePosition(this.movingNoteStartPosition.noteId);
-      const { width, height } = notePosition;
+      const note = this.notes.find(({ id }) => id === this.movingNoteStartPosition.noteId);
+      if (!note) return;
 
+      const { position } = note;
+      const { width, height } = position;
       const widthRatio = this.dimensions.width / width;
       const heightRatio = this.dimensions.height / height;
 
       const { deltaX, deltaY } = this.getMovingNotePositionDelta(e);
-      const x = notePosition.x * widthRatio + deltaX;
-      const y = notePosition.y * heightRatio + deltaY;
+      const x = position.x * widthRatio + deltaX;
+      const y = position.y * heightRatio + deltaY;
 
       this.movingNoteNewPosition = {
         x,
@@ -137,9 +145,11 @@ export default {
         this.onExistingNoteMove(e);
       }
     },
-    onNoteMousedown(e, note = {}) {
+    onNoteMousedown(e, note) {
+      if (note && !this.canMoveNote(note)) return;
+
       this.movingNoteStartPosition = {
-        noteId: note.id,
+        noteId: note?.id,
         initClientX: e.clientX,
         initClientY: e.clientY,
       };
