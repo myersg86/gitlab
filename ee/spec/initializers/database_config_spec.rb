@@ -32,17 +32,15 @@ describe 'Database config initializer for GitLab EE' do
         expect { subject }.to change { Rails.configuration.geo_database['pool'] }.from(1).to(max_threads)
       end
 
-      context "when running on staging or canary" do
-        context "and the resulting pool size remains smaller than the original pool size" do
-          before do
-            stub_rails_env('staging')
-            stub_geo_database_config(pool_size: 5)
-            allow(geo_pool).to receive(:size).and_return(4)
-          end
+      context "and the resulting pool size remains smaller than the original pool size" do
+        before do
+          stub_rails_env('staging')
+          stub_geo_database_config(pool_size: 5)
+          allow(geo_pool).to receive(:size).and_return(4)
+        end
 
-          it "raises an exception" do
-            expect { subject }.to raise_error(RuntimeError)
-          end
+        it "raises an exception" do
+          expect { subject }.to raise_error(RuntimeError)
         end
       end
     end

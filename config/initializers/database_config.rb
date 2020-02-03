@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
-def log_pool_size(db, previous_pool_size, current_pool_size)
+def report_pool_size(db, previous_pool_size, current_pool_size)
+  if current_pool_size.to_i < previous_pool_size.to_i
+    raise "FATAL: Database pool size has shrunk for #{db}: " \
+        "current (#{current_pool_size}) < previous (#{previous_pool_size})"
+  end
+
   log_message = ["#{db} connection pool size: #{current_pool_size}"]
 
   if previous_pool_size && current_pool_size > previous_pool_size
@@ -8,16 +13,6 @@ def log_pool_size(db, previous_pool_size, current_pool_size)
   end
 
   Gitlab::AppLogger.debug(log_message.join(' '))
-end
-
-def ensure_valid_pool_size!(db, previous_pool_size, current_pool_size)
-  if (Gitlab.canary? || Rails.env.staging?) &&
-    current_pool_size < previous_pool_size
-    raise "FATAL: Database pool size has shrunk for #{db}: " \
-        "current (#{current_pool_size}) < previous (#{previous_pool_size})"
-  end
-
-  log_pool_size(db, previous_pool_size, current_pool_size)
 end
 
 def set_main_database_pool_size(max_threads)
@@ -29,7 +24,7 @@ def set_main_database_pool_size(max_threads)
 
   conn_pool = ActiveRecord::Base.establish_connection(db_config)
 
-  ensure_valid_pool_size!('Main DB', previous_pool_size, conn_pool.size)
+  report_pool_size('Main DB', previous_pool_size, conn_pool.size)
 end
 
 def set_geo_database_pool_size(max_threads)
@@ -41,7 +36,7 @@ def set_geo_database_pool_size(max_threads)
 
     conn_pool = Geo::TrackingBase.establish_connection(geo_db)
 
-    ensure_valid_pool_size!('Geo DB', previous_pool_size, conn_pool.size)
+    report_pool_size('Geo DB', previous_pool_size, conn_pool.size)
   end
 end
 

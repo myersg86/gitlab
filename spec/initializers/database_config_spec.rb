@@ -47,17 +47,14 @@ describe 'Database config initializer' do
       end
     end
 
-    context "when running on staging or canary" do
-      context "and the resulting pool size remains smaller than the original pool size" do
-        before do
-          stub_rails_env('staging')
-          stub_database_config(pool_size: 5)
-          allow(connection_pool).to receive(:size).and_return(4)
-        end
+    context "and the resulting pool size remains smaller than the original pool size" do
+      before do
+        stub_database_config(pool_size: 5)
+        allow(connection_pool).to receive(:size).and_return(4)
+      end
 
-        it "raises an exception" do
-          expect { subject }.to raise_error(RuntimeError)
-        end
+      it "raises an exception" do
+        expect { subject }.to raise_error(RuntimeError)
       end
     end
   end
