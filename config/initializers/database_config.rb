@@ -59,6 +59,6 @@ if Gitlab::Runtime.multi_threaded?
   set_main_database_pool_size(max_threads)
 
   Gitlab.ee do
-    set_geo_database_pool_size(max_threads) if Gitlab::Geo.enabled?
+    set_geo_database_pool_size(max_threads) if Gitlab::Geo.geo_database_configured?
   end
 end

@@ -10,8 +10,7 @@ describe 'Database config initializer for GitLab EE' do
   end
 
   before do
-    allow(Gitlab::Geo).to receive(:enabled?).and_return(true)
-    stub_main_database_config # we're not interested in this here
+    stub_main_database_config
     stub_geo_database_config(pool_size: 1)
   end
 
@@ -34,7 +33,6 @@ describe 'Database config initializer for GitLab EE' do
 
       context "and the resulting pool size remains smaller than the original pool size" do
         before do
-          stub_rails_env('staging')
           stub_geo_database_config(pool_size: 5)
           allow(geo_pool).to receive(:size).and_return(4)
         end
@@ -52,6 +50,7 @@ describe 'Database config initializer for GitLab EE' do
     end
   end
 
+  # Main DB config is tested in spec/initializers/database_config_spec.rb
   def stub_main_database_config
     pool = instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool)
     allow(pool).to receive(:size).and_return(5)
