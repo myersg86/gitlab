@@ -1,0 +1,21 @@
+- top_most_group = @group.has_parent? ? @group.root_ancestor : @group
+
+.modal.fade{ id: "add-true-up-user-modal", tabindex:"-1", role:"dialog", "aria-labelledby":"add-true-up-user-label", "aria-hidden":"true" }
+  .modal-dialog{ role:"document" }
+    .modal-content
+      .modal-header
+        %h5.modal-title{ id: "add-true-up-user-label" }
+          = _('Add additional seats to your subscription?')
+        %button.close{ type: "button", "data-dismiss": "modal", "aria-label" => _('Close') }
+          %span{ "aria-hidden": true }= '&times;'.html_safe
+      .modal-body
+        .gl-alert.gl-alert-warning.mb-2{ role: "alert" }
+          = sprite_icon('warning', css_class: 'gl-icon gl-alert-icon gl-alert-icon-no-title', size: 16)
+          .gl-alert-body
+            = s_('This will put the "%{group_name}" group above its purchased seat count.') % { group_name: top_most_group.name }
+        %p= s_("If you continue, you will be billed for seats above your subscription's purchased seat count. Billing occurs at the end of your subscription term.")
+      .modal-footer
+        %button.btn.btn-secondary.mr-1{ type: "button", "data-dismiss": "modal" }
+          = _('Cancel')
+        %button.btn.btn-success.confirm-adding-member-to-group{ type: "button" }
+          = _('Add seat')

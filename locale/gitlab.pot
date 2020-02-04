@@ -1209,9 +1209,6 @@ msgstr ""
 msgid "Adding new applications is disabled in your GitLab instance. Please contact your GitLab administrator to get the permission"
 msgstr ""
 
-msgid "Adding this user will put the \"%{group_name}\" group above its purchased seat count."
-msgstr ""
-
 msgid "Additional minutes"
 msgstr ""
 
@@ -19627,6 +19624,9 @@ msgid "This user will be the author of all events in the activity feed that are 
 msgstr ""
 
 msgid "This will help us personalize your onboarding experience."
+msgstr ""
+
+msgid "This will put the \"%{group_name}\" group above its purchased seat count."
 msgstr ""
 
 msgid "This will redirect you to an external sign in page."

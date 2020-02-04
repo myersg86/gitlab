@@ -5,6 +5,8 @@ import axios from '~/lib/utils/axios_utils';
 import Members from '~/members';
 
 export default class MembersEE extends Members {
+  hasConfirmedAddingMember = false;
+
   addListeners() {
     super.addListeners();
 
@@ -14,6 +16,11 @@ export default class MembersEE extends Members {
     $('.js-ldap-override')
       .off('click')
       .on('click', this.toggleMemberAccessToggle.bind(this));
+    const $addMemberForm = $('form.invite-users-form');
+    $addMemberForm.on('submit', this.showTrueUpModal.bind(this));
+    $('#add-true-up-user-modal')
+      .find('.confirm-adding-member-to-group')
+      .click(this.continueFormSubmitting.bind(this));
   }
 
   dropdownClicked(options) {
@@ -85,6 +92,48 @@ export default class MembersEE extends Members {
           createFlash(__('An error occurred while saving LDAP override status. Please try again.'));
         }
       });
+  }
+
+  showTrueUpModal(e) {
+    const $addMemberForm = $('form.invite-users-form');
+    const membersBeingAdded = $('#user_ids')
+      .val()
+      .split(',').length;
+    const {
+      isFreePlan,
+      maxSeatsUsed,
+      seatsInUse,
+      // seatsOwed,
+      subscriptionSeats,
+    } = $addMemberForm.data();
+
+    const baseUserCount = subscriptionSeats < maxSeatsUsed ? maxSeatsUsed : subscriptionSeats;
+    const overUsers = Math.abs(baseUserCount - (seatsInUse + membersBeingAdded));
+
+    // Show the modal if:
+    // - the group is not on free plan
+    // - this event isn't triggered by submit programmatically
+    // - the max seats is about to increase
+    if (!isFreePlan && !this.hasConfirmedAddingMember && overUsers > 0) {
+      e.preventDefault();
+      $('#add-true-up-user-modal')
+        .modal()
+        .on('hide.bs.modal', () => {
+          if (!this.hasConfirmedAddingMember) {
+            // enable "Add to group" button
+            $addMemberForm
+              .find('input[type="submit"]')
+              .removeClass('disabled')
+              .removeAttr('disabled');
+          }
+        });
+    }
+  }
+
+  continueFormSubmitting() {
+    this.hasConfirmedAddingMember = true;
+    const $addMemberForm = $('form.invite-users-form');
+    $addMemberForm.submit();
   }
 
   static overrideLdap($memberListitem, endpoint, override) {

@@ -3,9 +3,20 @@
 - submit_url = local_assigns[:submit_url]
 - can_import_members = local_assigns[:can_import_members?]
 - import_path = local_assigns[:import_path]
+:ruby
+  form_data = {}
+  top_most_group = @group.present? && @group.has_parent? ? @group.root_ancestor : @group
+  if top_most_group&.respond_to?(:gitlab_subscription) && top_most_group.gitlab_subscription.present?
+    form_data = { subscription_seats: top_most_group.gitlab_subscription.seats,
+      seats_in_use: top_most_group.gitlab_subscription.seats_in_use,
+      max_seats_used: top_most_group.gitlab_subscription.max_seats_used,
+      seats_owed: top_most_group.gitlab_subscription.seats_owed,
+      is_free_plan: top_most_group.gitlab_subscription.hosted_plan&.nil?}
+  end
+
 .row
   .col-sm-12
-    = form_tag submit_url, class: 'invite-users-form', method: :post do
+    = form_tag submit_url, class: 'invite-users-form', data: form_data, method: :post do
       .form-group
         = label_tag :user_ids, _("GitLab member or Email address"), class: "label-bold"
         = users_select_tag(:user_ids, multiple: true, class: 'input-clamp qa-member-select-field', scope: :all, email_user: true, placeholder: 'Search for members to update or invite')
@@ -26,3 +37,6 @@
       = submit_tag _("Invite"), class: "btn btn-success", data: { qa_selector: 'invite_member_button' }
       - if can_import_members
         = link_to _("Import"), import_path, class: "btn btn-default", title: _("Import members from another project")
+
+- if @group
+  = render_if_exists 'groups/group_members/add_true_up_modal'
