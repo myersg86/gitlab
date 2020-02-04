@@ -1,0 +1,46 @@
+- top_most_group = @group.has_parent? ? @group.root_ancestor : @group
+- if top_most_group&.gitlab_subscription.present?
+  - return unless top_most_group.gitlab_subscription.hosted_plan.present?
+  .card.subscription-table
+    .card-header
+      %strong
+        #{top_most_group.name}: #{top_most_group.actual_plan_name.titleize}
+      .controls
+        %a.btn.btn-inverted-secondary{ href: "#{EE::SUBSCRIPTIONS_URL}/subscriptions" }
+          = _('Manage')
+    .card-body.flex-grid.d-flex.flex-column.flex-sm-row.flex-lg-column
+      .grid-row.d-flex.flex-grow-1.flex-column.flex-sm-column.flex-lg-row
+        .grid-cell.header-cell
+          .icon-wrapper
+            = sprite_icon('monitor', css_class: 'gl-icon append-right-8', size: 16)
+            %strong= _('Usage')
+        .grid-cell
+          %span.property-label= _('Seats included in subscription')
+          %p.property-value.prepend-top-5.append-bottom-0.number= top_most_group.gitlab_subscription.seats
+        .grid-cell
+          %span.property-label= _('Seats currently in use')
+          %a.btn.btn-blank.btn-transparent.btn-help{ href: '#',  data: { container: 'body',
+            toggle: 'popover',
+            placement: 'bottom',
+            trigger: 'focus',
+            content: s_('SubscriptionTable|Usage count is performed once a day at 12:00 PM.')} }
+            = sprite_icon('question', css_class: 'gl-icon ml-1', size: 16)
+          %p.property-value.prepend-top-5.append-bottom-0.number= top_most_group.gitlab_subscription.seats_in_use
+        .grid-cell
+          %span.property-label= _('Max seats used')
+          %a.btn.btn-blank.btn-transparent.btn-help{ href: '#',  data: { container: 'body',
+            toggle: 'popover',
+            placement: 'bottom',
+            trigger: 'focus',
+            content: s_('SubscriptionTable|This is the maximum number of users that have existed at the same time since this subscription started.')} }
+            = sprite_icon('question', css_class: 'gl-icon ml-1', size: 16)
+          %p.property-value.prepend-top-5.append-bottom-0.number= top_most_group.gitlab_subscription.max_seats_used
+        .grid-cell
+          %span.property-label= _('Seats owed')
+          %a.btn.btn-blank.btn-transparent.btn-help{ href: '#', data: { container: 'body',
+            toggle: 'popover',
+            placement: 'bottom',
+            trigger: 'focus',
+            content: s_('SubscriptionTable|Number of seats over subscription, to be paid for at end of term.')} }
+            = sprite_icon('question', css_class: 'gl-icon ml-1', size: 16)
+          %p.property-value.prepend-top-5.append-bottom-0.number= top_most_group.gitlab_subscription.seats_owed

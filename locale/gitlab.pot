@@ -1080,6 +1080,9 @@ msgstr ""
 msgid "Add a task list"
 msgstr ""
 
+msgid "Add additional seats to your subscription?"
+msgstr ""
+
 msgid "Add additional text to appear in all email communications. %{character_limit} character limit"
 msgstr ""
 
@@ -1143,6 +1146,9 @@ msgstr ""
 msgid "Add request manually"
 msgstr ""
 
+msgid "Add seat"
+msgstr ""
+
 msgid "Add system hook"
 msgstr ""
 
@@ -1201,6 +1207,9 @@ msgid "Added in this version"
 msgstr ""
 
 msgid "Adding new applications is disabled in your GitLab instance. Please contact your GitLab administrator to get the permission"
+msgstr ""
+
+msgid "Adding this user will put the \"%{group_name}\" group above its purchased seat count."
 msgstr ""
 
 msgid "Additional minutes"
@@ -10148,6 +10157,9 @@ msgstr ""
 msgid "If you believe this may be an error, please refer to the %{linkStart}Geo Troubleshooting%{linkEnd} documentation for more information."
 msgstr ""
 
+msgid "If you continue, you will be billed for seats above your subscription's purchased seat count. Billing occurs at the end of your subscription term."
+msgstr ""
+
 msgid "If you lose your recovery codes you can generate new ones, invalidating all previous codes."
 msgstr ""
 
@@ -16692,6 +16704,12 @@ msgstr ""
 msgid "Seats in license"
 msgstr ""
 
+msgid "Seats included in subscription"
+msgstr ""
+
+msgid "Seats owed"
+msgstr ""
+
 msgid "Secret"
 msgstr ""
 
@@ -18273,6 +18291,9 @@ msgid "SubscriptionTable|Max seats used"
 msgstr ""
 
 msgid "SubscriptionTable|Next invoice"
+msgstr ""
+
+msgid "SubscriptionTable|Number of seats over subscription, to be paid for at end of term."
 msgstr ""
 
 msgid "SubscriptionTable|Seats currently in use"

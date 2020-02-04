@@ -9,6 +9,7 @@
     = _("Group members")
   %hr
   - if can_manage_members
+    = render_if_exists 'groups/group_members/subscription_info'
     - if Feature.enabled?(:share_group_with_group, default_enabled: true)
       %ul.nav-links.nav.nav-tabs.gitlab-tabs{ role: 'tablist' }
         %li.nav-tab{ role: 'presentation' }
