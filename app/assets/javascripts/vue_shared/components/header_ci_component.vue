@@ -32,14 +32,6 @@ export default {
       type: String,
       required: true,
     },
-    itemId: {
-      type: Number,
-      required: true,
-    },
-    time: {
-      type: String,
-      required: true,
-    },
     user: {
       type: Object,
       required: false,
@@ -61,6 +53,14 @@ export default {
     userAvatarAltText() {
       return sprintf(__(`%{username}'s avatar`), { username: this.user.name });
     },
+    itemId() {
+      const el = document.querySelector('.js-pipeline-details-vue');
+      return el ? el.dataset.pipelineId : null;
+    },
+    time() {
+      const el = document.querySelector('.js-pipeline-details-vue');
+      return el ? el.dataset.createdAt : null;
+    },
   },
 
   methods: {
@@ -74,14 +74,14 @@ export default {
 <template>
   <header class="page-content-header ci-header-container">
     <section class="header-main-content">
-      <ci-icon-badge :status="status" />
+      <ci-icon-badge v-if="status" :status="status" />
 
       <strong> {{ itemName }} #{{ itemId }} </strong>
 
       <template v-if="shouldRenderTriggeredLabel">{{ __('triggered') }}</template>
       <template v-else>{{ __('created') }}</template>
 
-      <timeago-tooltip :time="time" />
+      <timeago-tooltip v-if="time" :time="time" />
 
       {{ __('by') }}
 
