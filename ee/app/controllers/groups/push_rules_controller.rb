@@ -3,7 +3,7 @@ class Groups::PushRulesController < Groups::ApplicationController
   layout 'group'
 
   before_action :check_push_rules_available!
-  before_action :push_rule
+  before_action :push_rule, only: :show
 
   respond_to :html
 
@@ -11,31 +11,30 @@ class Groups::PushRulesController < Groups::ApplicationController
   end
 
   def update
-    @push_rule.update(push_rule_params)
+    group_push_rule = group.group_push_rule || group.build_group_push_rule
+    group_push_rule.attributes = push_rule_params
 
-    if @push_rule.valid?
-      redirect_to admin_push_rule_path, notice: _('Push Rule updated successfully.')
+    if group_push_rule.save
+      flash[:notice] = _('Push Rules updated successfully.')
     else
-      render :show
+      flash[:alert] = group_push_rule.errors.full_messages.join(', ').html_safe
     end
+
+    redirect_to group_push_rules_path(group)
   end
 
   private
-
-  def check_push_rules_available!
-    render_404 unless License.feature_available?(:push_rules)
-  end
 
   def push_rule_params
     allowed_fields = %i[deny_delete_tag delete_branch_regex commit_message_regex commit_message_negative_regex
                         branch_name_regex force_push_regex author_email_regex
                         member_check file_name_regex max_file_size prevent_secrets]
 
-    if @push_rule.available?(:reject_unsigned_commits)
+    if can?(current_user, :change_reject_unsigned_commits, group)
       allowed_fields << :reject_unsigned_commits
     end
 
-    if @push_rule.available?(:commit_committer_check)
+    if can?(current_user, :change_commit_committer_check, group)
       allowed_fields << :commit_committer_check
     end
 
@@ -43,6 +42,6 @@ class Groups::PushRulesController < Groups::ApplicationController
   end
 
   def push_rule
-    @push_rule ||= group.predefined_push_rule
+    @push_rule ||= group.group_push_rule || PushRule.find_or_initialize_by(is_sample: true)
   end
 end

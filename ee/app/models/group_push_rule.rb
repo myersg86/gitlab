@@ -10,4 +10,8 @@ class GroupPushRule < ApplicationRecord
   def available?(feature_sym)
     group&.feature_available?(feature_sym)
   end
+
+  def global?
+    true
+  end
 end

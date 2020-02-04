@@ -44,7 +44,6 @@ module EE
         return unless group.feature_available?(:push_rules)
 
         push_rule = group.predefined_push_rule
-
         return unless push_rule
 
         attributes = push_rule.attributes.symbolize_keys.except(:project_id, :is_sample, :id)

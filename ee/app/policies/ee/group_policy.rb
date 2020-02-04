@@ -53,6 +53,22 @@ module EE
         @subject.feature_available?(:group_timelogs)
       end
 
+      condition(:commit_committer_check_disabled_globally) do
+        !PushRule.global&.commit_committer_check
+      end
+
+      condition(:reject_unsigned_commits_disabled_globally) do
+        !PushRule.global&.reject_unsigned_commits
+      end
+
+      condition(:commit_committer_check_available) do
+        @subject.feature_available?(:commit_committer_check)
+      end
+
+      condition(:reject_unsigned_commits_available) do
+        @subject.feature_available?(:reject_unsigned_commits)
+      end
+
       rule { reporter }.policy do
         enable :admin_list
         enable :admin_board
@@ -151,6 +167,24 @@ module EE
       end
 
       rule { ~group_timelogs_available }.prevent :read_group_timelogs
+
+      rule { admin | (commit_committer_check_disabled_globally & can?(:maintainer_access)) }.policy do
+        enable :change_commit_committer_check
+      end
+
+      rule { commit_committer_check_available }.policy do
+        enable :read_commit_committer_check
+      end
+
+      rule { ~commit_committer_check_available }.policy do
+        prevent :change_commit_committer_check
+      end
+
+      rule { admin | (reject_unsigned_commits_disabled_globally & can?(:maintainer_access)) }.enable :change_reject_unsigned_commits
+
+      rule { reject_unsigned_commits_available }.enable :read_reject_unsigned_commits
+
+      rule { ~reject_unsigned_commits_available }.prevent :change_reject_unsigned_commits
     end
 
     override :lookup_access_level!
