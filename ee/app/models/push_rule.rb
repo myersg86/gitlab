@@ -122,7 +122,6 @@ class PushRule < ApplicationRecord
     raise MatchError, "Regular expression '#{regex}' is invalid: #{e.message}"
   end
 
-
   # Allow fallback to ruby regex library
   # Only supported for existing regexes due to denial of service risk
   def allow_regex_fallback?

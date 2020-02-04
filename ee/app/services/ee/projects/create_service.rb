@@ -60,6 +60,7 @@ module EE
         if project.group && project.group.group_push_rule
           create_push_rule_from_group
         elsif predefined_push_rule
+          log_info(predefined_push_rule)
           push_rule = predefined_push_rule.dup.tap { |gh| gh.is_sample = false }
           project.push_rule = push_rule
         end

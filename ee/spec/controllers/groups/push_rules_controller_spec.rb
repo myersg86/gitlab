@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Groups::PushRulesController do
   let(:group) { create(:group, :private) }
   let!(:push_rule) { create(:group_push_rule, group: group) }
-  let(:user)  { create(:user) }
+  let(:user) { create(:user) }
 
   describe '#show' do
     before do

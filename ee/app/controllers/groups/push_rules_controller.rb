@@ -11,7 +11,7 @@ class Groups::PushRulesController < Groups::ApplicationController
   end
 
   def update
-    group_push_rule = group.group_push_rule || group.build_group_push_rule
+    group_push_rule = push_rule
     group_push_rule.attributes = push_rule_params
 
     if group_push_rule.save
@@ -42,6 +42,7 @@ class Groups::PushRulesController < Groups::ApplicationController
   end
 
   def push_rule
-    @push_rule ||= group.group_push_rule || PushRule.find_or_initialize_by(is_sample: true)
+    group.create_group_push_rule unless group.group_push_rule
+    @push_rule = group.group_push_rule
   end
 end

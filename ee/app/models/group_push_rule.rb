@@ -12,6 +12,6 @@ class GroupPushRule < ApplicationRecord
   end
 
   def global?
-    true
+    false
   end
 end

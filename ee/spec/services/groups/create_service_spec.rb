@@ -93,6 +93,7 @@ describe Groups::CreateService, '#execute' do
 
       context 'when there are push rules settings' do
         let!(:sample) { create(:push_rule_sample) }
+
         it 'uses the configured push rules settings' do
           group = create_group(user, group_params)
 
