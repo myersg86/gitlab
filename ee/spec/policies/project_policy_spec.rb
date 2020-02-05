@@ -1184,6 +1184,7 @@ describe ProjectPolicy do
     context 'it is enabled on group level' do
       let(:group) { create(:group) }
       let(:project) { create(:project, namespace_id: group.id) }
+
       before do
         create(:group_push_rule, reject_unsigned_commits: true, group: group)
       end

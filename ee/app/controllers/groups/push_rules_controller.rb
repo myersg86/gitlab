@@ -43,6 +43,10 @@ class Groups::PushRulesController < Groups::ApplicationController
 
   def push_rule
     group.create_group_push_rule unless group.group_push_rule
-    @push_rule = group.group_push_rule
+    @push_rule ||= group.group_push_rule
+  end
+
+  def check_push_rules_available!
+    render_404 unless can?(current_user, :change_push_rules, group)
   end
 end

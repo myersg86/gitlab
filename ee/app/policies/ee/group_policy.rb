@@ -69,6 +69,10 @@ module EE
         @subject.feature_available?(:reject_unsigned_commits)
       end
 
+      condition(:push_rules_available) do
+        @subject.feature_available?(:push_rules)
+      end
+
       rule { reporter }.policy do
         enable :admin_list
         enable :admin_board
@@ -185,6 +189,8 @@ module EE
       rule { reject_unsigned_commits_available }.enable :read_reject_unsigned_commits
 
       rule { ~reject_unsigned_commits_available }.prevent :change_reject_unsigned_commits
+
+      rule { can?(:maintainer_access) & push_rules_available }.enable :change_push_rules
     end
 
     override :lookup_access_level!
