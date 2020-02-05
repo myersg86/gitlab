@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-def report_pool_size(db, previous_pool_size, current_pool_size)
+def report_pool_size(db_name, previous_pool_size, current_pool_size)
   if current_pool_size.to_i < previous_pool_size.to_i
-    raise "FATAL: Database pool size has shrunk for #{db}: " \
+    raise "FATAL: Database pool size has shrunk for #{db_name}: " \
         "current (#{current_pool_size}) < previous (#{previous_pool_size})"
   end
 
-  log_message = ["#{db} connection pool size: #{current_pool_size}"]
+  log_message = ["#{db_name} connection pool size: #{current_pool_size.inspect}"]
 
   if previous_pool_size && current_pool_size > previous_pool_size
     log_message << "(increased from #{previous_pool_size} to match thread count)"
@@ -15,28 +15,25 @@ def report_pool_size(db, previous_pool_size, current_pool_size)
   Gitlab::AppLogger.debug(log_message.join(' '))
 end
 
-def set_main_database_pool_size(max_threads)
+def set_database_pool_size(base_class, database_config, max_threads)
+  previous_pool_size = database_config['pool']
+
+  database_config['pool'] = [database_config['pool'].to_i, max_threads].max
+
+  connection_pool = base_class.establish_connection(database_config)
+
+  report_pool_size(base_class.name, previous_pool_size, connection_pool.size)
+end
+
+def set_primary_database_pool_size(max_threads)
   db_config = Gitlab::Database.config ||
       Rails.application.config.database_configuration[Rails.env]
-  previous_pool_size = db_config['pool']
-
-  db_config['pool'] = [db_config['pool'].to_i, max_threads].max
-
-  conn_pool = ActiveRecord::Base.establish_connection(db_config)
-
-  report_pool_size('Main DB', previous_pool_size, conn_pool.size)
+  set_database_pool_size(ActiveRecord::Base, db_config, max_threads)
 end
 
 def set_geo_database_pool_size(max_threads)
   if Gitlab::Runtime.sidekiq?
-    geo_db = Rails.configuration.geo_database
-    previous_pool_size = geo_db['pool']
-
-    geo_db['pool'] = max_threads
-
-    conn_pool = Geo::TrackingBase.establish_connection(geo_db)
-
-    report_pool_size('Geo DB', previous_pool_size, conn_pool.size)
+    set_database_pool_size(Geo::TrackingBase, Rails.configuration.geo_database, max_threads)
   end
 end
 
@@ -56,7 +53,7 @@ end
 # https://github.com/rails/rails/pull/23057
 if Gitlab::Runtime.multi_threaded?
   max_threads = Gitlab::Runtime.max_threads
-  set_main_database_pool_size(max_threads)
+  set_primary_database_pool_size(max_threads)
 
   Gitlab.ee do
     set_geo_database_pool_size(max_threads) if Gitlab::Geo.geo_database_configured?

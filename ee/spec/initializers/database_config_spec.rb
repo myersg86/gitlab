@@ -10,8 +10,8 @@ describe 'Database config initializer for GitLab EE' do
   end
 
   before do
-    stub_main_database_config
-    stub_geo_database_config(pool_size: 1)
+    stub_primary_database_config
+    stub_geo_database_config(pool_size: nil)
   end
 
   context "when using multi-threaded runtime" do
@@ -27,8 +27,30 @@ describe 'Database config initializer for GitLab EE' do
         allow(Gitlab::Runtime).to receive(:sidekiq?).and_return(true)
       end
 
-      it "sets Geo DB connection pool size to the max number of worker threads" do
-        expect { subject }.to change { Rails.configuration.geo_database['pool'] }.from(1).to(max_threads)
+      context "and no existing pool size is set" do
+        it "sets it to the max number of worker threads" do
+          expect { subject }.to change { geo_pool.size }.from(nil).to(max_threads)
+        end
+      end
+
+      context "and the existing pool size is smaller than the max number of worker threads" do
+        before do
+          stub_geo_database_config(pool_size: max_threads - 1)
+        end
+
+        it "sets it to the max number of worker threads" do
+          expect { subject }.to change { geo_pool.size }.by(1)
+        end
+      end
+
+      context "and the existing pool size is larger than the max number of worker threads" do
+        before do
+          stub_geo_database_config(pool_size: max_threads + 1)
+        end
+
+        it "keeps the configured pool size" do
+          expect { subject }.not_to change { geo_pool.size }
+        end
       end
 
       context "and the resulting pool size remains smaller than the original pool size" do
@@ -46,14 +68,14 @@ describe 'Database config initializer for GitLab EE' do
 
   context "when using single-threaded runtime" do
     it "does nothing" do
-      expect { subject }.not_to change { Rails.configuration.geo_database['pool'] }
+      expect { subject }.not_to change { geo_pool.size }
     end
   end
 
-  # Main DB config is tested in spec/initializers/database_config_spec.rb
-  def stub_main_database_config
+  # Primary DB config is tested in spec/initializers/database_config_spec.rb
+  def stub_primary_database_config
     pool = instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool)
-    allow(pool).to receive(:size).and_return(5)
+    allow(pool).to receive(:size).and_return(10)
     allow(ActiveRecord::Base).to receive(:establish_connection).and_return(pool)
   end
 
@@ -64,7 +86,7 @@ describe 'Database config initializer for GitLab EE' do
       'pool' => pool_size
     }.compact
 
-    allow(geo_pool).to receive(:size).and_return(pool_size)
+    allow(geo_pool).to receive(:size) { config['pool'] }
     allow(Geo::TrackingBase).to receive(:establish_connection).and_return(geo_pool)
     allow(Rails.configuration).to receive(:geo_database).and_return(config)
   end

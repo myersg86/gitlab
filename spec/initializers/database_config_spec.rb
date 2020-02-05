@@ -23,7 +23,7 @@ describe 'Database config initializer' do
       end
 
       it "sets it to the max number of worker threads" do
-        expect { subject }.to change { Gitlab::Database.config['pool'] }.from(nil).to(max_threads)
+        expect { subject }.to change { connection_pool.size }.from(nil).to(max_threads)
       end
     end
 
@@ -33,7 +33,7 @@ describe 'Database config initializer' do
       end
 
       it "sets it to the max number of worker threads" do
-        expect { subject }.to change { Gitlab::Database.config['pool'] }.by(1)
+        expect { subject }.to change { connection_pool.size }.by(1)
       end
     end
 
@@ -43,7 +43,7 @@ describe 'Database config initializer' do
       end
 
       it "keeps the configured pool size" do
-        expect { subject }.not_to change { Gitlab::Database.config['pool'] }
+        expect { subject }.not_to change { connection_pool.size }
       end
     end
 
@@ -60,8 +60,12 @@ describe 'Database config initializer' do
   end
 
   context "when using single-threaded runtime" do
+    before do
+      stub_database_config(pool_size: nil)
+    end
+
     it "does nothing" do
-      expect { subject }.not_to change { Gitlab::Database.config['pool'] }
+      expect { subject }.not_to change { connection_pool.size }
     end
   end
 
@@ -72,7 +76,7 @@ describe 'Database config initializer' do
       'pool' => pool_size
     }.compact
 
-    allow(connection_pool).to receive(:size).and_return(pool_size)
+    allow(connection_pool).to receive(:size) { config['pool'] }
     allow(ActiveRecord::Base).to receive(:establish_connection).and_return(connection_pool)
     allow(Gitlab::Database).to receive(:config).and_return(config)
   end
