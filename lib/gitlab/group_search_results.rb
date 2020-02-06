@@ -29,8 +29,12 @@ module Gitlab
     end
     # rubocop:enable CodeReuse/ActiveRecord
 
+    def issues(finder_params = {})
+      base_issues(finder_params)
+    end
+
     def issuable_params
-      super.merge(group_id: group.id, include_subgroups: true)
+      super.merge(group_id: group.id, include_subgroups: true, attempt_group_search_optimizations: true)
     end
   end
 end

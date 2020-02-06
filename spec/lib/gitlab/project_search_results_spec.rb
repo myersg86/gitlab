@@ -187,6 +187,12 @@ describe Gitlab::ProjectSearchResults do
     expect(results.objects('issues')).not_to include issue
   end
 
+  it 'sets attempt_project_search_optimizations flag by default' do
+    results = described_class.new(user, project, 'searchterm')
+
+    expect(results.send(:issuable_params)).to include(attempt_project_search_optimizations: true)
+  end
+
   describe 'confidential issues' do
     let(:query) { 'issue' }
     let(:author) { create(:user) }

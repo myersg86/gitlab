@@ -131,6 +131,10 @@ module Gitlab
       @commits ||= find_commits(query)
     end
 
+    def issues(finder_params = {})
+      base_issues(finder_params)
+    end
+
     def find_commits(query)
       return [] unless Ability.allowed?(@current_user, :download_code, @project)
 
@@ -170,7 +174,7 @@ module Gitlab
     end
 
     def issuable_params
-      super.merge(project_id: project.id)
+      super.merge(project_id: project.id, attempt_project_search_optimizations: true)
     end
   end
 end

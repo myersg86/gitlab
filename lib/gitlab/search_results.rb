@@ -116,13 +116,17 @@ module Gitlab
     end
 
     def issues(finder_params = {})
-      issues = IssuesFinder.new(current_user, issuable_params.merge(finder_params)).execute
+      issues = base_issues(finder_params)
 
       unless default_project_filter
         issues = issues.where(project_id: project_ids_relation) # rubocop: disable CodeReuse/ActiveRecord
       end
 
       issues
+    end
+
+    def base_issues(finder_params)
+      IssuesFinder.new(current_user, issuable_params.merge(finder_params)).execute
     end
 
     # rubocop: disable CodeReuse/ActiveRecord
