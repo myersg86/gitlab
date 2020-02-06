@@ -20,7 +20,7 @@ describe Groups::PushRulesController do
       it "returns 404 status" do
         get :show, params: { group_id: group }
 
-        expect(response).to have_gitlab_http_status(404)
+        expect(response).to have_gitlab_http_status(:not_found)
       end
     end
 
@@ -32,7 +32,7 @@ describe Groups::PushRulesController do
       it "returns 200 status" do
         get :show, params: { group_id: group }
 
-        expect(response).to have_gitlab_http_status(200)
+        expect(response).to have_gitlab_http_status(:ok)
       end
     end
   end
@@ -51,7 +51,7 @@ describe Groups::PushRulesController do
     it 'updates the push rule' do
       do_update
 
-      expect(response).to have_gitlab_http_status(302)
+      expect(response).to have_gitlab_http_status(:found)
       expect(group.reload_group_push_rule.prevent_secrets).to be_truthy
     end
 
@@ -63,7 +63,7 @@ describe Groups::PushRulesController do
       it 'returns 404' do
         do_update
 
-        expect(response).to have_gitlab_http_status(404)
+        expect(response).to have_gitlab_http_status(:not_found)
       end
     end
 
