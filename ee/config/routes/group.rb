@@ -129,7 +129,7 @@ constraints(::Constraints::GroupUrlConstrainer.new) do
       end
     end
 
-    resource :push_rules, only: [:show, :update]
+    resource :push_rules, only: [:edit, :update]
 
     resource :saml_providers, path: 'saml', only: [:show, :create, :update] do
       callback_methods = Rails.env.test? ? [:get, :post] : [:post]

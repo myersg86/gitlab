@@ -10,7 +10,7 @@ module EE
         super.tap do |group|
           if group&.persisted?
             log_audit_event
-            create_predefined_push_rule
+            create_push_rule_for_group
           end
         end
       end
@@ -40,7 +40,7 @@ module EE
         ).for_group.security_event
       end
 
-      def create_predefined_push_rule
+      def create_push_rule_for_group
         return unless group.feature_available?(:push_rules)
 
         push_rule = group.predefined_push_rule

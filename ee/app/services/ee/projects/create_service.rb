@@ -67,8 +67,8 @@ module EE
       end
 
       def create_push_rule_from_group
-        push_rule = project.group.group_push_rule.attributes.except("group_id", "id")
-        project.create_push_rule(push_rule.merge(is_sample: false))
+        push_rule_attributes = project.group.group_push_rule.attributes.except("group_id", "id")
+        project.create_push_rule(push_rule_attributes.merge(is_sample: false))
       end
 
       # When using a project template from a Group, the new project can only be created

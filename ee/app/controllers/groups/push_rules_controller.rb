@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 class Groups::PushRulesController < Groups::ApplicationController
+  include PushRulesHelper
   layout 'group'
 
   before_action :check_push_rules_available!
-  before_action :push_rule, only: :show
+  before_action :push_rule
 
   respond_to :html
 
-  def show
+  def edit
   end
 
   def update
-    group_push_rule = push_rule
-    group_push_rule.attributes = push_rule_params
+    @push_rule.attributes = push_rule_params
 
-    if group_push_rule.save
+    if @push_rule.save
       flash[:notice] = _('Push Rules updated successfully.')
     else
-      flash[:alert] = group_push_rule.errors.full_messages.join(', ').html_safe
+      flash[:alert] = @push_rule.errors.full_messages.join(', ').html_safe
     end
 
-    redirect_to group_push_rules_path(group)
+    redirect_to edit_group_push_rules_path(group)
   end
 
   private
@@ -47,6 +47,6 @@ class Groups::PushRulesController < Groups::ApplicationController
   end
 
   def check_push_rules_available!
-    render_404 unless can?(current_user, :change_push_rules, group)
+    render_404 unless can_modify_group_push_rules?(current_user, group)
   end
 end

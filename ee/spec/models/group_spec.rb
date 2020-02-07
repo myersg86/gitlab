@@ -387,18 +387,18 @@ describe Group do
       end
 
       context 'with push rule from ancestor' do
-        let!(:ancestor) { create(:group) }
-        let!(:descendant_1) { create(:group, parent: ancestor) }
-        let!(:descendant_2) { create(:group, parent: descendant_1) }
-        let!(:group) { create(:group, parent: descendant_2) }
-        let!(:push_rule) { create(:group_push_rule, group: descendant_1) }
+        let!(:group) { create(:group) }
+        let!(:subgroup_1) { create(:group, parent: group) }
+        let!(:subgroup_1_1) { create(:group, parent: subgroup_1) }
+        let!(:subgroup_1_1_1) { create(:group, parent: subgroup_1_1) }
+        let!(:push_rule) { create(:group_push_rule, group: subgroup_1) }
 
         before do
-          create(:group_push_rule, group: ancestor)
+          create(:group_push_rule, group: group)
         end
 
         it 'returns push rule from closest ancestor' do
-          expect(group.predefined_push_rule).to eq(push_rule)
+          expect(subgroup_1_1_1.predefined_push_rule).to eq(push_rule)
         end
       end
     end

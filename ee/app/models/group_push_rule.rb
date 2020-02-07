@@ -8,7 +8,7 @@ class GroupPushRule < ApplicationRecord
   validates :group, presence: true
 
   def available?(feature_sym)
-    group&.feature_available?(feature_sym)
+    group.feature_available?(feature_sym)
   end
 
   def global?

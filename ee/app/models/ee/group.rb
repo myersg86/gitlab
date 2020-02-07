@@ -291,11 +291,11 @@ module EE
 
     def predefined_push_rule
       predefined_push_rule = PushRule.find_by(is_sample: true)
-      ancestors_with_push_rules = self_and_ancestors.joins(:group_push_rule)
+      ancestors_with_push_rules = self_and_ancestors(hierarchy_order: :asc).joins(:group_push_rule)
 
-      return predefined_push_rule unless self_and_ancestors.joins(:group_push_rule).present?
+      return predefined_push_rule unless ancestors_with_push_rules.present?
 
-      ancestors_with_push_rules.max.group_push_rule
+      ancestors_with_push_rules.first.group_push_rule
     end
 
     private
