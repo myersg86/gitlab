@@ -6,7 +6,7 @@ module API
 
     before do
       authenticate!
-      authorize_epics_feature!
+      authorize_subepics_feature!
     end
 
     helpers ::API::Helpers::EpicsHelpers

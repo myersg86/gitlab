@@ -8,7 +8,9 @@ describe API::EpicLinks do
   let(:epic) { create(:epic, group: group) }
 
   shared_examples 'user does not have access' do
-    it 'returns 403 when epics feature is disabled' do
+    it 'returns 403 when subepics feature is disabled' do
+      stub_licensed_features(epics: true, subepics: false)
+
       group.add_developer(user)
 
       subject
@@ -42,9 +44,9 @@ describe API::EpicLinks do
 
     it_behaves_like 'user does not have access'
 
-    context 'when epics feature is enabled' do
+    context 'when subepics feature is enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(subepics: true)
       end
 
       let!(:child_epic1) { create(:epic, group: group, parent: epic, relative_position: 200) }
@@ -70,9 +72,9 @@ describe API::EpicLinks do
 
     it_behaves_like 'user does not have access'
 
-    context 'when epics feature is enabled' do
+    context 'when subepics feature is enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(subepics: true)
       end
 
       context 'when user is guest' do
@@ -119,9 +121,9 @@ describe API::EpicLinks do
 
     it_behaves_like 'user does not have access'
 
-    context 'when epics feature is enabled' do
+    context 'when subepics feature is enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(subepics: true)
       end
 
       context 'when user is guest' do
@@ -176,9 +178,9 @@ describe API::EpicLinks do
 
     it_behaves_like 'user does not have access'
 
-    context 'when epics are enabled' do
+    context 'when subepics are enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(subepics: true)
       end
 
       context 'when user has permissions to reorder epics' do
@@ -215,9 +217,9 @@ describe API::EpicLinks do
 
     it_behaves_like 'user does not have access'
 
-    context 'when epics feature is enabled' do
+    context 'when subepics feature is enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(subepics: true)
       end
 
       context 'when user is guest' do

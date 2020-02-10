@@ -54,7 +54,7 @@ module EpicLinks
 
     def linkable_issuables(epics)
       @linkable_issuables ||= begin
-        return [] unless can?(current_user, :admin_epic, issuable.group)
+        return [] unless can?(current_user, :admin_epic_links, issuable.group)
 
         epics.select do |epic|
           linkable_epic?(epic)

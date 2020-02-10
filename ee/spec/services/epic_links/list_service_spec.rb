@@ -44,7 +44,11 @@ describe EpicLinks::ListService do
   describe '#execute' do
     subject { described_class.new(parent_epic, user).execute }
 
-    context 'when epics feature is disabled' do
+    context 'when subepics feature is disabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: false)
+      end
+
       it 'returns an empty array' do
         group.add_developer(user)
 
@@ -52,9 +56,9 @@ describe EpicLinks::ListService do
       end
     end
 
-    context 'when epics feature is enabled' do
+    context 'when subepics feature is enabled' do
       before do
-        stub_licensed_features(epics: true)
+        stub_licensed_features(epics: true, subepics: true)
       end
 
       context 'group member can see all child epics' do
