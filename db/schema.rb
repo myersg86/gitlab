@@ -340,13 +340,10 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
     t.string "encrypted_slack_app_secret_iv", limit: 255
     t.text "encrypted_slack_app_verification_token"
     t.string "encrypted_slack_app_verification_token_iv", limit: 255
+    t.boolean "force_pages_access_control", default: false, null: false
     t.boolean "updating_name_disabled_for_users", default: false, null: false
     t.integer "instance_administrators_group_id"
     t.integer "elasticsearch_indexed_field_length_limit", default: 0, null: false
-    t.boolean "force_pages_access_control", default: false, null: false
-    t.boolean "disable_overriding_approvers_per_merge_request", default: false, null: false
-    t.boolean "prevent_merge_requests_author_approval", default: false, null: false
-    t.boolean "prevent_merge_requests_committers_approval", default: false, null: false
     t.index ["custom_project_templates_group_id"], name: "index_application_settings_on_custom_project_templates_group_id"
     t.index ["file_template_project_id"], name: "index_application_settings_on_file_template_project_id"
     t.index ["instance_administration_project_id"], name: "index_applicationsettings_on_instance_administration_project_id"
@@ -1557,14 +1554,7 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
     t.integer "state_id", limit: 2, default: 1, null: false
     t.integer "start_date_sourcing_epic_id"
     t.integer "due_date_sourcing_epic_id"
-<<<<<<< HEAD
-<<<<<<< HEAD
     t.integer "health_status", limit: 2
-=======
-    t.integer "state_id", limit: 2, default: 1, null: false
->>>>>>> Add model for group push rules
-=======
->>>>>>> Fix form error
     t.index ["assignee_id"], name: "index_epics_on_assignee_id"
     t.index ["author_id"], name: "index_epics_on_author_id"
     t.index ["closed_by_id"], name: "index_epics_on_closed_by_id"
@@ -2021,7 +2011,7 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
   create_table "group_push_rules", force: :cascade do |t|
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
-    t.bigint "group_id", null: false
+    t.integer "group_id", null: false
     t.integer "max_file_size", default: 0, null: false
     t.boolean "deny_delete_tag"
     t.boolean "member_check", default: false, null: false
@@ -2470,36 +2460,34 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
   end
 
   create_table "merge_request_context_commit_diff_files", id: false, force: :cascade do |t|
-    t.bigint "merge_request_context_commit_id"
     t.binary "sha", null: false
     t.integer "relative_order", null: false
-    t.string "a_mode", limit: 255, null: false
-    t.string "b_mode", limit: 255, null: false
     t.boolean "new_file", null: false
     t.boolean "renamed_file", null: false
     t.boolean "deleted_file", null: false
     t.boolean "too_large", null: false
-    t.boolean "binary"
+    t.string "a_mode", limit: 255, null: false
+    t.string "b_mode", limit: 255, null: false
     t.text "new_path", null: false
     t.text "old_path", null: false
     t.text "diff"
+    t.boolean "binary"
+    t.bigint "merge_request_context_commit_id"
     t.index ["merge_request_context_commit_id", "sha"], name: "idx_mr_cc_diff_files_on_mr_cc_id_and_sha"
-    t.index ["merge_request_context_commit_id"], name: "idx_mr_cc_diff_files_on_mr_cc_id"
   end
 
   create_table "merge_request_context_commits", force: :cascade do |t|
-    t.bigint "merge_request_id"
     t.datetime_with_timezone "authored_date"
     t.datetime_with_timezone "committed_date"
-    t.binary "sha", null: false
     t.integer "relative_order", null: false
+    t.binary "sha", null: false
     t.text "author_name"
     t.text "author_email"
     t.text "committer_name"
     t.text "committer_email"
     t.text "message"
+    t.bigint "merge_request_id"
     t.index ["merge_request_id", "sha"], name: "index_mr_context_commits_on_merge_request_id_and_sha", unique: true
-    t.index ["merge_request_id"], name: "index_merge_request_context_commits_on_merge_request_id"
   end
 
   create_table "merge_request_diff_commits", id: false, force: :cascade do |t|
@@ -4524,18 +4512,7 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
     t.string "encrypted_token_iv"
     t.string "encrypted_url"
     t.string "encrypted_url_iv"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     t.index ["group_id"], name: "index_web_hooks_on_group_id", where: "((type)::text = 'GroupHook'::text)"
-=======
-    t.integer "group_id"
->>>>>>> Add model for group push rules
-=======
->>>>>>> Fix form error
-=======
-    t.index ["group_id"], name: "index_web_hooks_on_group_id", where: "((type)::text = 'GroupHook'::text)"
->>>>>>> Add cr remarks
     t.index ["project_id"], name: "index_web_hooks_on_project_id"
     t.index ["type"], name: "index_web_hooks_on_type"
   end
@@ -4802,7 +4779,7 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
   add_foreign_key "group_deploy_tokens", "namespaces", column: "group_id", on_delete: :cascade
   add_foreign_key "group_group_links", "namespaces", column: "shared_group_id", on_delete: :cascade
   add_foreign_key "group_group_links", "namespaces", column: "shared_with_group_id", on_delete: :cascade
-  add_foreign_key "group_push_rules", "namespaces", column: "group_id", on_delete: :cascade
+  add_foreign_key "group_push_rules", "namespaces", column: "group_id", on_delete: :cascadeq
   add_foreign_key "identities", "saml_providers", name: "fk_aade90f0fc", on_delete: :cascade
   add_foreign_key "import_export_uploads", "namespaces", column: "group_id", name: "fk_83319d9721", on_delete: :cascade
   add_foreign_key "import_export_uploads", "projects", on_delete: :cascade
