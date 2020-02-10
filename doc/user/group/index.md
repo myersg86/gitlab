@@ -534,6 +534,12 @@ For performance reasons, we may delay the update up to 1 hour and 30 minutes.
 
 If your namespace shows `N/A` as the total storage usage, you can trigger a recalculation by pushing a commit to any project in that namespace.
 
+#### Group push rules **(STARTER)**
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/23758) in [GitLab Starter](https://about.gitlab.com/pricing/) 12.8.
+
+Group push rules let group maintainers decide about [push rules](../../push_rules/push_rules.md) for newly created projects within this particular group. New subgroups have their push rules created based on their closest parent group with push rules defined, if there are no push rules in group hierarchy tree, group is inheriting push rules from GitLab instance.
+
 ### Maximum artifacts size **(CORE ONLY)**
 
 For information about setting a maximum artifact size for a group, see
