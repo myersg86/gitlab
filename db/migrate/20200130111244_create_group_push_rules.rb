@@ -8,12 +8,12 @@ class CreateGroupPushRules < ActiveRecord::Migration[5.2]
       t.timestamps_with_timezone null: false
       t.references :group, index: true, null: false, foreign_key: { to_table: :namespaces, on_delete: :cascade }
       t.integer :max_file_size, default: 0, null: false
-      t.boolean :deny_delete_tag
+      t.boolean :deny_delete_tag, default: false, null: false
       t.boolean :member_check, default: false, null: false
       t.boolean :prevent_secrets, default: false, null: false
-      t.boolean :reject_unsigned_commits
-      t.boolean :commit_committer_check
-      t.boolean :regexp_uses_re2, default: true
+      t.boolean :reject_unsigned_commits, default: false, null: false
+      t.boolean :commit_committer_check, default: false, null: false
+      t.boolean :regexp_uses_re2, default: true, null: false
       t.string :force_push_regex # rubocop:disable Migration/AddLimitToStringColumns
       t.string :delete_branch_regex # rubocop:disable Migration/AddLimitToStringColumns
       t.string :commit_message_regex # rubocop:disable Migration/AddLimitToStringColumns

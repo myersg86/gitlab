@@ -2011,14 +2011,14 @@ ActiveRecord::Schema.define(version: 2020_02_07_151640) do
   create_table "group_push_rules", force: :cascade do |t|
     t.datetime_with_timezone "created_at", null: false
     t.datetime_with_timezone "updated_at", null: false
-    t.integer "group_id", null: false
+    t.bigint "group_id", null: false
     t.integer "max_file_size", default: 0, null: false
-    t.boolean "deny_delete_tag"
+    t.boolean "deny_delete_tag", default: false, null: false
     t.boolean "member_check", default: false, null: false
     t.boolean "prevent_secrets", default: false, null: false
-    t.boolean "reject_unsigned_commits"
-    t.boolean "commit_committer_check"
-    t.boolean "regexp_uses_re2", default: true
+    t.boolean "reject_unsigned_commits", default: false, null: false
+    t.boolean "commit_committer_check", default: false, null: false
+    t.boolean "regexp_uses_re2", default: true, null: false
     t.string "force_push_regex"
     t.string "delete_branch_regex"
     t.string "commit_message_regex"
