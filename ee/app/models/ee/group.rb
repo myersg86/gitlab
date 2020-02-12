@@ -290,10 +290,10 @@ module EE
     end
 
     def predefined_push_rule
-      predefined_push_rule = PushRule.find_by(is_sample: true)
+      global_push_rule = PushRule.global
       ancestors_with_push_rules = self_and_ancestors(hierarchy_order: :asc).joins(:group_push_rule)
 
-      return predefined_push_rule unless ancestors_with_push_rules.present?
+      return global_push_rule unless ancestors_with_push_rules.present?
 
       ancestors_with_push_rules.first.group_push_rule
     end
