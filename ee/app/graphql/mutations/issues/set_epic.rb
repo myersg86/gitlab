@@ -18,7 +18,6 @@ module Mutations
         issue = authorized_find!(project_path: project_path, iid: iid)
         epic = find_epic(current_user, issue, epic_id)
         create_params = { target_issuable: issue }
-
         result = create_epic_issue(epic, current_user, create_params)
 
         epic_issue, errors = if result[:status] == :success
@@ -40,7 +39,12 @@ module Mutations
       private
 
       def find_epic(current_user, issue, epic_id)
-        EpicsFinder.new(current_user, group_id: issue.project&.group&.id,
+        return unless epic_id.present?
+
+        group = issue.project.group
+        return unless group.present?
+
+        EpicsFinder.new(current_user, group_id: group.id,
                         include_ancestor_groups: true).find(epic_id)
       end
 
@@ -49,7 +53,7 @@ module Mutations
       end
 
       def create_epic_issue(epic, current_user, create_params)
-        return {} unless can_update_epic?(current_user, epic)
+        return {} unless epic.present? && can_update_epic?(current_user, epic)
 
         ::EpicIssues::CreateService.new(epic, current_user, create_params).execute
       end
