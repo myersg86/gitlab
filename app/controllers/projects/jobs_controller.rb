@@ -48,15 +48,12 @@ class Projects::JobsController < Projects::ApplicationController
     build.trace.read do |stream|
       respond_to do |format|
         format.json do
-<<<<<<< HEAD
           build.trace.being_watched!
 
           # TODO: when the feature flag is removed we should not pass
           # content_format to serialize method.
           content_format = Feature.enabled?(:job_log_json, @project, default_enabled: true) ? :json : :html
 
-=======
->>>>>>> Remove feature flag for new job log
           build_trace = Ci::BuildTrace.new(
             build: @build,
             stream: stream,
