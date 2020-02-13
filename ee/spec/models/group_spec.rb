@@ -22,6 +22,7 @@ describe Group do
     it { is_expected.to have_many(:ip_restrictions) }
     it { is_expected.to have_one(:dependency_proxy_setting) }
     it { is_expected.to have_one(:deletion_schedule) }
+    it { is_expected.to have_one(:group_push_rule) }
   end
 
   describe 'scopes' do
@@ -363,6 +364,48 @@ describe Group do
 
       it 'returns a comma separated string of ranges of its ip_restriction records' do
         expect(group.ip_restriction_ranges).to eq('192.168.0.0/24,10.0.0.0/8')
+      end
+    end
+  end
+
+  describe '#predefined_push_rule' do
+    context 'group with no associated group_push_rules record' do
+      let!(:sample) { create(:push_rule_sample) }
+
+      it 'returns instance push rule' do
+        expect(group.predefined_push_rule).to eq(sample)
+      end
+    end
+
+    context 'group with associated group_push_rules record' do
+      context 'with its own push rule' do
+        let!(:push_rule) { create(:group_push_rule, group: group )}
+
+        it 'returns its own push rule' do
+          expect(group.predefined_push_rule).to eq(push_rule)
+        end
+      end
+
+      context 'with push rule from ancestor' do
+        let!(:group) { create(:group) }
+        let!(:subgroup_1) { create(:group, parent: group) }
+        let!(:subgroup_1_1) { create(:group, parent: subgroup_1) }
+        let!(:subgroup_1_1_1) { create(:group, parent: subgroup_1_1) }
+        let!(:push_rule) { create(:group_push_rule, group: subgroup_1) }
+
+        before do
+          create(:group_push_rule, group: group)
+        end
+
+        it 'returns push rule from closest ancestor' do
+          expect(subgroup_1_1_1.predefined_push_rule).to eq(push_rule)
+        end
+      end
+    end
+
+    context 'there are no push rules' do
+      it 'returns nil' do
+        expect(group.predefined_push_rule).to be_nil
       end
     end
   end

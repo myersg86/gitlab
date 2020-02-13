@@ -24,6 +24,7 @@ module EE
       has_one :insight, foreign_key: :namespace_id
       accepts_nested_attributes_for :insight, allow_destroy: true
       has_one :scim_oauth_access_token
+      has_one :group_push_rule
 
       has_many :ldap_group_links, foreign_key: 'group_id', dependent: :destroy # rubocop:disable Cop/ActiveRecordDependent
       has_many :hooks, dependent: :destroy, class_name: 'GroupHook' # rubocop:disable Cop/ActiveRecordDependent
@@ -296,6 +297,15 @@ module EE
     def adjourned_deletion?
       feature_available?(:adjourned_deletion_for_projects_and_groups) &&
         ::Gitlab::CurrentSettings.deletion_adjourned_period > 0
+    end
+
+    def predefined_push_rule
+      global_push_rule = PushRule.global
+      ancestors_with_push_rules = self_and_ancestors(hierarchy_order: :asc).joins(:group_push_rule)
+
+      return global_push_rule unless ancestors_with_push_rules.present?
+
+      ancestors_with_push_rules.first.group_push_rule
     end
 
     private
