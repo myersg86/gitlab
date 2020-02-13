@@ -25,7 +25,7 @@ describe 'Epic show', :js do
 
   before do
     group.add_developer(user)
-    stub_licensed_features(epics: true)
+    stub_licensed_features(epics: true, subepics: true)
     sign_in(user)
 
     visit group_epic_path(group, epic)

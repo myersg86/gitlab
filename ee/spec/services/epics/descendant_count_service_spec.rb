@@ -23,10 +23,6 @@ describe Epics::DescendantCountService do
   subject { described_class.new(parent_epic, user) }
 
   shared_examples 'descendants state count' do |method, expected_count|
-    before do
-      stub_licensed_features(epics: true)
-    end
-
     it 'does not count inaccessible epics' do
       expect(subject.public_send(method)).to eq 0
     end
@@ -43,19 +39,48 @@ describe Epics::DescendantCountService do
     end
   end
 
-  describe '#opened_epics' do
-    it_behaves_like 'descendants state count', :opened_epics, 1
+  context 'with subepics enabled' do
+    before do
+      stub_licensed_features(epics: true, subepics: true)
+    end
+
+    describe '#opened_epics' do
+      it_behaves_like 'descendants state count', :opened_epics, 1
+    end
+
+    describe '#closed_epics' do
+      it_behaves_like 'descendants state count', :closed_epics, 1
+    end
+
+    describe '#opened_issues' do
+      it_behaves_like 'descendants state count', :opened_issues, 2
+    end
+
+    describe '#closed_issues' do
+      it_behaves_like 'descendants state count', :closed_issues, 2
+    end
   end
 
-  describe '#closed_epics' do
-    it_behaves_like 'descendants state count', :closed_epics, 1
-  end
+  context 'with subepics disabled' do
+    before do
+      group.save # we need to clear feature_available memoisation
+      stub_licensed_features(epics: true, subepics: false)
+    end
 
-  describe '#opened_issues' do
-    it_behaves_like 'descendants state count', :opened_issues, 2
-  end
+    describe '#opened_epics' do
+      it_behaves_like 'descendants state count', :opened_epics, 0
+    end
 
-  describe '#closed_issues' do
-    it_behaves_like 'descendants state count', :closed_issues, 2
+    describe '#closed_epics' do
+      it_behaves_like 'descendants state count', :closed_epics, 0
+    end
+
+    describe '#opened_issues' do
+      it_behaves_like 'descendants state count', :opened_issues, 2
+    end
+
+    describe '#closed_issues' do
+      it_behaves_like 'descendants state count', :closed_issues, 2
+    end
   end
 end

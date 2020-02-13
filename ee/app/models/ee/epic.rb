@@ -284,17 +284,20 @@ module EE
       from && from != group
     end
 
-    def ancestors
+    def ancestors(skip_subepics_check: false)
+      return self.class.none unless skip_subepics_check || group.feature_available?(:subepics)
       return self.class.none unless parent_id
 
       hierarchy.ancestors(hierarchy_order: :asc)
     end
 
     def max_hierarchy_depth_achieved?
-      base_and_ancestors.count >= MAX_HIERARCHY_DEPTH
+      base_and_ancestors(skip_subepics_check: true).count >= MAX_HIERARCHY_DEPTH
     end
 
     def descendants
+      return self.class.none unless group.feature_available?(:subepics)
+
       hierarchy.descendants
     end
 
@@ -303,10 +306,12 @@ module EE
     end
 
     def has_ancestor?(epic)
-      ancestors.exists?(epic.id)
+      ancestors(skip_subepics_check: true).exists?(epic.id)
     end
 
     def has_children?
+      return false unless group.feature_available?(:subepics)
+
       children.any?
     end
 
@@ -371,11 +376,12 @@ module EE
     end
 
     def level_depth_exceeded?(parent_epic)
-      hierarchy.max_descendants_depth.to_i + parent_epic.base_and_ancestors.count >= MAX_HIERARCHY_DEPTH
+      hierarchy.max_descendants_depth.to_i + parent_epic.base_and_ancestors(skip_subepics_check: true).count >= MAX_HIERARCHY_DEPTH
     end
     private :level_depth_exceeded?
 
-    def base_and_ancestors
+    def base_and_ancestors(skip_subepics_check: false)
+      return self.class.none unless skip_subepics_check || group.feature_available?(:subepics)
       return self.class.none unless parent_id
 
       hierarchy.base_and_ancestors(hierarchy_order: :asc)

@@ -29,13 +29,6 @@ describe EpicPresenter do
       expect(presenter.show_data.keys).to match_array([:initial, :meta])
     end
 
-    it 'has correct ancestors' do
-      metadata     = JSON.parse(presenter.show_data[:meta])
-      ancestor_url = metadata['ancestors'].first['url']
-
-      expect(ancestor_url).to eq "/groups/#{parent_epic.group.full_path}/-/epics/#{parent_epic.iid}"
-    end
-
     it 'returns the correct json schema for epic initial data' do
       data = presenter.show_data(author_icon: 'icon_path')
 
@@ -68,27 +61,74 @@ describe EpicPresenter do
   end
 
   describe '#group_epic_link_path' do
-    it 'returns correct path' do
-      expect(presenter.group_epic_link_path).to eq group_epic_link_path(epic.group, epic.parent.iid, epic.id)
-    end
+    context 'when subepics feature is enabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: true)
+      end
 
-    context 'when in subgroups' do
-      let!(:subgroup) { create(:group, parent: group, path: "hedgehogs_subgroup") }
-      let(:child_epic) { create(:epic, group: subgroup, iid: 1, parent: epic) }
+      it 'returns correct path' do
+        expect(presenter.group_epic_link_path).to eq group_epic_link_path(epic.group, epic.parent.iid, epic.id)
+      end
 
-      subject(:presenter) { described_class.new(child_epic, current_user: user) }
+      context 'when in subgroups' do
+        let!(:subgroup) { create(:group, parent: group, path: "hedgehogs_subgroup") }
+        let(:child_epic) { create(:epic, group: subgroup, iid: 1, parent: epic) }
 
-      it 'returns the correct path' do
-        expected_result = "/groups/#{group.path}/-/epics/#{epic.iid}/links/#{child_epic.id}"
+        subject(:presenter) { described_class.new(child_epic, current_user: user) }
 
-        expect(presenter.group_epic_link_path).to eq expected_result
+        it 'returns the correct path' do
+          expected_result = "/groups/#{group.path}/-/epics/#{epic.iid}/links/#{child_epic.id}"
+
+          expect(presenter.group_epic_link_path).to eq expected_result
+        end
+      end
+
+      it 'returns nothing with nil parent' do
+        epic.parent = nil
+
+        expect(presenter.group_epic_link_path).to be_nil
       end
     end
 
-    it 'returns nothing with nil parent' do
-      epic.parent = nil
+    context 'when subepics feature is disabled' do
+      it 'returns nothing' do
+        stub_licensed_features(epics: true, subepics: false)
 
-      expect(presenter.group_epic_link_path).to be_nil
+        expect(presenter.group_epic_link_path).to be_nil
+      end
+    end
+  end
+
+  describe '#ancestors' do
+    context 'when subepics feature is enabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: true)
+      end
+
+      it 'returns ancestors in array' do
+        metadata = JSON.parse(presenter.show_data[:meta])
+
+        expect(metadata['ancestors'].count).to eq(1)
+      end
+
+      it 'returns correct ancestors' do
+        metadata     = JSON.parse(presenter.show_data[:meta])
+        ancestor_url = metadata['ancestors'].first['url']
+
+        expect(ancestor_url).to eq "/groups/#{parent_epic.group.full_path}/-/epics/#{parent_epic.iid}"
+      end
+    end
+
+    context 'when subepics feature is disabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: false)
+      end
+
+      it 'returns an empty array' do
+        metadata = JSON.parse(presenter.show_data[:meta])
+
+        expect(metadata['ancestors']).to be_empty
+      end
     end
   end
 

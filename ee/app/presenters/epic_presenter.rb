@@ -22,6 +22,7 @@ class EpicPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def group_epic_link_path
+    return unless subepics_available?
     return unless epic.parent
 
     url_builder.group_epic_link_path(epic.parent.group, epic.parent.iid, epic.id)
@@ -135,6 +136,8 @@ class EpicPresenter < Gitlab::View::Presenter::Delegated
   end
 
   def epic_ancestors(epics)
+    return [] unless subepics_available?
+
     epics.map do |epic|
       {
         id: epic.id,
@@ -150,5 +153,9 @@ class EpicPresenter < Gitlab::View::Presenter::Delegated
   # important for using routing helpers in GraphQL
   def url_builder
     @url_builder ||= Gitlab::UrlBuilder.new(epic)
+  end
+
+  def subepics_available?
+    epic.group.feature_available?(:subepics)
   end
 end

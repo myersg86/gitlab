@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe Epic do
   let_it_be(:user) { create(:user) }
-  let_it_be(:group) { create(:group) }
+  let(:group) { create(:group) }
   let(:project) { create(:project, group: group) }
 
   describe 'associations' do
@@ -210,22 +210,74 @@ describe Epic do
     let(:epic3) { create(:epic, group: group, parent: epic2) }
 
     describe '#ancestors' do
-      it 'returns all ancestors for an epic' do
-        expect(epic3.ancestors).to eq [epic2, epic1]
+      context 'when subepics feature is enabled' do
+        before do
+          stub_licensed_features(epics: true, subepics: true)
+        end
+
+        it 'returns all ancestors for an epic' do
+          expect(epic3.ancestors).to eq [epic2, epic1]
+        end
+
+        it 'returns an empty array if an epic does not have any parent' do
+          expect(epic1.ancestors).to be_empty
+        end
       end
 
-      it 'returns an empty array if an epic does not have any parent' do
-        expect(epic1.ancestors).to be_empty
+      context 'when subepics feature is disabled' do
+        it 'returns an empty array' do
+          stub_licensed_features(epics: true, subepics: false)
+
+          expect(epic3.ancestors).to be_empty
+        end
+      end
+    end
+
+    describe '#base_and_ancestors' do
+      context 'when subepics feature is enabled' do
+        before do
+          stub_licensed_features(epics: true, subepics: true)
+        end
+
+        it 'returns all ancestors including itself for an epic' do
+          expect(epic3.base_and_ancestors).to eq [epic3, epic2, epic1]
+        end
+
+        it 'returns an empty array if an epic does not have any parent' do
+          expect(epic1.base_and_ancestors).to be_empty
+        end
+      end
+
+      context 'when subepics feature is disabled' do
+        it 'returns an empty array' do
+          stub_licensed_features(epics: true, subepics: false)
+
+          expect(epic3.base_and_ancestors).to be_empty
+        end
       end
     end
 
     describe '#descendants' do
-      it 'returns all descendants for an epic' do
-        expect(epic1.descendants).to match_array([epic2, epic3])
+      context 'when subepics feature is enabled' do
+        before do
+          stub_licensed_features(epics: true, subepics: true)
+        end
+
+        it 'returns all descendants for an epic' do
+          expect(epic1.descendants).to match_array([epic2, epic3])
+        end
+
+        it 'returns an empty array if an epic does not have any descendants' do
+          expect(epic3.descendants).to be_empty
+        end
       end
 
-      it 'returns an empty array if an epic does not have any descendants' do
-        expect(epic3.descendants).to be_empty
+      context 'when subepics feature is disabled' do
+        it 'returns an empty array' do
+          stub_licensed_features(epics: true, subepics: false)
+
+          expect(epic1.descendants).to be_empty
+        end
       end
     end
   end
@@ -477,17 +529,53 @@ describe Epic do
     end
   end
 
+  describe '#has_ancestor?' do
+    let(:parent) { create(:epic, group: group) }
+    let(:other_epic) { create(:epic, group: group) }
+    let(:epic) { create(:epic, group: group, parent: parent) }
+
+    it 'returns false if the provided epic is not the ancestor' do
+      expect(epic.has_ancestor?(other_epic)).to be_falsey
+    end
+
+    it 'returns true if the provided epic is the ancestor' do
+      expect(epic.reload.has_ancestor?(parent)).to be_truthy
+    end
+  end
+
   describe '#has_children?' do
     let(:epic) { create(:epic, group: group) }
 
-    it 'has no children' do
-      expect(epic.has_children?).to be_falsey
+    context 'when subepics feature is enabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: true)
+      end
+
+      it 'returns false if has no children' do
+        expect(epic.has_children?).to be_falsey
+      end
+
+      it 'returns true if has child epics' do
+        create(:epic, group: group, parent: epic)
+
+        expect(epic.reload.has_children?).to be_truthy
+      end
     end
 
-    it 'has child epics' do
-      create(:epic, group: group, parent: epic)
+    context 'when subepics feature is disabled' do
+      before do
+        stub_licensed_features(epics: true, subepics: false)
+      end
 
-      expect(epic.reload.has_children?).to be_truthy
+      it 'returns false if has no children' do
+        expect(epic.has_children?).to be_falsey
+      end
+
+      it 'returns false if has child epics' do
+        create(:epic, group: group, parent: epic)
+
+        expect(epic.reload.has_children?).to be_falsey
+      end
     end
   end
 

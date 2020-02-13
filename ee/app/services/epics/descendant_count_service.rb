@@ -35,6 +35,8 @@ module Epics
 
     def epics_count
       strong_memoize(:epics_count) do
+        next {} unless epic.group.feature_available?(:subepics)
+
         accessible_epics.id_not_in(epic.id).counts_by_state
       end
     end
