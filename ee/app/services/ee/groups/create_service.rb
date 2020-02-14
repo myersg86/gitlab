@@ -7,7 +7,12 @@ module EE
 
       override :execute
       def execute
-        super.tap { |group| log_audit_event if group&.persisted? }
+        super.tap do |group|
+          if group&.persisted?
+            log_audit_event
+            create_push_rule_for_group
+          end
+        end
       end
 
       private
@@ -33,6 +38,16 @@ module EE
           group,
           action: :create
         ).for_group.security_event
+      end
+
+      def create_push_rule_for_group
+        return unless ::Feature.enabled?(:group_push_rules, group) && group.feature_available?(:push_rules)
+
+        push_rule = group.predefined_push_rule
+        return unless push_rule
+
+        attributes = push_rule.attributes.symbolize_keys.except(:project_id, :is_sample, :id)
+        group.create_group_push_rule(attributes.compact)
       end
     end
   end
