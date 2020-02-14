@@ -69,20 +69,17 @@ module EE
 
       with_scope :global
       condition(:reject_unsigned_commits_disabled_by_group) do
-        if ::Feature.enabled?(:group_push_rules, @subject.group)
-          !subject.group&.group_push_rule&.reject_unsigned_commits
-        else
-          false
-        end
+        return false unless @subject.group
+        return false unless ::Feature.enabled?(:group_push_rules, @subject.group.root_ancestor)
+
+        !subject.group.group_push_rule&.reject_unsigned_commits
       end
 
       with_scope :global
       condition(:commit_committer_check_disabled_by_group) do
-        if ::Feature.enabled?(:group_push_rules, @subject.group)
-          !subject.group&.group_push_rule&.commit_committer_check
-        else
-          false
-        end
+        return false unless @subject.group
+        return false unless ::Feature.enabled?(:group_push_rules, @subject.group.root_ancestor)
+        !subject.group.group_push_rule&.commit_committer_check
       end
 
       with_scope :subject

@@ -71,7 +71,7 @@ module EE
       end
 
       condition(:push_rules_available) do
-        ::Feature.enabled?(:group_push_rules, @subject) && @subject.feature_available?(:push_rules)
+        ::Feature.enabled?(:group_push_rules, @subject.root_ancestor) && @subject.feature_available?(:push_rules)
       end
 
       rule { reporter }.policy do
