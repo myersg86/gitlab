@@ -74,9 +74,8 @@ describe Groups::PushRulesController do
       shared_examples 'updateable setting' do |rule_attr, updates, new_value|
         it "#{updates ? 'updates' : 'does not update'} the setting" do
           if updates
-            expect do
-              patch :update, params: { group_id: group, push_rule: { rule_attr => new_value } }
-            end.to change { group.reload_group_push_rule.public_send(rule_attr) }.to(new_value)
+            patch :update, params: { group_id: group, push_rule: { rule_attr => new_value } }
+            expect(group.reload_group_push_rule.public_send(rule_attr)).to eq(new_value)
           else
             expect do
               patch :update, params: { group_id: group, push_rule: { rule_attr => new_value } }
@@ -90,6 +89,7 @@ describe Groups::PushRulesController do
           before do
             stub_licensed_features(rule_attr => false)
           end
+
           it_behaves_like 'updateable setting', rule_attr, false, true
         end
 
@@ -97,6 +97,7 @@ describe Groups::PushRulesController do
           before do
             stub_licensed_features(rule_attr => true)
           end
+
           it_behaves_like 'updateable setting', rule_attr, updates, true
         end
 
@@ -105,6 +106,7 @@ describe Groups::PushRulesController do
             stub_licensed_features(rule_attr => true)
             create(:push_rule_sample, rule_attr => true)
           end
+
           it_behaves_like 'updateable setting', rule_attr, updates_when_global_enabled, false
         end
       end
@@ -121,6 +123,7 @@ describe Groups::PushRulesController do
             before do
               group.add_maintainer(user)
             end
+
             it_behaves_like 'a setting with global default', rule_attr, updates: true, updates_when_global_enabled: false
           end
 
@@ -128,6 +131,7 @@ describe Groups::PushRulesController do
             before do
               group.add_developer(user)
             end
+
             it_behaves_like 'a setting with global default', rule_attr, updates: false, updates_when_global_enabled: false
           end
         end
