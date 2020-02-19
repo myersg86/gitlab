@@ -6,7 +6,7 @@ describe 'getting project information' do
   include GraphqlHelpers
 
   let(:query) do
-    graphql_query_for('currentUser', {}, 'name')
+    graphql_query_for('currentUser', {}, all_graphql_fields_for('User'))
   end
 
   subject { graphql_data['currentUser'] }

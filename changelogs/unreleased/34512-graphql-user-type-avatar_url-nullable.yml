@@ -1,0 +1,5 @@
+---
+title: Allow GraphQL UserType avatarUrl to be null
+merge_request: 25491
+author:
+type: fixed
