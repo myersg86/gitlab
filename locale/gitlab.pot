@@ -10610,6 +10610,9 @@ msgstr ""
 msgid "Go to %{link_to_google_takeout}."
 msgstr ""
 
+msgid "Go to Integrations"
+msgstr ""
+
 msgid "Go to Pipelines"
 msgstr ""
 
@@ -19717,6 +19720,12 @@ msgid "Service Templates"
 msgstr ""
 
 msgid "Service URL"
+msgstr ""
+
+msgid "Service templates will be deprecated after 12.10. Instead we are upgrading our current Integrations to allow more control."
+msgstr ""
+
+msgid "Service templates will be deprecated!"
 msgstr ""
 
 msgid "Session duration (minutes)"
