@@ -300,12 +300,15 @@ module EE
     end
 
     def predefined_push_rule
-      global_push_rule = PushRule.global
-      ancestors_with_push_rules = self_and_ancestors(hierarchy_order: :asc).joins(:group_push_rule)
+      return group_push_rule if group_push_rule.present?
 
-      return global_push_rule unless ancestors_with_push_rules.present?
-
-      ancestors_with_push_rules.first.group_push_rule
+      strong_memoize(:predefined_push_rule) do
+        if has_parent?
+          parent.predefined_push_rule
+        else
+          PushRule.global
+        end
+      end
     end
 
     private
