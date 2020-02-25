@@ -30,6 +30,7 @@ Issue:
 - last_edited_at
 - last_edited_by_id
 - discussion_locked
+- health_status
 Event:
 - id
 - target_type
@@ -132,6 +133,7 @@ Releases::Link:
 - id
 - url
 - name
+- filepath
 - created_at
 - updated_at
 ProjectMember:
@@ -359,6 +361,7 @@ CommitStatus:
 - upstream_pipeline_id
 - interruptible
 - processed
+- scheduling_type
 Ci::Variable:
 - id
 - project_id
@@ -452,7 +455,7 @@ Service:
 - updated_at
 - active
 - properties
-- instance
+- template
 - push_events
 - issues_events
 - commit_events
@@ -767,7 +770,9 @@ DesignManagement::Design:
 - project_id
 - filename
 DesignManagement::Action:
+- id
 - event
+- image_v432x230
 DesignManagement::Version:
 - id
 - created_at
@@ -824,3 +829,4 @@ Epic:
   - state_id
   - start_date_sourcing_epic_id
   - due_date_sourcing_epic_id
+  - health_status

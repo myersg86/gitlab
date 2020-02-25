@@ -32,7 +32,7 @@ constraints(::Constraints::GroupUrlConstrainer.new) do
       end
     end
     namespace :analytics do
-      resource :productivity_analytics, only: :show, constraints: -> (req) { Feature.enabled?(:group_level_productivity_analytics) && Gitlab::Analytics.productivity_analytics_enabled? }
+      resource :productivity_analytics, only: :show, constraints: -> (req) { Feature.enabled?(:group_level_productivity_analytics, default_enabled: true) && Gitlab::Analytics.productivity_analytics_enabled? }
     end
 
     resource :ldap, only: [] do
@@ -119,6 +119,7 @@ constraints(::Constraints::GroupUrlConstrainer.new) do
       resource :compliance_dashboard, only: [:show]
       resources :vulnerable_projects, only: [:index]
       resource :discover, only: [:show], controller: :discover
+      resources :credentials, only: [:index]
 
       resources :vulnerability_findings, only: [:index] do
         collection do

@@ -4,6 +4,12 @@ import { groupLabels } from '../mock_data';
 
 const selectedLabel = groupLabels[groupLabels.length - 1];
 
+const findActiveItem = wrapper =>
+  wrapper
+    .findAll('gl-dropdown-item-stub')
+    .filter(d => d.attributes('active'))
+    .at(0);
+
 describe('Value Stream Analytics LabelsSelector', () => {
   function createComponent({ props = {}, shallow = true } = {}) {
     const func = shallow ? shallowMount : mount;
@@ -25,6 +31,11 @@ describe('Value Stream Analytics LabelsSelector', () => {
 
     afterEach(() => {
       wrapper.destroy();
+      wrapper = null;
+    });
+
+    it('will render the label selector', () => {
+      expect(wrapper.html()).toMatchSnapshot();
     });
 
     it.each(labelNames)('generate a label item for the label %s', name => {
@@ -32,7 +43,7 @@ describe('Value Stream Analytics LabelsSelector', () => {
     });
 
     it('will render with the default option selected', () => {
-      const activeItem = wrapper.find('[active="true"]');
+      const activeItem = findActiveItem(wrapper);
 
       expect(activeItem.exists()).toBe(true);
       expect(activeItem.text()).toEqual('Select a label');
@@ -77,8 +88,12 @@ describe('Value Stream Analytics LabelsSelector', () => {
       wrapper.destroy();
     });
 
-    it('will set the active class', () => {
-      const activeItem = wrapper.find('[active="true"]');
+    it('will render the label selector', () => {
+      expect(wrapper.html()).toMatchSnapshot();
+    });
+
+    it('will set the active label', () => {
+      const activeItem = findActiveItem(wrapper);
 
       expect(activeItem.exists()).toBe(true);
       expect(activeItem.text()).toEqual(selectedLabel.name);

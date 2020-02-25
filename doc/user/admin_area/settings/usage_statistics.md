@@ -10,6 +10,9 @@ to perform various actions.
 All statistics are opt-out. You can enable/disable them in the
 **Admin Area > Settings > Metrics and profiling** section **Usage statistics**.
 
+NOTE: **Note:**
+Allow network traffic from your GitLab instance to IP address 104.196.17.203 to send usage statistics to GitLab Inc.
+
 ## Version Check **(CORE ONLY)**
 
 If enabled, version check will inform you if a new version is available and the
@@ -30,7 +33,7 @@ This information is used, among other things, to identify to which versions
 patches will need to be backported, making sure active GitLab instances remain
 secure.
 
-If you disable version check, this information will not be collected.  Enable or
+If you disable version check, this information will not be collected. Enable or
 disable the version check in **Admin Area > Settings > Metrics and profiling > Usage statistics**.
 
 ### Request flow example

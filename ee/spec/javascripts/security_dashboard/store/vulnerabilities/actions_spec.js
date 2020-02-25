@@ -9,7 +9,7 @@ import * as types from 'ee/security_dashboard/store/modules/vulnerabilities/muta
 import * as actions from 'ee/security_dashboard/store/modules/vulnerabilities/actions';
 import axios from '~/lib/utils/axios_utils';
 
-import mockDataVulnerabilities from './data/mock_data_vulnerabilities.json';
+import mockDataVulnerabilities from './data/mock_data_vulnerabilities';
 import mockDataVulnerabilitiesCount from './data/mock_data_vulnerabilities_count.json';
 import mockDataVulnerabilitiesHistory from './data/mock_data_vulnerabilities_history.json';
 
@@ -290,8 +290,10 @@ describe('vulnerabilities actions', () => {
     });
 
     describe('on error', () => {
+      const errorCode = 404;
+
       beforeEach(() => {
-        mock.onGet(state.vulnerabilitiesEndpoint).replyOnce(404, {});
+        mock.onGet(state.vulnerabilitiesEndpoint).replyOnce(errorCode, {});
       });
 
       it('should dispatch the request and error actions', done => {
@@ -300,7 +302,10 @@ describe('vulnerabilities actions', () => {
           {},
           state,
           [],
-          [{ type: 'requestVulnerabilities' }, { type: 'receiveVulnerabilitiesError' }],
+          [
+            { type: 'requestVulnerabilities' },
+            { type: 'receiveVulnerabilitiesError', payload: errorCode },
+          ],
           done,
         );
       });
@@ -337,11 +342,13 @@ describe('vulnerabilities actions', () => {
 
   describe('receiveVulnerabilitiesError', () => {
     it('should commit the error mutation', done => {
+      const errorCode = 403;
+
       testAction(
         actions.receiveVulnerabilitiesError,
-        {},
+        errorCode,
         state,
-        [{ type: types.RECEIVE_VULNERABILITIES_ERROR }],
+        [{ type: types.RECEIVE_VULNERABILITIES_ERROR, payload: errorCode }],
         [],
         done,
       );

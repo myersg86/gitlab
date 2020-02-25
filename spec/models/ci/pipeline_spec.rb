@@ -162,6 +162,23 @@ describe Ci::Pipeline, :mailer do
     end
   end
 
+  describe '#merge_request?' do
+    let(:pipeline) { create(:ci_pipeline, merge_request: merge_request) }
+    let(:merge_request) { create(:merge_request) }
+
+    it 'returns true' do
+      expect(pipeline).to be_merge_request
+    end
+
+    context 'when merge request is nil' do
+      let(:merge_request) { nil }
+
+      it 'returns false' do
+        expect(pipeline).not_to be_merge_request
+      end
+    end
+  end
+
   describe '#detached_merge_request_pipeline?' do
     subject { pipeline.detached_merge_request_pipeline? }
 
@@ -363,48 +380,6 @@ describe Ci::Pipeline, :mailer do
 
       it 'returns empty array' do
         expect(subject).to be_empty
-      end
-    end
-  end
-
-  describe 'Validations for merge request pipelines' do
-    let(:pipeline) do
-      build(:ci_pipeline, source: source, merge_request: merge_request)
-    end
-
-    let(:merge_request) do
-      create(:merge_request,
-        source_project: project,
-        source_branch:  'feature',
-        target_project: project,
-        target_branch:  'master')
-    end
-
-    context 'when source is merge request' do
-      let(:source) { :merge_request_event }
-
-      context 'when merge request is specified' do
-        it { expect(pipeline).to be_valid }
-      end
-
-      context 'when merge request is empty' do
-        let(:merge_request) { nil }
-
-        it { expect(pipeline).not_to be_valid }
-      end
-    end
-
-    context 'when source is web' do
-      let(:source) { :web }
-
-      context 'when merge request is specified' do
-        it { expect(pipeline).not_to be_valid }
-      end
-
-      context 'when merge request is empty' do
-        let(:merge_request) { nil }
-
-        it { expect(pipeline).to be_valid }
       end
     end
   end
@@ -612,9 +587,9 @@ describe Ci::Pipeline, :mailer do
       ]
     end
 
-    context 'when source is merge request' do
+    context 'when pipeline is merge request' do
       let(:pipeline) do
-        create(:ci_pipeline, source: :merge_request_event, merge_request: merge_request)
+        create(:ci_pipeline, merge_request: merge_request)
       end
 
       let(:merge_request) do
@@ -651,7 +626,7 @@ describe Ci::Pipeline, :mailer do
             'CI_MERGE_REQUEST_TITLE' => merge_request.title,
             'CI_MERGE_REQUEST_ASSIGNEES' => merge_request.assignee_username_list,
             'CI_MERGE_REQUEST_MILESTONE' => milestone.title,
-            'CI_MERGE_REQUEST_LABELS' => labels.map(&:title).join(','),
+            'CI_MERGE_REQUEST_LABELS' => labels.map(&:title).sort.join(','),
             'CI_MERGE_REQUEST_EVENT_TYPE' => pipeline.merge_request_event_type.to_s)
       end
 
@@ -1142,6 +1117,10 @@ describe Ci::Pipeline, :mailer do
     end
 
     describe 'pipeline caching' do
+      before do
+        pipeline.config_source = 'repository_source'
+      end
+
       it 'performs ExpirePipelinesCacheWorker' do
         expect(ExpirePipelineCacheWorker).to receive(:perform_async).with(pipeline.id)
 
@@ -1263,9 +1242,9 @@ describe Ci::Pipeline, :mailer do
         is_expected.to be_truthy
       end
 
-      context 'when source is merge request' do
+      context 'when pipeline is merge request' do
         let(:pipeline) do
-          create(:ci_pipeline, source: :merge_request_event, merge_request: merge_request)
+          create(:ci_pipeline, merge_request: merge_request)
         end
 
         let(:merge_request) do
@@ -2674,6 +2653,40 @@ describe Ci::Pipeline, :mailer do
     context 'when pipeline does not have any builds with test reports' do
       it 'returns empty test reports' do
         expect(subject.total_count).to be(0)
+      end
+    end
+  end
+
+  describe '#test_reports_count', :use_clean_rails_memory_store_caching do
+    subject { pipeline.test_reports }
+
+    context 'when pipeline has multiple builds with test reports' do
+      let!(:build_rspec) { create(:ci_build, :success, name: 'rspec', pipeline: pipeline, project: project) }
+      let!(:build_java) { create(:ci_build, :success, name: 'java', pipeline: pipeline, project: project) }
+
+      before do
+        create(:ci_job_artifact, :junit, job: build_rspec, project: project)
+        create(:ci_job_artifact, :junit_with_ant, job: build_java, project: project)
+      end
+
+      it 'returns test report count equal to test reports total_count' do
+        expect(subject.total_count).to eq(7)
+        expect(subject.total_count).to eq(pipeline.test_reports_count)
+      end
+
+      it 'reads from cache when records are cached' do
+        expect(Rails.cache.fetch(['project', project.id, 'pipeline', pipeline.id, 'test_reports_count'], force: false)).to be_nil
+
+        pipeline.test_reports_count
+
+        expect(ActiveRecord::QueryRecorder.new { pipeline.test_reports_count }.count).to eq(0)
+      end
+    end
+
+    context 'when pipeline does not have any builds with test reports' do
+      it 'returns empty test report count' do
+        expect(subject.total_count).to eq(0)
+        expect(subject.total_count).to eq(pipeline.test_reports_count)
       end
     end
   end

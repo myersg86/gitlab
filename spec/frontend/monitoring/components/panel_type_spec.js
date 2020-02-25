@@ -28,6 +28,8 @@ describe('Panel Type component', () => {
 
   const exampleText = 'example_text';
 
+  const findCopyLink = () => wrapper.find({ ref: 'copyChartLink' });
+
   const createWrapper = props => {
     wrapper = shallowMount(PanelType, {
       propsData: {
@@ -72,6 +74,18 @@ describe('Panel Type component', () => {
         glEmptyChart = wrapper.find(EmptyChart);
       });
 
+      it('renders the chart title', () => {
+        expect(wrapper.find({ ref: 'graphTitle' }).text()).toBe(graphDataNoResult.title);
+      });
+
+      it('renders the no download csv link', () => {
+        expect(wrapper.find({ ref: 'downloadCsvLink' }).exists()).toBe(false);
+      });
+
+      it('does not contain graph widgets', () => {
+        expect(wrapper.find('.js-graph-widgets').exists()).toBe(false);
+      });
+
       it('is a Vue instance', () => {
         expect(glEmptyChart.isVueInstance()).toBe(true);
       });
@@ -95,9 +109,17 @@ describe('Panel Type component', () => {
       wrapper.destroy();
     });
 
+    it('renders the chart title', () => {
+      expect(wrapper.find({ ref: 'graphTitle' }).text()).toBe(graphDataPrometheusQueryRange.title);
+    });
+
+    it('contains graph widgets', () => {
+      expect(wrapper.find('.js-graph-widgets').exists()).toBe(true);
+      expect(wrapper.find({ ref: 'downloadCsvLink' }).exists()).toBe(true);
+    });
+
     it('sets no clipboard copy link on dropdown by default', () => {
-      const link = () => wrapper.find({ ref: 'copyChartLink' });
-      expect(link().exists()).toBe(false);
+      expect(findCopyLink().exists()).toBe(false);
     });
 
     describe('Time Series Chart panel type', () => {
@@ -204,7 +226,6 @@ describe('Panel Type component', () => {
   });
 
   describe('when cliboard data is available', () => {
-    const link = () => wrapper.find({ ref: 'copyChartLink' });
     const clipboardText = 'A value to copy.';
 
     beforeEach(() => {
@@ -219,16 +240,16 @@ describe('Panel Type component', () => {
     });
 
     it('sets clipboard text on the dropdown', () => {
-      expect(link().exists()).toBe(true);
-      expect(link().element.dataset.clipboardText).toBe(clipboardText);
+      expect(findCopyLink().exists()).toBe(true);
+      expect(findCopyLink().element.dataset.clipboardText).toBe(clipboardText);
     });
 
     it('adds a copy button to the dropdown', () => {
-      expect(link().text()).toContain('Generate link to chart');
+      expect(findCopyLink().text()).toContain('Generate link to chart');
     });
 
     it('opens a toast on click', () => {
-      link().vm.$emit('click');
+      findCopyLink().vm.$emit('click');
 
       expect(wrapper.vm.$toast.show).toHaveBeenCalled();
     });

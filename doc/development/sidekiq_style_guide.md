@@ -167,7 +167,7 @@ Most workers tend to spend most of their time blocked, wait on network responses
 from other services such as Redis, Postgres and Gitaly. Since Sidekiq is a
 multithreaded environment, these jobs can be scheduled with high concurrency.
 
-Some workers, however, spend large amounts of time _on-cpu_ running logic in
+Some workers, however, spend large amounts of time _on-CPU_ running logic in
 Ruby. Ruby MRI does not support true multithreading - it relies on the
 [GIL](https://thoughtbot.com/blog/untangling-ruby-threads#the-global-interpreter-lock)
 to greatly simplify application development by only allowing one section of Ruby
@@ -187,12 +187,16 @@ performance.
 Likewise, if a worker uses large amounts of memory, we can run these on a
 bespoke low concurrency, high memory fleet.
 
-Note that Memory-bound workers create heavy GC workloads, with pauses of
+Note that memory-bound workers create heavy GC workloads, with pauses of
 10-50ms. This will have an impact on the latency requirements for the
 worker. For this reason, `memory` bound, `latency_sensitive` jobs are not
 permitted and will fail CI. In general, `memory` bound workers are
 discouraged, and alternative approaches to processing the work should be
 considered.
+
+If a worker needs large amounts of both memory and CPU time, it should be marked as
+memory-bound, due to the above restrction on latency-sensitive memory-bound
+workers.
 
 ## Declaring a Job as CPU-bound
 
@@ -275,6 +279,18 @@ class SomeCrossCuttingConcernWorker
   # ...
 end
 ```
+
+## Job weights
+
+Some jobs have a weight declared. This is only used when running Sidekiq
+in the default execution mode - using
+[`sidekiq-cluster`](../administration/operations/extra_sidekiq_processes.md)
+does not account for weights.
+
+As we are [moving towards using `sidekiq-cluster` in
+Core](https://gitlab.com/gitlab-org/gitlab/issues/34396), newly-added
+workers do not need to have weights specified. They can simply use the
+default weight, which is 1.
 
 ## Worker context
 

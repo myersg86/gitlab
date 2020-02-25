@@ -226,6 +226,7 @@ class Commit
     data = {
       id: id,
       message: safe_message,
+      title: title,
       timestamp: committed_date.xmlschema,
       url: Gitlab::UrlBuilder.build(self),
       author: {
@@ -244,6 +245,8 @@ class Commit
   # Discover issues should be closed when this commit is pushed to a project's
   # default branch.
   def closes_issues(current_user = self.committer)
+    return unless repository.repo_type.project?
+
     Gitlab::ClosingIssueExtractor.new(project, current_user).closed_by_message(safe_message)
   end
 
@@ -297,7 +300,11 @@ class Commit
   end
 
   def merge_requests
-    @merge_requests ||= project&.merge_requests&.by_commit_sha(sha)
+    strong_memoize(:merge_requests) do
+      next MergeRequest.none unless repository.repo_type.project? && project
+
+      project.merge_requests.by_commit_sha(sha)
+    end
   end
 
   def method_missing(method, *args, &block)
@@ -507,7 +514,7 @@ class Commit
   end
 
   def commit_reference(from, referable_commit_id, full: false)
-    base = project&.to_reference_base(from, full: full)
+    base = container.to_reference_base(from, full: full)
 
     if base.present?
       "#{base}#{self.class.reference_prefix}#{referable_commit_id}"

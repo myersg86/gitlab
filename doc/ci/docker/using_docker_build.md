@@ -217,8 +217,8 @@ support this.
      # The 'docker' hostname is the alias of the service container as described at
      # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services.
      #
-     # Note that if you're using the Kubernetes executor, the variable
-     # should be set to tcp://localhost:2376 because of how the
+     # Note that if you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
+     # the variable must be set to tcp://localhost:2376 because of how the
      # Kubernetes executor connects services to the job container
      # DOCKER_HOST: tcp://localhost:2376
      #
@@ -279,12 +279,11 @@ variables:
   # The 'docker' hostname is the alias of the service container as described at
   # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
   #
-  # Note that if you're using the Kubernetes executor, the variable should be set to
-  # tcp://localhost:2375 because of how the Kubernetes executor connects services
-  # to the job container
+  # Note that if you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
+  # the variable must be set to tcp://localhost:2375 because of how the
+  # Kubernetes executor connects services to the job container
   # DOCKER_HOST: tcp://localhost:2375
   #
-  # For non-Kubernetes executors, we use tcp://docker:2375
   DOCKER_HOST: tcp://docker:2375
   #
   # This will instruct Docker not to start over TLS.
@@ -520,4 +519,4 @@ If:
 - This is the first time setting it up, carefully read
   [using Docker in Docker workflow](#use-docker-in-docker-workflow-with-docker-executor).
 - You are upgrading from v18.09 or earlier, read our
-  [upgrade guide](https://about.gitlab.com/blog/2019/07/31/docker-in-docker-with-docker-19-dot-03/).
+  [upgrade guide](https://about.gitlab.com/releases/2019/07/31/docker-in-docker-with-docker-19-dot-03/).

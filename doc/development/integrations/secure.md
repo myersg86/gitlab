@@ -37,7 +37,7 @@ For instance, it is common practice to use `before_script` to install system lib
 a particular project needs before performing SAST or Dependency Scanning.
 
 Similarly, [`after_script`](../../ci/yaml/README.md#before_script-and-after_script)
-should not not be used in the job definition, because it may be overriden by users.
+should not not be used in the job definition, because it may be overridden by users.
 
 ### Stage
 
@@ -61,7 +61,7 @@ and uploads it as a SAST report:
 
 ```yaml
 mysec_dependency_scanning:
-  image: regitry.gitlab.com/secure/mysec
+  image: registry.gitlab.com/secure/mysec
   artifacts:
     reports:
       sast: gl-sast-report.json
@@ -116,9 +116,9 @@ the scanner with all the libraries and tools it depends on.
 
 ### Image size
 
-Depending on the CI infrastucture,
+Depending on the CI infrastructure,
 the CI may have to fetch the Docker image every time the job runs.
-To make the scanning job run fast, and to avoid wasting bandwith,
+To make the scanning job run fast, and to avoid wasting bandwidth,
 it is important to make Docker images as small as possible,
 ideally smaller than 50 MB.
 
@@ -189,7 +189,7 @@ then `artifacts:reports:dependency_scanning` must be set to `depscan.json`.
 ### Exit code
 
 Following the POSIX exit code standard, the scanner will exit with 0 for success and any number from 1 to 255 for anything else.
-This also includes the case when vulnerabilities are found.
+Success also includes the case when vulnerabilities are found.
 
 ### Logging
 
@@ -275,7 +275,7 @@ It should not repeat the other fields of the vulnerability object.
 In particular, the `description` should not repeat the `location` (what is affected)
 or the `solution` (how to mitigate the risk).
 
-There is a proposal to remove either the `name` or the `message`, to remove abmiguities.
+There is a proposal to remove either the `name` or the `message`, to remove ambiguities.
 See [issue #36779](https://gitlab.com/gitlab-org/gitlab/issues/36779).
 
 #### Solution

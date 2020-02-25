@@ -55,6 +55,17 @@ will help you to quickly create a deployment:
 1. Navigate to your project's **CI/CD > Pipelines** page, and run a pipeline on any branch.
 1. When the pipeline has run successfully, graphs will be available on the **Operations > Metrics** page.
 
+![Monitoring Dashboard](img/prometheus_monitoring_dashboard_v12_8.png)
+
+#### Using the Metrics Dashboard
+
+##### Select an environment
+
+The **Environment** dropdown box above the dashboard displays the list of all [environments](#monitoring-cicd-environments).
+It enables you to search as you type through all environments and select the one you're looking for.
+
+![Monitoring Dashboard Environments](img/prometheus_dashboard_environments_v12_8.png)
+
 #### About managed Prometheus deployments
 
 Prometheus is deployed into the `gitlab-managed-apps` namespace, using the [official Helm chart](https://github.com/helm/charts/tree/master/stable/prometheus). Prometheus is only accessible within the cluster, with GitLab communicating through the [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/).
@@ -198,18 +209,23 @@ supported and will not be available in the UI.
 
 #### Duplicating a GitLab-defined dashboard
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/37238) in GitLab 12.7.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/37238) in GitLab 12.7.
+> - From [GitLab 12.8 onwards](https://gitlab.com/gitlab-org/gitlab/issues/39505), custom metrics are also duplicated when you duplicate a dashboard.
 
-You can save a copy of a GitLab defined dashboard that can be customized and adapted to your project. You can decide to save the dashboard new `.yml` file in the project's **default** branch or in a newly created branch with a name of your choosing.
+You can save a complete copy of a GitLab defined dashboard along with all custom metrics added to it.
+Resulting `.yml` file can be customized and adapted to your project.
+You can decide to save the dashboard `.yml` file in the project's **default** branch or in a
+new branch.
 
-1. Click on the "Duplicate dashboard" in the dashboard dropdown.
+1. Click **Duplicate dashboard** in the dashboard dropdown.
 
-   NOTE:**Note:**
-   Only GitLab-defined dashboards can be duplicated.
+   NOTE: **Note:**
+   You can duplicate only GitLab-defined dashboards.
 
-1. Input the file name and other information, such as a new commit message, and click on "Duplicate".
+1. Enter the file name and other information, such as the new commit's message, and click **Duplicate**.
 
-If you select your **default** branch, the new dashboard will become immediately available. If you select another branch, this branch should be merged to your **default** branch first.
+If you select your **default** branch, the new dashboard becomes immediately available.
+If you select another branch, this branch should be merged to your **default** branch first.
 
 #### Dashboard YAML properties
 
@@ -285,7 +301,9 @@ Note the following properties:
 | type | string | no | Type of panel to be rendered. Optional for area panel types |
 | query_range | string | required | For area panel types, you must use a [range query](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) |
 
-![area panel type](img/prometheus_dashboard_area_panel_type.png)
+![area panel chart](img/prometheus_dashboard_area_panel_type_v12_8.png)
+
+Starting in [version 12.8](https://gitlab.com/gitlab-org/gitlab/issues/202696), the y-axis values will automatically scale according to the data. Previously, it always started from 0.
 
 ##### Anomaly chart
 
@@ -329,7 +347,7 @@ Note the following properties:
 
 ![anomaly panel type](img/prometheus_dashboard_anomaly_panel_type.png)
 
-#### Column
+##### Column chart
 
 To add a column panel type to a dashboard, look at the following sample dashboard file:
 
@@ -355,6 +373,44 @@ Note the following properties:
 | query_range | yes | yes | For column panel types, you must use a [range query](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) |
 
 ![anomaly panel type](img/prometheus_dashboard_column_panel_type.png)
+
+##### Stacked column
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/30583) in GitLab 12.8.
+
+To add a stacked column panel type to a dashboard, look at the following sample dashboard file:
+
+```yaml
+dashboard: 'Dashboard title'
+priority: 1
+panel_groups:
+- group: 'Group Title'
+  priority: 5
+  panels:
+  - type: 'stacked-column'
+    title: "Stacked column"
+    y_label: "y label"
+    x_label: 'x label'
+    metrics:
+      - id: memory_1
+        query_range: 'memory_query'
+        label: "memory query 1"
+        unit: "count"
+        series_name: 'group 1'
+      - id: memory_2
+        query_range: 'memory_query_2'
+        label: "memory query 2"
+        unit: "count"
+        series_name: 'group 2'
+
+```
+
+![stacked column panel type](img/prometheus_dashboard_stacked_column_panel_type_v12_8.png)
+
+| Property | Type | Required | Description |
+| ------ | ------ | ------ | ------ |
+| `type` | string | yes | Type of panel to be rendered. For stacked column panel types, set to `stacked-column` |
+| `query_range` | yes | yes | For stacked column panel types, you must use a [range query](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) |
 
 ##### Single Stat
 
@@ -382,6 +438,29 @@ Note the following properties:
 | query | string | yes | For single stat panel types, you must use an [instant query](https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries) |
 
 ![single stat panel type](img/prometheus_dashboard_single_stat_panel_type.png)
+
+###### Percentile based results
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/201946) in GitLab 12.8.
+
+Query results sometimes need to be represented as a percentage value out of 100. You can use the `max_value` property at the root of the panel definition:
+
+```yaml
+dashboard: 'Dashboard Title'
+panel_groups:
+  - group: 'Group Title'
+    panels:
+      - title: "Single Stat"
+        type: "single-stat"
+        max_value: 100
+        metrics:
+        - id: 10
+          query: 'max(go_memstats_alloc_bytes{job="prometheus"})'
+          unit: '%'
+          label: "Total"
+```
+
+For example, if you have a query value of `53.6`, adding `%` as the unit results in a single stat value of `53.6%`, but if the maximum expected value of the query is `120`, the value would be `44.6%`. Adding the `max_value` causes the correct percentage value to display.
 
 ##### Heatmaps
 
@@ -419,11 +498,30 @@ Note the following properties:
 When viewing a custom dashboard of a project, you can view the original
 `.yml` file by clicking on **Edit dashboard** button.
 
+### Chart Context Menu
+
+From each of the panels in the dashboard, you can access the context menu by clicking the **{ellipsis_v}** **More actions** dropdown box above the upper right corner of the panel to take actions related to the chart's data.
+
+![Context Menu](img/panel_context_menu_v12_8.png)
+
+The options are:
+
+- [View logs](#view-pod-logs-ultimate)
+- [Download CSV](#downloading-data-as-csv)
+- [Generate link to chart](#embedding-gitlab-managed-kubernetes-metrics)
+- [Alerts](#setting-up-alerts-for-prometheus-metrics-ultimate)
+
+### View Pod Logs **(ULTIMATE)**
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/122013) in GitLab 12.8.
+
+If you have [Kubernetes Pod Logs](../clusters/kubernetes_pod_logs.md) enabled, you can navigate from the charts in the dashboard to view Pod Logs by clicking on the context menu in the upper-right corner.
+
+If you use the **Timeline zoom** function at the bottom of the chart, logs will narrow down to the time range you selected.
+
 ### Downloading data as CSV
 
 Data from Prometheus charts on the metrics dashboard can be downloaded as CSV.
-
-![Downloading as CSV](img/download_as_csv.png)
 
 ### Setting up alerts for Prometheus metrics **(ULTIMATE)**
 

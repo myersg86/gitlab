@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import 'at.js';
+import '@gitlab/at.js';
 import _ from 'underscore';
 import SidebarMediator from '~/sidebar/sidebar_mediator';
 import glRegexp from './lib/utils/regexp';
@@ -719,7 +719,7 @@ GfmAutoComplete.Milestones = {
 };
 GfmAutoComplete.Loading = {
   template:
-    '<li style="pointer-events: none;"><i class="fa fa-spinner fa-spin"></i> Loading...</li>',
+    '<li style="pointer-events: none;"><span class="spinner align-text-bottom mr-1"></span>Loading...</li>',
 };
 
 export default GfmAutoComplete;

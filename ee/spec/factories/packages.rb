@@ -42,7 +42,7 @@ FactoryBot.define do
       package_type { :nuget }
 
       after :create do |package|
-        create :package_file, :nuget, package: package
+        create :package_file, :nuget, package: package, file_name: "#{package.name}.#{package.version}.nupkg"
       end
     end
 
@@ -65,6 +65,10 @@ FactoryBot.define do
         create :conan_package_file, :conan_package_info, package: package
         create :conan_package_file, :conan_package_manifest, package: package
         create :conan_package_file, :conan_package, package: package
+      end
+
+      trait(:without_loaded_metadatum) do
+        conan_metadatum { build(:conan_metadatum, package: nil) }
       end
     end
   end
@@ -170,7 +174,6 @@ FactoryBot.define do
       file { fixture_file_upload('ee/spec/fixtures/nuget/package.nupkg') }
       file_name { 'package.nupkg' }
       file_sha1 { '5fe852b2a6abd96c22c11fa1ff2fb19d9ce58b57' }
-      file_type { 0 }
       size { 300.kilobytes }
     end
 
@@ -188,7 +191,7 @@ FactoryBot.define do
   end
 
   factory :conan_metadatum, class: 'Packages::ConanMetadatum' do
-    association :package, package_type: :conan
+    association :package, factory: [:conan_package, :without_loaded_metadatum]
     package_username { 'username' }
     package_channel { 'stable' }
   end

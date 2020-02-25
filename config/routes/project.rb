@@ -323,6 +323,8 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         end
       end
 
+      post 'alerts/notify', to: 'alerting/notifications#create'
+
       resources :pipelines, only: [:index, :new, :create, :show, :destroy] do
         collection do
           resource :pipelines_settings, path: 'settings', only: [:show, :update]
@@ -341,6 +343,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           get :failures
           get :status
           get :test_report
+          get :test_reports_count
         end
 
         member do

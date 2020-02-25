@@ -1,6 +1,12 @@
 <script>
 import { GlButton, GlButtonGroup, GlIcon, GlTooltipDirective } from '@gitlab/ui';
-import { BTN_COPY_CONTENTS_TITLE, BTN_DOWNLOAD_TITLE, BTN_RAW_TITLE } from './constants';
+import {
+  BTN_COPY_CONTENTS_TITLE,
+  BTN_DOWNLOAD_TITLE,
+  BTN_RAW_TITLE,
+  RICH_BLOB_VIEWER,
+  SIMPLE_BLOB_VIEWER,
+} from './constants';
 
 export default {
   components: {
@@ -12,22 +18,22 @@ export default {
     GlTooltip: GlTooltipDirective,
   },
   props: {
-    blob: {
-      type: Object,
+    rawPath: {
+      type: String,
       required: true,
+    },
+    activeViewer: {
+      type: String,
+      default: SIMPLE_BLOB_VIEWER,
+      required: false,
     },
   },
   computed: {
-    rawUrl() {
-      return this.blob.rawPath;
-    },
     downloadUrl() {
-      return `${this.blob.rawPath}?inline=false`;
+      return `${this.rawPath}?inline=false`;
     },
-  },
-  methods: {
-    requestCopyContents() {
-      this.$emit('copy');
+    copyDisabled() {
+      return this.activeViewer === RICH_BLOB_VIEWER;
     },
   },
   BTN_COPY_CONTENTS_TITLE,
@@ -41,7 +47,8 @@ export default {
       v-gl-tooltip.hover
       :aria-label="$options.BTN_COPY_CONTENTS_TITLE"
       :title="$options.BTN_COPY_CONTENTS_TITLE"
-      @click="requestCopyContents"
+      :disabled="copyDisabled"
+      data-clipboard-target="#blob-code-content"
     >
       <gl-icon name="copy-to-clipboard" :size="14" />
     </gl-button>
@@ -49,7 +56,7 @@ export default {
       v-gl-tooltip.hover
       :aria-label="$options.BTN_RAW_TITLE"
       :title="$options.BTN_RAW_TITLE"
-      :href="rawUrl"
+      :href="rawPath"
       target="_blank"
     >
       <gl-icon name="doc-code" :size="14" />

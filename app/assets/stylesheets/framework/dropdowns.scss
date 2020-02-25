@@ -150,11 +150,38 @@
     right: 8px;
   }
 
+  .spinner {
+    position: absolute;
+    top: 9px;
+    right: 8px;
+  }
+
   .ic-chevron-down {
     position: absolute;
     top: $gl-padding-8;
     right: $gl-padding-8;
     color: $gray-darkest;
+  }
+}
+
+// Temporary hack until `gitlab-ui` issue is fixed.
+// https://gitlab.com/gitlab-org/gitlab-ui/issues/164
+.gl-dropdown .dropdown-menu-toggle {
+  .gl-dropdown-caret {
+    position: absolute;
+    right: $gl-padding-8;
+    top: $gl-padding-8;
+  }
+
+  // Add some child to the button so that the default height kicks in
+  // when there's no text (since the caret is now aboslute)
+  &::after {
+    border: 0;
+    content: ' ';
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    position: relative;
   }
 }
 
@@ -380,6 +407,15 @@
 
       &.btn .fa:not(:last-child) {
         margin-left: 5px;
+      }
+    }
+
+    > button.dropdown-epic-button {
+      flex-direction: column;
+
+      .reference {
+        color: $gl-gray-400;
+        margin-top: $gl-padding-4;
       }
     }
 

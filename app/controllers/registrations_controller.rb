@@ -55,8 +55,6 @@ class RegistrationsController < Devise::RegistrationsController
   def welcome
     return redirect_to new_user_registration_path unless current_user
     return redirect_to stored_location_or_dashboard(current_user) if current_user.role.present? && !current_user.setup_for_company.nil?
-
-    current_user.name = nil if current_user.name == current_user.username
   end
 
   def update_registration
@@ -117,8 +115,10 @@ class RegistrationsController < Devise::RegistrationsController
   end
 
   def after_inactive_sign_up_path_for(resource)
+    # With the current `allow_unconfirmed_access_for` Devise setting in config/initializers/8_devise.rb,
+    # this method is never called. Leaving this here in case that value is set to 0.
     Gitlab::AppLogger.info(user_created_message)
-    dashboard_projects_path
+    users_almost_there_path
   end
 
   private

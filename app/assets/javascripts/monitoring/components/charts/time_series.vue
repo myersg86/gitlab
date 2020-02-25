@@ -14,9 +14,21 @@ import {
   lineWidths,
   symbolSizes,
   dateFormats,
+  chartColorValues,
 } from '../../constants';
 import { makeDataSeries } from '~/helpers/monitor_helper';
 import { graphDataValidatorForValues } from '../../utils';
+
+/**
+ * A "virtual" coordinates system for the deployment icons.
+ * Deployment icons are displayed along the [min, max]
+ * range at height `pos`.
+ */
+const deploymentYAxisCoords = {
+  min: 0,
+  pos: 3, // 3% height of chart's grid
+  max: 100,
+};
 
 const THROTTLED_DATAZOOM_WAIT = 1000; // miliseconds
 const timestampToISODate = timestamp => new Date(timestamp).toISOString();
@@ -100,7 +112,6 @@ export default {
         isDeployment: false,
         sha: '',
       },
-      showTitleTooltip: false,
       width: 0,
       height: chartHeight,
       svgs: {},
@@ -113,7 +124,7 @@ export default {
       // Transforms & supplements query data to render appropriate labels & styles
       // Input: [{ queryAttributes1 }, { queryAttributes2 }]
       // Output: [{ seriesAttributes1 }, { seriesAttributes2 }]
-      return this.graphData.metrics.reduce((acc, query) => {
+      return this.graphData.metrics.reduce((acc, query, i) => {
         const { appearance } = query;
         const lineType =
           appearance && appearance.line && appearance.line.type
@@ -134,7 +145,7 @@ export default {
           lineStyle: {
             type: lineType,
             width: lineWidth,
-            color: this.primaryColor,
+            color: chartColorValues[i % chartColorValues.length],
           },
           showSymbol: false,
           areaStyle: this.graphData.type === 'area-chart' ? areaStyle : undefined,
@@ -145,28 +156,52 @@ export default {
       }, []);
     },
     chartOptionSeries() {
-      return (this.option.series || []).concat(this.scatterSeries ? [this.scatterSeries] : []);
+      return (this.option.series || []).concat(
+        this.deploymentSeries ? [this.deploymentSeries] : [],
+      );
     },
     chartOptions() {
-      const option = omit(this.option, 'series');
+      const { yAxis, xAxis } = this.option;
+      const option = omit(this.option, ['series', 'yAxis', 'xAxis']);
+
+      const dataYAxis = {
+        name: this.yAxisLabel,
+        nameGap: 50, // same as gitlab-ui's default
+        nameLocation: 'center', // same as gitlab-ui's default
+        boundaryGap: [0.1, 0.1],
+        scale: true,
+        axisLabel: {
+          formatter: num => roundOffFloat(num, 3).toString(),
+        },
+        ...yAxis,
+      };
+
+      const deploymentsYAxis = {
+        show: false,
+        min: deploymentYAxisCoords.min,
+        max: deploymentYAxisCoords.max,
+        axisLabel: {
+          // formatter fn required to trigger tooltip re-positioning
+          formatter: () => {},
+        },
+      };
+
+      const timeXAxis = {
+        name: __('Time'),
+        type: 'time',
+        axisLabel: {
+          formatter: date => dateFormat(date, dateFormats.timeOfDay),
+        },
+        axisPointer: {
+          snap: true,
+        },
+        ...xAxis,
+      };
+
       return {
         series: this.chartOptionSeries,
-        xAxis: {
-          name: __('Time'),
-          type: 'time',
-          axisLabel: {
-            formatter: date => dateFormat(date, dateFormats.timeOfDay),
-          },
-          axisPointer: {
-            snap: true,
-          },
-        },
-        yAxis: {
-          name: this.yAxisLabel,
-          axisLabel: {
-            formatter: num => roundOffFloat(num, 3).toString(),
-          },
-        },
+        xAxis: timeXAxis,
+        yAxis: [dataYAxis, deploymentsYAxis],
         dataZoom: [this.dataZoomConfig],
         ...option,
       };
@@ -228,10 +263,16 @@ export default {
         return acc;
       }, []);
     },
-    scatterSeries() {
+    deploymentSeries() {
       return {
         type: graphTypes.deploymentData,
-        data: this.recentDeployments.map(deployment => [deployment.createdAt, 0]),
+
+        yAxisIndex: 1, // deploymentsYAxis index
+        data: this.recentDeployments.map(deployment => [
+          deployment.createdAt,
+          deploymentYAxisCoords.pos,
+        ]),
+
         symbol: this.svgs.rocket,
         symbolSize: symbolSizes.default,
         itemStyle: {
@@ -242,12 +283,6 @@ export default {
     yAxisLabel() {
       return `${this.graphData.y_label}`;
     },
-  },
-  mounted() {
-    const graphTitleEl = this.$refs.graphTitle;
-    if (graphTitleEl && graphTitleEl.scrollWidth > graphTitleEl.offsetWidth) {
-      this.showTitleTooltip = true;
-    }
   },
   created() {
     this.setSvg('rocket');
@@ -265,6 +300,7 @@ export default {
     formatTooltipText(params) {
       this.tooltip.title = dateFormat(params.value, dateFormats.default);
       this.tooltip.content = [];
+
       params.seriesData.forEach(dataPoint => {
         if (dataPoint.value) {
           const [xVal, yVal] = dataPoint.value;
@@ -344,24 +380,7 @@ export default {
 </script>
 
 <template>
-  <div v-gl-resize-observer-directive="onResize" class="prometheus-graph">
-    <div class="prometheus-graph-header">
-      <h5
-        ref="graphTitle"
-        class="prometheus-graph-title js-graph-title text-truncate append-right-8"
-      >
-        {{ graphData.title }}
-      </h5>
-      <gl-tooltip :target="() => $refs.graphTitle" :disabled="!showTitleTooltip">
-        {{ graphData.title }}
-      </gl-tooltip>
-      <div
-        class="prometheus-graph-widgets js-graph-widgets flex-fill"
-        data-qa-selector="prometheus_graph_widgets"
-      >
-        <slot></slot>
-      </div>
-    </div>
+  <div v-gl-resize-observer-directive="onResize">
     <component
       :is="glChartComponent"
       ref="chart"

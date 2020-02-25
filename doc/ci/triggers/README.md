@@ -6,7 +6,7 @@ type: tutorial
 
 > **Notes**:
 >
-> - [Introduced](https://about.gitlab.com/blog/2015/08/22/gitlab-7-14-released/) in GitLab 7.14.
+> - [Introduced](https://about.gitlab.com/releases/2015/08/22/gitlab-7-14-released/) in GitLab 7.14.
 > - GitLab 8.12 has a completely redesigned job permissions system. Read all
 >   about the [new model and its implications](../../user/project/new_ci_build_permissions_model.md#pipeline-triggers).
 
@@ -248,6 +248,9 @@ curl --request POST \
   --form "variables[UPLOAD_TO_S3]=true" \
   https://gitlab.example.com/api/v4/projects/9/trigger/pipeline
 ```
+
+Trigger variables have the [highest priority](../variables/README.md#priority-of-environment-variables)
+of all types of variables.
 
 ## Using cron to trigger nightly pipelines
 

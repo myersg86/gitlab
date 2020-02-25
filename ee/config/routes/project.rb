@@ -78,7 +78,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
             get :summary, on: :collection
           end
 
-          resources :dashboard, only: [:show, :index], controller: :dashboard
+          resources :dashboard, only: [:index], controller: :dashboard
           resource :configuration, only: [:show], controller: :configuration
           resource :discover, only: [:show], controller: :discover
 
@@ -88,11 +88,12 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
             end
           end
 
-          resources :vulnerabilities, only: [:index]
+          resources :vulnerabilities, only: [:show, :index]
         end
 
         namespace :analytics do
           resources :code_reviews, only: [:index]
+          resource :issues_analytics, only: [:show]
         end
 
         resources :approvers, only: :destroy
@@ -126,8 +127,6 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           post :validate_query, on: :collection
         end
       end
-
-      post 'alerts/notify', to: 'alerting/notifications#create'
 
       resource :tracing, only: [:show]
 

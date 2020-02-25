@@ -345,6 +345,9 @@ For example, the following two definitions are equal:
 | `command`    | no       | 9.4 |Command or script that should be used as the container's command. It will be translated to arguments passed to Docker after the image's name. The syntax is similar to [`Dockerfile`'s `CMD`][cmd] directive, where each shell token is a separate string in the array. |
 | `alias`      | no       | 9.4 |Additional alias that can be used to access the service from the job's container. Read [Accessing the services](#accessing-the-services) for more information. |
 
+NOTE: **Note:**
+Alias support for the Kubernetes executor was [introduced](https://gitlab.com/gitlab-org/gitlab-runner/issues/2229) in GitLab Runner 12.8, and is only available for Kubernetes version 1.7 or later.
+
 ### Starting multiple services from the same image
 
 > Introduced in GitLab and GitLab Runner 9.4. Read more about the [extended
@@ -394,7 +397,7 @@ Before the new extended Docker configuration options, you would need to create
 your own image based on the `super/sql:latest` image, add the default command,
 and then use it in job's configuration, like:
 
-```Dockerfile
+```dockerfile
 # my-super-sql:latest image's Dockerfile
 
 FROM super/sql:latest
@@ -639,7 +642,7 @@ Specifying only `registry.example.com` will not work.
 ### Configuring a Runner
 
 If you have many pipelines that access the same registry, it'll
-probably be better to setup registry access at the runner level.  This
+probably be better to setup registry access at the runner level. This
 allows pipeline authors to have access to a private registry just by
 running a job on the appropriate runner. It also makes registry
 changes and credential rotations much simpler.

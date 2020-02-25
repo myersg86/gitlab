@@ -10,7 +10,6 @@ module EE
     extend ::Gitlab::Utils::Override
 
     prepended do
-      include Vulnerable
       include TokenAuthenticatable
       include InsightsFeature
       include HasTimelogsReport
@@ -45,6 +44,7 @@ module EE
 
       has_one :deletion_schedule, class_name: 'GroupDeletionSchedule'
       delegate :deleting_user, :marked_for_deletion_on, to: :deletion_schedule, allow_nil: true
+      delegate :enforced_group_managed_accounts?, to: :saml_provider, allow_nil: true
 
       belongs_to :file_template_project, class_name: "Project"
 
@@ -58,7 +58,7 @@ module EE
       validate :custom_project_templates_group_allowed, if: :custom_project_templates_group_id_changed?
 
       scope :aimed_for_deletion, -> (date) { joins(:deletion_schedule).where('group_deletion_schedules.marked_for_deletion_on <= ?', date) }
-      scope :with_deletion_schedule, -> { preload(:deletion_schedule) }
+      scope :with_deletion_schedule, -> { preload(deletion_schedule: :deleting_user) }
 
       scope :where_group_links_with_provider, ->(provider) do
         joins(:ldap_group_links).where(ldap_group_links: { provider: provider })
@@ -247,12 +247,22 @@ module EE
     # For now, we are not billing for members with a Guest role for subscriptions
     # with a Gold plan. The other plans will treat Guest members as a regular member
     # for billing purposes.
+    #
+    # We are plucking the user_ids from the "Members" table in an array and
+    # concatenating the array of user_ids with ruby "|" (pipe) method to generate
+    # one single array of unique user_ids.
     override :billable_members_count
     def billable_members_count(requested_hosted_plan = nil)
       if [actual_plan_name, requested_hosted_plan].include?(Plan::GOLD)
-        users_with_descendants.excluding_guests.count
+        (billed_group_members.non_guests.distinct.pluck(:user_id) |
+        billed_project_members.non_guests.distinct.pluck(:user_id) |
+        billed_shared_group_members.non_guests.distinct.pluck(:user_id) |
+        billed_invited_group_members.non_guests.distinct.pluck(:user_id)).count
       else
-        users_with_descendants.count
+        (billed_group_members.distinct.pluck(:user_id) |
+        billed_project_members.distinct.pluck(:user_id) |
+        billed_shared_group_members.distinct.pluck(:user_id) |
+        billed_invited_group_members.distinct.pluck(:user_id)).count
       end
     end
 
@@ -294,6 +304,37 @@ module EE
       return if children.exists?(id: custom_project_templates_group_id)
 
       errors.add(:custom_project_templates_group_id, "has to be a subgroup of the group")
+    end
+
+    def billed_group_members
+      ::GroupMember.active_without_invites_and_requests.where(
+        source_id: self_and_descendants
+      )
+    end
+
+    def billed_project_members
+      ::ProjectMember.active_without_invites_and_requests.where(
+        source_id: ::Project.joins(:group).where(namespace: self_and_descendants)
+      )
+    end
+
+    def billed_invited_group_members
+      invited_or_shared_group_members(invited_groups_in_projects)
+    end
+
+    def billed_shared_group_members
+      return ::GroupMember.none unless ::Feature.enabled?(:share_group_with_group)
+
+      invited_or_shared_group_members(shared_groups)
+    end
+
+    def invited_or_shared_group_members(groups)
+      ::GroupMember.active_without_invites_and_requests.where(source_id: ::Gitlab::ObjectHierarchy.new(groups).base_and_ancestors)
+    end
+
+    def invited_groups_in_projects
+      ::Group.joins(:project_group_links)
+        .where(project_group_links: { project_id: all_projects })
     end
   end
 end

@@ -83,14 +83,26 @@ module Types
           description: 'Indicates if the epic has direct issues',
           method: :has_issues?
 
-    field :web_path, GraphQL::STRING_TYPE, null: false, method: :group_epic_path # rubocop:disable Graphql/Descriptions
-    field :web_url, GraphQL::STRING_TYPE, null: false, method: :group_epic_url # rubocop:disable Graphql/Descriptions
+    field :web_path, GraphQL::STRING_TYPE, null: false,
+          description: 'Web path of the epic',
+          method: :group_epic_path
+    field :web_url, GraphQL::STRING_TYPE, null: false,
+          description: 'Web URL of the epic',
+          method: :group_epic_url
+
     field :relative_position, GraphQL::INT_TYPE, null: true,
           description: 'The relative position of the epic in the epic tree'
-    field :relation_path, GraphQL::STRING_TYPE, null: true, method: :group_epic_link_path # rubocop:disable Graphql/Descriptions
-    field :reference, GraphQL::STRING_TYPE, null: false, method: :epic_reference do # rubocop:disable Graphql/Descriptions
-      argument :full, GraphQL::BOOLEAN_TYPE, required: false, default_value: false # rubocop:disable Graphql/Descriptions
+    field :relation_path, GraphQL::STRING_TYPE, null: true,
+           description: 'URI path of the epic-issue relationship',
+           method: :group_epic_link_path
+
+    field :reference, GraphQL::STRING_TYPE, null: false,
+    description: 'Internal reference of the epic. Returned in shortened format by default',
+    method: :epic_reference do
+      argument :full, GraphQL::BOOLEAN_TYPE, required: false, default_value: false,
+                description: 'Indicates if the reference should be returned in full'
     end
+
     field :participants, Types::UserType.connection_type, null: true,
           description: 'List of participants for the epic',
           complexity: 5
@@ -113,5 +125,11 @@ module Types
       resolve: -> (epic, args, ctx) do
         Epics::DescendantCountService.new(epic, ctx[:current_user])
       end
+
+    field :health_status,
+      ::Types::HealthStatusEnum,
+      null: true,
+      description: 'Current health status',
+      feature_flag: :save_issuable_health_status
   end
 end

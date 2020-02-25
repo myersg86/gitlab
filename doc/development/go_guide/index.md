@@ -40,7 +40,7 @@ of possible security breaches in our code:
 - SQL injections
 
 Remember to run
-[SAST](../../user/application_security/sast/index.md)
+[SAST](../../user/application_security/sast/index.md) and [Dependency Scanning](../../user/application_security/dependency_scanning/index.md)
 **(ULTIMATE)** on your project (or at least the [gosec
 analyzer](https://gitlab.com/gitlab-org/security-products/analyzers/gosec)),
 and to follow our [Security
@@ -72,6 +72,7 @@ projects:
   effects if the package is included multiple times.
 - Use `go fmt` before committing ([Gofmt](https://golang.org/cmd/gofmt/) is a
   tool that automatically formats Go source code).
+- Place private methods below the first caller method in the source file.
 
 ### Automatic linting
 
@@ -188,13 +189,13 @@ code readability and test output.
 ### Better output in tests
 
 When comparing expected and actual values in tests, use
-[testify/require.Equal](https://godoc.org/github.com/stretchr/testify/require#Equal),
-[testify/require.EqualError](https://godoc.org/github.com/stretchr/testify/require#EqualError),
-[testify/require.EqualValues](https://godoc.org/github.com/stretchr/testify/require#EqualValues),
+[`testify/require.Equal`](https://godoc.org/github.com/stretchr/testify/require#Equal),
+[`testify/require.EqualError`](https://godoc.org/github.com/stretchr/testify/require#EqualError),
+[`testify/require.EqualValues`](https://godoc.org/github.com/stretchr/testify/require#EqualValues),
 and others to improve readability when comparing structs, errors,
 large portions of text, or JSON documents:
 
-```go
+```golang
 type TestData struct {
     // ...
 }

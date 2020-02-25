@@ -163,6 +163,24 @@ If you change your mind before your request is approved, just click the
 
 ![Withdraw access request button](img/withdraw_access_request_button.png)
 
+## Changing the owner of a group
+
+Ownership of a group means at least one of its members has
+[Owner permission](../permissions.md#group-members-permissions). Groups must have at
+least one owner.
+
+Changing the owner of a group with only one owner is possible. To change the sole owner
+of a group:
+
+- As an administrator:
+  1. Go to the group's **{users}** **Members** tab.
+  1. Give a different member **Owner** permissions.
+  1. Refresh the page. You can now remove **Owner** permissions from the original owner.
+- As the current group's owner:
+  1. Go to the group's **{users}** **Members** tab.
+  1. Give a different member **Owner** permissions.
+  1. Have the new owner sign in and remove **Owner** permissions from you.
+
 ## Add projects to a group
 
 There are two different ways to add a new project to a group:
@@ -223,9 +241,10 @@ and give all group members access to the project at once.
 
 Alternatively, you can [lock the sharing with group feature](#share-with-group-lock).
 
-## Sharing a group with another group
+## Sharing a group with another group **(CORE ONLY)**
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/18328) in GitLab 12.7.
+> This feature has been [disabled on GitLab.com](https://gitlab.com/gitlab-com/gl-infra/production/issues/1635).
 
 Similarly to [sharing a project with a group](#sharing-a-project-with-a-group),
 you can share a group with another group to give direct group members access

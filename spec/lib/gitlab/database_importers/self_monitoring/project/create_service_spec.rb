@@ -76,6 +76,14 @@ describe Gitlab::DatabaseImporters::SelfMonitoring::Project::CreateService do
 
       it_behaves_like 'has prometheus service', 'http://localhost:9090'
 
+      it 'is idempotent' do
+        result1 = subject.execute
+        expect(result1[:status]).to eq(:success)
+
+        result2 = subject.execute
+        expect(result2[:status]).to eq(:success)
+      end
+
       it "tracks successful install" do
         expect(::Gitlab::Tracking).to receive(:event).twice
         expect(::Gitlab::Tracking).to receive(:event).with('self_monitoring', 'project_created')
@@ -123,6 +131,11 @@ describe Gitlab::DatabaseImporters::SelfMonitoring::Project::CreateService do
       it 'saves the project id' do
         expect(result[:status]).to eq(:success)
         expect(application_setting.self_monitoring_project_id).to eq(project.id)
+      end
+
+      it 'expires application_setting cache' do
+        expect(Gitlab::CurrentSettings).to receive(:expire_current_application_settings)
+        expect(result[:status]).to eq(:success)
       end
 
       it 'creates an environment for the project' do

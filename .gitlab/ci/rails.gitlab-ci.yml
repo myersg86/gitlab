@@ -1,100 +1,3 @@
-# Make sure to update all the similar conditions in other CI config files if you modify these conditions
-.if-not-ee: &if-not-ee
-  if: '$CI_PROJECT_NAME !~ /^gitlab(-ee)?$/'
-
-# Make sure to update all the similar conditions in other CI config files if you modify these conditions
-.if-master-refs: &if-master-refs
-  if: '$CI_COMMIT_REF_NAME == "master"'
-
-# Make sure to update all the similar conditions in other CI config files if you modify these conditions
-.if-default-refs: &if-default-refs
-  if: '$CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /^[\d-]+-stable(-ee)?$/ || $CI_COMMIT_REF_NAME =~ /^\d+-\d+-auto-deploy-\d+$/ || $CI_COMMIT_REF_NAME =~ /^security\// || $CI_MERGE_REQUEST_IID || $CI_COMMIT_TAG'
-
-# Make sure to update all the similar conditions in other CI config files if you modify these conditions
-.if-merge-request: &if-merge-request
-  if: '$CI_MERGE_REQUEST_IID'
-
-# Make sure to update all the similar patterns in other CI config files if you modify these patterns
-.code-backstage-patterns: &code-backstage-patterns
-  - ".gitlab/ci/**/*"
-  - ".{eslintignore,gitattributes,nvmrc,prettierrc,stylelintrc,yamllint}"
-  - ".{codeclimate,eslintrc,gitlab-ci,haml-lint,haml-lint_todo,rubocop,rubocop_todo,scss-lint}.yml"
-  - ".csscomb.json"
-  - "Dockerfile.assets"
-  - "*_VERSION"
-  - "Gemfile{,.lock}"
-  - "Rakefile"
-  - "{babel.config,jest.config}.js"
-  - "config.ru"
-  - "{package.json,yarn.lock}"
-  - "{,ee/}{app,bin,config,db,haml_lint,lib,locale,public,scripts,symbol,vendor}/**/*"
-  - "doc/api/graphql/reference/*" # Files in this folder are auto-generated
-  # Backstage changes
-  - "Dangerfile"
-  - "danger/**/*"
-  - "{,ee/}fixtures/**/*"
-  - "{,ee/}rubocop/**/*"
-  - "{,ee/}spec/**/*"
-  - "doc/README.md"  # Some RSpec test rely on this file
-
-# Make sure to update all the similar patterns in other CI config files if you modify these patterns
-.code-backstage-qa-patterns: &code-backstage-qa-patterns
-  - ".gitlab/ci/**/*"
-  - ".{eslintignore,gitattributes,nvmrc,prettierrc,stylelintrc,yamllint}"
-  - ".{codeclimate,eslintrc,gitlab-ci,haml-lint,haml-lint_todo,rubocop,rubocop_todo,scss-lint}.yml"
-  - ".csscomb.json"
-  - "Dockerfile.assets"
-  - "*_VERSION"
-  - "Gemfile{,.lock}"
-  - "Rakefile"
-  - "{babel.config,jest.config}.js"
-  - "config.ru"
-  - "{package.json,yarn.lock}"
-  - "{,ee/}{app,bin,config,db,haml_lint,lib,locale,public,scripts,symbol,vendor}/**/*"
-  - "doc/api/graphql/reference/*" # Files in this folder are auto-generated
-  # Backstage changes
-  - "Dangerfile"
-  - "danger/**/*"
-  - "{,ee/}fixtures/**/*"
-  - "{,ee/}rubocop/**/*"
-  - "{,ee/}spec/**/*"
-  - "doc/README.md"  # Some RSpec test rely on this file
-  # QA changes
-  - ".dockerignore"
-  - "qa/**/*"
-
-.rails:rules:ee-and-foss:
-  rules:
-    - <<: *if-default-refs
-      changes: *code-backstage-patterns
-      when: on_success
-
-.rails:rules:default-refs-code-backstage-qa:
-  rules:
-    - <<: *if-default-refs
-      changes: *code-backstage-qa-patterns
-      when: on_success
-
-.rails:rules:master-refs:
-  rules:
-    - <<: *if-master-refs
-      when: on_success
-
-.rails:rules:master-refs-ee-only:
-  rules:
-    - <<: *if-not-ee
-      when: never
-    - <<: *if-master-refs
-      when: on_success
-
-.rails:rules:ee-only:
-  rules:
-    - <<: *if-not-ee
-      when: never
-    - <<: *if-default-refs
-      changes: *code-backstage-patterns
-      when: on_success
-
 .rails:needs:setup-and-assets:
   needs:
     - job: setup-test-env
@@ -141,7 +44,7 @@ static-analysis:
   script:
     - scripts/static-analysis
   cache:
-    key: "debian-stretch-ruby-2.6-and-rubocop"
+    key: "debian-stretch-ruby-2.6-pg9.6-rubocop"
     paths:
       - vendor/ruby
       - tmp/rubocop_cache
@@ -151,11 +54,8 @@ downtime_check:
   extends:
     - .rails-job-base
     - .rails:needs:setup-and-assets
+    - .rails:rules:downtime_check
   stage: test
-  rules:
-    - <<: *if-merge-request
-      changes: *code-backstage-patterns
-      when: on_success
   variables:
     SETUP_DB: "false"
   script:
@@ -330,13 +230,19 @@ coverage:
 rspec quarantine pg9:
   extends:
     - .rspec-base-quarantine
-    - .rails:rules:master-refs
+    - .rails:rules:master-refs-code-backstage
 
 .rspec-base-pg10:
   extends:
     - .rspec-base
-    - .rails:rules:master-refs
+    - .rails:rules:master-refs-code-backstage
     - .use-pg10
+
+rspec migration pg10:
+  extends:
+    - .rspec-base-pg10
+    - .rspec-base-migration
+  parallel: 2
 
 rspec unit pg10:
   extends: .rspec-base-pg10
@@ -352,12 +258,40 @@ rspec system pg10:
 # master-only jobs #
 ####################
 
+############################
+# nightly master-only jobs #
+.rspec-base-pg11:
+  extends:
+    - .rspec-base
+    - .rails:rules:nightly-master-refs-code-backstage
+    - .use-pg11
+
+rspec migration pg11:
+  extends:
+    - .rspec-base-pg11
+    - .rspec-base-migration
+  parallel: 2
+
+rspec unit pg11:
+  extends: .rspec-base-pg11
+  parallel: 20
+
+rspec integration pg11:
+  extends: .rspec-base-pg11
+  parallel: 8
+
+rspec system pg11:
+  extends: .rspec-base-pg11
+  parallel: 24
+# nightly master-only jobs #
+############################
+
 #########################
 # ee + master-only jobs #
 rspec-ee quarantine pg9:
   extends:
     - .rspec-base-quarantine
-    - .rails:rules:master-refs-ee-only
+    - .rails:rules:master-refs-code-backstage-ee-only
   variables:
     RSPEC_OPTS: "--tag quarantine -- ee/spec/"
 
@@ -365,26 +299,26 @@ rspec-ee migration pg10:
   extends:
     - .rspec-ee-base-pg10
     - .rspec-base-migration
-    - .rails:rules:master-refs
+    - .rails:rules:master-refs-code-backstage
   parallel: 2
 
 rspec-ee unit pg10:
   extends:
     - .rspec-ee-base-pg10
-    - .rails:rules:master-refs
+    - .rails:rules:master-refs-code-backstage
   parallel: 10
 
 rspec-ee integration pg10:
   extends:
     - .rspec-ee-base-pg10
-    - .rails:rules:master-refs
-  parallel: 3
+    - .rails:rules:master-refs-code-backstage
+  parallel: 4
 
 rspec-ee system pg10:
   extends:
     - .rspec-ee-base-pg10
-    - .rails:rules:master-refs
-  parallel: 5
+    - .rails:rules:master-refs-code-backstage
+  parallel: 6
 # ee + master-only jobs #
 #########################
 
@@ -405,7 +339,7 @@ rspec-ee system pg10:
       artifacts: true
     - job: retrieve-tests-metadata
       artifacts: true
-    - job: compile-assets pull-cache foss
+    - job: compile-assets pull-cache as-if-foss
       artifacts: true
 
 .rspec-ee-base-pg9:

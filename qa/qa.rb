@@ -159,6 +159,10 @@ module QA
     autoload :Validator, 'qa/page/validator'
     autoload :Validatable, 'qa/page/validatable'
 
+    module SubMenus
+      autoload :Common, 'qa/page/sub_menus/common'
+    end
+
     module Main
       autoload :Login, 'qa/page/main/login'
       autoload :Menu, 'qa/page/main/menu'
@@ -469,6 +473,7 @@ module QA
         autoload :Configure, 'qa/vendor/jenkins/page/configure'
         autoload :NewCredentials, 'qa/vendor/jenkins/page/new_credentials'
         autoload :NewJob, 'qa/vendor/jenkins/page/new_job'
+        autoload :Job, 'qa/vendor/jenkins/page/job'
         autoload :ConfigureJob, 'qa/vendor/jenkins/page/configure_job'
       end
     end

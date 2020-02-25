@@ -9,10 +9,6 @@ describe Project do
 
   let(:project) { create(:project) }
 
-  it_behaves_like Vulnerable do
-    let(:vulnerable) { project }
-  end
-
   describe 'associations' do
     it { is_expected.to delegate_method(:shared_runners_minutes).to(:statistics) }
     it { is_expected.to delegate_method(:shared_runners_seconds).to(:statistics) }
@@ -479,6 +475,87 @@ describe Project do
       end
 
       it { is_expected.to be_nil }
+    end
+  end
+
+  context 'merge requests related settings' do
+    shared_examples 'setting modified by application setting' do
+      using RSpec::Parameterized::TableSyntax
+
+      where(:app_setting, :project_setting, :feature_enabled, :final_setting) do
+        true     | true      | true   | true
+        false    | true      | true   | true
+        true     | false     | true   | true
+        false    | false     | true   | false
+        true     | true      | false  | true
+        false    | true      | false  | true
+        true     | false     | false  | false
+        false    | false     | false  | false
+      end
+
+      with_them do
+        let(:project) { create(:project) }
+
+        before do
+          stub_licensed_features(feature => feature_enabled)
+          stub_application_setting(application_setting => app_setting)
+          project.update(setting => project_setting)
+        end
+
+        it 'shows proper setting' do
+          expect(project.send(setting)).to eq(final_setting)
+          expect(project.send("#{setting}?")).to eq(final_setting)
+        end
+      end
+    end
+
+    describe '#disable_overriding_approvers_per_merge_request' do
+      it_behaves_like 'setting modified by application setting' do
+        let(:feature) { :admin_merge_request_approvers_rules }
+        let(:setting) { :disable_overriding_approvers_per_merge_request }
+        let(:application_setting) { :disable_overriding_approvers_per_merge_request }
+      end
+    end
+
+    describe '#merge_requests_disable_committers_approval' do
+      it_behaves_like 'setting modified by application setting' do
+        let(:feature) { :admin_merge_request_approvers_rules }
+        let(:setting) { :merge_requests_disable_committers_approval }
+        let(:application_setting) { :prevent_merge_requests_committers_approval }
+      end
+    end
+
+    describe '#merge_requests_author_approval' do
+      using RSpec::Parameterized::TableSyntax
+
+      where(:app_setting, :project_setting, :feature_enabled, :final_setting) do
+        true     | true      | true   | false
+        false    | true      | true   | true
+        true     | false     | true   | false
+        false    | false     | true   | false
+        true     | true      | false  | true
+        false    | true      | false  | true
+        true     | false     | false  | false
+        false    | false     | false  | false
+      end
+
+      with_them do
+        let(:project) { create(:project) }
+        let(:feature) { :admin_merge_request_approvers_rules }
+        let(:setting) { :merge_requests_author_approval }
+        let(:application_setting) { :prevent_merge_requests_author_approval }
+
+        before do
+          stub_licensed_features(feature => feature_enabled)
+          stub_application_setting(application_setting => app_setting)
+          project.update(setting => project_setting)
+        end
+
+        it 'shows proper setting' do
+          expect(project.send(setting)).to eq(final_setting)
+          expect(project.send("#{setting}?")).to eq(final_setting)
+        end
+      end
     end
   end
 
@@ -1207,42 +1284,6 @@ describe Project do
     end
   end
 
-  describe '#alerts_service_activated?' do
-    let!(:project) { create(:project) }
-
-    subject { project.alerts_service_activated? }
-
-    context 'when incident management feature available' do
-      before do
-        stub_licensed_features(incident_management: true)
-      end
-
-      context 'when project has an activated alerts service' do
-        before do
-          create(:alerts_service, project: project)
-        end
-
-        it { is_expected.to be_truthy }
-      end
-
-      context 'when project has an inactive alerts service' do
-        before do
-          create(:alerts_service, :inactive, project: project)
-        end
-
-        it { is_expected.to be_falsey }
-      end
-    end
-
-    context 'when incident feature is not available' do
-      before do
-        stub_licensed_features(incident_management: false)
-      end
-
-      it { is_expected.to be_falsey }
-    end
-  end
-
   describe '#disabled_services' do
     let(:project) { build(:project) }
 
@@ -1251,7 +1292,6 @@ describe Project do
     where(:license_feature, :disabled_services) do
       :jenkins_integration                | %w(jenkins jenkins_deprecated)
       :github_project_service_integration | %w(github)
-      :incident_management                | %w(alerts)
     end
 
     with_them do
@@ -1372,7 +1412,8 @@ describe Project do
     before do
       allow(License).to receive(:current).and_return(global_license)
       allow(global_license).to receive(:features).and_return([
-        :epics, # Gold only
+        :subepics, # Gold only
+        :epics, # Silver and up
         :service_desk, # Silver and up
         :audit_events, # Bronze and up
         :geo # Global feature, should not be checked at namespace level
@@ -1398,7 +1439,7 @@ describe Project do
         let(:plan_license) { :silver }
 
         it 'filters for silver features' do
-          is_expected.to contain_exactly(:service_desk, :audit_events, :geo)
+          is_expected.to contain_exactly(:service_desk, :audit_events, :geo, :epics)
         end
       end
 
@@ -1406,7 +1447,7 @@ describe Project do
         let(:plan_license) { :gold }
 
         it 'filters for gold features' do
-          is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo)
+          is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo, :subepics)
         end
       end
 
@@ -1423,7 +1464,7 @@ describe Project do
           let(:project) { create(:project, :public, group: group) }
 
           it 'includes all features in global license' do
-            is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo)
+            is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo, :subepics)
           end
         end
       end
@@ -1431,7 +1472,7 @@ describe Project do
 
     context 'when namespace should not be checked' do
       it 'includes all features in global license' do
-        is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo)
+        is_expected.to contain_exactly(:epics, :service_desk, :audit_events, :geo, :subepics)
       end
     end
 
@@ -2596,6 +2637,24 @@ describe Project do
 
       it 'returns true' do
         expect(project_template.template_source?).to be_truthy
+      end
+    end
+  end
+
+  describe '#jira_subscription_exists?' do
+    subject { project.jira_subscription_exists? }
+
+    context 'jira connect subscription exists' do
+      let!(:jira_connect_subscription) { create(:jira_connect_subscription, namespace: project.namespace) }
+
+      it { is_expected.to eq(false) }
+
+      context 'dev panel integration is available' do
+        before do
+          stub_licensed_features(jira_dev_panel_integration: true)
+        end
+
+        it { is_expected.to eq(true) }
       end
     end
   end

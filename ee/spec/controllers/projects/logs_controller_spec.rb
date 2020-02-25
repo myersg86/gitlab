@@ -73,7 +73,9 @@ describe Projects::LogsController do
     before do
       stub_licensed_features(pod_logs: true)
 
-      allow_any_instance_of(PodLogsService).to receive(:execute).and_return(service_result)
+      allow_next_instance_of(::PodLogs::KubernetesService) do |instance|
+        allow(instance).to receive(:execute).and_return(service_result)
+      end
     end
 
     shared_examples 'resource not found' do |message|
@@ -159,8 +161,8 @@ describe Projects::LogsController do
       end
     end
 
-    context 'when service returns status processing' do
-      let(:service_result) { { status: :processing } }
+    context 'when service is processing (returns nil)' do
+      let(:service_result) { nil }
 
       it 'renders accepted' do
         get :k8s, params: environment_params(pod_name: pod_name, format: :json)

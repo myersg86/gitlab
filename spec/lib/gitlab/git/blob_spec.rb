@@ -12,9 +12,33 @@ describe Gitlab::Git::Blob, :seed_helper do
     let(:blob) { Gitlab::Git::Blob.new(name: 'test') }
 
     it 'handles nil data' do
+      expect(described_class).not_to receive(:gitlab_blob_size)
+
       expect(blob.name).to eq('test')
       expect(blob.size).to eq(nil)
       expect(blob.loaded_size).to eq(nil)
+    end
+
+    it 'records blob size' do
+      expect(described_class).to receive(:gitlab_blob_size).and_call_original
+
+      Gitlab::Git::Blob.new(name: 'test', size: 4, data: 'abcd')
+    end
+
+    context 'when untruncated' do
+      it 'attempts to record gitlab_blob_truncated_false' do
+        expect(described_class).to receive(:gitlab_blob_truncated_false).and_call_original
+
+        Gitlab::Git::Blob.new(name: 'test', size: 4, data: 'abcd')
+      end
+    end
+
+    context 'when truncated' do
+      it 'attempts to record gitlab_blob_truncated_true' do
+        expect(described_class).to receive(:gitlab_blob_truncated_true).and_call_original
+
+        Gitlab::Git::Blob.new(name: 'test', size: 40, data: 'abcd')
+      end
     end
   end
 
@@ -586,6 +610,20 @@ describe Gitlab::Git::Blob, :seed_helper do
 
         expect(blob.data).to eq(full_data)
       end
+    end
+  end
+
+  describe 'metrics' do
+    it 'defines :gitlab_blob_truncated_true counter' do
+      expect(described_class).to respond_to(:gitlab_blob_truncated_true)
+    end
+
+    it 'defines :gitlab_blob_truncated_false counter' do
+      expect(described_class).to respond_to(:gitlab_blob_truncated_false)
+    end
+
+    it 'defines :gitlab_blob_size histogram' do
+      expect(described_class).to respond_to(:gitlab_blob_size)
     end
   end
 end

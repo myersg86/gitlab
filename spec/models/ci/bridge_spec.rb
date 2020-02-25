@@ -3,9 +3,9 @@
 require 'spec_helper'
 
 describe Ci::Bridge do
-  set(:project) { create(:project) }
-  set(:target_project) { create(:project, name: 'project', namespace: create(:namespace, name: 'my')) }
-  set(:pipeline) { create(:ci_pipeline, project: project) }
+  let_it_be(:project) { create(:project) }
+  let_it_be(:target_project) { create(:project, name: 'project', namespace: create(:namespace, name: 'my')) }
+  let_it_be(:pipeline) { create(:ci_pipeline, project: project) }
 
   let(:bridge) do
     create(:ci_bridge, :variables, status: :created,
@@ -50,6 +50,36 @@ describe Ci::Bridge do
       ]
 
       expect(bridge.scoped_variables_hash.keys).to include(*variables)
+    end
+  end
+
+  describe 'state machine transitions' do
+    context 'when bridge points towards downstream' do
+      it 'schedules downstream pipeline creation' do
+        expect(bridge).to receive(:schedule_downstream_pipeline!)
+
+        bridge.enqueue!
+      end
+    end
+  end
+
+  describe 'state machine transitions' do
+    context 'when bridge points towards downstream' do
+      it 'schedules downstream pipeline creation' do
+        expect(bridge).to receive(:schedule_downstream_pipeline!)
+
+        bridge.enqueue!
+      end
+    end
+  end
+
+  describe 'state machine transitions' do
+    context 'when bridge points towards downstream' do
+      it 'schedules downstream pipeline creation' do
+        expect(bridge).to receive(:schedule_downstream_pipeline!)
+
+        bridge.enqueue!
+      end
     end
   end
 

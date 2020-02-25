@@ -126,7 +126,7 @@ To resume the test run, press any key.
 
 For example:
 
-```
+```shell
 $ bin/rspec spec/features/auto_deploy_spec.rb:34
 Running via Spring preloader in process 8999
 Run options: include {:locations=>{"./spec/features/auto_deploy_spec.rb"=>[34]}}
@@ -147,7 +147,7 @@ Note: `live_debug` only works on JavaScript enabled specs.
 
 Run the spec with `CHROME_HEADLESS=0`, e.g.:
 
-```
+```shell
 CHROME_HEADLESS=0 bin/rspec some_spec.rb
 ```
 
@@ -242,7 +242,7 @@ This can be achieved by using
 [`before_all`](https://test-prof.evilmartians.io/#/before_all) hook
 from the [`test-prof` gem](https://rubygems.org/gems/test-prof).
 
-```
+```ruby
 let_it_be(:project) { create(:project) }
 let_it_be(:user) { create(:user) }
 
@@ -260,14 +260,14 @@ Note that if you modify an object defined inside a `let_it_be` block,
 then you will need to reload the object as needed, or specify the `reload`
 option to reload for every example.
 
-```
+```ruby
 let_it_be(:project, reload: true) { create(:project) }
 ```
 
 You can also specify the `refind` option as well to completely load a
 new object.
 
-```
+```ruby
 let_it_be(:project, refind: true) { create(:project) }
 ```
 
@@ -411,7 +411,7 @@ cause issues depending on the developer's local network. There are RSpec labels
 available in `spec/support/dns.rb` which you can apply to tests if you need to
 bypass the DNS stubbing, e.g.:
 
-```
+```ruby
 it "really connects to Prometheus", :permit_dns do
 ```
 
@@ -536,7 +536,7 @@ reset before each example, add the `:prometheus` tag to the Rspec test.
 ### Matchers
 
 Custom matchers should be created to clarify the intent and/or hide the
-complexity of RSpec expectations.They should be placed under
+complexity of RSpec expectations. They should be placed under
 `spec/support/matchers/`. Matchers can be placed in subfolder if they apply to
 a certain type of specs only (e.g. features, requests etc.) but shouldn't be if
 they apply to multiple type of specs.

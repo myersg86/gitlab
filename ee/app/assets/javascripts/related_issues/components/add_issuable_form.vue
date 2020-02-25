@@ -1,7 +1,6 @@
 <script>
 import { GlFormGroup, GlFormRadioGroup, GlLoadingIcon } from '@gitlab/ui';
 import { __ } from '~/locale';
-import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import RelatedIssuableInput from './related_issuable_input.vue';
 import {
   issuableTypesMap,
@@ -19,7 +18,6 @@ export default {
     GlLoadingIcon,
     RelatedIssuableInput,
   },
-  mixins: [glFeatureFlagsMixin()],
   props: {
     inputValue: {
       type: String,
@@ -59,6 +57,11 @@ export default {
       required: false,
       default: itemAddFailureTypesMap.NOT_FOUND,
     },
+    itemAddFailureMessage: {
+      type: String,
+      required: false,
+      default: '',
+    },
   },
   data() {
     return {
@@ -86,7 +89,9 @@ export default {
       );
     },
     addRelatedErrorMessage() {
-      if (this.itemAddFailureType === itemAddFailureTypesMap.NOT_FOUND) {
+      if (this.itemAddFailureMessage) {
+        return this.itemAddFailureMessage;
+      } else if (this.itemAddFailureType === itemAddFailureTypesMap.NOT_FOUND) {
         return addRelatedIssueErrorMap[this.issuableType];
       }
       // Only other failure is MAX_NUMBER_OF_CHILD_EPICS at the moment
@@ -118,24 +123,22 @@ export default {
 
 <template>
   <form @submit.prevent="onFormSubmit">
-    <template v-if="glFeatures.issueLinkTypes">
-      <gl-form-group
-        :label="__('The current issue')"
-        label-for="linked-issue-type-radio"
-        label-class="label-bold"
-        class="mb-2"
-      >
-        <gl-form-radio-group
-          id="linked-issue-type-radio"
-          v-model="linkedIssueType"
-          :options="linkedIssueTypes"
-          :checked="linkedIssueType"
-        />
-      </gl-form-group>
-      <p class="bold">
-        {{ __('the following issue(s)') }}
-      </p>
-    </template>
+    <gl-form-group
+      :label="__('The current issue')"
+      label-for="linked-issue-type-radio"
+      label-class="label-bold"
+      class="mb-2"
+    >
+      <gl-form-radio-group
+        id="linked-issue-type-radio"
+        v-model="linkedIssueType"
+        :options="linkedIssueTypes"
+        :checked="linkedIssueType"
+      />
+    </gl-form-group>
+    <p class="bold">
+      {{ __('the following issue(s)') }}
+    </p>
     <related-issuable-input
       ref="relatedIssuableInput"
       :focus-on-mount="true"

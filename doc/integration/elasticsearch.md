@@ -151,6 +151,8 @@ The following Elasticsearch settings are available:
 | `AWS Access Key`                                      | The AWS access key. |
 | `AWS Secret Access Key`                               | The AWS secret access key. |
 | `Maximum field length`                                | See [the explanation in instance limits.](../administration/instance_limits.md#maximum-field-length). |
+| `Maximum bulk request size (MiB)` | Repository indexing uses the Elasticsearch bulk request API. This setting determines the maximum size of an individual bulk request during these operations. |
+| `Bulk request concurrency` | Each repository indexing operation may submit bulk requests in parallel. This increases indexing performance, but fills the Elasticsearch bulk requests queue faster. |
 
 ### Limiting namespaces and projects
 
@@ -464,13 +466,13 @@ When performing a search, the GitLab index will use the following scopes:
 
 ### Deleted documents
 
-Whenever a change or deletion is made to an indexed GitLab object (a merge request description is changed, a file is deleted from the master branch in a repository, a project is deleted, etc), a document in the index is deleted.  However, since these are "soft" deletes, the overall number of "deleted documents", and therefore wasted space, increases.  Elasticsearch does intelligent merging of segments in order to remove these deleted documents.  However, depending on the amount and type of activity in your GitLab installation, it's possible to see as much as 50% wasted space in the index.
+Whenever a change or deletion is made to an indexed GitLab object (a merge request description is changed, a file is deleted from the master branch in a repository, a project is deleted, etc), a document in the index is deleted. However, since these are "soft" deletes, the overall number of "deleted documents", and therefore wasted space, increases. Elasticsearch does intelligent merging of segments in order to remove these deleted documents. However, depending on the amount and type of activity in your GitLab installation, it's possible to see as much as 50% wasted space in the index.
 
 In general, we recommend simply letting Elasticsearch merge and reclaim space automatically, with the default settings. From [Lucene's Handling of Deleted Documents](https://www.elastic.co/blog/lucenes-handling-of-deleted-documents "Lucene's Handling of Deleted Documents"), _"Overall, besides perhaps decreasing the maximum segment size, it is best to leave Lucene's defaults as-is and not fret too much about when deletes are reclaimed."_
 
 However, some larger installations may wish to tune the merge policy settings:
 
-- Consider reducing the `index.merge.policy.max_merged_segment` size from the default 5 GB to maybe 2 GB or 3 GB.  Merging only happens when a segment has at least 50% deletions.  Smaller segment sizes will allow merging to happen more frequently.
+- Consider reducing the `index.merge.policy.max_merged_segment` size from the default 5 GB to maybe 2 GB or 3 GB. Merging only happens when a segment has at least 50% deletions. Smaller segment sizes will allow merging to happen more frequently.
 
   ```shell
   curl --request PUT localhost:9200/gitlab-production/_settings ---header 'Content-Type: application/json' --data '{
@@ -480,7 +482,7 @@ However, some larger installations may wish to tune the merge policy settings:
   }'
   ```
 
-- You can also adjust `index.merge.policy.reclaim_deletes_weight`, which controls how aggressively deletions are targeted.  But this can lead to costly merge decisions, so we recommend not changing this unless you understand the tradeoffs.
+- You can also adjust `index.merge.policy.reclaim_deletes_weight`, which controls how aggressively deletions are targeted. But this can lead to costly merge decisions, so we recommend not changing this unless you understand the tradeoffs.
 
   ```shell
   curl --request PUT localhost:9200/gitlab-production/_settings ---header 'Content-Type: application/json' --data '{
@@ -490,7 +492,7 @@ However, some larger installations may wish to tune the merge policy settings:
   }'
   ```
 
-- Do not do a [force merge](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-forcemerge.html "Force Merge") to remove deleted documents.  A warning in the [documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-forcemerge.html "Force Merge") states that this can lead to very large segments that may never get reclaimed, and can also cause significant performance or availability issues.
+- Do not do a [force merge](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-forcemerge.html "Force Merge") to remove deleted documents. A warning in the [documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-forcemerge.html "Force Merge") states that this can lead to very large segments that may never get reclaimed, and can also cause significant performance or availability issues.
 
 ## Troubleshooting
 
@@ -509,7 +511,7 @@ Here are some common pitfalls and how to overcome them:
   If you see `Elasticsearch::Model::Response::Records`, you are using Elasticsearch.
 
   NOTE: **Note**:
-  The above instructions are used to verify that GitLab is using Elasticsearch only when indexing all namespaces. This is not to be used for scenarios that only index a [subset of namespaces](https://docs.gitlab.com/ee/integration/elasticsearch.html#limiting-namespaces-and-projects).
+  The above instructions are used to verify that GitLab is using Elasticsearch only when indexing all namespaces. This is not to be used for scenarios that only index a [subset of namespaces](#limiting-namespaces-and-projects).
 
 - **I updated GitLab and now I can't find anything**
 
@@ -532,7 +534,7 @@ Here are some common pitfalls and how to overcome them:
   ```
 
   NOTE: **Note**:
-  The above instructions are not to be used for scenarios that only index a [subset of namespaces](https://docs.gitlab.com/ee/integration/elasticsearch.html#limiting-namespaces-and-projects).
+  The above instructions are not to be used for scenarios that only index a [subset of namespaces](#limiting-namespaces-and-projects).
 
   See [Elasticsearch Index Scopes](#elasticsearch-index-scopes) for more information on searching for specific types of data.
 
@@ -595,7 +597,7 @@ Here are some common pitfalls and how to overcome them:
   AWS has [fixed limits](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-limits.html)
   for this setting ("Maximum Size of HTTP Request Payloads"), based on the size of
   the underlying instance.
-  
+
 - **My single node Elasticsearch cluster status never goes from `yellow` to `green` even though everything seems to be running properly**
 
   **For a single node Elasticsearch cluster the functional cluster health status will be yellow** (will never be green) because the primary shard is allocated but replicas can not be as there is no other node to which Elasticsearch can assign a replica. This also applies if you are using using the
@@ -612,7 +614,7 @@ Here are some common pitfalls and how to overcome them:
     }
   }'
   ```
-  
+
 - **I'm getting a `health check timeout: no Elasticsearch node available` error in Sidekiq during the indexing process**
 
    ```

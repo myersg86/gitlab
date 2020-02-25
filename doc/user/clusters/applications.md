@@ -464,8 +464,8 @@ chart is used to install this application with a
 file.
 
 NOTE: **Note:**
-The chart will deploy 4 Elasticsearch nodes: 2 masters, 1 data and 1 client node,
-with resource requests totalling 0.1 CPU and 3GB RAM. Each data node requests 1.5GB of memory,
+The chart will deploy 5 Elasticsearch nodes: 2 masters, 2 data and 1 client node,
+with resource requests totalling 0.125 CPU and 4.5GB RAM. Each data node requests 1.5GB of memory,
 which makes it incompatible with clusters of `f1-micro` and `g1-small` instance types.
 
 ## Install using GitLab CI (alpha)
@@ -487,6 +487,8 @@ Supported applications:
 - [Sentry](#install-sentry-using-gitlab-ci)
 - [GitLab Runner](#install-gitlab-runner-using-gitlab-ci)
 - [Cilium](#install-cilium-using-gitlab-ci)
+- [JupyterHub](#install-jupyterhub-using-gitlab-ci)
+- [Elastic Stack](#install-elastic-stack-using-gitlab-ci)
 
 ### Usage
 
@@ -748,6 +750,74 @@ agent:
   monitor:
     enabled: false
 ```
+
+### Install JupyterHub using GitLab CI
+
+> [Introduced](https://gitlab.com/gitlab-org/cluster-integration/cluster-applications/-/merge_requests/40) in GitLab 12.8.
+
+Enable JupyterHub in the `.gitlab/managed-apps/config.yaml` file to install it:
+
+```yaml
+jupyterhub:
+  installed: true
+  gitlabProjectIdWhitelist: []
+  gitlabGroupWhitelist: []
+```
+
+`gitlabProjectIdWhitelist` restricts GitLab authentication to only members of the specified projects. `gitlabGroupWhitelist` restricts GitLab authentication to only members of the specified groups. Specifying an empty array for both will allow any user on the GitLab instance to log in.
+
+JupyterHub is installed into the `gitlab-managed-apps` namespace of your
+cluster.
+
+In order for JupyterHub to function, you must setup an [OAuth Application](../../integration/oauth_provider.md). Using the following values:
+
+- "Redirect URI" to `http://<JupyterHub Host>/hub/oauth_callback`
+- "Scope" to `api read_repository write_repository`
+
+In addition the following variables must be specified using [CI variables](../../ci/variables/README.md):
+
+- `JUPYTERHUB_PROXY_SECRET_TOKEN` will set [`proxy.secretToken`](https://zero-to-jupyterhub.readthedocs.io/en/stable/reference.html#proxy-secrettoken). Generate this using `openssl rand -hex 32`.
+- `JUPYTERHUB_COOKIE_SECRET` will set [`hub.cookieSecret`](https://zero-to-jupyterhub.readthedocs.io/en/stable/reference.html#hub-cookiesecret). Generate this using `openssl rand -hex 32`.
+- `JUPYTERHUB_HOST` is the hostname used for the installation (e.g., `jupyter.example.gitlab.com`).
+- `JUPYTERHUB_GITLAB_HOST` is the hostname of the GitLab instance used for authentication (e.g., `example.gitlab.com`).
+- `JUPYTERHUB_AUTH_CRYPTO_KEY` will set [`auth.state.cryptoKey`](https://zero-to-jupyterhub.readthedocs.io/en/stable/reference.html#auth-state-cryptokey). Generate this using `openssl rand -hex 32`.
+- `JUPYTERHUB_AUTH_GITLAB_CLIENT_ID` the "Application ID" for the OAuth Application.
+- `JUPYTERHUB_AUTH_GITLAB_CLIENT_SECRET` the "Secret" for the OAuth Application.
+
+By default JupyterHub will be installed using a
+[default values file](https://gitlab.com/gitlab-org/cluster-integration/cluster-applications/-/blob/master/src/default-data/jupyterhub/values.yaml.gotmpl).
+You can customize the installation of JupyterHub by defining
+`.gitlab/managed-apps/jupyterhub/values.yaml` file in your cluster management
+project. Refer to the
+[chart reference](https://zero-to-jupyterhub.readthedocs.io/en/stable/reference.html)
+for the available configuration options.
+
+### Install Elastic Stack using GitLab CI
+
+> [Introduced](https://gitlab.com/gitlab-org/cluster-integration/cluster-applications/-/merge_requests/45) in GitLab 12.8.
+
+Elastic Stack is installed using GitLab CI by defining configuration in
+`.gitlab/managed-apps/config.yaml`.
+
+The following configuration is required to install Elastic Stack using GitLab CI:
+
+```yaml
+elasticStack:
+  installed: true
+```
+
+Elastic Stack is installed into the `gitlab-managed-apps` namespace of your cluster.
+
+You can check the default [values.yaml](https://gitlab.com/gitlab-org/gitlab/-/blob/master/vendor/elastic_stack/values.yaml) we set for this chart.
+
+You can customize the installation of Elastic Stack by defining
+`.gitlab/managed-apps/elastic-stack/values.yaml` file in your cluster
+management project. Refer to the
+[chart](https://github.com/helm/charts/blob/master/stable/elastic-stack/values.yaml) for the
+available configuration options.
+
+NOTE: **Note:**
+In this alpha implementation of installing Elastic Stack through CI, reading the environment pod logs through Elasticsearch is unsupported. This is supported if [installed via the UI](#elastic-stack).
 
 ## Upgrading applications
 

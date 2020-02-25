@@ -1,6 +1,4 @@
 import api from '~/api';
-import { __ } from '~/locale';
-import createFlash from '~/flash';
 import * as types from './mutation_types';
 import { getCurrentHoverElement, setCurrentHoverElement, addInteractionClass } from '../utils';
 
@@ -10,13 +8,12 @@ export default {
   },
   requestDataError({ commit }) {
     commit(types.REQUEST_DATA_ERROR);
-    createFlash(__('An error occurred loading code navigation'));
   },
   fetchData({ commit, dispatch, state }) {
     commit(types.REQUEST_DATA);
 
     api
-      .lsifData(state.projectPath, state.commitId, state.path)
+      .lsifData(state.projectPath, state.commitId, state.blobPath)
       .then(({ data }) => {
         const normalizedData = data.reduce((acc, d) => {
           if (d.hover) {
