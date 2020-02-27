@@ -19,6 +19,7 @@ module EE
         bg_color: label.color
       ) + render_label_text(
         label_name,
+        css_class: ('gl-label-text-dark' if light_color?(label.color)),
         suffix: suffix
       )
     end
