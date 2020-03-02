@@ -17,7 +17,7 @@ module Security
   class VulnerabilitiesFinder
     def initialize(vulnerable, filters = {})
       @filters = filters
-      @vulnerabilities = vulnerable.vulnerabilities
+      @vulnerabilities = vulnerable.vulnerabilities.with_findings
     end
 
     def execute
