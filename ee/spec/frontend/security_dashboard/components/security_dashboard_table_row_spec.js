@@ -149,7 +149,7 @@ describe('Security Dashboard Table Row', () => {
       createComponent(mount, { props: { vulnerability } });
     });
 
-    it('should have a `ic-issue-created` class', () => {
+    it('should have a `ic-issues` class', () => {
       expect(findAllIssueCreated()).toHaveLength(1);
     });
   });
