@@ -42,7 +42,7 @@ export default {
 </script>
 
 <template>
-  <event-item :author="feedback.author" :created-at="feedback.created_at" icon-name="issue-created">
+  <event-item :author="feedback.author" :created-at="feedback.created_at" icon-name="issues">
     <div v-html="eventText"></div>
   </event-item>
 </template>
