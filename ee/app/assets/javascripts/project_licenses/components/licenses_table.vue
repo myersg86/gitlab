@@ -21,7 +21,8 @@ export default {
     return {
       tableHeaders: [
         { className: 'section-30', label: s__('Licenses|Name') },
-        { className: 'section-70', label: s__('Licenses|Component') },
+        { className: 'section-50', label: s__('Licenses|Component') },
+        { className: 'section-20', label: s__('Licenses|Classification') },
       ],
     };
   },

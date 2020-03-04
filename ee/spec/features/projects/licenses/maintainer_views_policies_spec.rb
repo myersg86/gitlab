@@ -41,6 +41,7 @@ describe 'EE > Projects > Licenses > Maintainer views policies', :js do
         policy = policy_for(license)
         expect(row).to have_content(policy&.name || license['name'])
         expect(row).to have_content(dependencies_for(license['id']).join(' and '))
+        expect(row).to have_content((policy&.classification || 'Unclassified').titlecase)
       end
     end
 

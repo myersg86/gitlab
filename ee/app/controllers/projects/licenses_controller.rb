@@ -95,7 +95,7 @@ module Projects
 
     def licenses_app_data
       {
-        project_licenses_endpoint: project_licenses_path(@project, detected: true, format: :json),
+        project_licenses_endpoint: project_licenses_path(@project, format: :json),
         read_license_policies_endpoint: expose_path(api_v4_projects_managed_licenses_path(id: @project.id)),
         write_license_policies_endpoint: write_license_policies_endpoint,
         documentation_path: help_page_path('user/application_security/license_compliance/index'),
