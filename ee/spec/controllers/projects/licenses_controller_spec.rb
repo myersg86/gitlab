@@ -29,7 +29,7 @@ describe Projects::LicensesController do
 
             expect(response).to have_gitlab_http_status(:ok)
             licenses_app_data = assigns(:licenses_app_data)
-            expect(licenses_app_data[:project_licenses_endpoint]).to eql(controller.helpers.project_licenses_path(project, detected: true, format: :json))
+            expect(licenses_app_data[:project_licenses_endpoint]).to eql(controller.helpers.project_licenses_path(project, format: :json))
             expect(licenses_app_data[:read_license_policies_endpoint]).to eql(controller.helpers.api_v4_projects_managed_licenses_path(id: project.id))
             expect(licenses_app_data[:write_license_policies_endpoint]).to eql('')
             expect(licenses_app_data[:documentation_path]).to eql(help_page_path('user/application_security/license_compliance/index'))
