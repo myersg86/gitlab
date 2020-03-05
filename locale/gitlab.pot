@@ -1559,6 +1559,9 @@ msgstr ""
 msgid "AdminSettings|Select a template"
 msgstr ""
 
+msgid "AdminSettings|Service Templates will soon be deprecated."
+msgstr ""
+
 msgid "AdminSettings|Service template allows you to set default values for integrations"
 msgstr ""
 
@@ -1572,6 +1575,9 @@ msgid "AdminSettings|Specify a domain to use by default for every project's Auto
 msgstr ""
 
 msgid "AdminSettings|The required pipeline configuration can be selected from the %{code_start}gitlab-ci%{code_end} directory inside of the configured %{link_start}instance template repository%{link_end} or from GitLab provided configurations."
+msgstr ""
+
+msgid "AdminSettings|Try using the latest version of Integrations instead."
 msgstr ""
 
 msgid "AdminSettings|When creating a new environment variable it will be protected by default."
@@ -19720,12 +19726,6 @@ msgid "Service Templates"
 msgstr ""
 
 msgid "Service URL"
-msgstr ""
-
-msgid "Service templates will be deprecated after 12.10. Instead we are upgrading our current Integrations to allow more control."
-msgstr ""
-
-msgid "Service templates will be deprecated!"
 msgstr ""
 
 msgid "Session duration (minutes)"

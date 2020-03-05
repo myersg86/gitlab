@@ -6,8 +6,8 @@
     %button.js-close.gl-alert-dismiss{ type: 'button', 'aria-label' => _('Dismiss') }
       = sprite_icon('close', size: 16, css_class: 'gl-icon')
     .gl-alert-body
-      %h4.gl-alert-title= _('Service templates will be deprecated!')
-      = _('Service templates will be deprecated after 12.10. Instead we are upgrading our current Integrations to allow more control.')
+      %h4.gl-alert-title= s_('AdminSettings|Service Templates will soon be deprecated.')
+      = s_('AdminSettings|Try using the latest version of Integrations instead.')
     .gl-alert-actions
       = link_to _('Go to Integrations'), integrations_admin_application_settings_path, class: 'btn gl-alert-action btn-warning new-gl-button'
       = link_to _('Learn more'), '#', class: 'btn gl-alert-action btn-warning btn-secondary new-gl-button'
