@@ -56,10 +56,18 @@ describe Backup::Manager do
       let(:tar_file) { 'custom_gitlab_backup.tar' }
 
       it 'uses the given value as tar file name' do
-        stub_env('BACKUP', '/ignored/path/custom')
+        stub_env('BACKUP', 'custom')
         subject.pack
 
         expect(Kernel).to have_received(:system).with(*tar_cmdline)
+      end
+    end
+
+    context 'when BACKUP is set with a path' do
+      it 'fails the operation' do
+        stub_env('BACKUP', '/some/path/../../../traversal/custom')
+
+        expect { subject.pack }.to raise_error Backup::Error
       end
     end
   end
@@ -305,7 +313,7 @@ describe Backup::Manager do
         allow(Kernel).to receive(:system).and_return(true)
         allow(YAML).to receive(:load_file).and_return(gitlab_version: Gitlab::VERSION)
 
-        stub_env('BACKUP', '/ignored/path/1451606400_2016_01_01_1.2.3')
+        stub_env('BACKUP', '1451606400_2016_01_01_1.2.3')
       end
 
       it 'unpacks the file' do
@@ -314,6 +322,22 @@ describe Backup::Manager do
         expect(Kernel).to have_received(:system)
           .with("tar", "-xf", "1451606400_2016_01_01_1.2.3_gitlab_backup.tar")
         expect(progress).to have_received(:puts).with(a_string_matching('done'))
+      end
+    end
+
+    context 'when BACKUP variable is set with a path' do
+      before do
+        allow(Dir).to receive(:glob).and_return(
+          [
+            '1451606400_2016_01_01_1.2.3_gitlab_backup.tar'
+          ]
+        )
+
+        stub_env('BACKUP', '/invalid/backup/value/1451606400_2016_01_01_1.2.3')
+      end
+
+      it 'fails the operation' do
+        expect { subject.unpack }.to raise_error Backup::Error
       end
     end
 

@@ -147,7 +147,7 @@ module Backup
         end
 
         tar_file = if ENV['BACKUP'].present?
-                     File.basename(ENV['BACKUP']) + FILE_NAME_SUFFIX
+                     backup_file_name
                    else
                      backup_file_list.first
                    end
@@ -185,6 +185,13 @@ module Backup
 
     def backup_path
       Gitlab.config.backup.path
+    end
+
+    def backup_file_name
+      Gitlab::Utils.check_path_traversal!(ENV['BACKUP'] + FILE_NAME_SUFFIX)
+    rescue StandardError
+      progress.puts "Aborting, invalid BACKUP value supplied".color(:red)
+      raise Backup::Error, 'Backup failed'
     end
 
     def backup_file_list
@@ -245,7 +252,7 @@ module Backup
 
     def tar_file
       @tar_file ||= if ENV['BACKUP'].present?
-                      File.basename(ENV['BACKUP']) + FILE_NAME_SUFFIX
+                      backup_file_name
                     else
                       "#{backup_information[:backup_created_at].strftime('%s_%Y_%m_%d_')}#{backup_information[:gitlab_version]}#{FILE_NAME_SUFFIX}"
                     end
