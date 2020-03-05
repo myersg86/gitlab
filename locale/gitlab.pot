@@ -11610,6 +11610,9 @@ msgstr ""
 msgid "Licenses|%{remainingComponentsCount} more"
 msgstr ""
 
+msgid "Licenses|Classification"
+msgstr ""
+
 msgid "Licenses|Component"
 msgstr ""
 
