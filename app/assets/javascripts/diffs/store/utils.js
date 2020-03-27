@@ -21,6 +21,10 @@ export function findDiffFile(files, match, matchKey = 'file_hash') {
   return files.find(file => file[matchKey] === match);
 }
 
+export function findDiffFileWithDeleteMode(files, match, mode, matchKey = 'file_hash') {
+  return files.find(file => file[matchKey] === match && file.mode[mode] === '0');
+}
+
 export const getReversePosition = linePosition => {
   if (linePosition === LINE_POSITION_RIGHT) {
     return LINE_POSITION_LEFT;
@@ -274,6 +278,77 @@ function mergeTwoFiles(target, source) {
   };
 }
 
+function prepareDiffFile(file) {
+  return Object.assign(file, {
+    mode: {
+      old: file.a_mode,
+      new: file.b_mode,
+      changed: file.mode_changed,
+    },
+    isShowingFullFile: false,
+    isLoadingFullFile: false,
+    discussions: [],
+    renderingLines: false,
+  });
+}
+
+function handleSymlinkFile(file, index, files) {
+  /*
+    We have to figure out how to dedupe multiple files
+
+    Here's what it looks like if the old file was a symlink
+
+    |      Which File     |     Old Mode     |     New Mode     |
+    | --------------------| ---------------- | ---------------- |
+    |      New (file)     |         0        |    !0, !120000   |
+    |    Old (symlink)    |      120000      |         0        |
+
+    Here's what it looks like if the new file is the symlink
+
+    |      Which File     |     Old Mode     |     New Mode     |
+    | --------------------| ---------------- | ---------------- |
+    |     New (symlink)   |         0        |      120000      |
+    |      Old (file)     |    !0, !120000   |         0        |
+   */
+
+  if (file.mode.old === '120000') {
+    const newFile = findDiffFileWithDeleteMode(files, file.file_hash, 'old');
+
+    // This file will be consumed by the new file, which we'll display
+    // so we need to mark it for skipping and update the paired new file
+    Object.assign(file, { deduped: true });
+    Object.assign(newFile, {
+      symlinkMerged: true,
+      replaced: 'symlink',
+    });
+  } else if (file.mode.new === '120000') {
+    const oldFile = findDiffFileWithDeleteMode(files, file.file_hash, 'new');
+
+    // This is the authoritative file, so we'll mark it so the frontend
+    // can display a little helper text
+    // We'll also go mark the paired old file as skipped
+    Object.assign(file, {
+      symlinkMerged: true,
+      replaced: 'file',
+    });
+    Object.assign(oldFile, { deduped: true });
+  }
+
+  return file;
+}
+
+function handleSpecialCaseFile(file, index, files) {
+  if ([file.mode.new, file.mode.old].includes('120000') && file.mode.changed) {
+    Object.assign(file, handleSymlinkFile(file, index, files));
+  }
+
+  return file;
+}
+
+function filterEarlyDedupes(file) {
+  return !file.deduped;
+}
+
 function ensureBasicDiffFileLines(file) {
   const missingInline = !file.highlighted_diff_lines;
   const missingParallel = !file.parallel_diff_lines;
@@ -343,10 +418,6 @@ function finalizeDiffFile(file) {
   Object.assign(file, {
     renderIt: lines < LINES_TO_BE_RENDERED_DIRECTLY,
     collapsed: name === diffViewerModes.text && lines > MAX_LINES_TO_BE_RENDERED,
-    isShowingFullFile: false,
-    isLoadingFullFile: false,
-    discussions: [],
-    renderingLines: false,
   });
 
   return file;
@@ -367,6 +438,9 @@ function deduplicateFilesList(files) {
 
 export function prepareDiffData(diff, priorFiles = []) {
   const cleanedFiles = (diff.diff_files || [])
+    .map(prepareDiffFile)
+    .map(handleSpecialCaseFile)
+    .filter(filterEarlyDedupes)
     .map(ensureBasicDiffFileLines)
     .map(prepareDiffFileLines)
     .map(finalizeDiffFile);

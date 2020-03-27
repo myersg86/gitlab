@@ -84,6 +84,9 @@ export default {
 
       return this.diffFile.file_path;
     },
+    fileMode() {
+      return this.diffFile.mode?.new || '';
+    },
     isUsingLfs() {
       return this.diffFile.stored_externally && this.diffFile.external_storage === 'lfs';
     },
@@ -122,6 +125,19 @@ export default {
         return s__('MRDiff|Show changes only');
       }
       return s__('MRDiff|Show full file');
+    },
+    symlinkText() {
+      let text = '';
+
+      if (this.diffFile.symlinkMerged) {
+        if (this.diffFile.replaced === 'file') {
+          text = __('(replaced a file with this symlink)');
+        } else if (this.diffFile.replaced === 'symlink') {
+          text = __('(replaced a symlink with this file)');
+        }
+      }
+
+      return text;
     },
   },
   mounted() {
@@ -180,6 +196,7 @@ export default {
       >
         <file-icon
           :file-name="filePath"
+          :file-mode="fileMode"
           :size="18"
           aria-hidden="true"
           css-classes="append-right-5"
@@ -203,6 +220,7 @@ export default {
         <strong v-else v-gl-tooltip :title="filePath" class="file-title-name" data-container="body">
           {{ filePath }}
         </strong>
+        <span v-if="diffFile.symlinkMerged">{{ symlinkText }}</span>
       </a>
 
       <clipboard-button
