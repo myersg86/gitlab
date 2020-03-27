@@ -1,0 +1,5 @@
+---
+title: Eliminate duplicate files when modifying symlinks to non-symlink or vice versa
+merge_request: 28066
+author:
+type: fixed
