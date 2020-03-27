@@ -569,6 +569,12 @@ msgstr ""
 msgid "(removed)"
 msgstr ""
 
+msgid "(replaced a file with this symlink)"
+msgstr ""
+
+msgid "(replaced a symlink with this file)"
+msgstr ""
+
 msgid "(revoked)"
 msgstr ""
 
