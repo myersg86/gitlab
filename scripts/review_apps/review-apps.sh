@@ -266,6 +266,18 @@ function base_config_changed() {
   curl "${CI_API_V4_URL}/projects/${CI_MERGE_REQUEST_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/changes" | jq '.changes | any(.old_path == "scripts/review_apps/base-config.yaml")'
 }
 
+# Helm might attempt to change an existing poddisruptionbudget when upgrading,
+# which is not allowed in Kubernetes < 1.15
+# https://gitlab.com/gitlab-org/gitlab/-/issues/36021
+function cleanup_existing_pdb() {
+  local namespace="${KUBE_NAMESPACE}"
+  local release="${CI_ENVIRONMENT_SLUG}"
+
+  echoinfo "Deleting any existing poddisruptionbudget"
+
+  kubectl delete pdb -l release="${release}" -n "${namespace}"
+}
+
 function deploy() {
   local namespace="${KUBE_NAMESPACE}"
   local release="${CI_ENVIRONMENT_SLUG}"

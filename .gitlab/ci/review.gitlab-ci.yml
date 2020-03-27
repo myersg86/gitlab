@@ -99,6 +99,7 @@ review-deploy:
     - install_tiller
     - install_external_dns
     - download_chart
+    - cleanup_existing_pdb
     - date
     - deploy || (display_deployment_debug && exit 1)
     # When the job is manual, review-qa-smoke is also manual and we don't want people
