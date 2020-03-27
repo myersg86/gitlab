@@ -25,6 +25,11 @@ export default {
       type: String,
       required: true,
     },
+    fileMode: {
+      type: String,
+      required: false,
+      default: '',
+    },
 
     folder: {
       type: Boolean,
@@ -57,12 +62,33 @@ export default {
     },
   },
   computed: {
+    useSprite() {
+      return !this.loading && !this.folder && this.fileMode !== '120000';
+    },
+    useIcon() {
+      return !this.loading && (this.folder || this.fileMode === '120000');
+    },
+    iconName() {
+      let name = this.opened ? 'folder-open' : 'folder';
+
+      if (this.fileMode === '120000') {
+        name = 'leave';
+      }
+
+      return name;
+    },
+    iconClasses() {
+      const classes = [];
+
+      if (this.iconName.includes('folder')) {
+        classes.push('folder-icon');
+      }
+
+      return classes;
+    },
     spriteHref() {
       const iconName = getIconForFile(this.fileName) || 'file';
       return `${gon.sprite_file_icons}#${iconName}`;
-    },
-    folderIconName() {
-      return this.opened ? 'folder-open' : 'folder';
     },
     iconSizeClass() {
       return this.size ? `s${this.size}` : '';
@@ -72,10 +98,10 @@ export default {
 </script>
 <template>
   <span>
-    <svg v-if="!loading && !folder" :class="[iconSizeClass, cssClasses]">
+    <svg v-if="useSprite" :class="[iconSizeClass, cssClasses]">
       <use v-bind="{ 'xlink:href': spriteHref }" />
     </svg>
-    <icon v-if="!loading && folder" :name="folderIconName" :size="size" class="folder-icon" />
+    <icon v-if="useIcon" :name="iconName" :size="size" :class="iconClasses" />
     <gl-loading-icon v-if="loading" :inline="true" />
   </span>
 </template>
