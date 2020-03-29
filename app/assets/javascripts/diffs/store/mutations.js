@@ -1,3 +1,4 @@
+import Vue from 'vue';
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 import {
   findDiffFile,
@@ -293,11 +294,9 @@ export default {
   [types.TOGGLE_SHOW_TREE_LIST](state) {
     state.showTreeList = !state.showTreeList;
   },
-  [types.UPDATE_CURRENT_DIFF_FILE_ID](state, fileId) {
+  [types.VIEW_DIFF_FILE](state, fileId) {
     state.currentDiffFileId = fileId;
-    if (!state.viewedDiffFileIds.includes(fileId)) {
-      state.viewedDiffFileIds = [fileId, ...state.viewedDiffFileIds];
-    }
+    Vue.set(state.viewedDiffFileIds, fileId, true);
   },
   [types.OPEN_DIFF_FILE_COMMENT_FORM](state, formData) {
     state.commentForms.push({

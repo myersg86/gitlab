@@ -56,6 +56,19 @@ describe('Diff File Row component', () => {
     );
   });
 
+  it('sets the correct class by default for FileRow', () => {
+    createComponent({
+      file: {
+        type: 'blob',
+        fileHash: '#123456789',
+      },
+      level: 0,
+      hideFileStats: false,
+      viewedFiles: { '#123456782': true },
+    });
+    expect(wrapper.find(FileRow).props('fileClasses')).toBe('font-weight-bold');
+  });
+
   it('passes the correct class to FileRow if clicked', () => {
     createComponent({
       file: {
@@ -64,9 +77,9 @@ describe('Diff File Row component', () => {
       },
       level: 0,
       hideFileStats: false,
-      viewedFiles: ['#123456789'],
+      viewedFiles: { '#123456789': true },
     });
-    expect(wrapper.find(FileRow).props('fileClasses')).toBe('font-weight-normal');
+    expect(wrapper.find(FileRow).props('fileClasses')).toBe('');
   });
 
   describe('FileRowStats components', () => {

@@ -479,7 +479,7 @@ describe('DiffsStoreActions', () => {
     it('should mark currently selected diff and set lineHash and fileHash of highlightedRow', () => {
       testAction(setHighlightedRow, 'ABC_123', {}, [
         { type: types.SET_HIGHLIGHTED_ROW, payload: 'ABC_123' },
-        { type: types.UPDATE_CURRENT_DIFF_FILE_ID, payload: 'ABC' },
+        { type: types.VIEW_DIFF_FILE, payload: 'ABC' },
       ]);
     });
   });
@@ -1083,7 +1083,7 @@ describe('DiffsStoreActions', () => {
       expect(document.location.hash).toBe('#test');
     });
 
-    it('commits UPDATE_CURRENT_DIFF_FILE_ID', () => {
+    it('commits VIEW_DIFF_FILE', () => {
       const state = {
         treeEntries: {
           path: {
@@ -1094,7 +1094,7 @@ describe('DiffsStoreActions', () => {
 
       scrollToFile({ state, commit }, 'path');
 
-      expect(commit).toHaveBeenCalledWith(types.UPDATE_CURRENT_DIFF_FILE_ID, 'test');
+      expect(commit).toHaveBeenCalledWith(types.VIEW_DIFF_FILE, 'test');
     });
   });
 

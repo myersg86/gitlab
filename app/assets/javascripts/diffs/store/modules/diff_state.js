@@ -33,7 +33,7 @@ export default () => ({
   showTreeList: true,
   currentDiffFileId: '',
   projectPath: '',
-  viewedDiffFileIds: [],
+  viewedDiffFileIds: {},
   commentForms: [],
   highlightedRow: null,
   renderTreeList: true,
