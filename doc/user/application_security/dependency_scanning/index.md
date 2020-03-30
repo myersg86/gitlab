@@ -16,7 +16,7 @@ If you are using [GitLab CI/CD](../../../ci/README.md), you can analyze your dep
 vulnerabilities using Dependency Scanning.
 All dependencies are scanned, including the transitive dependencies (also known as nested dependencies).
 
-You can take advantage of Dependency Scanning by either [including the CI job](#configuration)
+You can take advantage of Dependency Scanning by either [including the Dependency Scanning template](#configuration)
 in your existing `.gitlab-ci.yml` file or by implicitly using
 [Auto Dependency Scanning](../../../topics/autodevops/index.md#auto-dependency-scanning-ultimate)
 that is provided by [Auto DevOps](../../../topics/autodevops/index.md).
@@ -39,16 +39,15 @@ The results are sorted by the severity of the vulnerability:
 ## Requirements
 
 To run a Dependency Scanning job, by default, you need GitLab Runner with the
-[`docker`](https://docs.gitlab.com/runner/executors/docker.html#use-docker-in-docker-with-privileged-mode) or
-[`kubernetes`](https://docs.gitlab.com/runner/install/kubernetes.html#running-privileged-containers-for-the-runners)
-executor running in privileged mode. If you're using the shared Runners on GitLab.com,
-this is enabled by default.
+[`docker`](https://docs.gitlab.com/runner/executors/docker.html) or
+[`kubernetes`](https://docs.gitlab.com/runner/install/kubernetes.html) executor.
+If you're using the shared Runners on GitLab.com, this is enabled by default.
 
 CAUTION: **Caution:**
 If you use your own Runners, make sure that the Docker version you have installed
 is **not** `19.03.00`. See [troubleshooting information](#error-response-from-daemon-error-processing-tar-file-docker-tar-relocation-error) for details.
 
-Privileged mode is not necessary if you've [disabled Docker in Docker for Dependency Scanning](#disabling-docker-in-docker-for-dependency-scanning)
+Starting from GitLab 13.0, Docker privileged mode is necessary only if you've [enabled Docker in Docker for Dependency Scanning](#enabling-docker-in-docker-for-dependency-scanning).
 
 ## Supported languages and package managers
 
@@ -87,13 +86,12 @@ include:
   - template: Dependency-Scanning.gitlab-ci.yml
 ```
 
-The included template will create a `dependency_scanning` job in your CI/CD
+The included template will create Dependency Scanning jobs in your CI/CD
 pipeline and scan your project's source code for possible vulnerabilities.
 
-The results will be saved as a
-[Dependency Scanning report artifact](../../../ci/yaml/README.md#artifactsreportsdependency_scanning-ultimate)
-that you can later download and analyze. Due to implementation limitations, we
-always take the latest Dependency Scanning artifact available.
+The results will be saved as
+[Dependency Scanning report artifacts](../../../ci/yaml/README.md#artifactsreportsdependency_scanning-ultimate).
+Due to implementation limitations, we always take the latest Dependency Scanning artifact available.
 
 ### Customizing the Dependency Scanning settings
 
@@ -113,17 +111,18 @@ variables:
 Because template is [evaluated before](../../../ci/yaml/README.md#include) the pipeline
 configuration, the last mention of the variable will take precedence.
 
-### Overriding the Dependency Scanning template
+### Overriding Dependency Scanning jobs
 
-If you want to override the job definition (for example, change properties like
-`variables` or `dependencies`), you need to declare a `dependency_scanning` job
-after the template inclusion and specify any additional keys under it. For example:
+If you want to override a job definition (for example, change properties like
+`variables` or `dependencies`), you need to declare a Dependency Scanning job
+after the template inclusion and specify any additional keys under it.
+For example, this enabled `CI_DEBUG_TRACE` for the the `gemnasium-maven` scanner:
 
 ```yaml
 include:
   - template: Dependency-Scanning.gitlab-ci.yml
 
-dependency_scanning:
+gemnasium-maven-dependency_scanning:
   variables:
     CI_DEBUG_TRACE: "true"
 ```
@@ -139,17 +138,11 @@ The following variables allow configuration of global dependency scanning settin
 
 | Environment variable                    | Default     | Description |
 | --------------------------------------- | ----------- | ----------- |
-| `DS_ANALYZER_IMAGES`                    |             | Comma separated list of custom images. The official default images are still enabled. Read more about [customizing analyzers](analyzers.md). |
-| `DS_ANALYZER_IMAGE_PREFIX`              |             | Override the name of the Docker registry providing the official default images (proxy). Read more about [customizing analyzers](analyzers.md). |
-| `DS_ANALYZER_IMAGE_TAG`                 |             | Override the Docker tag of the official default images. Read more about [customizing analyzers](analyzers.md). |
-| `DS_DEFAULT_ANALYZERS`                  |             | Override the names of the official default images. Read more about [customizing analyzers](analyzers.md). |
-| `DS_DISABLE_DIND`                       |             | Disable Docker in Docker and run analyzers [individually](#disabling-docker-in-docker-for-dependency-scanning).|
-| `DS_PULL_ANALYZER_IMAGES`               |             | Pull the images from the Docker registry (set to `0` to disable). |
-| `DS_EXCLUDED_PATHS`                     |             | Exclude vulnerabilities from output based on the paths. A comma-separated list of patterns. Patterns can be globs, file or folder paths (for example, `doc,spec`). Parent directories will also match patterns. |
-| `DS_DOCKER_CLIENT_NEGOTIATION_TIMEOUT`  | 2m          | Time limit for Docker client negotiation. Timeouts are parsed using Go's [`ParseDuration`](https://golang.org/pkg/time/#ParseDuration). Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, or `h`. For example, `300ms`, `1.5h`, or `2h45m`. |
-| `DS_PULL_ANALYZER_IMAGE_TIMEOUT`        | 5m          | Time limit when pulling an analyzer's image. Timeouts are parsed using Go's [`ParseDuration`](https://golang.org/pkg/time/#ParseDuration). Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, or `h`. For example, `300ms`, `1.5h`, or `2h45m`. |
-| `DS_RUN_ANALYZER_TIMEOUT`               | 20m         | Time limit when running an analyzer. Timeouts are parsed using Go's [`ParseDuration`](https://golang.org/pkg/time/#ParseDuration). Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, or `h`. For example, `300ms`, `1.5h`, or `2h45m`. |
-| `ADDITIONAL_CA_CERT_BUNDLE`   |  | Bundle of CA certs that you want to trust. |
+| `DS_ANALYZER_IMAGE_PREFIX`              | `registry.gitlab.com/gitlab-org/security-products/analyzers` | Name of the Docker registry providing the official default images (proxy). Read more about [customizing analyzers](analyzers.md). |
+| `DS_DEFAULT_ANALYZERS`                  | `bundler-audit, retire.js, gemnasium, gemnasium-maven, gemnasium-python` | Names of the official scanners to be enabled. Read more about [customizing analyzers](analyzers.md). |
+| `DS_DISABLE_DIND`                       | `true`  | Disable Docker in Docker and run analyzers. To be set to `false` to [enable Docker in Docker](#enabling-docker-in-docker-for-dependency-scanning). |
+| `DS_EXCLUDED_PATHS`                     |         | Exclude vulnerabilities from output based on the paths. A comma-separated list of patterns. Patterns can be globs, file or folder paths (for example, `doc,spec`). Parent directories will also match patterns. |
+| `ADDITIONAL_CA_CERT_BUNDLE`             |         | Bundle of CA certs that you want to trust. |
 
 #### Configuring specific analyzers used by Dependency Scanning
 
@@ -199,22 +192,23 @@ so that you don't have to expose your private data in `.gitlab-ci.yml` (e.g., ad
 </settings>
 ```
 
-### Disabling Docker in Docker for Dependency Scanning
+### Enabling Docker in Docker for Dependency Scanning
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/12487) in GitLab Ultimate 12.5.
+> [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/37278) in GitLab Ultimate 13.0.
 
-You can avoid the need for Docker in Docker by running the individual analyzers.
-This does not require running the executor in privileged mode. For example:
+You can avoid multiple `<analyzer-name>-dependency_scanning` CI jobs by enabling Docker in Docker for Dependency Scanning.
+This require running the executor in privileged mode. For example:
 
 ```yaml
 include:
   - template: Dependency-Scanning.gitlab-ci.yml
 
 variables:
-  DS_DISABLE_DIND: "true"
+  DS_DISABLE_DIND: "false"
 ```
 
-This will create individual `<analyzer-name>-dependency_scanning` jobs for each analyzer that runs in your CI/CD pipeline.
+This will create a single `dependency_scanning` in your CI/CD pipeline
+instead of multiple `<analyzer-name>-dependency_scanning`.
 
 ## Interacting with the vulnerabilities
 
@@ -415,7 +409,7 @@ You can also [submit new vulnerabilities](https://gitlab.com/gitlab-org/security
 
 ### Error response from daemon: error processing tar file: docker-tar: relocation error
 
-This error occurs when the Docker version used to run the SAST job is `19.03.00`.
+This error occurs when the Docker version used to run the Dependency Scanning job is `19.03.00`.
 You are advised to update to Docker `19.03.01` or greater. Older versions are not
 affected. Read more in
 [this issue](https://gitlab.com/gitlab-org/gitlab/issues/13830#note_211354992 "Current SAST container fails").
