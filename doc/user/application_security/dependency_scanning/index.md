@@ -140,7 +140,7 @@ The following variables allow configuration of global dependency scanning settin
 | --------------------------------------- | ----------- | ----------- |
 | `DS_ANALYZER_IMAGE_PREFIX`              | `registry.gitlab.com/gitlab-org/security-products/analyzers` | Name of the Docker registry providing the official default images (proxy). Read more about [customizing analyzers](analyzers.md). |
 | `DS_DEFAULT_ANALYZERS`                  | `bundler-audit, retire.js, gemnasium, gemnasium-maven, gemnasium-python` | Names of the official scanners to be enabled. Read more about [customizing analyzers](analyzers.md). |
-| `DS_DISABLE_DIND`                       | `true`  | Disable Docker in Docker and run analyzers. To be set to `false` to [enable Docker in Docker](#enabling-docker-in-docker-for-dependency-scanning). |
+| `DS_DISABLE_DIND`                       | `true`  | Disable Docker-in-Docker and run analyzers. To be set to `false` to [enable Docker-in-Docker](#enabling-docker-in-docker-for-dependency-scanning). |
 | `DS_EXCLUDED_PATHS`                     |         | Exclude vulnerabilities from output based on the paths. A comma-separated list of patterns. Patterns can be globs, file or folder paths (for example, `doc,spec`). Parent directories will also match patterns. |
 | `ADDITIONAL_CA_CERT_BUNDLE`             |         | Bundle of CA certs that you want to trust. |
 
