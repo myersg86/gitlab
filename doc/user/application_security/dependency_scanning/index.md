@@ -196,7 +196,7 @@ so that you don't have to expose your private data in `.gitlab-ci.yml` (e.g., ad
 
 > [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/37278) in GitLab Ultimate 13.0.
 
-You can avoid multiple `<analyzer-name>-dependency_scanning` CI jobs by enabling Docker in Docker for Dependency Scanning.
+You can avoid multiple `<analyzer-name>-dependency_scanning` CI jobs by enabling Docker-in-Docker for Dependency Scanning.
 This require running the executor in privileged mode. For example:
 
 ```yaml
