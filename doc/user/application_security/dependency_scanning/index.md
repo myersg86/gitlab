@@ -47,7 +47,7 @@ CAUTION: **Caution:**
 If you use your own Runners, make sure that the Docker version you have installed
 is **not** `19.03.00`. See [troubleshooting information](#error-response-from-daemon-error-processing-tar-file-docker-tar-relocation-error) for details.
 
-Starting from GitLab 13.0, Docker privileged mode is necessary only if you've [enabled Docker in Docker for Dependency Scanning](#enabling-docker-in-docker-for-dependency-scanning).
+Beginning with GitLab 13.0, Docker privileged mode is necessary only if you've [enabled Docker-in-Docker for Dependency Scanning](#enabling-docker-in-docker-for-dependency-scanning).
 
 ## Supported languages and package managers
 
