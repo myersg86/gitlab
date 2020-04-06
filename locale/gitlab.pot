@@ -3353,6 +3353,9 @@ msgstr ""
 msgid "Cannot create the abuse report. This user has been blocked."
 msgstr ""
 
+msgid "Cannot have multiple Jira imports running at the same time"
+msgstr ""
+
 msgid "Cannot make epic confidential if it contains not-confidential issues"
 msgstr ""
 
@@ -4034,6 +4037,9 @@ msgstr ""
 msgid "Clone with %{http_label}"
 msgstr ""
 
+msgid "Clone with %{protocol}"
+msgstr ""
+
 msgid "Clone with KRB5"
 msgstr ""
 
@@ -4691,6 +4697,9 @@ msgstr ""
 msgid "ClusterIntegration|Search VPCs"
 msgstr ""
 
+msgid "ClusterIntegration|Search domains"
+msgstr ""
+
 msgid "ClusterIntegration|Search instance types"
 msgstr ""
 
@@ -4746,6 +4755,9 @@ msgid "ClusterIntegration|Select a stack to install Crossplane."
 msgstr ""
 
 msgid "ClusterIntegration|Select a zone to choose a network"
+msgstr ""
+
+msgid "ClusterIntegration|Select existing domain or use new"
 msgstr ""
 
 msgid "ClusterIntegration|Select machine type"
@@ -4866,6 +4878,9 @@ msgid "ClusterIntegration|Uninstall %{appTitle}"
 msgstr ""
 
 msgid "ClusterIntegration|Update failed. Please check the logs and try again."
+msgstr ""
+
+msgid "ClusterIntegration|Use %{query}"
 msgstr ""
 
 msgid "ClusterIntegration|Uses the Cloud Run, Istio, and HTTP Load Balancing addons for this cluster."
