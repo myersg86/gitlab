@@ -134,5 +134,13 @@ describe('Diffs tree list component', () => {
         expect(wrapper.find('.file-row').text()).toContain('index.js');
       });
     });
+
+    it('contains the right file ID based on the viewed file difference ID from the store', () => {
+      wrapper.vm.$store.state.diffs.viewedDiffFileIds = { fileId: '#12345' };
+
+      return wrapper.vm.$nextTick().then(() => {
+        expect(wrapper.vm.viewedDiffFileIds).toEqual({ fileId: '#12345' });
+      });
+    });
   });
 });
