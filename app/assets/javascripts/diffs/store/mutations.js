@@ -296,7 +296,7 @@ export default {
   },
   [types.VIEW_DIFF_FILE](state, fileId) {
     state.currentDiffFileId = fileId;
-    Vue.set(state.viewedDiffFileIds, fileId, true);
+    Vue.set(state.viewedDiffFileIds, fileId.replace("diff-content-", '').replace('#', ''), true);
   },
   [types.OPEN_DIFF_FILE_COMMENT_FORM](state, formData) {
     state.commentForms.push({

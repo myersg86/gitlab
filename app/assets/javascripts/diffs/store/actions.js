@@ -477,13 +477,17 @@ export const toggleTreeOpen = ({ commit }, path) => {
   commit(types.TOGGLE_FOLDER_OPEN, path);
 };
 
+export const toggleActiveFileByHash = ({ commit }, fileHash) => {
+  commit(types.VIEW_DIFF_FILE, fileHash);
+};
+
 export const scrollToFile = ({ state, commit }, path) => {
   if (!state.treeEntries[path]) return;
 
   const { fileHash } = state.treeEntries[path];
   document.location.hash = fileHash;
 
-  commit(types.VIEW_DIFF_FILE, fileHash);
+  toggleActiveFileByHash({ commit }, fileHash);
 };
 
 export const toggleShowTreeList = ({ commit, state }, saving = true) => {
