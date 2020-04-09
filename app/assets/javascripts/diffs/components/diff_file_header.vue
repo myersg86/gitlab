@@ -133,7 +133,7 @@ export default {
       'toggleFileDiscussions',
       'toggleFileDiscussionWrappers',
       'toggleFullDiff',
-      'toggleActiveFileByHash'
+      'toggleActiveFileByHash',
     ]),
     handleToggleFile() {
       this.$emit('toggleFile');
