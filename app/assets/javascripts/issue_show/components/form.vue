@@ -7,6 +7,7 @@ import editActions from './edit_actions.vue';
 import descriptionTemplate from './fields/description_template.vue';
 import Autosave from '~/autosave';
 import eventHub from '../event_hub';
+import { GlAlert } from '@gitlab/ui';
 
 export default {
   components: {
@@ -15,6 +16,7 @@ export default {
     descriptionField,
     descriptionTemplate,
     editActions,
+    GlAlert,
   },
   props: {
     canDestroy: {
@@ -65,6 +67,10 @@ export default {
       required: false,
       default: true,
     },
+    initialDescriptionText: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
@@ -112,7 +118,6 @@ export default {
 
       const savedLockVersion = this.autosaveDescription.getLockVersion();
 
-      console.log(savedLockVersion, this.formState.lock_version);
       this.showOutdatedDescriptionWarning =
         savedLockVersion && `${this.formState.lock_version}` !== savedLockVersion;
 
@@ -126,6 +131,27 @@ export default {
       this.autosaveDescription.reset();
       this.autosaveTitle.reset();
     },
+    keepAutosave() {
+      const {
+        description: {
+          $refs: { textarea },
+        },
+      } = this.$refs;
+
+      textarea.focus();
+      this.showOutdatedDescriptionWarning = false;
+    },
+    discardAutosave() {
+      const {
+        description: {
+          $refs: { textarea },
+        },
+      } = this.$refs;
+
+      textarea.value = this.initialDescriptionText;
+      textarea.focus();
+      this.showOutdatedDescriptionWarning = false;
+    },
   },
 };
 </script>
@@ -133,7 +159,21 @@ export default {
 <template>
   <form>
     <locked-warning v-if="showLockedWarning" />
-    <h1 v-if="showOutdatedDescriptionWarning">Warning!!!</h1>
+    <gl-alert
+      v-if="showOutdatedDescriptionWarning"
+      class="mb-3"
+      variant="warning"
+      primary-button-text="Keep"
+      secondary-button-text="Discard"
+      :dismissible="false"
+      @primaryAction="keepAutosave"
+      @secondaryAction="discardAutosave"
+      >{{
+        __(
+          'The comment you are editing has been changed by another user. Would you like to keep your changes and overwrite the new description or discard your changes?',
+        )
+      }}</gl-alert
+    >
     <div class="row">
       <div v-if="hasIssuableTemplates" class="col-sm-4 col-lg-3">
         <description-template
