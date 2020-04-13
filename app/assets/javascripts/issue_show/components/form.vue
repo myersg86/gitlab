@@ -66,6 +66,11 @@ export default {
       default: true,
     },
   },
+  data() {
+    return {
+      showOutdatedDescriptionWarning: false,
+    };
+  },
   computed: {
     hasIssuableTemplates() {
       return this.issuableTemplates.length;
@@ -98,11 +103,18 @@ export default {
         },
       } = this.$refs;
 
-      this.autosaveDescription = new Autosave($(textarea), [
-        document.location.pathname,
-        document.location.search,
-        'description',
-      ]);
+      this.autosaveDescription = new Autosave(
+        $(textarea),
+        [document.location.pathname, document.location.search, 'description'],
+        null,
+        this.formState.lock_version,
+      );
+
+      const savedLockVersion = this.autosaveDescription.getLockVersion();
+
+      console.log(savedLockVersion, this.formState.lock_version);
+      this.showOutdatedDescriptionWarning =
+        savedLockVersion && `${this.formState.lock_version}` !== savedLockVersion;
 
       this.autosaveTitle = new Autosave($(input), [
         document.location.pathname,
@@ -121,6 +133,7 @@ export default {
 <template>
   <form>
     <locked-warning v-if="showLockedWarning" />
+    <h1 v-if="showOutdatedDescriptionWarning">Warning!!!</h1>
     <div class="row">
       <div v-if="hasIssuableTemplates" class="col-sm-4 col-lg-3">
         <description-template
