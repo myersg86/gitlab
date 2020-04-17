@@ -156,6 +156,22 @@ secrets-sast:
       - $GITLAB_FEATURES =~ /\bsast\b/ &&
           $SAST_DEFAULT_ANALYZERS =~ /secrets/
 
+secrets-sast-mr:
+  image:
+    name: "$SAST_ANALYZER_IMAGE_PREFIX/secrets:$SAST_ANALYZER_IMAGE_TAG"
+  script:
+    - git fetch
+    - git log --left-right --cherry-pick --pretty=format:"%H" refs/remotes/origin/$CI_DEFAULT_BRANCH...refs/remotes/origin/$CI_BUILD_REF_NAME > commit_list.txt
+    - export SAST_GITLEAKS_COMMIT_TO=$(tail -n 1 commit_list.txt)
+    - export SAST_GITLEAKS_COMMIT_FROM=$CI_COMMIT_SHA
+    - /analyzer run
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $GITLAB_FEATURES =~ /\bsast\b/ &&
+          $SAST_DEFAULT_ANALYZERS =~ /secrets-mr/
+
 security-code-scan-sast:
   extends: .sast-analyzer
   image:
