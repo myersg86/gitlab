@@ -526,7 +526,7 @@ does not make any unsolicited requests including checking for updates.
 
 ## Reports
 
-The DAST job can emit various reports.
+The DAST tool emits a JSON report file. The schema for this report can be found [here](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dast-report-format.json).
 
 ### List of URLs scanned
 
