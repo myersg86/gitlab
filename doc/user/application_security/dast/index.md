@@ -529,7 +529,7 @@ does not make any unsolicited requests including checking for updates.
 
 ## Reports
 
-The DAST tool emits a JSON report file. The schema for this report can be found [here](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dast-report-format.json).
+The DAST tool will always emit a JSON report file, however reports can also be generated in Markdown, HTML, and XML. The schema for the JSON report can be found [here](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dast-report-format.json).
 
 ### List of URLs scanned
 
