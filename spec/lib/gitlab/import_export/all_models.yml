@@ -6,6 +6,7 @@ issues:
 - assignees
 - updated_by
 - milestone
+- sprint
 - notes
 - resource_label_events
 - resource_weight_events
@@ -18,6 +19,7 @@ issues:
 - todos
 - user_agent_detail
 - moved_to
+- moved_from
 - duplicated_to
 - promoted_to_epic
 - events
@@ -39,6 +41,8 @@ issues:
 - related_vulnerabilities
 - user_mentions
 - system_note_metadata
+- alert_management_alert
+- status_page_published_incident
 events:
 - author
 - project
@@ -111,6 +115,7 @@ merge_requests:
 - assignee
 - updated_by
 - milestone
+- sprint
 - notes
 - resource_label_events
 - resource_milestone_events
@@ -343,6 +348,7 @@ project:
 - labels
 - events
 - milestones
+- sprints
 - notes
 - snippets
 - hooks
@@ -481,6 +487,8 @@ project:
 - daily_report_results
 - jira_imports
 - compliance_framework_setting
+- metrics_users_starred_dashboards
+- alert_management_alerts
 award_emoji:
 - awardable
 - user
@@ -632,3 +640,5 @@ epic_issue:
 system_note_metadata:
 - note
 - description_version
+status_page_published_incident:
+- issue

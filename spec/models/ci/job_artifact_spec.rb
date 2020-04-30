@@ -70,6 +70,22 @@ describe Ci::JobArtifact do
     end
   end
 
+  describe '.accessibility_reports' do
+    subject { described_class.accessibility_reports }
+
+    context 'when there is an accessibility report' do
+      let(:artifact) { create(:ci_job_artifact, :accessibility) }
+
+      it { is_expected.to eq([artifact]) }
+    end
+
+    context 'when there are no accessibility report' do
+      let(:artifact) { create(:ci_job_artifact, :archive) }
+
+      it { is_expected.to be_empty }
+    end
+  end
+
   describe '.coverage_reports' do
     subject { described_class.coverage_reports }
 
@@ -144,15 +160,26 @@ describe Ci::JobArtifact do
   end
 
   describe '.for_sha' do
-    it 'returns job artifacts for a given pipeline sha' do
-      project = create(:project)
-      first_pipeline = create(:ci_pipeline, project: project)
-      second_pipeline = create(:ci_pipeline, project: project, sha: Digest::SHA1.hexdigest(SecureRandom.hex))
-      first_artifact = create(:ci_job_artifact, job: create(:ci_build, pipeline: first_pipeline))
-      second_artifact = create(:ci_job_artifact, job: create(:ci_build, pipeline: second_pipeline))
+    let(:first_pipeline) { create(:ci_pipeline) }
+    let(:second_pipeline) { create(:ci_pipeline, project: first_pipeline.project, sha: Digest::SHA1.hexdigest(SecureRandom.hex)) }
+    let!(:first_artifact) { create(:ci_job_artifact, job: create(:ci_build, pipeline: first_pipeline)) }
+    let!(:second_artifact) { create(:ci_job_artifact, job: create(:ci_build, pipeline: second_pipeline)) }
 
-      expect(described_class.for_sha(first_pipeline.sha, project.id)).to eq([first_artifact])
-      expect(described_class.for_sha(second_pipeline.sha, project.id)).to eq([second_artifact])
+    it 'returns job artifacts for a given pipeline sha' do
+      expect(described_class.for_sha(first_pipeline.sha, first_pipeline.project.id)).to eq([first_artifact])
+      expect(described_class.for_sha(second_pipeline.sha, first_pipeline.project.id)).to eq([second_artifact])
+    end
+  end
+
+  describe '.for_ref' do
+    let(:first_pipeline) { create(:ci_pipeline, ref: 'first_ref') }
+    let(:second_pipeline) { create(:ci_pipeline, ref: 'second_ref', project: first_pipeline.project) }
+    let!(:first_artifact) { create(:ci_job_artifact, job: create(:ci_build, pipeline: first_pipeline)) }
+    let!(:second_artifact) { create(:ci_job_artifact, job: create(:ci_build, pipeline: second_pipeline)) }
+
+    it 'returns job artifacts for a given pipeline ref' do
+      expect(described_class.for_ref(first_pipeline.ref, first_pipeline.project.id)).to eq([first_artifact])
+      expect(described_class.for_ref(second_pipeline.ref, first_pipeline.project.id)).to eq([second_artifact])
     end
   end
 
@@ -169,9 +196,9 @@ describe Ci::JobArtifact do
   end
 
   describe 'callbacks' do
-    subject { create(:ci_job_artifact, :archive) }
-
     describe '#schedule_background_upload' do
+      subject { create(:ci_job_artifact, :archive) }
+
       context 'when object storage is disabled' do
         before do
           stub_artifacts_object_storage(enabled: false)

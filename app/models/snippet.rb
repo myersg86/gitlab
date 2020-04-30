@@ -15,6 +15,7 @@ class Snippet < ApplicationRecord
   include FromUnion
   include IgnorableColumns
   include HasRepository
+  include AfterCommitQueue
   extend ::Gitlab::Utils::Override
 
   MAX_FILE_COUNT = 1
@@ -99,6 +100,10 @@ class Snippet < ApplicationRecord
 
   def self.only_personal_snippets
     where(project_id: nil)
+  end
+
+  def self.only_project_snippets
+    where.not(project_id: nil)
   end
 
   def self.only_include_projects_visible_to(current_user = nil)
@@ -318,10 +323,6 @@ class Snippet < ApplicationRecord
     Digest::SHA256.hexdigest("#{title}#{description}#{created_at}#{updated_at}")
   end
 
-  def versioned_enabled_for?(user)
-    ::Feature.enabled?(:version_snippets, user) && repository_exists?
-  end
-
   def file_name_on_repo
     return if repository.empty?
 
@@ -338,17 +339,6 @@ class Snippet < ApplicationRecord
     # Returns an ActiveRecord::Relation.
     def search(query)
       fuzzy_search(query, [:title, :description, :file_name])
-    end
-
-    # Searches for snippets with matching content.
-    #
-    # This method uses ILIKE on PostgreSQL and LIKE on MySQL.
-    #
-    # query - The search query as a String.
-    #
-    # Returns an ActiveRecord::Relation.
-    def search_code(query)
-      fuzzy_search(query, [:content])
     end
 
     def parent_class

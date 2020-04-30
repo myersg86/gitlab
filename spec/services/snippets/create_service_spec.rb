@@ -228,36 +228,14 @@ describe Snippets::CreateService do
           expect(snippet.repository_exists?).to be_falsey
         end
       end
-
-      context 'when feature flag :version_snippets is disabled' do
-        before do
-          stub_feature_flags(version_snippets: false)
-        end
-
-        it 'does not create snippet repository' do
-          expect do
-            subject
-          end.to change(Snippet, :count).by(1)
-
-          expect(snippet.repository_exists?).to be_falsey
-        end
-
-        it 'does not try to commit files' do
-          expect_next_instance_of(described_class) do |instance|
-            expect(instance).not_to receive(:create_commit)
-          end
-
-          subject
-        end
-      end
     end
 
-    shared_examples 'after_save callback to store_mentions' do
+    shared_examples 'after_save callback to store_mentions' do |mentionable_class|
       context 'when mentionable attributes change' do
         let(:extra_opts) { { description: "Description with #{user.to_reference}" } }
 
         it 'saves mentions' do
-          expect_next_instance_of(Snippet) do |instance|
+          expect_next_instance_of(mentionable_class) do |instance|
             expect(instance).to receive(:store_mentions!).and_call_original
           end
           expect(snippet.user_mentions.count).to eq 1
@@ -266,7 +244,7 @@ describe Snippets::CreateService do
 
       context 'when mentionable attributes do not change' do
         it 'does not call store_mentions' do
-          expect_next_instance_of(Snippet) do |instance|
+          expect_next_instance_of(mentionable_class) do |instance|
             expect(instance).not_to receive(:store_mentions!)
           end
           expect(snippet.user_mentions.count).to eq 0
@@ -277,7 +255,7 @@ describe Snippets::CreateService do
         it 'does not call store_mentions' do
           base_opts.delete(:title)
 
-          expect_next_instance_of(Snippet) do |instance|
+          expect_next_instance_of(mentionable_class) do |instance|
             expect(instance).not_to receive(:store_mentions!)
           end
           expect(snippet.valid?).to be false
@@ -298,7 +276,7 @@ describe Snippets::CreateService do
       it_behaves_like 'snippet create data is tracked'
       it_behaves_like 'an error service response when save fails'
       it_behaves_like 'creates repository and files'
-      it_behaves_like 'after_save callback to store_mentions'
+      it_behaves_like 'after_save callback to store_mentions', ProjectSnippet
     end
 
     context 'when PersonalSnippet' do
@@ -310,9 +288,7 @@ describe Snippets::CreateService do
       it_behaves_like 'snippet create data is tracked'
       it_behaves_like 'an error service response when save fails'
       it_behaves_like 'creates repository and files'
-      pending('See https://gitlab.com/gitlab-org/gitlab/issues/30742') do
-        it_behaves_like 'after_save callback to store_mentions'
-      end
+      it_behaves_like 'after_save callback to store_mentions', PersonalSnippet
     end
   end
 end

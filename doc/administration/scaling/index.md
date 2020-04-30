@@ -49,7 +49,7 @@ References:
 NOTE: **Note:** Note that depending on your workflow the below recommended
 reference architectures may need to be adapted accordingly. Your workload
 is influenced by factors such as - but not limited to - how active your users are,
-how much automation you use, mirroring, and repo/change size. Additionally the
+how much automation you use, mirroring, and repository/change size. Additionally the
 shown memory values are given directly by [GCP machine types](https://cloud.google.com/compute/docs/machine-types).
 On different cloud vendors a best effort like for like can be used.
 
@@ -58,13 +58,23 @@ On different cloud vendors a best effort like for like can be used.
 From 1 to 1,000 users, a single-node [Omnibus](https://docs.gitlab.com/omnibus/) setup with frequent backups is adequate.
 Please refer to the [installation documentation](../../install/README.md) and [backup/restore documentation](https://docs.gitlab.com/omnibus/settings/backups.html#backup-and-restore-omnibus-gitlab-configuration).
 
+| Users | Configuration[^8]    | GCP type      | AWS type[^9] |
+|-------|----------------------|---------------|--------------|
+| 100   | 2 vCPU, 7.2GB Memory | n1-standard-2 | c5.2xlarge   |
+| 500   | 4 vCPU, 15GB Memory  | n1-standard-4 | m5.xlarge    |
+| 1000  | 8 vCPU, 30GB Memory  | n1-standard-8 | m5.2xlarge   |
+
 This solution is appropriate for many teams that have a single server at their disposal. With automatic backup of the GitLab repositories, configuration, and the database, this can be an optimal solution if you don't have strict availability requirements.
 
 You can also optionally configure GitLab to use an [external PostgreSQL service](../external_database.md) or an [external object storage service](../high_availability/object_storage.md) for added performance and reliability at a relatively low complexity cost.
 
 ### Up to 2,000 users
 
-NOTE: **Note:** The 2,000-user reference architecture documented below is
+For up to 2,000 users, defining the reference architecture is [being worked on](https://gitlab.com/gitlab-org/quality/performance/-/issues/223).
+
+### Up to 3,000 users
+
+NOTE: **Note:** The 3,000-user reference architecture documented below is
 designed to help your organization achieve a highly-available GitLab deployment.
 If you do not have the expertise or need to maintain a highly-available
 environment, you can have a simpler and less costly-to-operate environment by

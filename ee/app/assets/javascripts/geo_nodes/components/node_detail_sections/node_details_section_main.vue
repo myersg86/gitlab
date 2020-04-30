@@ -1,5 +1,5 @@
 <script>
-import { __ } from '~/locale';
+import { __, sprintf } from '~/locale';
 
 import GeoNodeHealthStatus from '../geo_node_health_status.vue';
 import GeoNodeActions from '../geo_node_actions.vue';
@@ -45,6 +45,23 @@ export default {
     nodeHealthStatus() {
       return this.nodeDetails.healthy ? this.nodeDetails.health : this.nodeDetails.healthStatus;
     },
+    selectiveSyncronization() {
+      const { selectiveSyncType } = this.nodeDetails;
+
+      if (selectiveSyncType === 'shards') {
+        return sprintf(__('Shards (%{shards})'), {
+          shards: this.node.selectiveSyncShards.join(', '),
+        });
+      }
+
+      if (selectiveSyncType === 'namespaces') {
+        return sprintf(__('Groups (%{groups})'), {
+          groups: this.nodeDetails.namespaces.map(n => n.full_path).join(', '),
+        });
+      }
+
+      return null;
+    },
   },
 };
 </script>
@@ -77,7 +94,16 @@ export default {
           {{ nodeVersion }}
         </span>
       </div>
-      <geo-node-health-status :status="nodeHealthStatus" />
+      <div v-if="selectiveSyncronization" class="d-flex flex-column mt-2">
+        <span class="text-secondary-700">{{ s__('GeoNodes|Selective synchronization') }}</span>
+        <span data-testid="selectiveSync" class="mt-1 font-weight-bold">
+          {{ selectiveSyncronization }}
+        </span>
+      </div>
+      <geo-node-health-status
+        :status="nodeHealthStatus"
+        :status-check-timestamp="nodeDetails.statusCheckTimestamp"
+      />
     </div>
   </div>
 </template>

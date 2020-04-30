@@ -11,10 +11,10 @@ module EE
     include ::Gitlab::Utils::StrongMemoize
 
     NAMESPACE_PLANS_TO_LICENSE_PLANS = {
-      Plan::BRONZE        => License::STARTER_PLAN,
-      Plan::SILVER        => License::PREMIUM_PLAN,
-      Plan::GOLD          => License::ULTIMATE_PLAN,
-      Plan::EARLY_ADOPTER => License::EARLY_ADOPTER_PLAN
+      ::Plan::BRONZE        => License::STARTER_PLAN,
+      ::Plan::SILVER        => License::PREMIUM_PLAN,
+      ::Plan::GOLD          => License::ULTIMATE_PLAN,
+      ::Plan::EARLY_ADOPTER => License::EARLY_ADOPTER_PLAN
     }.freeze
 
     LICENSE_PLANS_TO_NAMESPACE_PLANS = NAMESPACE_PLANS_TO_LICENSE_PLANS.invert.freeze
@@ -34,20 +34,17 @@ module EE
 
       scope :include_gitlab_subscription, -> { includes(:gitlab_subscription) }
       scope :join_gitlab_subscription, -> { joins("LEFT OUTER JOIN gitlab_subscriptions ON gitlab_subscriptions.namespace_id=namespaces.id") }
-      scope :with_shared_runners_minutes_limit, -> { where("namespaces.shared_runners_minutes_limit > 0") }
-      scope :with_extra_shared_runners_minutes_limit, -> { where("namespaces.extra_shared_runners_minutes_limit > 0") }
-      scope :with_shared_runners_minutes_exceeding_default_limit, -> do
-        where('namespace_statistics.namespace_id = namespaces.id')
-        .where('namespace_statistics.shared_runners_seconds > (namespaces.shared_runners_minutes_limit * 60)')
-      end
 
-      scope :with_ci_minutes_notification_sent, -> do
-        where('last_ci_minutes_notification_at IS NOT NULL OR last_ci_minutes_usage_notification_level IS NOT NULL')
+      scope :requiring_ci_extra_minutes_recalculation, -> do
+        joins(:namespace_statistics)
+          .where('namespaces.shared_runners_minutes_limit > 0')
+          .where('namespaces.extra_shared_runners_minutes_limit > 0')
+          .where('namespace_statistics.shared_runners_seconds > (namespaces.shared_runners_minutes_limit * 60)')
       end
 
       scope :with_feature_available_in_plan, -> (feature) do
         plans = plans_with_feature(feature)
-        matcher = Plan.where(name: plans)
+        matcher = ::Plan.where(name: plans)
           .joins(:hosted_subscriptions)
           .where("gitlab_subscriptions.namespace_id = namespaces.id")
           .select('1')
@@ -77,71 +74,8 @@ module EE
     class_methods do
       extend ::Gitlab::Utils::Override
 
-      NamespaceStatisticsNotResetError = Class.new(StandardError)
-
       def plans_with_feature(feature)
         LICENSE_PLANS_TO_NAMESPACE_PLANS.values_at(*License.plans_with_feature(feature))
-      end
-
-      def reset_ci_minutes_in_batches!
-        each_batch do |namespaces|
-          reset_ci_minutes!(namespaces)
-        end
-      end
-
-      def reset_ci_minutes_for_batch!(from_id, to_id, batch_size: 1000)
-        where(id: from_id..to_id).each_batch(of: batch_size) do |namespaces|
-          reset_ci_minutes!(namespaces)
-        end
-      end
-
-      # ensure that recalculation of extra shared runners minutes occurs in the same
-      # transaction as the reset of the namespace statistics. If the transaction fails
-      # none of the changes apply but the numbers still remain consistent with each other.
-      override :reset_ci_minutes!
-      def reset_ci_minutes!(namespaces)
-        transaction do
-          recalculate_extra_shared_runners_minutes_limits!(namespaces)
-          reset_shared_runners_seconds!(namespaces)
-          reset_ci_minutes_notifications!(namespaces)
-        end
-        true
-      rescue ActiveRecord::ActiveRecordError
-        # We don't need to print thousands of namespace_ids
-        # in the message if all batches failed.
-        # A small batch would be sufficient for investigation.
-        failed_namespace_ids = namespaces.first(10).pluck(:id)
-
-        raise EE::Namespace::NamespaceStatisticsNotResetError,
-          "#{namespaces.size} namespace shared runner minutes were not reset and the transaction was rolled back. Namespace Ids: #{failed_namespace_ids}"
-      end
-
-      def extra_minutes_left_sql
-        "GREATEST((namespaces.shared_runners_minutes_limit + namespaces.extra_shared_runners_minutes_limit) - ROUND(namespace_statistics.shared_runners_seconds / 60.0), 0)"
-      end
-
-      def recalculate_extra_shared_runners_minutes_limits!(namespaces)
-        namespaces
-          .with_shared_runners_minutes_limit
-          .with_extra_shared_runners_minutes_limit
-          .with_shared_runners_minutes_exceeding_default_limit
-          .update_all("extra_shared_runners_minutes_limit = #{extra_minutes_left_sql} FROM namespace_statistics")
-      end
-
-      def reset_shared_runners_seconds!(namespaces)
-        NamespaceStatistics
-          .where(namespace: namespaces)
-          .where.not(shared_runners_seconds: 0)
-          .update_all(shared_runners_seconds: 0, shared_runners_seconds_last_reset: Time.current)
-
-        ::ProjectStatistics
-          .where(namespace: namespaces)
-          .where.not(shared_runners_seconds: 0)
-          .update_all(shared_runners_seconds: 0, shared_runners_seconds_last_reset: Time.current)
-      end
-
-      def reset_ci_minutes_notifications!(namespaces)
-        namespaces.update_all(last_ci_minutes_notification_at: nil, last_ci_minutes_usage_notification_level: nil)
       end
     end
 
@@ -210,30 +144,20 @@ module EE
       available_features[feature]
     end
 
+    override :actual_plan
     def actual_plan
       strong_memoize(:actual_plan) do
         if parent_id
           root_ancestor.actual_plan
         else
           subscription = find_or_create_subscription
-          subscription&.hosted_plan || Plan.free || Plan.default
+          subscription&.hosted_plan
         end
-      end
-    end
-
-    def actual_limits
-      # We default to PlanLimits.new otherwise a lot of specs would fail
-      # On production each plan should already have associated limits record
-      # https://gitlab.com/gitlab-org/gitlab/issues/36037
-      actual_plan&.limits || PlanLimits.new
-    end
-
-    def actual_plan_name
-      actual_plan&.name || Plan::FREE
+      end || super
     end
 
     def plan_name_for_upgrading
-      return Plan::FREE if trial_active?
+      return ::Plan::FREE if trial_active?
 
       actual_plan_name
     end
@@ -302,9 +226,9 @@ module EE
     def plans
       @plans ||=
         if parent_id
-          Plan.hosted_plans_for_namespaces(self_and_ancestors.select(:id))
+          ::Plan.hosted_plans_for_namespaces(self_and_ancestors.select(:id))
         else
-          Plan.hosted_plans_for_namespaces(self)
+          ::Plan.hosted_plans_for_namespaces(self)
         end
     end
 
@@ -328,7 +252,7 @@ module EE
       ::Gitlab.com? &&
         parent_id.nil? &&
         trial_ends_on.blank? &&
-        [Plan::EARLY_ADOPTER, Plan::FREE].include?(actual_plan_name)
+        [::Plan::EARLY_ADOPTER, ::Plan::FREE].include?(actual_plan_name)
     end
 
     def trial_active?
@@ -342,7 +266,7 @@ module EE
     def trial_expired?
       trial_ends_on.present? &&
         trial_ends_on < Date.today &&
-        actual_plan_name == Plan::FREE
+        actual_plan_name == ::Plan::FREE
     end
 
     # A namespace may not have a file template project
@@ -362,23 +286,23 @@ module EE
     end
 
     def free_plan?
-      actual_plan_name == Plan::FREE
+      actual_plan_name == ::Plan::FREE
     end
 
     def early_adopter_plan?
-      actual_plan_name == Plan::EARLY_ADOPTER
+      actual_plan_name == ::Plan::EARLY_ADOPTER
     end
 
     def bronze_plan?
-      actual_plan_name == Plan::BRONZE
+      actual_plan_name == ::Plan::BRONZE
     end
 
     def silver_plan?
-      actual_plan_name == Plan::SILVER
+      actual_plan_name == ::Plan::SILVER
     end
 
     def gold_plan?
-      actual_plan_name == Plan::GOLD
+      actual_plan_name == ::Plan::GOLD
     end
 
     def use_elasticsearch?

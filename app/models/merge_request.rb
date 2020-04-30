@@ -32,6 +32,7 @@ class MergeRequest < ApplicationRecord
   belongs_to :target_project, class_name: "Project"
   belongs_to :source_project, class_name: "Project"
   belongs_to :merge_user, class_name: "User"
+  belongs_to :sprint
 
   has_internal_id :iid, scope: :target_project, track_if: -> { !importing? }, init: ->(s) { s&.target_project&.merge_requests&.maximum(:iid) }
 
@@ -1126,26 +1127,6 @@ class MergeRequest < ApplicationRecord
   def default_squash_commit_message
     strong_memoize(:default_squash_commit_message) do
       recent_commits.without_merge_commits.reverse_each.find(&:description?)&.safe_message || title
-    end
-  end
-
-  # Return array of possible target branches
-  # depends on target project of MR
-  def target_branches
-    if target_project.nil?
-      []
-    else
-      target_project.repository.branch_names
-    end
-  end
-
-  # Return array of possible source branches
-  # depends on source project of MR
-  def source_branches
-    if source_project.nil?
-      []
-    else
-      source_project.repository.branch_names
     end
   end
 

@@ -10,6 +10,7 @@ import Header from 'ee/vulnerabilities/components/header.vue';
 import StatusDescription from 'ee/vulnerabilities/components/status_description.vue';
 import ResolutionAlert from 'ee/vulnerabilities/components/resolution_alert.vue';
 import VulnerabilityStateDropdown from 'ee/vulnerabilities/components/vulnerability_state_dropdown.vue';
+import VulnerabilitiesEventBus from 'ee/vulnerabilities/components/vulnerabilities_event_bus';
 import { VULNERABILITY_STATE_OBJECTS } from 'ee/vulnerabilities/constants';
 
 const vulnerabilityStateEntries = Object.entries(VULNERABILITY_STATE_OBJECTS);
@@ -80,6 +81,7 @@ describe('Vulnerability Header', () => {
 
   afterEach(() => {
     wrapper.destroy();
+    wrapper = null;
     mockAxios.reset();
     createFlash.mockReset();
   });
@@ -99,6 +101,36 @@ describe('Vulnerability Header', () => {
 
       return waitForPromises().then(() => {
         expect(mockAxios.history.post).toHaveLength(1); // Check that a POST request was made.
+      });
+    });
+
+    it('when the vulnerability state dropdown emits a change event, the state badge updates', () => {
+      const newState = 'dismiss';
+      mockAxios.onPost().reply(201, { state: newState });
+      expect(findBadge().text()).not.toBe(newState);
+
+      const dropdown = wrapper.find(VulnerabilityStateDropdown);
+
+      dropdown.vm.$emit('change');
+
+      return waitForPromises().then(() => {
+        expect(findBadge().text()).toBe(newState);
+      });
+    });
+
+    it('when the vulnerability state dropdown emits a change event, the vulnerabilities event bus event is emitted with the proper event', () => {
+      const newState = 'dismiss';
+      jest.spyOn(VulnerabilitiesEventBus, '$emit');
+      mockAxios.onPost().reply(201, { state: newState });
+      expect(findBadge().text()).not.toBe(newState);
+
+      const dropdown = wrapper.find(VulnerabilityStateDropdown);
+
+      dropdown.vm.$emit('change');
+
+      return waitForPromises().then(() => {
+        expect(VulnerabilitiesEventBus.$emit).toHaveBeenCalledTimes(1);
+        expect(VulnerabilitiesEventBus.$emit).toHaveBeenCalledWith('VULNERABILITY_STATE_CHANGE');
       });
     });
 
@@ -208,7 +240,7 @@ describe('Vulnerability Header', () => {
     beforeEach(() => {
       createWrapper({
         resolved_on_default_branch: true,
-        default_branch_name: branchName,
+        project_default_branch: branchName,
       });
     });
 
@@ -248,7 +280,7 @@ describe('Vulnerability Header', () => {
         createWrapper({ state, [`${state}_by_id`]: user.id });
 
         return waitForPromises().then(() => {
-          expect(mockAxios.history.get.length).toBe(1);
+          expect(mockAxios.history.get).toHaveLength(1);
           expect(findStatusDescription().props('user')).toEqual(user);
         });
       },
@@ -258,7 +290,7 @@ describe('Vulnerability Header', () => {
       createWrapper({ state: 'detected' });
 
       return waitForPromises().then(() => {
-        expect(mockAxios.history.get.length).toBe(0);
+        expect(mockAxios.history.get).toHaveLength(0);
         expect(findStatusDescription().props('user')).toBeUndefined();
       });
     });
@@ -270,7 +302,7 @@ describe('Vulnerability Header', () => {
 
       return waitForPromises().then(() => {
         expect(createFlash).toHaveBeenCalledTimes(1);
-        expect(mockAxios.history.get.length).toBe(1);
+        expect(mockAxios.history.get).toHaveLength(1);
       });
     });
 
@@ -281,7 +313,7 @@ describe('Vulnerability Header', () => {
       expect(findStatusDescription().props('isLoadingUser')).toBe(true);
 
       return waitForPromises().then(() => {
-        expect(mockAxios.history.get.length).toBe(1);
+        expect(mockAxios.history.get).toHaveLength(1);
         expect(findStatusDescription().props('isLoadingUser')).toBe(false);
       });
     });

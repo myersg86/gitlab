@@ -113,7 +113,7 @@ describe('Design management design index page', () => {
   });
 
   it('passes the correct amount of participants to the Participants component', () => {
-    expect(findParticipants().props('participants').length).toBe(1);
+    expect(findParticipants().props('participants')).toHaveLength(1);
   });
 
   describe('when has no discussions', () => {
@@ -124,7 +124,7 @@ describe('Design management design index page', () => {
         design: {
           ...design,
           discussions: {
-            edges: [],
+            nodes: [],
           },
         },
       });
@@ -149,7 +149,7 @@ describe('Design management design index page', () => {
     });
 
     it('renders correct amount of discussions', () => {
-      expect(findDiscussions().length).toBe(1);
+      expect(findDiscussions()).toHaveLength(1);
     });
   });
 
@@ -160,7 +160,7 @@ describe('Design management design index page', () => {
       design: {
         ...design,
         discussions: {
-          edges: [],
+          nodes: [],
         },
       },
     });
@@ -179,7 +179,7 @@ describe('Design management design index page', () => {
       design: {
         ...design,
         discussions: {
-          edges: [],
+          nodes: [],
         },
       },
       annotationCoordinates,
@@ -206,7 +206,7 @@ describe('Design management design index page', () => {
       design: {
         ...design,
         discussions: {
-          edges: [],
+          nodes: [],
         },
       },
       annotationCoordinates,
@@ -234,7 +234,7 @@ describe('Design management design index page', () => {
         design: {
           ...design,
           discussions: {
-            edges: [],
+            nodes: [],
           },
         },
         errorMessage: 'woops',

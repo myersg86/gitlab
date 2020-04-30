@@ -165,7 +165,7 @@
   :weight: 1
   :idempotent: 
 - :name: cronjob:sync_seat_link
-  :feature_category: :analysis
+  :feature_category: :billing
   :has_external_dependencies: 
   :urgency: :low
   :resource_boundary: :unknown
@@ -409,13 +409,6 @@
   :resource_boundary: :unknown
   :weight: 1
   :idempotent: 
-- :name: personal_access_tokens:personal_access_tokens_policy
-  :feature_category: :authentication_and_authorization
-  :has_external_dependencies: 
-  :urgency: :low
-  :resource_boundary: :unknown
-  :weight: 1
-  :idempotent: 
 - :name: pipeline_default:ci_trigger_downstream_subscriptions
   :feature_category: :continuous_integration
   :has_external_dependencies: 
@@ -585,7 +578,7 @@
   :weight: 1
   :idempotent: true
 - :name: sync_seat_link_request
-  :feature_category: :analysis
+  :feature_category: :billing
   :has_external_dependencies: true
   :urgency: :low
   :resource_boundary: :unknown

@@ -17,9 +17,9 @@ that apply to all GitLab content, not just documentation.
 
 ### Why a single source of truth
 
-The documentation of GitLab products and features is the SSOT for all information related to implementation, usage, and troubleshooting. It evolves continually, in keeping with new products and features, and with improvements for clarity, accuracy, and completeness.
+The documentation of GitLab products and features is the SSOT for all information related to implementation, usage, and troubleshooting. It evolves continuously, in keeping with new products and features, and with improvements for clarity, accuracy, and completeness.
 
-This policy prevents information silos, ensuring that it remains easy to find information about GitLab products.
+This policy prevents information silos, making it easier to find information about GitLab products.
 
 It also informs decisions about the kinds of content we include in our documentation.
 
@@ -46,12 +46,12 @@ In the software industry, it is a best practice to organize documentation in dif
 1. Explanation
 1. Reference (for example, a glossary)
 
-At GitLab, we have so many product changes in our monthly releases that we can't afford to continually update multiple types of information.
+At GitLab, we have so many product changes in our monthly releases that we can't afford to continuously update multiple types of information.
 If we have multiple types, the information will become outdated. Therefore, we have a [single template](structure.md) for documentation.
 
 We currently do not distinguish specific document types, although we are open to reconsidering this policy
 once the documentation has reached a future stage of maturity and quality. If you are reading this, then despite our
-continual improvement efforts, that point hasn't been reached.
+continuous improvement efforts, that point hasn't been reached.
 
 ### Link instead of summarize
 
@@ -61,7 +61,7 @@ Instead, link to the SSOT and explain why it is important to consume the informa
 
 ### Organize by topic, not by type
 
-Beyond top-level audience-type folders (for example, `administration`), we organize content by topic, not by type, so that it can be located as easily as possible within the single-source-of-truth (SSOT) section for the subject matter.
+Beyond top-level audience-type folders (for example, `administration`), we organize content by topic, not by type, so it can be located as easily as possible within the single-source-of-truth (SSOT) section for the subject matter.
 
 For example, do not create groupings of similar media types. For example:
 
@@ -76,7 +76,7 @@ and cross-link between any related content.
 
 ### Docs-first methodology
 
-We employ a **docs-first methodology** to help ensure that the docs remain a complete and trusted resource, and to make communicating about the use of GitLab more efficient.
+We employ a **docs-first methodology** to help ensure the docs remain a complete and trusted resource, and to make communicating about the use of GitLab more efficient.
 
 - If the answer to a question exists in documentation, share the link to the docs instead of rephrasing the information.
 - When you encounter new information not available in GitLab’s documentation (for example, when working on a support case or testing a feature), your first step should be to create a merge request (MR) to add this information to the docs. You can then share the MR in order to communicate this information.
@@ -129,13 +129,13 @@ correctly, but is not the current standard for GitLab documentation).
 A rule that could cause confusion is `MD044/proper-names`, as it might not be immediately
 clear what caused markdownlint to fail, or how to correct the failure. This rule
 checks a list of known words, listed in the `.markdownlint.json` file in each project,
-to verify that proper capitalization and backticks are used. Words in backticks will
+to verify proper use of capitalization and backticks. Words in backticks will
 be ignored by markdownlint.
 
 In general, product names should follow the exact capitalization of the official names
 of the products, protocols, and so on.
 
-Some examples that will fail if incorrect capitalization is used:
+Some examples fail if incorrect capitalization is used:
 
 - MinIO (needs capital `IO`)
 - NGINX (needs all capitals)
@@ -252,6 +252,8 @@ GitLab documentation should be clear and easy to understand.
 - Avoid uncommon words.
 - Don't write in the first person singular.
   - Instead of "I" or "me," use "we," "you," "us," or "one."
+  - When possible, stay user focused by writing in the second person ("you" or the imperative).
+- Don't overuse "that". In many cases, you can remove "that" from a sentence and improve readability.
 
 ### Point of view
 
@@ -300,6 +302,9 @@ as even native users of English might misunderstand them.
   - Instead of "i.e.," use "that is."
   - Instead of "e.g.," use "for example," "such as," "for instance," or "like."
   - Instead of "etc.," either use "and so on" or consider editing it out, since it can be vague.
+- Avoid using the word *Currently* when talking about the product or its
+  features. The documentation describes the product as it is, and not as it
+  will be at some indeterminate point in the future.
 
 ### Contractions
 
@@ -1216,7 +1221,7 @@ a helpful link back to how the feature was developed.
   to the following should be added immediately below the heading as a blockquote:
   - `> Introduced in GitLab 11.3.`.
 
-- Whenever possible, version text should have a link to the issue, merge request, or epic that introduced the feature.
+- Whenever possible, version text should have a link to the _completed_ issue, merge request, or epic that introduced the feature.
   An issue is preferred over a merge request, and a merge request is preferred over an epic. For example:
   - `> [Introduced](<link-to-issue>) in GitLab 11.3.`.
 
@@ -1243,6 +1248,20 @@ a helpful link back to how the feature was developed.
 
 NOTE: **Note:**
 Version text must be on its own line and surounded by blank lines to render correctly.
+
+### Versions in the past or future
+
+When describing functionality available in past or future versions, use:
+
+- **Earlier**, and not **older** or **before**.
+- **Later**, and not **newer** or **after**.
+
+For example:
+
+- Available in GitLab 12.3 and earlier.
+- Available in GitLab 12.4 and later.
+- If using GitLab 11.4 or earlier, ...
+- If using GitLab 10.6 or later, ...
 
 ### Importance of referencing GitLab versions and tiers
 

@@ -199,7 +199,7 @@ of commits to the fewest, and displayed on a nice graph:
 
 ## Repository graph
 
-The repository graph displays visually the Git flow strategy used in that repository:
+The repository graph displays the history of the repository network visually, including branches and merges. This can help you visualize the Git flow strategy used in the repository:
 
 ![repository Git flow](img/repo_graph.png)
 
@@ -215,7 +215,7 @@ minutes.
 ![Repository Languages bar](img/repository_languages_v12_2.gif)
 
 Not all files are detected, among others; documentation,
-vendored code, and most markup languages are excluded. This behaviour can be
+vendored code, and most markup languages are excluded. This behavior can be
 adjusted by overriding the default. For example, to enable `.proto` files to be
 detected, add the following to `.gitattributes` in the root of your repository.
 

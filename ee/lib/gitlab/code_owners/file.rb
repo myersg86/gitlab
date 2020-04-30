@@ -3,8 +3,9 @@
 module Gitlab
   module CodeOwners
     class File
-      def initialize(blob)
+      def initialize(blob, project = nil)
         @blob = blob
+        @project = project
       end
 
       def parsed_data
@@ -40,6 +41,10 @@ module Gitlab
       end
 
       def get_parsed_data
+        if Feature.enabled?(:sectional_codeowners, @project, default_enabled: false)
+          return get_parsed_sectional_data
+        end
+
         parsed = {}
 
         data.lines.each do |line|
@@ -55,6 +60,10 @@ module Gitlab
         end
 
         parsed
+      end
+
+      def get_parsed_sectional_data
+        {}
       end
 
       def normalize_pattern(pattern)

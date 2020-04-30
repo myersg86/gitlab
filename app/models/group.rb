@@ -15,6 +15,7 @@ class Group < Namespace
   include WithUploads
   include Gitlab::Utils::StrongMemoize
   include GroupAPICompatibility
+  include HasWiki
 
   ACCESS_REQUEST_APPROVERS_TO_BE_NOTIFIED_LIMIT = 10
 
@@ -30,6 +31,7 @@ class Group < Namespace
   has_many :members_and_requesters, as: :source, class_name: 'GroupMember'
 
   has_many :milestones
+  has_many :sprints
   has_many :shared_group_links, foreign_key: :shared_with_group_id, class_name: 'GroupGroupLink'
   has_many :shared_with_group_links, foreign_key: :shared_group_id, class_name: 'GroupGroupLink'
   has_many :shared_groups, through: :shared_group_links, source: :shared_group
@@ -58,6 +60,8 @@ class Group < Namespace
   has_one :import_export_upload
 
   has_many :import_failures, inverse_of: :group
+
+  has_one :import_state, class_name: 'GroupImportState', inverse_of: :group
 
   has_many :group_deploy_tokens
   has_many :deploy_tokens, through: :group_deploy_tokens
@@ -168,7 +172,7 @@ class Group < Namespace
     notification_settings.find { |n| n.notification_email.present? }&.notification_email
   end
 
-  def to_reference(_from = nil, full: nil)
+  def to_reference(_from = nil, target_project: nil, full: nil)
     "#{self.class.reference_prefix}#{full_path}"
   end
 

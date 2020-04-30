@@ -6,13 +6,14 @@ import MockAdapter from 'axios-mock-adapter';
 import axios from '~/lib/utils/axios_utils';
 import statusCodes from '~/lib/utils/http_status';
 import { metricStates } from '~/monitoring/constants';
-import Dashboard from '~/monitoring/components/dashboard_with_alerts.vue';
+import Dashboard from '~/monitoring/components/dashboard.vue';
 
 import DateTimePicker from '~/vue_shared/components/date_time_picker/date_time_picker.vue';
 import CustomMetricsFormFields from '~/custom_metrics/components/custom_metrics_form_fields.vue';
 import DashboardsDropdown from '~/monitoring/components/dashboards_dropdown.vue';
+import EmptyState from '~/monitoring/components/empty_state.vue';
 import GroupEmptyState from '~/monitoring/components/group_empty_state.vue';
-import PanelType from '~/monitoring/components/panel_type_with_alerts.vue';
+import DashboardPanel from '~/monitoring/components/dashboard_panel.vue';
 import { createStore } from '~/monitoring/stores';
 import * as types from '~/monitoring/stores/mutation_types';
 import { setupStoreWithDashboard, setMetricResult, setupStoreWithData } from '../store_utils';
@@ -33,9 +34,6 @@ describe('Dashboard', () => {
   const createShallowWrapper = (props = {}, options = {}) => {
     wrapper = shallowMount(Dashboard, {
       propsData: { ...propsData, ...props },
-      methods: {
-        fetchData: jest.fn(),
-      },
       store,
       ...options,
     });
@@ -44,10 +42,8 @@ describe('Dashboard', () => {
   const createMountedWrapper = (props = {}, options = {}) => {
     wrapper = mount(Dashboard, {
       propsData: { ...propsData, ...props },
-      methods: {
-        fetchData: jest.fn(),
-      },
       store,
+      stubs: ['graph-group', 'dashboard-panel'],
       ...options,
     });
   };
@@ -55,14 +51,14 @@ describe('Dashboard', () => {
   beforeEach(() => {
     store = createStore();
     mock = new MockAdapter(axios);
+    jest.spyOn(store, 'dispatch').mockResolvedValue();
   });
 
   afterEach(() => {
-    if (wrapper) {
-      wrapper.destroy();
-      wrapper = null;
-    }
     mock.restore();
+    if (store.dispatch.mockReset) {
+      store.dispatch.mockReset();
+    }
   });
 
   describe('no metrics are available yet', () => {
@@ -103,9 +99,7 @@ describe('Dashboard', () => {
 
   describe('request information to the server', () => {
     it('calls to set time range and fetch data', () => {
-      jest.spyOn(store, 'dispatch');
-
-      createShallowWrapper({ hasMetrics: true }, { methods: {} });
+      createShallowWrapper({ hasMetrics: true });
 
       return wrapper.vm.$nextTick().then(() => {
         expect(store.dispatch).toHaveBeenCalledWith(
@@ -118,18 +112,18 @@ describe('Dashboard', () => {
     });
 
     it('shows up a loading state', () => {
-      createShallowWrapper({ hasMetrics: true }, { methods: {} });
+      store.state.monitoringDashboard.emptyState = 'loading';
+
+      createShallowWrapper({ hasMetrics: true });
 
       return wrapper.vm.$nextTick().then(() => {
-        expect(wrapper.vm.emptyState).toEqual('loading');
+        expect(wrapper.find(EmptyState).exists()).toBe(true);
+        expect(wrapper.find(EmptyState).props('selectedState')).toBe('loading');
       });
     });
 
     it('hides the group panels when showPanels is false', () => {
-      createMountedWrapper(
-        { hasMetrics: true, showPanels: false },
-        { stubs: ['graph-group', 'panel-type'] },
-      );
+      createMountedWrapper({ hasMetrics: true, showPanels: false });
 
       setupStoreWithData(wrapper.vm.$store);
 
@@ -142,7 +136,7 @@ describe('Dashboard', () => {
     it('fetches the metrics data with proper time window', () => {
       jest.spyOn(store, 'dispatch');
 
-      createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+      createMountedWrapper({ hasMetrics: true });
 
       wrapper.vm.$store.commit(
         `monitoringDashboard/${types.RECEIVE_ENVIRONMENTS_DATA_SUCCESS}`,
@@ -157,7 +151,7 @@ describe('Dashboard', () => {
 
   describe('when all requests have been commited by the store', () => {
     beforeEach(() => {
-      createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+      createMountedWrapper({ hasMetrics: true });
 
       setupStoreWithData(wrapper.vm.$store);
 
@@ -186,7 +180,7 @@ describe('Dashboard', () => {
   });
 
   it('hides the environments dropdown list when there is no environments', () => {
-    createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+    createMountedWrapper({ hasMetrics: true });
 
     setupStoreWithDashboard(wrapper.vm.$store);
 
@@ -196,7 +190,7 @@ describe('Dashboard', () => {
   });
 
   it('renders the datetimepicker dropdown', () => {
-    createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+    createMountedWrapper({ hasMetrics: true });
 
     setupStoreWithData(wrapper.vm.$store);
 
@@ -206,7 +200,7 @@ describe('Dashboard', () => {
   });
 
   it('renders the refresh dashboard button', () => {
-    createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+    createMountedWrapper({ hasMetrics: true });
 
     setupStoreWithData(wrapper.vm.$store);
 
@@ -215,6 +209,97 @@ describe('Dashboard', () => {
 
       expect(refreshBtn).toHaveLength(1);
       expect(refreshBtn.is(GlDeprecatedButton)).toBe(true);
+    });
+  });
+
+  describe('single panel expands to "full screen" mode', () => {
+    const findExpandedPanel = () => wrapper.find({ ref: 'expandedPanel' });
+
+    describe('when the panel is not expanded', () => {
+      beforeEach(() => {
+        createShallowWrapper({ hasMetrics: true });
+        setupStoreWithData(wrapper.vm.$store);
+        return wrapper.vm.$nextTick();
+      });
+
+      it('expanded panel is not visible', () => {
+        expect(findExpandedPanel().isVisible()).toBe(false);
+      });
+
+      it('can set a panel as expanded', () => {
+        const panel = wrapper.findAll(DashboardPanel).at(1);
+
+        jest.spyOn(store, 'dispatch');
+
+        panel.vm.$emit('expand');
+
+        const groupData = metricsDashboardViewModel.panelGroups[0];
+
+        expect(store.dispatch).toHaveBeenCalledWith('monitoringDashboard/setExpandedPanel', {
+          group: groupData.group,
+          panel: expect.objectContaining({
+            id: groupData.panels[0].id,
+          }),
+        });
+      });
+    });
+
+    describe('when the panel is expanded', () => {
+      let group;
+      let panel;
+
+      const MockPanel = {
+        template: `<div><slot name="topLeft"/></div>`,
+      };
+
+      beforeEach(() => {
+        createShallowWrapper({ hasMetrics: true }, { stubs: { DashboardPanel: MockPanel } });
+        setupStoreWithData(wrapper.vm.$store);
+
+        const { panelGroups } = wrapper.vm.$store.state.monitoringDashboard.dashboard;
+
+        group = panelGroups[0].group;
+        [panel] = panelGroups[0].panels;
+
+        wrapper.vm.$store.commit(`monitoringDashboard/${types.SET_EXPANDED_PANEL}`, {
+          group,
+          panel,
+        });
+        return wrapper.vm.$nextTick();
+      });
+
+      it('displays a single panel and others are hidden', () => {
+        const panels = wrapper.findAll(MockPanel);
+        const visiblePanels = panels.filter(w => w.isVisible());
+
+        expect(findExpandedPanel().isVisible()).toBe(true);
+        // v-show for hiding panels is more performant than v-if
+        // check for panels to be hidden.
+        expect(panels.length).toBe(metricsDashboardPanelCount + 1);
+        expect(visiblePanels.length).toBe(1);
+      });
+
+      it('sets a link to the expanded panel', () => {
+        const searchQuery =
+          '?group=System%20metrics%20(Kubernetes)&title=Memory%20Usage%20(Total)&y_label=Total%20Memory%20Used%20(GB)';
+
+        expect(findExpandedPanel().attributes('clipboard-text')).toEqual(
+          expect.stringContaining(searchQuery),
+        );
+      });
+
+      it('restores full dashboard by clicking `back`', () => {
+        const backBtn = wrapper.find({ ref: 'goBackBtn' });
+        expect(backBtn.exists()).toBe(true);
+
+        jest.spyOn(store, 'dispatch');
+        backBtn.vm.$emit('click');
+
+        expect(store.dispatch).toHaveBeenCalledWith(
+          'monitoringDashboard/clearExpandedPanel',
+          undefined,
+        );
+      });
     });
   });
 
@@ -249,17 +334,15 @@ describe('Dashboard', () => {
 
   describe('searchable environments dropdown', () => {
     beforeEach(() => {
-      createMountedWrapper(
-        { hasMetrics: true },
-        {
-          attachToDocument: true,
-          stubs: ['graph-group', 'panel-type'],
-        },
-      );
+      createMountedWrapper({ hasMetrics: true }, { attachToDocument: true });
 
       setupStoreWithData(wrapper.vm.$store);
 
       return wrapper.vm.$nextTick();
+    });
+
+    afterEach(() => {
+      wrapper.destroy();
     });
 
     it('renders a search input', () => {
@@ -330,8 +413,10 @@ describe('Dashboard', () => {
     const findRearrangeButton = () => wrapper.find('.js-rearrange-button');
 
     beforeEach(() => {
-      createShallowWrapper({ hasMetrics: true });
+      // call original dispatch
+      store.dispatch.mockRestore();
 
+      createShallowWrapper({ hasMetrics: true });
       setupStoreWithData(wrapper.vm.$store);
 
       return wrapper.vm.$nextTick();
@@ -465,7 +550,7 @@ describe('Dashboard', () => {
 
   describe('Dashboard dropdown', () => {
     beforeEach(() => {
-      createMountedWrapper({ hasMetrics: true }, { stubs: ['graph-group', 'panel-type'] });
+      createMountedWrapper({ hasMetrics: true });
 
       wrapper.vm.$store.commit(
         `monitoringDashboard/${types.SET_ALL_DASHBOARDS}`,
@@ -484,15 +569,12 @@ describe('Dashboard', () => {
 
   describe('external dashboard link', () => {
     beforeEach(() => {
-      createMountedWrapper(
-        {
-          hasMetrics: true,
-          showPanels: false,
-          showTimeWindowDropdown: false,
-          externalDashboardUrl: '/mockUrl',
-        },
-        { stubs: ['graph-group', 'panel-type'] },
-      );
+      createMountedWrapper({
+        hasMetrics: true,
+        showPanels: false,
+        showTimeWindowDropdown: false,
+        externalDashboardUrl: '/mockUrl',
+      });
 
       return wrapper.vm.$nextTick();
     });
@@ -508,11 +590,12 @@ describe('Dashboard', () => {
 
   describe('Clipboard text in panels', () => {
     const currentDashboard = 'TEST_DASHBOARD';
+    const panelIndex = 1; // skip expanded panel
 
-    const getClipboardTextAt = i =>
+    const getClipboardTextFirstPanel = () =>
       wrapper
-        .findAll(PanelType)
-        .at(i)
+        .findAll(DashboardPanel)
+        .at(panelIndex)
         .props('clipboardText');
 
     beforeEach(() => {
@@ -524,18 +607,18 @@ describe('Dashboard', () => {
     });
 
     it('contains a link to the dashboard', () => {
-      expect(getClipboardTextAt(0)).toContain(`dashboard=${currentDashboard}`);
-      expect(getClipboardTextAt(0)).toContain(`group=`);
-      expect(getClipboardTextAt(0)).toContain(`title=`);
-      expect(getClipboardTextAt(0)).toContain(`y_label=`);
+      expect(getClipboardTextFirstPanel()).toContain(`dashboard=${currentDashboard}`);
+      expect(getClipboardTextFirstPanel()).toContain(`group=`);
+      expect(getClipboardTextFirstPanel()).toContain(`title=`);
+      expect(getClipboardTextFirstPanel()).toContain(`y_label=`);
     });
 
     it('strips the undefined parameter', () => {
       wrapper.setProps({ currentDashboard: undefined });
 
       return wrapper.vm.$nextTick(() => {
-        expect(getClipboardTextAt(0)).not.toContain(`dashboard=`);
-        expect(getClipboardTextAt(0)).toContain(`y_label=`);
+        expect(getClipboardTextFirstPanel()).not.toContain(`dashboard=`);
+        expect(getClipboardTextFirstPanel()).toContain(`y_label=`);
       });
     });
 
@@ -543,8 +626,8 @@ describe('Dashboard', () => {
       wrapper.setProps({ currentDashboard: null });
 
       return wrapper.vm.$nextTick(() => {
-        expect(getClipboardTextAt(0)).not.toContain(`dashboard=`);
-        expect(getClipboardTextAt(0)).toContain(`y_label=`);
+        expect(getClipboardTextFirstPanel()).not.toContain(`dashboard=`);
+        expect(getClipboardTextFirstPanel()).toContain(`y_label=`);
       });
     });
   });

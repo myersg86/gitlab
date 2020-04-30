@@ -56,7 +56,7 @@ Use the switches to enable or disable the following features:
 | **Forks**                         | ✓                         | Enables [forking](../index.md#fork-a-project) functionality                                                                                                                                    |
 | **Pipelines**                     | ✓                         | Enables [CI/CD](../../../ci/README.md) functionality                                                                                                                                           |
 | **Container Registry**            |                           | Activates a [registry](../../packages/container_registry/) for your docker images                                                                                                              |
-| **Git Large File Storage**        |                           | Enables the use of [large files](../../../topics/git/lfs/index.md#git-lfs)                                                                                    |
+| **Git Large File Storage**        |                           | Enables the use of [large files](../../../topics/git/lfs/index.md#git-large-file-storage-lfs)                                                                                    |
 | **Packages**                      |                           | Supports configuration of a [package registry](../../../administration/packages/index.md#gitlab-package-registry-administration-premium-only) functionality                                    |
 | **Wiki**                          | ✓                         | Enables a separate system for [documentation](../wiki/)                                                                                                                                        |
 | **Snippets**                      | ✓                         | Enables [sharing of code and text](../../snippets.md)                                                                                                                                          |
@@ -67,7 +67,7 @@ Some features depend on others:
 - If you disable the **Issues** option, GitLab also removes the following
   features:
   - **Issue Boards**
-  - [**Service Desk**](#service-desk-premium) **(PREMIUM)**
+  - [**Service Desk**](#service-desk-starter) **(STARTER)**
 
   NOTE: **Note:**
   When the **Issues** option is disabled, you can still access **Milestones**
@@ -106,7 +106,7 @@ Set up your project's merge request settings:
 
 ![project's merge request settings](img/merge_requests_settings.png)
 
-### Service Desk **(PREMIUM)**
+### Service Desk **(STARTER)**
 
 Enable [Service Desk](../service_desk.md) for your project to offer customer support.
 
@@ -257,7 +257,7 @@ To do so:
 1. Confirm the action by typing the project's path as instructed.
 
 NOTE: **Note:**
-Only project maintainers have the [permissions](../../permissions.md#project-members-permissions)
+Only project owners have the [permissions](../../permissions.md#project-members-permissions)
 to remove a fork relationship.
 
 ## Operations settings

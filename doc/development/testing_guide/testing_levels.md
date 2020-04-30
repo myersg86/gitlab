@@ -467,7 +467,7 @@ Formal definitions:
 
 GitLab consists of [multiple pieces](../architecture.md#components) such as [GitLab Shell](https://gitlab.com/gitlab-org/gitlab-shell), [GitLab Workhorse](https://gitlab.com/gitlab-org/gitlab-workhorse),
 [Gitaly](https://gitlab.com/gitlab-org/gitaly), [GitLab Pages](https://gitlab.com/gitlab-org/gitlab-pages), [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-runner), and GitLab Rails. All theses pieces
-are configured and packaged by [GitLab Omnibus](https://gitlab.com/gitlab-org/omnibus-gitlab).
+are configured and packaged by [Omnibus GitLab](https://gitlab.com/gitlab-org/omnibus-gitlab).
 
 The QA framework and instance-level scenarios are [part of GitLab Rails](https://gitlab.com/gitlab-org/gitlab-foss/tree/master/qa) so that
 they're always in-sync with the codebase (especially the views).
@@ -540,7 +540,7 @@ and the basic idea is that the cost of a test includes:
 
 ### Frontend-related tests
 
-There are cases where the behaviour you are testing is not worth the time spent
+There are cases where the behavior you are testing is not worth the time spent
 running the full application, for example, if you are testing styling, animation,
 edge cases or small actions that don't involve the backend,
 you should write an integration test using Jasmine.

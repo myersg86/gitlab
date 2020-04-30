@@ -310,7 +310,9 @@ module ApplicationSettingsHelper
       :custom_http_clone_url_root,
       :snippet_size_limit,
       :email_restrictions_enabled,
-      :email_restrictions
+      :email_restrictions,
+      :issues_create_limit,
+      :raw_blob_request_limit
     ]
   end
 

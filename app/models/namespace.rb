@@ -135,11 +135,6 @@ class Namespace < ApplicationRecord
       name = host.delete_suffix(gitlab_host)
       Namespace.where(parent_id: nil).by_path(name)
     end
-
-    # overridden in ee
-    def reset_ci_minutes!(namespace_id)
-      false
-    end
   end
 
   def default_branch_protection
@@ -344,6 +339,21 @@ class Namespace < ApplicationRecord
     self_and_ancestors(hierarchy_order: :asc)
       .find { |n| !n.read_attribute(name).nil? }
       .try(name)
+  end
+
+  def actual_plan
+    Plan.default
+  end
+
+  def actual_limits
+    # We default to PlanLimits.new otherwise a lot of specs would fail
+    # On production each plan should already have associated limits record
+    # https://gitlab.com/gitlab-org/gitlab/issues/36037
+    actual_plan.limits || PlanLimits.new
+  end
+
+  def actual_plan_name
+    actual_plan.name
   end
 
   private

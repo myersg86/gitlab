@@ -20,6 +20,7 @@ describe Project do
     it { is_expected.to have_many(:merge_requests) }
     it { is_expected.to have_many(:issues) }
     it { is_expected.to have_many(:milestones) }
+    it { is_expected.to have_many(:sprints) }
     it { is_expected.to have_many(:project_members).dependent(:delete_all) }
     it { is_expected.to have_many(:users).through(:project_members) }
     it { is_expected.to have_many(:requesters).dependent(:delete_all) }
@@ -110,12 +111,19 @@ describe Project do
     it { is_expected.to have_many(:source_pipelines) }
     it { is_expected.to have_many(:prometheus_alert_events) }
     it { is_expected.to have_many(:self_managed_prometheus_alert_events) }
+    it { is_expected.to have_many(:alert_management_alerts) }
     it { is_expected.to have_many(:jira_imports) }
+    it { is_expected.to have_many(:metrics_users_starred_dashboards).inverse_of(:project) }
 
     it_behaves_like 'model with repository' do
       let_it_be(:container) { create(:project, :repository, path: 'somewhere') }
       let(:stubbed_container) { build_stubbed(:project) }
       let(:expected_full_path) { "#{container.namespace.full_path}/somewhere" }
+    end
+
+    it_behaves_like 'model with wiki' do
+      let(:container) { create(:project, :wiki_repo) }
+      let(:container_without_wiki) { create(:project) }
     end
 
     it 'has an inverse relationship with merge requests' do
@@ -261,27 +269,6 @@ describe Project do
       expect_any_instance_of(described_class).to receive(:visibility_level_allowed_by_group).and_call_original
 
       create(:project)
-    end
-
-    describe 'wiki path conflict' do
-      context "when the new path has been used by the wiki of other Project" do
-        it 'has an error on the name attribute' do
-          new_project = build_stubbed(:project, namespace_id: project.namespace_id, path: "#{project.path}.wiki")
-
-          expect(new_project).not_to be_valid
-          expect(new_project.errors[:name].first).to eq(_('has already been taken'))
-        end
-      end
-
-      context "when the new wiki path has been used by the path of other Project" do
-        it 'has an error on the name attribute' do
-          project_with_wiki_suffix = create(:project, path: 'foo.wiki')
-          new_project = build_stubbed(:project, namespace_id: project_with_wiki_suffix.namespace_id, path: 'foo')
-
-          expect(new_project).not_to be_valid
-          expect(new_project.errors[:name].first).to eq(_('has already been taken'))
-        end
-      end
     end
 
     context 'repository storages inclusion' do
@@ -4713,20 +4700,6 @@ describe Project do
         .and_call_original
 
       project.update_project_counter_caches
-    end
-  end
-
-  describe '#wiki_repository_exists?' do
-    it 'returns true when the wiki repository exists' do
-      project = create(:project, :wiki_repo)
-
-      expect(project.wiki_repository_exists?).to eq(true)
-    end
-
-    it 'returns false when the wiki repository does not exist' do
-      project = create(:project)
-
-      expect(project.wiki_repository_exists?).to eq(false)
     end
   end
 

@@ -129,16 +129,6 @@ describe API::Search do
 
         it_behaves_like 'response is correct', schema: 'public_api/v4/snippets'
       end
-
-      context 'for snippet_blobs scope' do
-        before do
-          create(:snippet, :public, title: 'awesome snippet', content: 'snippet content')
-
-          get api('/search', user), params: { scope: 'snippet_blobs', search: 'content' }
-        end
-
-        it_behaves_like 'response is correct', schema: 'public_api/v4/snippets'
-      end
     end
   end
 
@@ -401,7 +391,7 @@ describe API::Search do
       context 'for wiki_blobs scope' do
         before do
           wiki = create(:project_wiki, project: project)
-          create(:wiki_page, wiki: wiki, attrs: { title: 'home', content: "Awesome page" })
+          create(:wiki_page, wiki: wiki, title: 'home', content: "Awesome page")
 
           get api("/projects/#{project.id}/search", user), params: { scope: 'wiki_blobs', search: 'awesome' }
         end

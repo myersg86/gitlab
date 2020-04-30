@@ -14,7 +14,7 @@ class Projects::EnvironmentsController < Projects::ApplicationController
   before_action :expire_etag_cache, only: [:index], unless: -> { request.format.json? }
   before_action only: [:metrics, :additional_metrics, :metrics_dashboard] do
     push_frontend_feature_flag(:prometheus_computed_alerts)
-    push_frontend_feature_flag(:metrics_dashboard_annotations)
+    push_frontend_feature_flag(:metrics_dashboard_annotations, project)
   end
   after_action :expire_etag_cache, only: [:cancel_auto_stop]
 
@@ -27,12 +27,13 @@ class Projects::EnvironmentsController < Projects::ApplicationController
       format.html
       format.json do
         Gitlab::PollingInterval.set_header(response, interval: 3_000)
+        environments_count_by_state = project.environments.count_by_state
 
         render json: {
           environments: serialize_environments(request, response, params[:nested]),
           review_app: serialize_review_app,
-          available_count: project.environments.available.count,
-          stopped_count: project.environments.stopped.count
+          available_count: environments_count_by_state[:available],
+          stopped_count: environments_count_by_state[:stopped]
         }
       end
     end

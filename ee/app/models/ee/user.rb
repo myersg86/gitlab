@@ -34,7 +34,7 @@ module EE
 
       has_many :reviews,                  foreign_key: :author_id, inverse_of: :author
       has_many :epics,                    foreign_key: :author_id
-      has_many :requirements,             foreign_key: :author_id
+      has_many :requirements,             foreign_key: :author_id, inverse_of: :author, class_name: 'RequirementsManagement::Requirement'
       has_many :assigned_epics,           foreign_key: :assignee_id, class_name: "Epic"
       has_many :path_locks,               dependent: :destroy # rubocop: disable Cop/ActiveRecordDependent
       has_many :vulnerability_feedback, foreign_key: :author_id, class_name: 'Vulnerabilities::Feedback'
@@ -235,7 +235,7 @@ module EE
       ::Namespace
         .from("(#{namespace_union_for_reporter_developer_maintainer_owned}) #{::Namespace.table_name}")
         .include_gitlab_subscription
-        .where(gitlab_subscriptions: { hosted_plan: Plan.where(name: Plan::PAID_HOSTED_PLANS) })
+        .where(gitlab_subscriptions: { hosted_plan: ::Plan.where(name: Plan::PAID_HOSTED_PLANS) })
         .any?
     end
 
@@ -243,14 +243,14 @@ module EE
       ::Namespace
         .from("(#{namespace_union_for_owned}) #{::Namespace.table_name}")
         .include_gitlab_subscription
-        .where(gitlab_subscriptions: { hosted_plan: Plan.where(name: Plan::PAID_HOSTED_PLANS) })
+        .where(gitlab_subscriptions: { hosted_plan: ::Plan.where(name: Plan::PAID_HOSTED_PLANS) })
         .any?
     end
 
     def managed_free_namespaces
       manageable_groups
         .left_joins(:gitlab_subscription)
-        .merge(GitlabSubscription.left_joins(:hosted_plan).where(plans: { name: [nil, *Plan::DEFAULT_PLANS] }))
+        .merge(GitlabSubscription.left_joins(:hosted_plan).where(plans: { name: [nil, *::Plan.default_plans] }))
         .order(:name)
     end
 
@@ -347,6 +347,10 @@ module EE
 
     def organization
       gitlab_employee? ? 'GitLab' : super
+    end
+
+    def security_dashboard
+      InstanceSecurityDashboard.new(self)
     end
 
     protected

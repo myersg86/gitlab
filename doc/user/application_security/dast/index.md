@@ -51,6 +51,9 @@ However, DAST can be [configured](#full-scan)
 to also perform a so-called "active scan". That is, attack your application and produce a more extensive security report.
 It can be very useful combined with [Review Apps](../../../ci/review_apps/index.md).
 
+NOTE: **Note:**
+A pipeline may consist of multiple jobs, including SAST and DAST scanning. If any job fails to finish for any reason, the security dashboard will not show DAST scanner output. For example, if the DAST job finishes but the SAST job fails, the security dashboard will not show DAST results. The analyzer will output an [exit code](../../../development/integrations/secure.md#exit-code) on failure.
+
 ## Use cases
 
 It helps you automatically find security vulnerabilities in your running web
@@ -98,7 +101,7 @@ The included template will create a `dast` job in your CI/CD pipeline and scan
 your project's source code for possible vulnerabilities.
 
 The results will be saved as a
-[DAST report artifact](../../../ci/yaml/README.md#artifactsreportsdast-ultimate)
+[DAST report artifact](../../../ci/pipelines/job_artifacts.md#artifactsreportsdast-ultimate)
 that you can later download and analyze. Due to implementation limitations we
 always take the latest DAST artifact available. Behind the scenes, the
 [GitLab DAST Docker image](https://gitlab.com/gitlab-org/security-products/dast)
@@ -144,7 +147,7 @@ variables:
 ```
 
 The results will be saved as a
-[DAST report artifact](../../../ci/yaml/README.md#artifactsreportsdast-ultimate)
+[DAST report artifact](../../../ci/pipelines/job_artifacts.md#artifactsreportsdast-ultimate)
 that you can later download and analyze.
 Due to implementation limitations, we always take the latest DAST artifact available.
 
@@ -416,7 +419,7 @@ DAST can be [configured](#customizing-the-dast-settings) using environment varia
 | `DAST_TARGET_AVAILABILITY_TIMEOUT` | no | Time limit in seconds to wait for target availability. Scan is attempted nevertheless if it runs out. Integer. Defaults to `60`. |
 | `DAST_FULL_SCAN_ENABLED` | no | Switches the tool to execute [ZAP Full Scan](https://github.com/zaproxy/zaproxy/wiki/ZAP-Full-Scan) instead of [ZAP Baseline Scan](https://github.com/zaproxy/zaproxy/wiki/ZAP-Baseline-Scan). Boolean. `true`, `True`, or `1` are considered as true value, otherwise false. Defaults to `false`. |
 | `DAST_FULL_SCAN_DOMAIN_VALIDATION_REQUIRED` | no | Requires [domain validation](#domain-validation) when running DAST full scans. Boolean. `true`, `True`, or `1` are considered as true value, otherwise false. Defaults to `false`. Not supported for API scans. |
-| `DAST_AUTO_UPDATE_ADDONS` | no | Set to `false` to pin the versions of ZAProxy add-ons to those provided with the DAST image. Defaults to `true`. |
+| `DAST_AUTO_UPDATE_ADDONS` | no | By default the versions of ZAP add-ons are pinned to those provided with the DAST image. Set to `true` to allow ZAP to download the latest versions. |
 | `DAST_API_HOST_OVERRIDE` | no | Used to override domains defined in API specification files. |
 | `DAST_EXCLUDE_RULES` | no | Set to a comma-separated list of Vulnerability Rule IDs to exclude them from scans. Rule IDs are numbers and can be found from the DAST log or on the [ZAP project](https://github.com/zaproxy/zaproxy/blob/master/docs/scanners.md). For example, `HTTP Parameter Override` has a rule ID of `10026`. |
 | `DAST_REQUEST_HEADERS` | no | Set to a comma-separated list of request header names and values. For example, `Cache-control: no-cache,User-Agent: DAST/1.0` |
@@ -607,6 +610,17 @@ questions that you know someone might ask.
 Each scenario can be a third-level heading, e.g. `### Getting error message X`.
 If you have none to add when creating a doc, leave this section in place
 but commented out to help encourage others to add to it in the future. -->
+
+## Optimizing DAST
+
+By default, DAST will download all artifacts defined by previous jobs in the pipeline. If
+your DAST job does not rely on `environment_url.txt` to define the URL under test or any other files created
+in previous jobs, we recommend you don't download artifacts. To avoid downloading artifacts, add the following to your `gitlab-ci.yml` file:
+
+```json
+dast:
+   dependencies: []
+```
 
 ## Troubleshooting
 

@@ -7,13 +7,16 @@ describe Issue do
 
   describe "Associations" do
     it { is_expected.to belong_to(:milestone) }
+    it { is_expected.to belong_to(:sprint) }
     it { is_expected.to belong_to(:project) }
     it { is_expected.to belong_to(:moved_to).class_name('Issue') }
+    it { is_expected.to have_one(:moved_from).class_name('Issue') }
     it { is_expected.to belong_to(:duplicated_to).class_name('Issue') }
     it { is_expected.to belong_to(:closed_by).class_name('User') }
     it { is_expected.to have_many(:assignees) }
     it { is_expected.to have_many(:user_mentions).class_name("IssueUserMention") }
     it { is_expected.to have_one(:sentry_issue) }
+    it { is_expected.to have_one(:alert_management_alert) }
   end
 
   describe 'modules' do

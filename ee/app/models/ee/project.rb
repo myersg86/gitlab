@@ -59,7 +59,7 @@ module EE
       has_many :audit_events, as: :entity
       has_many :designs, inverse_of: :project, class_name: 'DesignManagement::Design'
       has_many :path_locks
-      has_many :requirements
+      has_many :requirements, inverse_of: :project, class_name: 'RequirementsManagement::Requirement'
 
       # the rationale behind vulnerabilities and vulnerability_findings can be found here:
       # https://gitlab.com/gitlab-org/gitlab/issues/10252#terminology
@@ -168,7 +168,6 @@ module EE
 
       delegate :merge_pipelines_enabled, :merge_pipelines_enabled=, :merge_pipelines_enabled?, :merge_pipelines_were_disabled?, to: :ci_cd_settings
       delegate :merge_trains_enabled?, to: :ci_cd_settings
-      delegate :actual_limits, :actual_plan_name, to: :namespace, allow_nil: true
       delegate :gitlab_subscription, to: :namespace
 
       validates :repository_size_limit,
@@ -281,7 +280,7 @@ module EE
     end
 
     def shared_runners_minutes_limit_enabled?
-      if ::Feature.enabled?(:ci_minutes_enforce_quota_for_public_projects)
+      if ::Feature.enabled?(:ci_minutes_track_for_public_projects, shared_runners_limit_namespace)
         shared_runners_enabled? &&
           shared_runners_limit_namespace.shared_runners_minutes_limit_enabled?
       else

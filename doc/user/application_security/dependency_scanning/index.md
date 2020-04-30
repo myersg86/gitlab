@@ -91,7 +91,7 @@ The included template will create a `dependency_scanning` job in your CI/CD
 pipeline and scan your project's source code for possible vulnerabilities.
 
 The results will be saved as a
-[Dependency Scanning report artifact](../../../ci/yaml/README.md#artifactsreportsdependency_scanning-ultimate)
+[Dependency Scanning report artifact](../../../ci/pipelines/job_artifacts.md#artifactsreportsdependency_scanning-ultimate)
 that you can later download and analyze. Due to implementation limitations, we
 always take the latest Dependency Scanning artifact available.
 
@@ -365,7 +365,6 @@ Here is an example Dependency Scanning report:
     }
   ]
 }
-
 ```
 
 ## Versioning and release process
@@ -448,6 +447,7 @@ For every language and package manager, add the following to the variables secti
 
 ```yaml
 GEMNASIUM_DB_REMOTE_URL: "gitlab.example.com/gemnasium-db.git"
+GIT_SSL_NO_VERIFY: "true"
 ```
 
 See the following sections for additional instructions on specific languages and package managers.
@@ -477,7 +477,7 @@ When using self-signed certificates, add the following job section to the `.gitl
 ```yaml
 gemnasium-maven-dependency_scanning:
   variables:
-    MAVEN_CLI_OPTS: "-Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true -Dmaven.wagon.http.ssl.ignore.validity.dates=true"
+    MAVEN_CLI_OPTS: "-s settings.xml -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true -Dmaven.wagon.http.ssl.ignore.validity.dates=true"
 ```
 
 #### Java (Gradle) projects
@@ -522,7 +522,7 @@ Add the following job section to `.gitlab-ci.yml`:
 ```yaml
 gemnasium-python-dependency_scanning:
   before_script:
-    - mkdir ~/.config/pip
+    - mkdir -p ~/.config/pip
     - cp pip.conf ~/.config/pip/pip.conf
 ```
 

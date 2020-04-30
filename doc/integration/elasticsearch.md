@@ -48,12 +48,12 @@ For indexing Git repository data, GitLab uses an [indexer written in Go](https:/
 
 The way you install the Go indexer depends on your version of GitLab:
 
-- For GitLab Omnibus 11.8 and above, see [GitLab Omnibus](#gitlab-omnibus).
-- For installations from source or older versions of GitLab Omnibus, install the indexer [From Source](#from-source).
+- For Omnibus GitLab 11.8 and above, see [Omnibus GitLab](#omnibus-gitlab).
+- For installations from source or older versions of Omnibus GitLab, install the indexer [From Source](#from-source).
 
-### GitLab Omnibus
+### Omnibus GitLab
 
-Since GitLab 11.8 the Go indexer is included in GitLab Omnibus.
+Since GitLab 11.8 the Go indexer is included in Omnibus GitLab.
 The former Ruby-based indexer was removed in [GitLab 12.3](https://gitlab.com/gitlab-org/gitlab/issues/6481).
 
 ### From source
@@ -497,6 +497,8 @@ However, some larger installations may wish to tune the merge policy settings:
 
 ## Troubleshooting
 
+### Common issues
+
 Here are some common pitfalls and how to overcome them:
 
 - **How can I verify my GitLab instance is using Elasticsearch?**
@@ -624,6 +626,10 @@ Here are some common pitfalls and how to overcome them:
 
    You probably have not used either `http://` or `https://` as part of your value in the **"URL"** field of the Elasticseach Integration Menu. Please make sure you are using either `http://` or `https://` in this field as the [Elasticsearch client for Go](https://github.com/olivere/elastic) that we are using [needs the prefix for the URL to be accepted as valid](https://github.com/olivere/elastic/commit/a80af35aa41856dc2c986204e2b64eab81ccac3a).
    Once you have corrected the formatting of the URL, delete the index (via the [dedicated Rake task](#gitlab-elasticsearch-rake-tasks)) and [reindex the content of your instance](#adding-gitlabs-data-to-the-elasticsearch-index).
+
+### Low level troubleshooting
+
+There is more [low level troubleshooting documentation](../administration/troubleshooting/elasticsearch.md) for when you experience other issues, including poor performance.
 
 ### Known Issues
 

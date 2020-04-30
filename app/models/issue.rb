@@ -29,9 +29,12 @@ class Issue < ApplicationRecord
   SORTING_PREFERENCE_FIELD = :issues_sort
 
   belongs_to :project
-  belongs_to :moved_to, class_name: 'Issue'
   belongs_to :duplicated_to, class_name: 'Issue'
   belongs_to :closed_by, class_name: 'User'
+  belongs_to :sprint
+
+  belongs_to :moved_to, class_name: 'Issue'
+  has_one :moved_from, class_name: 'Issue', foreign_key: :moved_to_id
 
   has_internal_id :iid, scope: :project, track_if: -> { !importing? }, init: ->(s) { s&.project&.issues&.maximum(:iid) }
 
@@ -48,6 +51,7 @@ class Issue < ApplicationRecord
   has_many :sent_notifications, as: :noteable
 
   has_one :sentry_issue
+  has_one :alert_management_alert, class_name: 'AlertManagement::Alert'
 
   accepts_nested_attributes_for :sentry_issue
 

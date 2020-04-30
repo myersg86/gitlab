@@ -38,7 +38,7 @@ describe API::Search do
     context 'for wiki_blobs scope', :sidekiq_might_not_need_inline do
       before do
         wiki = create(:project_wiki, project: project)
-        create(:wiki_page, wiki: wiki, attrs: { title: 'home', content: "Awesome page" })
+        create(:wiki_page, wiki: wiki, title: 'home', content: "Awesome page")
 
         project.wiki.index_wiki_blobs
         ensure_elasticsearch_index!
@@ -98,6 +98,24 @@ describe API::Search do
             expect(file['path']).to match(/\A.+\.md\z/)
           end
         end
+      end
+    end
+
+    context 'for issues scope', :sidekiq_inline do
+      before do
+        create_list(:issue, 4, project: project)
+        ensure_elasticsearch_index!
+      end
+
+      it 'avoids N+1 queries' do
+        control = ActiveRecord::QueryRecorder.new { get api(endpoint, user), params: { scope: 'issues', search: '*' } }
+
+        new_issues = create_list(:issue, 4, project: project)
+
+        ensure_elasticsearch_index!
+
+        # Some N+1 queries still exist
+        expect { get api(endpoint, user), params: { scope: 'issues', search: '*' } }.not_to exceed_query_limit(control.count + new_issues.count * 4)
       end
     end
   end
@@ -183,7 +201,7 @@ describe API::Search do
       context 'for wiki_blobs scope' do
         before do
           wiki = create(:project_wiki, project: project)
-          create(:wiki_page, wiki: wiki, attrs: { title: 'home', content: "Awesome page" })
+          create(:wiki_page, wiki: wiki, title: 'home', content: "Awesome page")
 
           get api(endpoint, user), params: { scope: 'wiki_blobs', search: 'awesome' }
         end

@@ -5,7 +5,7 @@ type: reference, howto
 # Epics **(PREMIUM)**
 
 > - Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 10.2.
-> - In [GitLab 12.8](https://gitlab.com/gitlab-org/gitlab/issues/37081), single-level Epics were moved to the Premium tier.
+> - Single-level Epics [were moved](https://gitlab.com/gitlab-org/gitlab/issues/37081) to [GitLab Premium](https://about.gitlab.com/pricing/) in 12.8.
 
 Epics let you manage your portfolio of projects more efficiently and with less
 effort by tracking groups of issues that share a theme, across projects and
@@ -236,7 +236,7 @@ To apply labels across multiple epics:
 NOTE: **Note:**
 To delete an epic, you need to be an [Owner](../../permissions.md#group-members-permissions) of a group/subgroup.
 
-When inside a single epic view, click the **Delete** button to delete the epic.
+When editing the description of an epic, click the **Delete** button to delete the epic.
 A modal will pop-up to confirm your action.
 
 Deleting an epic releases all existing issues from their associated epic in the

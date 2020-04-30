@@ -200,11 +200,23 @@ Gitlab/ConstGetInheritFalse:
   Exclude:
     - 'qa/bin/*'
 
+Gitlab/ChangeTimezone:
+  Enabled: true
+  Exclude:
+    - config/initializers/time_zone.rb
+
 Gitlab/HTTParty:
   Enabled: true
   Exclude:
     - 'spec/**/*'
     - 'ee/spec/**/*'
+
+Gitlab/Json:
+  Enabled: false
+  Exclude:
+    - 'db/**/*'
+    - 'qa/**/*'
+    - 'scripts/**/*'
 
 GitlabSecurity/PublicSend:
   Enabled: true
@@ -221,10 +233,8 @@ GitlabSecurity/PublicSend:
 
 Gitlab/DuplicateSpecLocation:
   Exclude:
-    - ee/spec/helpers/auth_helper_spec.rb
     - ee/spec/lib/gitlab/gl_repository_spec.rb
     - ee/spec/services/merge_requests/refresh_service_spec.rb
-    - ee/spec/helpers/ee/auth_helper_spec.rb
     - ee/spec/services/ee/merge_requests/refresh_service_spec.rb
 
 Cop/InjectEnterpriseEditionModule:
@@ -329,7 +339,6 @@ RSpec/LeakyConstantDeclaration:
   Enabled: true
   Exclude:
     - 'spec/**/*.rb'
-    - 'qa/spec/**/*.rb'
 
 RSpec/EmptyLineAfterHook:
   Enabled: false

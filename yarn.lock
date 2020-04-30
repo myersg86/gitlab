@@ -786,10 +786,10 @@
   resolved "https://registry.yarnpkg.com/@gitlab/svgs/-/svgs-1.121.0.tgz#77083a68f72e9aa0e294da7715f378eef13b839e"
   integrity sha512-scz/6Y/eED7RMFLAlhT6PwXwe0Wj8ivnRsyulk9NXKoqUmAqZliNmBmzYsHy5bFf9NB6xVV/rOk1/92nbi/Yaw==
 
-"@gitlab/ui@12.2.0":
-  version "12.2.0"
-  resolved "https://registry.yarnpkg.com/@gitlab/ui/-/ui-12.2.0.tgz#2dc6103ef4eeb016cdff8a885bee173ed3eab5f3"
-  integrity sha512-Qkyzrcu28gfJy635kqgfXzIKndOMT6touZ32FlXYowyrJOBQOxQt1q4/Z+S6nDWkC0tbBuOsbGiPx6F37MjWjQ==
+"@gitlab/ui@13.6.1":
+  version "13.6.1"
+  resolved "https://registry.yarnpkg.com/@gitlab/ui/-/ui-13.6.1.tgz#dbf1941ed762381e83f557c5ee6cc860dacee03b"
+  integrity sha512-r8R5O8xPQUxi0yrzT5svbFhtHiZkdaf+GcXALF5oRgDTut6qOqWZ7RllHPo7RNBlyBbP30FiFvXjZlvN3PZaWQ==
   dependencies:
     "@babel/standalone" "^7.0.0"
     "@gitlab/vue-toasted" "^1.3.0"
@@ -1036,10 +1036,25 @@
     "@sentry/types" "5.10.0"
     tslib "^1.9.3"
 
-"@sourcegraph/code-host-integration@0.0.36":
-  version "0.0.36"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/code-host-integration/-/code-host-integration-0.0.36.tgz#2f4d287840ac2944c78ef92f10f0db0ef8a077fa"
-  integrity sha512-Hpj1xiVhPxMsjLNre9MrYYAM1SPOWPE9yG9SPtz4dqYzc6/ycaPGyr+ljcaWEclS9hZCvkk4+qVC5WONpYVjyA==
+"@sourcegraph/code-host-integration@0.0.37":
+  version "0.0.37"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/code-host-integration/-/code-host-integration-0.0.37.tgz#87f9a602e2a60520b6038311a67face2ece86827"
+  integrity sha512-GQvNuPORLjsMhto57Ue1umeSV3cir+hMEaGxwCKmmq+cc9ZSZpuXa8RVBXuT5azN99K9/8zFps4woyPJ8wrjYA==
+
+"@toast-ui/editor@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@toast-ui/editor/-/editor-2.0.1.tgz#749e5be1f02f42ded51488d1575ab1c19ca59952"
+  integrity sha512-TC481O/zP37boY6H6oVN6KLVMY7yrU8zQu+3xqZ71V3Sr6D2XyaGb2Xub9XqTdqzBmzsf7y4Gi+EXO0IQ3rGVA==
+  dependencies:
+    "@types/codemirror" "0.0.71"
+    codemirror "^5.48.4"
+
+"@toast-ui/vue-editor@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@toast-ui/vue-editor/-/vue-editor-2.0.1.tgz#c9c8c8da4c0a67b9fbc4240464388c67d72a0c22"
+  integrity sha512-sGsApl0n+GVAZbmPA+tTrq9rmmyh2mRgCgg2/mu1/lN7S4vPv/nQH8KXxLG9Y6hG2+kgelqz6wvbOCdzlM/HmQ==
+  dependencies:
+    "@toast-ui/editor" "^2.0.1"
 
 "@types/anymatch@*":
   version "1.3.0"
@@ -1078,6 +1093,18 @@
   integrity sha512-XYVgHF2sQ0YblLRMLNPB3CkFMewzFmlDsH/TneZFHUXDlABQgh88uOxuez7ZcXxayLFrqLwtDH1t+FmlFwNZxw==
   dependencies:
     "@babel/types" "^7.3.0"
+
+"@types/codemirror@0.0.71":
+  version "0.0.71"
+  resolved "https://registry.yarnpkg.com/@types/codemirror/-/codemirror-0.0.71.tgz#861f1bcb3100c0a064567c5400f2981cf4ae8ca7"
+  integrity sha512-b2oEEnno1LIGKMR7uBEsr40al1UijF1HEpRn0+Yf1xOLl24iQgB7DBpZVMM7y54G5wCNoclDrRO65E6KHPNO2w==
+  dependencies:
+    "@types/tern" "*"
+
+"@types/estree@*":
+  version "0.0.44"
+  resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.44.tgz#980cc5a29a3ef3bea6ff1f7d021047d7ea575e21"
+  integrity sha512-iaIVzr+w2ZJ5HkidlZ3EJM8VTZb2MJLCjw3V+505yVts0gRC4UMvjw0d1HPtGqI/HQC/KdsYtayfzl+AXY2R8g==
 
 "@types/events@*":
   version "1.2.0"
@@ -1137,6 +1164,13 @@
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.4.tgz#b4ffc7dc97b498c969b360a41eee247f82616370"
   integrity sha512-78AdXtlhpCHT0K3EytMpn4JNxaf5tbqbLcbIRoQIHzpTIyjpxLQKRoxU55ujBXAtg3Nl2h/XWvfDa9dsMOd0pQ==
+
+"@types/tern@*":
+  version "0.23.3"
+  resolved "https://registry.yarnpkg.com/@types/tern/-/tern-0.23.3.tgz#4b54538f04a88c9ff79de1f6f94f575a7f339460"
+  integrity sha512-imDtS4TAoTcXk0g7u4kkWqedB3E4qpjXzCpD2LU5M5NAXHzCDsypyvXSaG7mM8DKYkCRa7tFp4tS/lp/Wo7Q3w==
+  dependencies:
+    "@types/estree" "*"
 
 "@types/uglify-js@*":
   version "3.0.4"
@@ -2763,6 +2797,11 @@ code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
+
+codemirror@^5.48.4:
+  version "5.53.2"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.53.2.tgz#9799121cf8c50809cca487304e9de3a74d33f428"
+  integrity sha512-wvSQKS4E+P8Fxn/AQ+tQtJnF1qH5UOlxtugFLpubEZ5jcdH2iXTVinb+Xc/4QjshuOxRm4fUsU2QPF1JJKiyXA==
 
 codesandbox-api@0.0.23:
   version "0.0.23"
@@ -5334,10 +5373,10 @@ graphlib@^2.1.7, graphlib@^2.1.8:
   dependencies:
     lodash "^4.17.15"
 
-graphql-tag@^2.10.0:
-  version "2.10.0"
-  resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-2.10.0.tgz#87da024be863e357551b2b8700e496ee2d4353ae"
-  integrity sha512-9FD6cw976TLLf9WYIUPCaaTpniawIjHWZSwIRZSjrfufJamcXbVVYfN2TWvJYbw0Xf2JjYbl1/f2+wDnBVw3/w==
+graphql-tag@^2.10.1:
+  version "2.10.3"
+  resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-2.10.3.tgz#ea1baba5eb8fc6339e4c4cf049dabe522b0edf03"
+  integrity sha512-4FOv3ZKfA4WdOKJeHdz6B3F/vxBLSgmBcGeAFPf4n1F64ltJUvOOerNj0rsJxONQGdhUMynQIvd6LzB+1J5oKA==
 
 graphql@^14.0.2:
   version "14.0.2"
@@ -10117,7 +10156,7 @@ send@0.17.1:
     range-parser "~1.2.1"
     statuses "~1.5.0"
 
-serialize-javascript@^2.1.2:
+serialize-javascript@^2.1.0, serialize-javascript@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-2.1.2.tgz#ecec53b0e0317bdc95ef76ab7074b7384785fa61"
   integrity sha512-rs9OggEUF0V4jUSecXazOYsLfu7OGK2qIn3c7IPBiffz32XniEp/TX9Xmc9LQfK2nQ2QKHvZ2oygKUGU0lG4jQ==
@@ -11009,10 +11048,10 @@ throat@^4.0.0:
   resolved "https://registry.yarnpkg.com/throat/-/throat-4.1.0.tgz#89037cbc92c56ab18926e6ba4cbb200e15672a6a"
   integrity sha1-iQN8vJLFarGJJua6TLsgDhVnKmo=
 
-throttle-debounce@^2.0.0:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-2.0.1.tgz#7307ddd6cd9acadb349132fbf6c18d78c88a5e62"
-  integrity sha512-Sr6jZBlWShsAaSXKyNXyNicOrJW/KtkDqIEwHt4wYwWA2wa/q67Luhqoujg48V8hTk60wB56tYrJJn6jc2R7VA==
+throttle-debounce@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-2.1.0.tgz#257e648f0a56bd9e54fe0f132c4ab8611df4e1d5"
+  integrity sha512-AOvyNahXQuU7NN+VVvOOX+uW6FPaWdAOdRP5HfwYxAfCzXTFKRMoIMk+n+po318+ktcChx+F1Dd91G3YHeMKyg==
 
 through2@^2.0.0:
   version "2.0.5"
@@ -11725,13 +11764,14 @@ void-elements@^2.0.0:
   resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
   integrity sha1-wGavtYK7HLQSjWDqkjkulNXp2+w=
 
-vue-apollo@^3.0.0-beta.28:
-  version "3.0.0-beta.28"
-  resolved "https://registry.yarnpkg.com/vue-apollo/-/vue-apollo-3.0.0-beta.28.tgz#be6a3a1504be2096cbfb23996537e2fc95c8c239"
-  integrity sha512-ceCc1xTyxpNtiSeJMQgSkfgJue6pnv+TIvp75CwZlwMxRtNZjITj4MGvBWFwnoIEhVrUAw45ff/5udgJ8z9sdQ==
+vue-apollo@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/vue-apollo/-/vue-apollo-3.0.3.tgz#7f29558df76eec0f03251847eef153816a261827"
+  integrity sha512-WJaQ1v/i46/oIPlKv7J0Tx6tTlbuaeCdhrAbL06h+Zca2gzr5ywjUFpl8ijMTGJsQ+Ph/U4xEpBFBOMxQmL+7g==
   dependencies:
-    chalk "^2.4.1"
-    throttle-debounce "^2.0.0"
+    chalk "^2.4.2"
+    serialize-javascript "^2.1.0"
+    throttle-debounce "^2.1.0"
 
 vue-eslint-parser@^7.0.0:
   version "7.0.0"

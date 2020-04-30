@@ -19,12 +19,15 @@ describe 'layouts/application' do
     context 'when we show the notification dot' do
       let(:show_notification_dot) { true }
 
-      it 'has the notification dot' do
-        expect(view).to receive(:track_event).with('show_buy_ci_minutes_notification', label: 'free', property: 'user_dropdown')
+      before do
+        allow(Gitlab).to receive(:com?) { true }
+      end
 
+      it 'has the notification dot' do
         render
 
         expect(rendered).to have_css('span', class: 'header-user-notification-dot')
+        expect(rendered).to have_selector('[data-track-event="render"]')
       end
     end
 
@@ -33,6 +36,7 @@ describe 'layouts/application' do
         render
 
         expect(rendered).not_to have_css('span', class: 'header-user-notification-dot')
+        expect(rendered).not_to have_selector('[data-track-event="render"]')
       end
     end
   end

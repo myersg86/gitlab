@@ -30,7 +30,7 @@ To use the instance, group, project, or pipeline security dashboard:
 
 1. At least one project inside a group must be configured with at least one of
    the [supported reports](#supported-reports).
-1. The configured jobs must use the [new `reports` syntax](../../../ci/yaml/README.md#artifactsreports).
+1. The configured jobs must use the [new `reports` syntax](../../../ci/pipelines/job_artifacts.md#artifactsreports).
 1. [GitLab Runner](https://docs.gitlab.com/runner/) 11.5 or newer must be used.
    If you're using the shared Runners on GitLab.com, this is already the case.
 
@@ -43,6 +43,9 @@ At the pipeline level, the Security section displays the vulnerabilities present
 Visit the page for any pipeline which has run any of the [supported reports](#supported-reports). Click the **Security** tab to view the Security findings.
 
 ![Pipeline Security Dashboard](img/pipeline_security_dashboard_v12_6.png)
+
+NOTE: **Note:**
+A pipeline consists of multiple jobs, including SAST and DAST scanning. If any job fails to finish for any reason, the security dashboard will not show SAST scanner output. For example, if the SAST job finishes but the DAST job fails, the security dashboard will not show SAST results. The analyzer will output an [exit code](../../../development/integrations/secure.md#exit-code) on failure.
 
 ## Project Security Dashboard
 

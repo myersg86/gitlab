@@ -26,7 +26,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
-        resources :feature_flags
+        resources :feature_flags, param: :iid
         resource :feature_flags_client, only: [] do
           post :reset_token
         end
@@ -147,14 +147,6 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
       put '/service_desk' => 'service_desk#update', as: :service_desk_refresh
 
       post '/restore' => '/projects#restore', as: :restore
-
-      resources :pipelines, only: [] do
-        member do
-          get :security
-          get :licenses
-          get :codequality_report
-        end
-      end
 
       resource :insights, only: [:show], trailing_slash: true do
         collection do

@@ -49,129 +49,6 @@ describe Namespace do
     end
   end
 
-  describe '.reset_ci_minutes_for_batch!' do
-    let(:batch_size) { 3 }
-
-    let!(:namespace_1) { create(:namespace, id: 1) }
-    let!(:namespace_2) { create(:namespace, id: 2) }
-    let!(:namespace_3) { create(:namespace, id: 3) }
-    let!(:namespace_4) { create(:namespace, id: 4) }
-    let!(:namespace_5) { create(:namespace, id: 5) }
-    let!(:namespace_6) { create(:namespace, id: 6) }
-    let!(:namespace_7) { create(:namespace, id: 7) }
-
-    it 'resets all ci minutes' do
-      expect(described_class).to receive(:reset_ci_minutes!).with([namespace_1, namespace_2, namespace_3])
-      expect(described_class).to receive(:reset_ci_minutes!).with([namespace_4, namespace_5, namespace_6])
-      expect(described_class).to receive(:reset_ci_minutes!).with([namespace_7])
-
-      described_class.reset_ci_minutes_for_batch!(1, 7, batch_size: batch_size)
-    end
-
-    it 'resets ci minutes for the ID range' do
-      expect(described_class).to receive(:reset_ci_minutes!).with([namespace_2, namespace_3, namespace_4])
-      expect(described_class).to receive(:reset_ci_minutes!).with([namespace_5, namespace_6])
-
-      described_class.reset_ci_minutes_for_batch!(2, 6, batch_size: batch_size)
-    end
-  end
-
-  describe '.reset_ci_minutes_in_batches!' do
-    it 'returns when there were no failures' do
-      expect { described_class.reset_ci_minutes_in_batches! }.not_to raise_error
-    end
-
-    it 'raises an exception when with a list of namespace ids to investigate if there were any failures' do
-      failed_namespace = create(:namespace)
-
-      allow(described_class).to receive(:transaction).and_raise(ActiveRecord::ActiveRecordError)
-
-      expect { described_class.reset_ci_minutes_in_batches! }.to raise_error(
-        EE::Namespace::NamespaceStatisticsNotResetError,
-        "1 namespace shared runner minutes were not reset and the transaction was rolled back. Namespace Ids: [#{failed_namespace.id}]")
-    end
-  end
-
-  describe '.reset_ci_minutes!' do
-    it 'returns true if there were no exceptions to the db transaction' do
-      result = described_class.reset_ci_minutes!(Namespace.none)
-
-      expect(result).to be true
-    end
-
-    it 'raises an exception if anything in the transaction rolled back' do
-      namespace = create(:namespace)
-
-      allow(described_class).to receive(:transaction).and_raise(ActiveRecord::ActiveRecordError)
-
-      expect { described_class.reset_ci_minutes!([namespace]) }.to raise_error(
-        EE::Namespace::NamespaceStatisticsNotResetError,
-        "1 namespace shared runner minutes were not reset and the transaction was rolled back. Namespace Ids: [#{namespace.id}]")
-    end
-  end
-
-  describe '.recalculate_extra_shared_runners_minutes_limits!' do
-    context 'when the namespace had used runner minutes for the month' do
-      let(:namespace) { create(:namespace, shared_runners_minutes_limit: 5000, extra_shared_runners_minutes_limit: 5000) }
-      let(:namespaces) { Namespace.where(id: namespace) }
-
-      it 'updates the namespace extra_shared_runners_minutes_limit subtracting used minutes above the shared_runners_minutes_limit' do
-        minutes_used = 6000
-        create(:namespace_statistics, namespace: namespace, shared_runners_seconds: minutes_used * 60)
-
-        described_class.recalculate_extra_shared_runners_minutes_limits!(namespaces)
-
-        expect(namespace.reload.extra_shared_runners_minutes_limit).to eq(4000)
-      end
-    end
-  end
-
-  describe '.reset_shared_runners_seconds!' do
-    let(:namespace) do
-      create(:namespace,
-        shared_runners_minutes_limit: 5000,
-        extra_shared_runners_minutes_limit: 5000)
-    end
-
-    subject do
-      described_class.reset_shared_runners_seconds!(Namespace.where(id: namespace))
-    end
-
-    it 'resets NamespaceStatistics shared_runners_seconds and updates the timestamp' do
-      namespace_statistics = create(:namespace_statistics,
-        namespace: namespace,
-        shared_runners_seconds: 360000 )
-
-      expect { subject && namespace_statistics.reload }
-        .to change { namespace_statistics.shared_runners_seconds }.to(0)
-        .and change { namespace_statistics.shared_runners_seconds_last_reset }
-    end
-
-    it 'resets ProjectStatistics shared_runners_seconds and updates the timestamp' do
-      project_statistics = create(:project_statistics,
-        namespace: namespace,
-        shared_runners_seconds: 120)
-
-      expect { subject && project_statistics.reload }
-        .to change { project_statistics.shared_runners_seconds }.to(0)
-        .and change { project_statistics.shared_runners_seconds_last_reset }
-    end
-  end
-
-  describe 'reset_ci_minutes_notifications!' do
-    it 'updates the last_ci_minutes_notification_at and last_ci_minutes_usage_notification_level flags' do
-      namespace = create(:namespace,
-        last_ci_minutes_notification_at: Date.yesterday,
-        last_ci_minutes_usage_notification_level: 50 )
-
-      subject = described_class.reset_ci_minutes_notifications!(Namespace.where(id: namespace))
-
-      expect { subject && namespace.reload }
-        .to change { namespace.last_ci_minutes_notification_at }.to(nil)
-        .and change { namespace.last_ci_minutes_usage_notification_level }.to(nil)
-    end
-  end
-
   describe '#use_elasticsearch?' do
     let(:namespace) { create :namespace }
 
@@ -200,6 +77,10 @@ describe Namespace do
 
   describe '#actual_plan_name' do
     let(:namespace) { create(:namespace) }
+
+    before do
+      allow(Gitlab).to receive(:com?).and_return(true)
+    end
 
     subject { namespace.actual_plan_name }
 
@@ -363,7 +244,7 @@ describe Namespace do
   describe '#feature_available?' do
     let(:hosted_plan) { create(:bronze_plan) }
     let(:group) { create(:group) }
-    let(:licensed_feature) { :service_desk }
+    let(:licensed_feature) { :epics }
     let(:feature) { licensed_feature }
 
     subject { group.feature_available?(feature) }
@@ -872,67 +753,71 @@ describe Namespace do
   end
 
   describe '#actual_plan' do
-    context 'when namespace has a subscription associated' do
-      before do
-        create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
-      end
+    context 'when namespace does not have a subscription associated' do
+      it 'generates a subscription and returns default plan' do
+        expect(namespace.actual_plan).to eq(Plan.default)
 
-      it 'returns the plan from the subscription' do
-        expect(namespace.actual_plan).to eq(gold_plan)
+        # This should be revisited after https://gitlab.com/gitlab-org/gitlab/-/issues/214434
         expect(namespace.gitlab_subscription).to be_present
       end
     end
 
-    context 'when namespace does not have a subscription associated' do
-      it 'generates a subscription without a plan' do
-        expect(namespace.actual_plan).to be_nil
-        expect(namespace.gitlab_subscription).to be_present
+    context 'when running on Gitlab.com' do
+      before do
+        allow(Gitlab).to receive(:com?).and_return(true)
       end
 
-      context 'when free plan does exist' do
+      context 'when namespace has a subscription associated' do
         before do
-          free_plan
+          create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
         end
 
-        it 'generates a subscription' do
-          expect(namespace.actual_plan).to eq(free_plan)
+        it 'returns the plan from the subscription' do
+          expect(namespace.actual_plan).to eq(gold_plan)
           expect(namespace.gitlab_subscription).to be_present
         end
       end
 
-      context 'when default plan does exist' do
-        before do
-          default_plan
-        end
-
-        it 'generates a subscription' do
-          expect(namespace.actual_plan).to eq(default_plan)
+      context 'when namespace does not have a subscription associated' do
+        it 'generates a subscription and returns free plan' do
+          expect(namespace.actual_plan).to eq(Plan.free)
           expect(namespace.gitlab_subscription).to be_present
         end
-      end
-
-      context 'when namespace is a subgroup with a parent' do
-        let(:subgroup) { create(:namespace, parent: namespace) }
 
         context 'when free plan does exist' do
           before do
             free_plan
           end
 
-          it 'does not generates a subscription' do
-            expect(subgroup.actual_plan).to eq(free_plan)
-            expect(subgroup.gitlab_subscription).not_to be_present
+          it 'generates a subscription' do
+            expect(namespace.actual_plan).to eq(free_plan)
+            expect(namespace.gitlab_subscription).to be_present
           end
         end
 
-        context 'when namespace has a subscription associated' do
-          before do
-            create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
+        context 'when namespace is a subgroup with a parent' do
+          let(:subgroup) { create(:namespace, parent: namespace) }
+
+          context 'when free plan does exist' do
+            before do
+              free_plan
+            end
+
+            it 'does not generates a subscription' do
+              expect(subgroup.actual_plan).to eq(free_plan)
+              expect(subgroup.gitlab_subscription).not_to be_present
+            end
           end
 
-          it 'returns the plan from the subscription' do
-            expect(subgroup.actual_plan).to eq(gold_plan)
-            expect(subgroup.gitlab_subscription).not_to be_present
+          context 'when namespace has a subscription associated' do
+            before do
+              create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
+            end
+
+            it 'returns the plan from the subscription' do
+              expect(subgroup.actual_plan).to eq(gold_plan)
+              expect(subgroup.gitlab_subscription).not_to be_present
+            end
           end
         end
       end
@@ -940,24 +825,16 @@ describe Namespace do
   end
 
   describe '#actual_plan_name' do
-    context 'when namespace has a subscription associated' do
+    context 'when namespace does not have a subscription associated' do
+      it 'returns default plan' do
+        expect(namespace.actual_plan_name).to eq('default')
+      end
+    end
+
+    context 'when running on Gitlab.com' do
       before do
-        create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
+        allow(Gitlab).to receive(:com?).and_return(true)
       end
-
-      it 'returns an associated plan name' do
-        expect(namespace.actual_plan_name).to eq 'gold'
-      end
-    end
-
-    context 'when namespace does not have subscription associated' do
-      it 'returns a free plan name' do
-        expect(namespace.actual_plan_name).to eq 'free'
-      end
-    end
-
-    context 'when namespace is a subgroup with a parent' do
-      let(:subgroup) { create(:namespace, parent: namespace) }
 
       context 'when namespace has a subscription associated' do
         before do
@@ -965,13 +842,33 @@ describe Namespace do
         end
 
         it 'returns an associated plan name' do
-          expect(subgroup.actual_plan_name).to eq 'gold'
+          expect(namespace.actual_plan_name).to eq 'gold'
         end
       end
 
       context 'when namespace does not have subscription associated' do
         it 'returns a free plan name' do
-          expect(subgroup.actual_plan_name).to eq 'free'
+          expect(namespace.actual_plan_name).to eq 'free'
+        end
+      end
+
+      context 'when namespace is a subgroup with a parent' do
+        let(:subgroup) { create(:namespace, parent: namespace) }
+
+        context 'when namespace has a subscription associated' do
+          before do
+            create(:gitlab_subscription, namespace: namespace, hosted_plan: gold_plan)
+          end
+
+          it 'returns an associated plan name' do
+            expect(subgroup.actual_plan_name).to eq 'gold'
+          end
+        end
+
+        context 'when namespace does not have subscription associated' do
+          it 'returns a free plan name' do
+            expect(subgroup.actual_plan_name).to eq 'free'
+          end
         end
       end
     end
