@@ -6,7 +6,7 @@ to look for substantive examples to copy and paste into their own instances of t
 ## Use case: identify issue boards
 
 The following procedure describes how you can use the GraphiQL explorer to identify
-existing issue boards in the gitlab-docs documentation repository.
+existing issue boards in the `gitlab-docs` documentation repository.
 
 ```graphql
 query {
