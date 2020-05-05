@@ -529,7 +529,8 @@ does not make any unsolicited requests including checking for updates.
 
 ## Reports
 
-The DAST tool will always emit a JSON report file, however reports can also be generated in Markdown, HTML, and XML. See [schema for DAST reports](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dast-report-format.json).
+The DAST tool always emits a JSON report file. However, this tool can also generate reports in
+Markdown, HTML, and XML. For more information, see the [schema for DAST reports](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dast-report-format.json).
 
 ### List of URLs scanned
 
