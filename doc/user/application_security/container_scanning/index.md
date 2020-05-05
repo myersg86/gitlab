@@ -339,7 +339,7 @@ The results are stored in `gl-container-scanning-report.json`.
 The Container Scanning tool emits a JSON report file. For more information, see the
 [schema for this report](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/container-scanning-report-format.json).
 
-Here is an example Container Scanning report:
+Here's an example Container Scanning report:
 
 ```json-doc
 {
