@@ -255,10 +255,10 @@ the [Dependency List](../dependency_list/index.md).
 
 ## Reports JSON format
 
-The Dependency Scanning tool emits a JSON report file. For more information, see the
-[schema for this report](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dependency-scanning-report-format.json).
+The Dependency Scanning tool emits a JSON report file. The schema for this report can be found
+[here](https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/dependency-scanning-report-format.json).
 
-Here is an example Dependency Scanning report:
+Here's an example Dependency Scanning report:
 
 ```json-doc
 {
