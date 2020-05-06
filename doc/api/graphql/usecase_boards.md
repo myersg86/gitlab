@@ -1,44 +1,52 @@
 # GraphQL Use cases
 
-Given the advantages of GraphQL as described in the [GraphQL API](index.md), we expect readers
-to look for substantive examples to copy and paste into their own instances of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer).
+Given the advantages of GraphQL as described in the [GraphQL API](index.md), this page presents
+a substantive example that you can copy and paste into your own instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer).
 
 ## Use case: identify issue boards
 
 The following procedure describes how you can use the GraphiQL explorer to identify
 existing issue boards in the `gitlab-docs` documentation repository.
 
-```graphql
-query {
-  project(fullPath: "gitlab-org/gitlab-docs") {
-    name
-    forksCount
-    statistics {
-      wikiSize
-    }
-    issuesEnabled
-    boards {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-}
-```
+1. Copy the following code excerpt:
 
-You can copy the `query` listed above into the left-hand window of your GraphiQL explorer tool, and click the Play button to get the result shown here:
+   ```graphql
+   query {
+     project(fullPath: "gitlab-org/gitlab-docs") {
+       name
+       forksCount
+       statistics {
+         wikiSize
+       }
+       issuesEnabled
+       boards {
+         edges {
+           node {
+             id
+             name
+           }
+         }
+       }
+     }
+   }
+   ```
+
+1. Open the GraphiQL explorer tool in the following URL: `https://gitlab.com/-/graphql-explorer`.
+1. Paste the `query` listed above into the left window of your GraphiQL explorer tool.
+1. Click Play <should include SVG of the play icon> to get the result shown here:
 
 ![GraphiQL explorer search for boards](img/graphql_usecase_boards_v13_0.png)
 
 The query includes:
 
-- Number of forks (`forksCount`).
-- Size of wiki pages (`wikiSize`).
-- The identifier of each board (`boards`), which you can append to the following URL:
-  `https://gitlab.com/gitlab-org/gitlab-docs/-/boards/`.
-- The name of each board (`name`).
+| Attribute    | Description              |
+|--------------|--------------------------|
+| `forksCount` | Number of forks          |
+| `wikiSize`   | Size of wiki pages       |
+| `boards`     | Identifier of each board |
+| `name`       | Name of each board       |
 
-For details of each of these properties, see the [GraphQL API Resources](reference/index.md).
+You can append the identifier of each board (`boards`) to the following URL:
+  `https://gitlab.com/gitlab-org/gitlab-docs/-/boards/`.
+
+For more information on each attribute, see the [GraphQL API Resources](reference/index.md).
