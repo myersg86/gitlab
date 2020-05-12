@@ -16,7 +16,13 @@ module Boards
       private
 
       def type
-        :label
+        # We don't ever expect to have more than one list
+        # type param at once.
+        if params.key?('backlog')
+          :backlog
+        else
+          :label
+        end
       end
 
       def target(board)
