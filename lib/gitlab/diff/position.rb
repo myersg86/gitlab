@@ -145,7 +145,7 @@ module Gitlab
       end
 
       def file_hash
-        @file_hash ||= Digest::SHA1.hexdigest(file_path)
+        @file_hash ||= @diff_file.file_identifier
       end
 
       def on_image?

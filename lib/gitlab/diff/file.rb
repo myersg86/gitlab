@@ -234,7 +234,7 @@ module Gitlab
       end
 
       def file_identifier
-        "#{file_path}-#{new_file?}-#{deleted_file?}-#{renamed_file?}"
+        "#{file_path}-#{new_file?}-#{deleted_file?}-#{renamed_file?}-#{b_mode}"
       end
 
       def diffable?

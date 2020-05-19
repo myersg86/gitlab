@@ -93,7 +93,7 @@ class DraftNote < ApplicationRecord
   def file_hash
     return unless diff_file
 
-    Digest::SHA1.hexdigest(diff_file.file_path)
+    diff_file.file_identifier
   end
 
   def file_path
