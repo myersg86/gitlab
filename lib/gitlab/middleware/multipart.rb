@@ -29,6 +29,8 @@ module Gitlab
   module Middleware
     class Multipart
       RACK_ENV_KEY = 'HTTP_GITLAB_WORKHORSE_MULTIPART_FIELDS'
+      JWT_PARAM_SUFFIX = '.gitlab-workhorse-upload'
+      JWT_PARAM_FIXED_KEY = 'upload'
 
       class Handler
         def initialize(env, message)
@@ -116,6 +118,76 @@ module Gitlab
         end
       end
 
+      class HandlerForJWTParams < Handler
+        def with_open_files
+          @rewritten_fields.keys.each do |field|
+            parsed_field = Rack::Utils.parse_nested_query(field)
+            raise "unexpected field: #{field.inspect}" unless parsed_field.count == 1
+
+            key, value = parsed_field.first
+            if value.nil? # we have a top level param, eg. field = 'foo' and not 'foo[bar]'
+              raise "invalid field: #{field.inspect}" if field != key
+
+              value = open_file(jwt_signed_upload_params(@request.params, key))
+              @open_files << value
+            else
+              value = decorate_params_value(value, @request.params[key])
+            end
+
+            update_param(key, value)
+          end
+
+          yield
+        ensure
+          @open_files.each(&:close)
+        end
+
+        # This function calls itself recursively
+        def decorate_params_value(hash_path, value_hash)
+          unless hash_path.is_a?(Hash) && hash_path.count == 1
+            raise "invalid path: #{hash_path.inspect}"
+          end
+
+          path_key, path_value = hash_path.first
+
+          unless value_hash.is_a?(Hash) && value_hash[path_key]
+            raise "invalid value hash: #{value_hash.inspect}"
+          end
+
+          case path_value
+          when nil
+            value_hash[path_key] = open_file(jwt_signed_upload_params(value_hash.dig(path_key), ''))
+            @open_files << value_hash[path_key]
+            value_hash
+          when Hash
+            decorate_params_value(path_value, value_hash[path_key])
+            value_hash
+          else
+            raise "unexpected path value: #{path_value.inspect}"
+          end
+        end
+
+        def open_file(params)
+          ::UploadedFile.from_params_without_field(params, allowed_paths)
+        end
+
+        private
+
+        def jwt_signed_upload_params(params, key)
+          param_key = "#{key}#{JWT_PARAM_SUFFIX}"
+          message = params.dig(param_key)
+          raise "Empty JWT param: #{param_key}" if message.blank?
+
+          message = Gitlab::Workhorse.decode_jwt(message).first
+          raise "" unless message.is_a?(Hash)
+
+          params = message.fetch(JWT_PARAM_FIXED_KEY, {})
+          raise "Empty params for: #{param_key}" if params.empty?
+
+          params
+        end
+      end
+
       def initialize(app)
         @app = app
       end
@@ -126,7 +198,8 @@ module Gitlab
 
         message = Gitlab::Workhorse.decode_jwt(encoded_message)[0]
 
-        Handler.new(env, message).with_open_files do
+        handler_class = Feature.enabled?(:upload_middleware_jwt_params_handler) ? HandlerForJWTParams : Handler
+        handler_class.new(env, message).with_open_files do
           @app.call(env)
         end
       rescue UploadedFile::InvalidPathError => e
@@ -137,3 +210,4 @@ module Gitlab
 end
 
 ::Gitlab::Middleware::Multipart::Handler.prepend_if_ee('EE::Gitlab::Middleware::Multipart::Handler')
+::Gitlab::Middleware::Multipart::HandlerForJWTParams.prepend_if_ee('EE::Gitlab::Middleware::Multipart::Handler')

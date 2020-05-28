@@ -13,14 +13,18 @@ RSpec.shared_context 'multipart middleware context' do
     req.GET.merge(req.POST)
   end
 
-  def post_env(rewritten_fields, params, secret, issuer)
-    token = JWT.encode({ 'iss' => issuer, 'rewritten_fields' => rewritten_fields }, secret, 'HS256')
+  def post_env(rewritten_fields, params)
+    token = jwt_encode('rewritten_fields' => rewritten_fields)
     Rack::MockRequest.env_for(
       '/',
       method: 'post',
       params: params,
       described_class::RACK_ENV_KEY => token
     )
+  end
+
+  def jwt_encode(params)
+    JWT.encode(params.merge('iss' => jwt_issuer), jwt_secret, 'HS256')
   end
 
   def with_tmp_dir(uploads_sub_dir, storage_path = '')
@@ -33,7 +37,15 @@ RSpec.shared_context 'multipart middleware context' do
       allow(GitlabUploader).to receive(:root).and_return(File.join(dir, storage_path))
 
       Tempfile.open('top-level', upload_dir) do |tempfile|
-        env = post_env({ 'file' => tempfile.path }, { 'file.name' => original_filename, 'file.path' => tempfile.path }, Gitlab::Workhorse.secret, 'gitlab-workhorse')
+        rewritten = { 'file' => tempfile.path }
+        upload_params = { 'name' => original_filename, 'path' => tempfile.path }
+        in_params = {
+          'file.name' => original_filename,
+          'file.path' => tempfile.path,
+          'file.gitlab-workhorse-upload' => jwt_encode('upload' => upload_params)
+        }
+
+        env = post_env(rewritten, in_params)
 
         yield dir, env
       end
