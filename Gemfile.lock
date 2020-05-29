@@ -1351,6 +1351,7 @@ DEPENDENCIES
   redis-rails (~> 5.0.2)
   request_store (~> 1.5)
   responders (~> 3.0)
+  rest-client
   retriable (~> 3.1.2)
   rouge (~> 3.19.0)
   rqrcode-rails3 (~> 0.1.7)

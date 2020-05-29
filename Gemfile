@@ -408,6 +408,7 @@ group :test do
   gem 'test-prof', '~> 0.10.0'
   gem 'rspec_junit_formatter'
   gem 'guard-rspec'
+  gem 'rest-client'
 
   # Moved in `test` because https://gitlab.com/gitlab-org/gitlab/-/issues/217527
   gem 'derailed_benchmarks', require: false
