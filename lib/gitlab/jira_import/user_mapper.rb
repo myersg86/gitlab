@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# TODO: this will be removed as part of
+# https://gitlab.com/gitlab-org/gitlab/-/issues/214810
 module Gitlab
   module JiraImport
     class UserMapper

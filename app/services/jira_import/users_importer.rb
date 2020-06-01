@@ -2,8 +2,6 @@
 
 module JiraImport
   class UsersImporter
-    attr_reader :user, :project, :start_at, :result
-
     MAX_USERS = 50
 
     def initialize(user, project, start_at)
@@ -15,9 +13,9 @@ module JiraImport
     def execute
       Gitlab::JiraImport.validate_project_settings!(project, user: user)
 
-      return ServiceResponse.success(payload: nil) if users.blank?
+      return ServiceResponse.success(payload: nil) if jira_users.blank?
 
-      result = UsersMapper.new(project, users).execute
+      result = UsersMapper.new(user, project, jira_users).execute
       ServiceResponse.success(payload: result)
     rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::ECONNREFUSED, URI::InvalidURIError, JIRA::HTTPError, OpenSSL::SSL::SSLError => error
       Gitlab::ErrorTracking.track_exception(error, project_id: project.id, request: url)
@@ -28,8 +26,10 @@ module JiraImport
 
     private
 
-    def users
-      @users ||= client.get(url)
+    attr_reader :user, :project, :start_at, :result
+
+    def jira_users
+      @jira_users ||= client.get(url)
     end
 
     def url

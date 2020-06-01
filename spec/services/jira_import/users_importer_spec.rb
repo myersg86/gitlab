@@ -6,7 +6,8 @@ RSpec.describe JiraImport::UsersImporter do
   include JiraServiceHelper
 
   let_it_be(:user) { create(:user) }
-  let_it_be(:project, reload: true) { create(:project) }
+  let_it_be(:group) { create(:group) }
+  let_it_be(:project, reload: true) { create(:project, group: group) }
   let_it_be(:start_at) { 7 }
 
   let(:importer) { described_class.new(user, project, start_at) }
@@ -51,19 +52,27 @@ RSpec.describe JiraImport::UsersImporter do
         context 'when jira client returns an empty array' do
           let(:jira_users) { [] }
 
-          it 'retturns nil payload' do
+          it 'returns nil payload' do
             expect(subject.success?).to be_truthy
             expect(subject.payload).to be_nil
           end
         end
 
         context 'when jira client returns an results' do
+          let_it_be(:project_member) { create(:user) }
+          let_it_be(:group_member) { create(:user) }
+          let_it_be(:other_user) { create(:user) }
+
           let(:jira_users)   { [{ 'name' => 'user1' }, { 'name' => 'user2' }] }
           let(:mapped_users) { [{ jira_display_name: 'user1', gitlab_id: 5 }] }
 
           before do
-            expect(JiraImport::UsersMapper).to receive(:new).with(project, jira_users)
-            .and_return(double(execute: mapped_users))
+            project.add_developer(project_member)
+            group.add_developer(group_member)
+
+            expect(JiraImport::UsersMapper).to receive(:new)
+              .with(user, project, jira_users)
+              .and_return(double(execute: mapped_users))
           end
 
           it 'returns the mapped users' do
