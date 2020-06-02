@@ -13,30 +13,20 @@ module NotesActions
   end
 
   def index
-    notes_json = { notes: [], last_fetched_at: Time.current.to_i }
-
-    notes = notes_finder
-              .execute
-              .inc_relations_for_view
-
-    if notes_filter != UserPreference::NOTES_FILTERS[:only_comments]
-      notes =
-        ResourceEvents::MergeIntoNotesService
-          .new(noteable, current_user, last_fetched_at: last_fetched_at)
-          .execute(notes)
-    end
-
+    notes, meta = gather_notes
     notes = prepare_notes_for_rendering(notes)
     notes = notes.select { |n| n.readable_by?(current_user) }
-
-    notes_json[:notes] =
+    notes =
       if use_note_serializer?
         note_serializer.represent(notes)
       else
         notes.map { |note| note_json(note) }
       end
 
-    render json: notes_json
+    # We know there's more data, so tell the frontend to poll again after 1ms
+    headers['Poll-Interval'] = 1 if meta[:more]
+
+    render json: meta.merge(notes: notes)
   end
 
   # rubocop:disable Gitlab/ModuleWithInstanceVariables
@@ -100,6 +90,50 @@ module NotesActions
   end
 
   private
+
+  # Lower bound (last_fetched_at as specified in the request) is already set in
+  # the finder. Here, we select between returning all notes since then, or a
+  # page's worth of notes.
+  def gather_notes
+    if Feature.enabled?(:paginated_notes)
+      gather_some_notes
+    else
+      gather_all_notes
+    end
+  end
+
+  SOME_NOTES_LIMIT = 20
+
+  def gather_some_notes
+    paginator = Gitlab::UpdatedNotesPaginator.new(
+      notes_finder,
+      last_fetched_at: last_fetched_at
+    )
+
+    notes = paginator.notes
+
+    # Rather than trying to accurately paginate resource events, include them
+    # all in the first batch for now. We control the note text so they should be
+    # relatively lightweight.
+    notes = merge_resource_events(notes) if last_fetched_at.to_i == 0
+
+    [notes, paginator.metadata]
+  end
+
+  def gather_all_notes
+    now = Time.current
+    notes = merge_resource_events(notes_finder.execute.inc_relations_for_view)
+
+    [notes, { last_fetched_at: now.to_i }]
+  end
+
+  def merge_resource_events(notes)
+    return notes if notes_filter == UserPreference::NOTES_FILTERS[:only_comments]
+
+    ResourceEvents::MergeIntoNotesService
+      .new(noteable, current_user, last_fetched_at: last_fetched_at)
+      .execute(notes)
+  end
 
   def note_html(note)
     render_to_string(

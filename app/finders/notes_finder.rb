@@ -25,9 +25,9 @@ class NotesFinder
     @target_type = @params[:target_type]
   end
 
-  def execute
+  def execute(fetch_overlap: FETCH_OVERLAP)
     notes = init_collection
-    notes = since_fetch_at(notes)
+    notes = since_fetch_at(notes, fetch_overlap: fetch_overlap)
     notes = notes.with_notes_filter(@params[:notes_filter]) if notes_filter?
 
     notes.fresh
@@ -159,12 +159,12 @@ class NotesFinder
 
   # Notes changed since last fetch
   # Uses overlapping intervals to avoid worrying about race conditions
-  def since_fetch_at(notes)
+  def since_fetch_at(notes, fetch_overlap:)
     return notes unless @params[:last_fetched_at]
 
     # Default to 0 to remain compatible with old clients
     last_fetched_at = Time.at(@params.fetch(:last_fetched_at, 0).to_i)
-    notes.updated_after(last_fetched_at - FETCH_OVERLAP)
+    notes.by_updated_at.updated_after(last_fetched_at - fetch_overlap)
   end
 
   def notes_filter?

@@ -27,6 +27,8 @@ export const isNotesFetched = state => state.isNotesFetched;
 
 export const sortDirection = state => state.discussionSortOrder;
 
+export const isFetching = state => state.isFetching;
+
 export const isLoading = state => state.isLoading;
 
 export const getNotesDataByProp = state => prop => state.notesData[prop];

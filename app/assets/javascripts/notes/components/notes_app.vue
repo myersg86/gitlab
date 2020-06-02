@@ -57,7 +57,6 @@ export default {
   },
   data() {
     return {
-      isFetching: false,
       currentFilter: null,
     };
   },
@@ -68,6 +67,7 @@ export default {
       'convertedDisscussionIds',
       'getNotesDataByProp',
       'isLoading',
+      'isFetching',
       'commentsDisabled',
       'getNoteableData',
       'userCanReply',
@@ -149,6 +149,7 @@ export default {
   },
   methods: {
     ...mapActions([
+      'setFetchingState',
       'setLoadingState',
       'fetchDiscussions',
       'poll',
@@ -178,7 +179,16 @@ export default {
     fetchNotes() {
       if (this.isFetching) return null;
 
-      this.isFetching = true;
+      this.setFetchingState(true);
+
+      if (this.getNotesDataByProp('lastFetchedAt') == 0) {
+        // In this mode, we stay in init until all notes are loaded
+        return this.initPolling().catch(() => {
+          this.setLoadingState(false);
+          this.setNotesFetchedState(true);
+          Flash(__('Something went wrong while fetching comments. Please try again.'));
+        });
+      }
 
       return this.fetchDiscussions(this.getFetchDiscussionsConfig())
         .then(this.initPolling)
@@ -186,7 +196,7 @@ export default {
           this.setLoadingState(false);
           this.setNotesFetchedState(true);
           eventHub.$emit('fetchedNotesData');
-          this.isFetching = false;
+          this.setFetchingState(false);
         })
         .then(this.$nextTick)
         .then(this.startTaskList)
@@ -204,8 +214,9 @@ export default {
 
       this.setLastFetchedAt(this.getNotesDataByProp('lastFetchedAt'));
 
-      this.poll();
+      let promise = this.poll();
       this.isPollingInitialized = true;
+      return promise;
     },
     checkLocationHash() {
       const hash = getLocationHash();
