@@ -13,7 +13,7 @@
 #     group_id: integer
 #     project_id: integer
 #     milestone_title: string
-#     release_tag: string
+#     tag_name: string
 #     author_id: integer
 #     author_username: string
 #     assignee_id: integer or 'None' or 'Any'
@@ -55,7 +55,7 @@ class IssuableFinder
       author_username
       label_name
       milestone_title
-      release_tag
+      tag_name
       my_reaction_emoji
       search
       in
@@ -435,14 +435,14 @@ class IssuableFinder
     elsif params.filter_by_any_release?
       items.any_release
     else
-      items.with_release(params[:release_tag], params[:project_id])
+      items.with_release(params[:tag_name], params[:project_id])
     end
   end
 
   def by_negated_release(items)
     return items unless not_params.releases?
 
-    items.without_particular_release(not_params[:release_tag], not_params[:project_id])
+    items.without_particular_release(not_params[:tag_name], not_params[:project_id])
   end
 
   def by_label(items)
