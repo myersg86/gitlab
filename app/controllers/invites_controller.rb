@@ -75,7 +75,7 @@ class InvitesController < ApplicationController
     notice = notice.join(' ') + "."
 
     store_location_for :user, request.fullpath
-    redirect_to new_user_session_path, notice: notice
+    redirect_to new_user_session_path(notice: notice, email: member.invite_email)
   end
 
   def invite_details
