@@ -9281,6 +9281,9 @@ msgstr ""
 msgid "Failed Jobs"
 msgstr ""
 
+msgid "Failed on"
+msgstr ""
+
 msgid "Failed to add a Zoom meeting"
 msgstr ""
 
@@ -14642,6 +14645,9 @@ msgstr ""
 msgid "New issue title"
 msgstr ""
 
+msgid "New iteration"
+msgstr ""
+
 msgid "New iteration created"
 msgstr ""
 
@@ -14817,6 +14823,9 @@ msgid "No forks are available to you."
 msgstr ""
 
 msgid "No grouping"
+msgstr ""
+
+msgid "No iterations to show"
 msgstr ""
 
 msgid "No job log"
@@ -15755,6 +15764,9 @@ msgid "Participants"
 msgstr ""
 
 msgid "Passed"
+msgstr ""
+
+msgid "Passed on"
 msgstr ""
 
 msgid "Password"
@@ -27246,6 +27258,9 @@ msgstr ""
 msgid "revised"
 msgstr ""
 
+msgid "satisfied"
+msgstr ""
+
 msgid "score"
 msgstr ""
 
@@ -27391,6 +27406,9 @@ msgid "username"
 msgstr ""
 
 msgid "uses Kubernetes clusters to deploy your code!"
+msgstr ""
+
+msgid "v%{version} published %{timeAgo}"
 msgstr ""
 
 msgid "verify ownership"
