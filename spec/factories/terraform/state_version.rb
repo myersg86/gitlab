@@ -1,17 +1,14 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :terraform_state, class: 'Terraform::State' do
-    project factory: :project
+  factory :terraform_state_version, class: 'Terraform::StateVersion' do
+    terraform_state factory: :terraform_state, traits: :versioned
+    created_by_user factory: :user
 
-    sequence(:name) { |n| "state-#{n}" }
+    sequence(:version)
 
     trait :with_file do
       file { fixture_file_upload('spec/fixtures/terraform/terraform.tfstate', 'application/json') }
-    end
-
-    trait :versioned do
-      versioning_enabled { true }
     end
   end
 end

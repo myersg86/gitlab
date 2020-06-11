@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+module Terraform
+  class StateVersion < ApplicationRecord
+    include Terraform::FileStore
+
+    belongs_to :terraform_state, class_name: 'Terraform::State', optional: false
+    belongs_to :created_by_user, class_name: 'User', optional: true
+
+    scope :ordered_by_version_desc, -> { order(version: :desc) }
+
+    mount_uploader :file, VersionedStateUploader
+
+    delegate :project_id, :uuid, to: :terraform_state
+  end
+end
