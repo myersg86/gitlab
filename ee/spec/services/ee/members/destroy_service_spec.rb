@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Members::DestroyService do
+RSpec.describe Members::DestroyService do
   let(:current_user) { create(:user) }
   let(:member_user) { create(:user) }
   let(:group) { create(:group) }
@@ -14,7 +14,7 @@ describe Members::DestroyService do
   end
 
   shared_examples_for 'logs an audit event' do
-    it do
+    specify do
       expect { event }.to change { SecurityEvent.count }.by(1)
     end
   end

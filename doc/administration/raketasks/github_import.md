@@ -1,4 +1,4 @@
-# GitHub import
+# GitHub import **(CORE ONLY)**
 
 > [Introduced]( https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/10308) in GitLab 9.1.
 
@@ -9,8 +9,13 @@ which will become the owner of the project. You can resume an import
 with the same command.
 
 Bear in mind that the syntax is very specific. Remove any spaces within the argument block and
-before/after the brackets. Also, Some shells (e.g., zsh) can interpret the open/close brackets
+before/after the brackets. Also, some shells (for example, `zsh`) can interpret the open/close brackets
 (`[]`) separately. You may need to either escape the brackets or use double quotes.
+
+## Caveats
+
+If the GitHub [rate limit](https://developer.github.com/v3/#rate-limiting) is reached while importing,
+the importing process will wait (`sleep()`) until it can continue importing.
 
 ## Importing multiple projects
 

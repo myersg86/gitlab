@@ -2,32 +2,24 @@
 
 module Snippets
   class CreateService < Snippets::BaseService
-    include SpamCheckMethods
-
-    CreateRepositoryError = Class.new(StandardError)
-
     def execute
-      filter_spam_check_params
+      @snippet = build_from_params
 
-      @snippet = if project
-                   project.snippets.build(params)
-                 else
-                   PersonalSnippet.new(params)
-                 end
+      return invalid_params_error(@snippet) unless valid_params?
 
-      unless Gitlab::VisibilityLevel.allowed_for?(current_user, @snippet.visibility_level)
-        deny_visibility_level(@snippet)
-
-        return snippet_error_response(@snippet, 403)
+      unless visibility_allowed?(@snippet, @snippet.visibility_level)
+        return forbidden_visibility_error(@snippet)
       end
 
       @snippet.author = current_user
 
-      spam_check(@snippet, current_user)
+      spam_check(@snippet, current_user, action: :create)
 
       if save_and_commit
         UserAgentDetailService.new(@snippet, @request).create
         Gitlab::UsageDataCounters::SnippetCounter.count(:create)
+
+        move_temporary_files
 
         ServiceResponse.success(payload: { snippet: @snippet } )
       else
@@ -37,10 +29,27 @@ module Snippets
 
     private
 
+    def build_from_params
+      if project
+        project.snippets.build(create_params)
+      else
+        PersonalSnippet.new(create_params)
+      end
+    end
+
+    # If the snippet_files param is present
+    # we need to fill content and file_name from
+    # the model
+    def create_params
+      return params if snippet_files.empty?
+
+      params.merge(content: snippet_files[0].content, file_name: snippet_files[0].file_path)
+    end
+
     def save_and_commit
       snippet_saved = @snippet.save
 
-      if snippet_saved && Feature.enabled?(:version_snippets, current_user)
+      if snippet_saved
         create_repository
         create_commit
       end
@@ -60,7 +69,7 @@ module Snippets
         @snippet = @snippet.dup
       end
 
-      @snippet.errors.add(:base, e.message)
+      add_snippet_repository_error(snippet: @snippet, error: e)
 
       false
     end
@@ -77,10 +86,18 @@ module Snippets
         message: 'Initial commit'
       }
 
-      @snippet.snippet_repository.multi_files_action(current_user, snippet_files, commit_attrs)
+      @snippet.snippet_repository.multi_files_action(current_user, files_to_commit(@snippet), commit_attrs)
     end
 
-    def snippet_files
+    def move_temporary_files
+      return unless @snippet.is_a?(PersonalSnippet)
+
+      uploaded_assets.each do |file|
+        FileMover.new(file, from_model: current_user, to_model: @snippet).execute
+      end
+    end
+
+    def build_actions_from_params(_snippet)
       [{ file_path: params[:file_name], content: params[:content] }]
     end
   end

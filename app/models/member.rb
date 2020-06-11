@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Member < ApplicationRecord
+  include EachBatch
   include AfterCommitQueue
   include Sortable
   include Importable
@@ -319,7 +320,7 @@ class Member < ApplicationRecord
     return false unless invite?
 
     self.invite_token = nil
-    self.invite_accepted_at = Time.now.utc
+    self.invite_accepted_at = Time.current.utc
 
     self.user = new_user
 

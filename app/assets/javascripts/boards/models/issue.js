@@ -15,7 +15,7 @@ class ListIssue {
     this.labels = [];
     this.assignees = [];
     this.selected = false;
-    this.position = obj.relative_position || Infinity;
+    this.position = obj.position || obj.relative_position || Infinity;
     this.isFetching = {
       subscriptions: true,
     };
@@ -36,44 +36,35 @@ class ListIssue {
   }
 
   findLabel(findLabel) {
-    return this.labels.find(label => label.id === findLabel.id);
+    return boardsStore.findIssueLabel(this, findLabel);
   }
 
   removeLabel(removeLabel) {
-    if (removeLabel) {
-      this.labels = this.labels.filter(label => removeLabel.id !== label.id);
-    }
+    boardsStore.removeIssueLabel(this, removeLabel);
   }
 
   removeLabels(labels) {
-    labels.forEach(this.removeLabel.bind(this));
+    boardsStore.removeIssueLabels(this, labels);
   }
 
   addAssignee(assignee) {
-    if (!this.findAssignee(assignee)) {
-      this.assignees.push(new ListAssignee(assignee));
-    }
+    boardsStore.addIssueAssignee(this, assignee);
   }
 
   findAssignee(findAssignee) {
-    return this.assignees.find(assignee => assignee.id === findAssignee.id);
+    return boardsStore.findIssueAssignee(this, findAssignee);
   }
 
   removeAssignee(removeAssignee) {
-    if (removeAssignee) {
-      this.assignees = this.assignees.filter(assignee => assignee.id !== removeAssignee.id);
-    }
+    boardsStore.removeIssueAssignee(this, removeAssignee);
   }
 
   removeAllAssignees() {
-    this.assignees = [];
+    boardsStore.removeAllIssueAssignees(this);
   }
 
   addMilestone(milestone) {
-    const miletoneId = this.milestone ? this.milestone.id : null;
-    if (IS_EE && milestone.id !== miletoneId) {
-      this.milestone = new ListMilestone(milestone);
-    }
+    boardsStore.addIssueMilestone(this, milestone);
   }
 
   removeMilestone(removeMilestone) {
@@ -87,7 +78,7 @@ class ListIssue {
   }
 
   updateData(newData) {
-    Object.assign(this, newData);
+    boardsStore.updateIssueData(this, newData);
   }
 
   setFetchingState(key, value) {
@@ -95,35 +86,11 @@ class ListIssue {
   }
 
   setLoadingState(key, value) {
-    this.isLoading[key] = value;
+    boardsStore.setIssueLoadingState(this, key, value);
   }
 
   update() {
-    const data = {
-      issue: {
-        milestone_id: this.milestone ? this.milestone.id : null,
-        due_date: this.dueDate,
-        assignee_ids: this.assignees.length > 0 ? this.assignees.map(u => u.id) : [0],
-        label_ids: this.labels.map(label => label.id),
-      },
-    };
-
-    if (!data.issue.label_ids.length) {
-      data.issue.label_ids = [''];
-    }
-
-    const projectPath = this.project ? this.project.path : '';
-    return axios.patch(`${this.path}.json`, data).then(({ data: body = {} } = {}) => {
-      /**
-       * Since post implementation of Scoped labels, server can reject
-       * same key-ed labels. To keep the UI and server Model consistent,
-       * we're just assigning labels that server echo's back to us when we
-       * PATCH the said object.
-       */
-      if (body) {
-        this.labels = convertObjectPropsToCamelCase(body.labels, { deep: true });
-      }
-    });
+    return boardsStore.updateIssue(this);
   }
 }
 

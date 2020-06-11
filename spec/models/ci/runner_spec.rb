@@ -263,14 +263,14 @@ describe Ci::Runner do
     subject { described_class.online }
 
     before do
-      @runner1 = create(:ci_runner, :instance, contacted_at: 1.hour.ago)
+      @runner1 = create(:ci_runner, :instance, contacted_at: 2.hours.ago)
       @runner2 = create(:ci_runner, :instance, contacted_at: 1.second.ago)
     end
 
     it { is_expected.to eq([@runner2])}
   end
 
-  describe '#online?' do
+  describe '#online?', :clean_gitlab_redis_cache do
     let(:runner) { create(:ci_runner, :instance) }
 
     subject { runner.online? }
@@ -332,7 +332,7 @@ describe Ci::Runner do
     end
 
     def stub_redis_runner_contacted_at(value)
-      Gitlab::Redis::SharedState.with do |redis|
+      Gitlab::Redis::Cache.with do |redis|
         cache_key = runner.send(:cache_attribute_key)
         expect(redis).to receive(:get).with(cache_key)
           .and_return({ contacted_at: value }.to_json).at_least(:once)
@@ -344,7 +344,7 @@ describe Ci::Runner do
     subject { described_class.offline }
 
     before do
-      @runner1 = create(:ci_runner, :instance, contacted_at: 1.hour.ago)
+      @runner1 = create(:ci_runner, :instance, contacted_at: 2.hours.ago)
       @runner2 = create(:ci_runner, :instance, contacted_at: 1.second.ago)
     end
 
@@ -598,14 +598,14 @@ describe Ci::Runner do
     end
   end
 
-  describe '#update_cached_info' do
+  describe '#heartbeat' do
     let(:runner) { create(:ci_runner, :project) }
 
-    subject { runner.update_cached_info(architecture: '18-bit') }
+    subject { runner.heartbeat(architecture: '18-bit') }
 
     context 'when database was updated recently' do
       before do
-        runner.contacted_at = Time.now
+        runner.contacted_at = Time.current
       end
 
       it 'updates cache' do
@@ -640,7 +640,7 @@ describe Ci::Runner do
     end
 
     def expect_redis_update
-      Gitlab::Redis::SharedState.with do |redis|
+      Gitlab::Redis::Cache.with do |redis|
         redis_key = runner.send(:cache_attribute_key)
         expect(redis).to receive(:set).with(redis_key, anything, any_args)
       end
@@ -664,7 +664,7 @@ describe Ci::Runner do
       end
 
       it 'cleans up the queue' do
-        Gitlab::Redis::SharedState.with do |redis|
+        Gitlab::Redis::Cache.with do |redis|
           expect(redis.get(queue_key)).to be_nil
         end
       end

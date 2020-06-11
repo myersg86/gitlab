@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inline do
+RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inline do
   before do
     stub_ee_application_setting(elasticsearch_search: true, elasticsearch_indexing: true)
   end
@@ -17,7 +17,7 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
       expect(Repository).to receive(:find_commits_by_message_with_elastic).with('hello world', anything).once.and_call_original
 
       results = described_class.new(user, 'hello world', limit_project_ids)
-      expect(results.objects('commits', 2)).to be_empty
+      expect(results.objects('commits', page: 2)).to be_empty
       expect(results.commits_count).to eq 0
     end
   end
@@ -56,13 +56,18 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
     let(:results) { described_class.new(user, 'hello world', limit_project_ids) }
 
     it 'does not explode when given a page as a string' do
-      expect { results.objects(object_type, "2") }.not_to raise_error
+      expect { results.objects(object_type, page: "2") }.not_to raise_error
     end
 
     it 'paginates' do
-      objects = results.objects(object_type, 2)
+      objects = results.objects(object_type, page: 2)
       expect(objects).to respond_to(:total_count, :limit, :offset)
       expect(objects.offset_value).to eq(20)
+    end
+
+    it 'uses the per_page value if passed' do
+      objects = results.objects(object_type, page: 5, per_page: 1)
+      expect(objects.offset_value).to eq(4)
     end
   end
 
@@ -532,7 +537,15 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
       blobs = results.objects('blobs')
 
       expect(blobs.first.data).to include('def')
-      expect(results.blobs_count).to eq 7
+      expect(results.blobs_count).to eq 5
+    end
+
+    it 'finds blobs by prefix search' do
+      results = described_class.new(user, 'defau*', limit_project_ids)
+      blobs = results.objects('blobs')
+
+      expect(blobs.first.data).to include('default')
+      expect(results.blobs_count).to eq 3
     end
 
     it 'finds blobs from public projects only' do
@@ -542,13 +555,13 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
       ensure_elasticsearch_index!
 
       results = described_class.new(user, 'def', [project_1.id])
-      expect(results.blobs_count).to eq 7
+      expect(results.blobs_count).to eq 5
       result_project_ids = results.objects('blobs').map(&:project_id)
       expect(result_project_ids.uniq).to eq([project_1.id])
 
       results = described_class.new(user, 'def', [project_1.id, project_2.id])
 
-      expect(results.blobs_count).to eq 14
+      expect(results.blobs_count).to eq 10
     end
 
     it 'returns zero when blobs are not found' do
@@ -575,7 +588,8 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
         expect(search_for('write')).to include('test.txt')
       end
 
-      it 'find by first two words' do
+      # Re-enable after fixing https://gitlab.com/gitlab-org/gitlab/-/issues/10693#note_349683299
+      xit 'find by first two words' do
         expect(search_for('writeString')).to include('test.txt')
       end
 
@@ -585,6 +599,10 @@ describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need_inlin
 
       it 'find by exact match' do
         expect(search_for('writeStringToFile')).to include('test.txt')
+      end
+
+      it 'find by prefix search' do
+        expect(search_for('writeStr*')).to include('test.txt')
       end
     end
 

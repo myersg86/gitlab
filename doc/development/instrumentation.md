@@ -5,7 +5,7 @@ blocks of Ruby code. Method instrumentation is the primary form of
 instrumentation with block-based instrumentation only being used when we want to
 drill down to specific regions of code within a method.
 
-Please refer to [Telemetry](../telemetry/index.md) if you are tracking product usage patterns.
+Please refer to [Telemetry](telemetry/index.md) if you are tracking product usage patterns.
 
 ## Instrumenting Methods
 
@@ -119,9 +119,9 @@ without measuring anything.
 
 Three values are measured for a block:
 
-- The real time elapsed, stored in NAME_real_time.
-- The CPU time elapsed, stored in NAME_cpu_time.
-- The call count, stored in NAME_call_count.
+- The real time elapsed, stored in `NAME_real_time`.
+- The CPU time elapsed, stored in `NAME_cpu_time`.
+- The call count, stored in `NAME_call_count`.
 
 Both the real and CPU timings are measured in milliseconds.
 

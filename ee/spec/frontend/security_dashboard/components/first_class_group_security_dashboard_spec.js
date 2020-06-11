@@ -3,6 +3,7 @@ import SecurityDashboardLayout from 'ee/security_dashboard/components/security_d
 import FirstClassGroupDashboard from 'ee/security_dashboard/components/first_class_group_security_dashboard.vue';
 import FirstClassGroupVulnerabilities from 'ee/security_dashboard/components/first_class_group_security_dashboard_vulnerabilities.vue';
 import VulnerabilitySeverity from 'ee/security_dashboard/components/vulnerability_severity.vue';
+import VulnerabilityChart from 'ee/security_dashboard/components/first_class_vulnerability_chart.vue';
 import Filters from 'ee/security_dashboard/components/first_class_vulnerability_filters.vue';
 
 describe('First Class Group Dashboard Component', () => {
@@ -15,6 +16,7 @@ describe('First Class Group Dashboard Component', () => {
 
   const findGroupVulnerabilities = () => wrapper.find(FirstClassGroupVulnerabilities);
   const findVulnerabilitySeverity = () => wrapper.find(VulnerabilitySeverity);
+  const findVulnerabilityChart = () => wrapper.find(VulnerabilityChart);
   const findFilters = () => wrapper.find(Filters);
 
   const createWrapper = () => {
@@ -52,7 +54,19 @@ describe('First Class Group Dashboard Component', () => {
     expect(findFilters().exists()).toBe(true);
   });
 
-  it('it responds to the filterChange event', () => {
+  it('has the vulnerability history chart', () => {
+    expect(findVulnerabilityChart().props('groupFullPath')).toBe(groupFullPath);
+  });
+
+  it('responds to the projectFetch event', () => {
+    const projects = [{ id: 1, name: 'GitLab Org' }];
+    findGroupVulnerabilities().vm.$listeners.projectFetch(projects);
+    return wrapper.vm.$nextTick(() => {
+      expect(findFilters().props('projects')).toEqual(projects);
+    });
+  });
+
+  it('responds to the filterChange event', () => {
     const filters = { severity: 'critical' };
     findFilters().vm.$listeners.filterChange(filters);
     return wrapper.vm.$nextTick(() => {

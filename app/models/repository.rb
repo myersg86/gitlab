@@ -950,7 +950,6 @@ class Repository
     async_remove_remote(remote_name) if tmp_remote_name
   end
 
-  # rubocop:disable Gitlab/RailsLogger
   def async_remove_remote(remote_name)
     return unless remote_name
     return unless project
@@ -958,14 +957,13 @@ class Repository
     job_id = RepositoryRemoveRemoteWorker.perform_async(project.id, remote_name)
 
     if job_id
-      Rails.logger.info("Remove remote job scheduled for #{project.id} with remote name: #{remote_name} job ID #{job_id}.")
+      Gitlab::AppLogger.info("Remove remote job scheduled for #{project.id} with remote name: #{remote_name} job ID #{job_id}.")
     else
-      Rails.logger.info("Remove remote job failed to create for #{project.id} with remote name #{remote_name}.")
+      Gitlab::AppLogger.info("Remove remote job failed to create for #{project.id} with remote name #{remote_name}.")
     end
 
     job_id
   end
-  # rubocop:enable Gitlab/RailsLogger
 
   def fetch_source_branch!(source_repository, source_branch, local_ref)
     raw_repository.fetch_source_branch!(source_repository.raw_repository, source_branch, local_ref)
@@ -1120,6 +1118,17 @@ class Repository
     end
   end
 
+  # TODO: pass this in directly to `Blob` rather than delegating it to here
+  #
+  # https://gitlab.com/gitlab-org/gitlab/-/issues/201886
+  def lfs_enabled?
+    if container.is_a?(Project)
+      container.lfs_enabled?
+    else
+      false # LFS is not supported for snippet or group repositories
+    end
+  end
+
   private
 
   # TODO Genericize finder, later split this on finders by Ref or Oid
@@ -1160,7 +1169,7 @@ class Repository
       if target
         target.committed_date
       else
-        Time.now
+        Time.current
       end
     end
   end

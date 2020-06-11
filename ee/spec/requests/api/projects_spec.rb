@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe API::Projects do
+RSpec.describe API::Projects do
   include ExternalAuthorizationServiceHelpers
 
   let(:user) { create(:user) }
@@ -346,6 +346,72 @@ describe API::Projects do
     end
   end
 
+  describe 'GET /projects/:id/users' do
+    shared_examples_for 'project users response' do
+      it 'returns the project users' do
+        get api("/projects/#{project.id}/users", current_user)
+
+        user = project.namespace.owner
+
+        expect(response).to have_gitlab_http_status(:ok)
+        expect(response).to include_pagination_headers
+        expect(json_response).to be_an Array
+        expect(json_response.size).to eq(1)
+
+        first_user = json_response.first
+        expect(first_user['username']).to eq(user.username)
+        expect(first_user['name']).to eq(user.name)
+      end
+
+      context 'when the gitlab_employee_badge flag is off' do
+        it 'does not expose the is_gitlab_employee attribute on the user' do
+          stub_feature_flags(gitlab_employee_badge: false)
+
+          get api("/projects/#{project.id}/users", current_user)
+
+          expect(json_response.first.keys).to contain_exactly(*%w[name username id state avatar_url web_url])
+        end
+      end
+
+      context 'when the gitlab_employee_badge flag is on but we are not on gitlab.com' do
+        it 'does not expose the is_gitlab_employee attribute on the user' do
+          stub_feature_flags(gitlab_employee_badge: true)
+          allow(Gitlab).to receive(:com?).and_return(false)
+
+          get api("/projects/#{project.id}/users", current_user)
+
+          expect(json_response.first.keys).to contain_exactly(*%w[name username id state avatar_url web_url])
+        end
+      end
+
+      context 'when the gitlab_employee_badge flag is on and we are on gitlab.com' do
+        it 'exposes the is_gitlab_employee attribute on the user' do
+          stub_feature_flags(gitlab_employee_badge: true)
+          allow(Gitlab).to receive(:com?).and_return(true)
+
+          get api("/projects/#{project.id}/users", current_user)
+
+          expect(json_response.first.keys).to contain_exactly(*%w[name username id state avatar_url web_url is_gitlab_employee])
+        end
+      end
+    end
+
+    context 'when unauthenticated' do
+      it_behaves_like 'project users response' do
+        let(:project) { create(:project, :public) }
+        let(:current_user) { nil }
+      end
+    end
+
+    context 'when authenticated' do
+      context 'valid request' do
+        it_behaves_like 'project users response' do
+          let(:current_user) { user }
+        end
+      end
+    end
+  end
+
   describe 'POST /projects/user/:id' do
     let(:admin) { create(:admin) }
     let(:api_call) { post api("/projects/user/#{user.id}", admin), params: project_params }
@@ -457,6 +523,178 @@ describe API::Projects do
     end
   end
 
+  describe 'GET projects/:id/audit_events' do
+    let_it_be(:user) { create(:user) }
+    let_it_be(:project) { create(:project, :public, namespace: user.namespace) }
+    let(:path) { "/projects/#{project.id}/audit_events" }
+
+    context 'when authenticated, as a user' do
+      it_behaves_like '403 response' do
+        let(:request) { get api(path, create(:user)) }
+      end
+    end
+
+    context 'when authenticated, as a project owner' do
+      context 'audit events feature is not available' do
+        before do
+          stub_licensed_features(audit_events: false)
+        end
+
+        it_behaves_like '403 response' do
+          let(:request) { get api(path, user) }
+        end
+      end
+
+      context 'audit events feature is available' do
+        let_it_be(:project_audit_event_1) { create(:project_audit_event, created_at: Date.new(2000, 1, 10), entity_id: project.id) }
+        let_it_be(:project_audit_event_2) { create(:project_audit_event, created_at: Date.new(2000, 1, 15), entity_id: project.id) }
+        let_it_be(:project_audit_event_3) { create(:project_audit_event, created_at: Date.new(2000, 1, 20), entity_id: project.id) }
+
+        before do
+          stub_licensed_features(audit_events: true)
+        end
+
+        it 'returns 200 response' do
+          get api(path, user)
+
+          expect(response).to have_gitlab_http_status(:ok)
+        end
+
+        it 'includes the correct pagination headers' do
+          audit_events_counts = 3
+
+          get api(path, user)
+
+          expect(response).to include_pagination_headers
+          expect(response.headers['X-Total']).to eq(audit_events_counts.to_s)
+          expect(response.headers['X-Page']).to eq('1')
+        end
+
+        it 'does not include audit events of a different project' do
+          project = create(:project)
+          audit_event = create(:project_audit_event, created_at: Date.new(2000, 1, 20), entity_id: project.id)
+
+          get api(path, user)
+
+          audit_event_ids = json_response.map { |audit_event| audit_event['id'] }
+
+          expect(audit_event_ids).not_to include(audit_event.id)
+        end
+
+        context 'parameters' do
+          context 'created_before parameter' do
+            it "returns audit events created before the given parameter" do
+              created_before = '2000-01-20T00:00:00.060Z'
+
+              get api(path, user), params: { created_before: created_before }
+
+              expect(json_response.size).to eq 3
+              expect(json_response.first["id"]).to eq(project_audit_event_3.id)
+              expect(json_response.last["id"]).to eq(project_audit_event_1.id)
+            end
+          end
+
+          context 'created_after parameter' do
+            it "returns audit events created after the given parameter" do
+              created_after = '2000-01-12T00:00:00.060Z'
+
+              get api(path, user), params: { created_after: created_after }
+
+              expect(json_response.size).to eq 2
+              expect(json_response.first["id"]).to eq(project_audit_event_3.id)
+              expect(json_response.last["id"]).to eq(project_audit_event_2.id)
+            end
+          end
+        end
+
+        context 'response schema' do
+          it 'matches the response schema' do
+            get api(path, user)
+
+            expect(response).to match_response_schema('public_api/v4/audit_events', dir: 'ee')
+          end
+        end
+      end
+    end
+  end
+
+  describe 'GET projects/:id/audit_events/:audit_event_id' do
+    let_it_be(:user) { create(:user) }
+    let_it_be(:project) { create(:project, :public, namespace: user.namespace) }
+    let(:path) { "/projects/#{project.id}/audit_events/#{project_audit_event.id}" }
+
+    let_it_be(:project_audit_event) { create(:project_audit_event, created_at: Date.new(2000, 1, 10), entity_id: project.id) }
+
+    context 'when authenticated, as a user' do
+      it_behaves_like '403 response' do
+        let(:request) { get api(path, create(:user)) }
+      end
+    end
+
+    context 'when authenticated, as a project owner' do
+      context 'audit events feature is not available' do
+        before do
+          stub_licensed_features(audit_events: false)
+        end
+
+        it_behaves_like '403 response' do
+          let(:request) { get api(path, user) }
+        end
+      end
+
+      context 'audit events feature is available' do
+        before do
+          stub_licensed_features(audit_events: true)
+        end
+
+        context 'existent audit event' do
+          it 'returns 200 response' do
+            get api(path, user)
+
+            expect(response).to have_gitlab_http_status(:ok)
+          end
+
+          context 'response schema' do
+            it 'matches the response schema' do
+              get api(path, user)
+
+              expect(response).to match_response_schema('public_api/v4/audit_event', dir: 'ee')
+            end
+          end
+
+          context 'invalid audit_event_id' do
+            let(:path) { "/projects/#{project.id}/audit_events/an-invalid-id" }
+
+            it_behaves_like '400 response' do
+              let(:request) { get api(path, user) }
+            end
+          end
+
+          context 'non existent audit event' do
+            context 'non existent audit event of a project' do
+              let(:path) { "/projects/#{project.id}/audit_events/666777" }
+
+              it_behaves_like '404 response' do
+                let(:request) { get api(path, user) }
+              end
+            end
+
+            context 'existing audit event of a different project' do
+              let(:new_project) { create(:project) }
+              let(:audit_event) { create(:project_audit_event, created_at: Date.new(2000, 1, 10), entity_id: new_project.id) }
+
+              let(:path) { "/projects/#{project.id}/audit_events/#{audit_event.id}" }
+
+              it_behaves_like '404 response' do
+                let(:request) { get api(path, user) }
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
   describe 'PUT /projects/:id' do
     let(:project) { create(:project, namespace: user.namespace) }
 
@@ -501,7 +739,6 @@ describe API::Projects do
         {
           mirror: true,
           import_url: import_url,
-          mirror_user_id: user.id,
           mirror_trigger_builds: true,
           only_mirror_protected_branches: true,
           mirror_overwrites_diverged_branches: true
@@ -522,7 +759,9 @@ describe API::Projects do
 
         it 'updates mirror related attributes when user is admin' do
           admin = create(:admin)
-          mirror_params[:mirror_user_id] = admin.id
+          unrelated_user = create(:user)
+
+          mirror_params[:mirror_user_id] = unrelated_user.id
           project.add_maintainer(admin)
 
           expect_any_instance_of(EE::ProjectImportState).to receive(:force_import_job!).once
@@ -533,7 +772,7 @@ describe API::Projects do
           expect(project.reload).to have_attributes(
             mirror: true,
             import_url: import_url,
-            mirror_user_id: admin.id,
+            mirror_user_id: unrelated_user.id,
             mirror_trigger_builds: true,
             only_mirror_protected_branches: true,
             mirror_overwrites_diverged_branches: true
@@ -748,7 +987,6 @@ describe API::Projects do
       end
 
       before do
-        stub_feature_flags(enforced_sso_requires_session: false)
         stub_licensed_features(group_saml: true)
       end
 

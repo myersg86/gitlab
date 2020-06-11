@@ -31,7 +31,11 @@ describe('Threat Monitoring actions', () => {
     it('commits the SET_ENDPOINT mutation', () =>
       testAction(
         actions.setEndpoints,
-        { environmentsEndpoint, wafStatisticsEndpoint, networkPolicyStatisticsEndpoint },
+        {
+          environmentsEndpoint,
+          wafStatisticsEndpoint,
+          networkPolicyStatisticsEndpoint,
+        },
         state,
         [
           {
@@ -198,7 +202,7 @@ describe('Threat Monitoring actions', () => {
   describe('setCurrentEnvironmentId', () => {
     const environmentId = 1;
 
-    it('commits the SET_CURRENT_ENVIRONMENT_ID mutation and dispatches WAF and Network Policy fetch actions', () =>
+    it('commits the SET_CURRENT_ENVIRONMENT_ID mutation and dispatches WAF, Network Policy statistics fetch actions and policy fetch action', () =>
       testAction(
         actions.setCurrentEnvironmentId,
         environmentId,
@@ -206,7 +210,11 @@ describe('Threat Monitoring actions', () => {
         [{ type: types.SET_CURRENT_ENVIRONMENT_ID, payload: environmentId }],
         [
           { type: 'threatMonitoringWaf/fetchStatistics', payload: null },
-          { type: 'threatMonitoringNetworkPolicy/fetchStatistics', payload: null },
+          {
+            type: 'threatMonitoringNetworkPolicy/fetchStatistics',
+            payload: null,
+          },
+          { type: 'networkPolicies/fetchPolicies', payload: environmentId },
         ],
       ));
   });
@@ -222,7 +230,10 @@ describe('Threat Monitoring actions', () => {
         [{ type: types.SET_CURRENT_TIME_WINDOW, payload: timeWindow.name }],
         [
           { type: 'threatMonitoringWaf/fetchStatistics', payload: null },
-          { type: 'threatMonitoringNetworkPolicy/fetchStatistics', payload: null },
+          {
+            type: 'threatMonitoringNetworkPolicy/fetchStatistics',
+            payload: null,
+          },
         ],
       ));
   });

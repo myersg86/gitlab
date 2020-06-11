@@ -2,12 +2,12 @@
 
 require 'spec_helper'
 
-describe 'Git HTTP requests' do
+RSpec.describe 'Git HTTP requests' do
   include GitHttpHelpers
   include WorkhorseHelpers
 
   shared_examples_for 'pulls are allowed' do
-    it do
+    specify do
       download(path, env) do |response|
         expect(response).to have_gitlab_http_status(:ok)
         expect(response.media_type).to eq(Gitlab::Workhorse::INTERNAL_API_CONTENT_TYPE)
@@ -16,7 +16,7 @@ describe 'Git HTTP requests' do
   end
 
   shared_examples_for 'pushes are allowed' do
-    it do
+    specify do
       upload(path, env) do |response|
         expect(response).to have_gitlab_http_status(:ok)
         expect(response.media_type).to eq(Gitlab::Workhorse::INTERNAL_API_CONTENT_TYPE)

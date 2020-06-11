@@ -2,8 +2,6 @@
 
 module ChatMessage
   class MergeMessage < BaseMessage
-    prepend_if_ee('::EE::ChatMessage::MergeMessage') # rubocop: disable Cop/InjectEnterpriseEditionModule
-
     attr_reader :merge_request_iid
     attr_reader :source_branch
     attr_reader :target_branch
@@ -50,7 +48,7 @@ module ChatMessage
     end
 
     def merge_request_message
-      "#{user_combined_name} #{state_or_action_text} #{merge_request_link} in #{project_link}"
+      "#{user_combined_name} #{state_or_action_text} merge request #{merge_request_link} in #{project_link}"
     end
 
     def merge_request_link
@@ -71,3 +69,5 @@ module ChatMessage
     end
   end
 end
+
+ChatMessage::MergeMessage.prepend_if_ee('::EE::ChatMessage::MergeMessage')

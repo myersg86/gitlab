@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe EE::GitlabRoutingHelper do
+RSpec.describe EE::GitlabRoutingHelper do
   include ProjectsHelper
   include ApplicationSettingsHelper
 
@@ -84,6 +84,14 @@ describe EE::GitlabRoutingHelper do
 
         it { is_expected.to eq('git@localhost:foo/bar.wiki.git') }
       end
+    end
+  end
+
+  describe '#license_management_settings_path' do
+    it 'generates a path to the license compliance page' do
+      result = helper.license_management_settings_path(project)
+
+      expect(result).to eq('/foo/bar/-/licenses#policies')
     end
   end
 

@@ -16,24 +16,47 @@ exports[`Code navigation popover component renders popover 1`] = `
     <pre
       class="border-0 bg-transparent m-0 code highlight"
     >
-      console.log
+      <span
+        class="line"
+        lang="javascript"
+      >
+        <span
+          class="k"
+        >
+          function
+        </span>
+        <span>
+           main() {
+        </span>
+      </span>
+      <span
+        class="line"
+        lang="javascript"
+      >
+        <span>
+          }
+        </span>
+      </span>
     </pre>
   </div>
    
   <div
     class="popover-body"
   >
-    <gl-deprecated-button-stub
+    <gl-button-stub
+      category="tertiary"
       class="w-100"
-      href="http://test.com"
-      size="md"
+      data-testid="go-to-definition-btn"
+      href="http://gitlab.com/test.js#L20"
+      icon=""
+      size="medium"
       target="_blank"
       variant="default"
     >
       
       Go to definition
     
-    </gl-deprecated-button-stub>
+    </gl-button-stub>
   </div>
 </div>
 `;

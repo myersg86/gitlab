@@ -15,11 +15,15 @@ class Geo::UploadRegistry < Geo::BaseRegistry
   scope :never, -> { where(success: false, retry_count: nil) }
 
   def self.registry_consistency_worker_enabled?
-    Feature.enabled?(:geo_file_registry_ssot_sync)
+    Feature.enabled?(:geo_file_registry_ssot_sync, default_enabled: true)
   end
 
   def self.finder_class
     ::Geo::AttachmentRegistryFinder
+  end
+
+  def self.delete_worker_class
+    ::Geo::FileRegistryRemovalWorker
   end
 
   # If false, RegistryConsistencyService will frequently check the end of the
@@ -36,6 +40,12 @@ class Geo::UploadRegistry < Geo::BaseRegistry
     bulk_insert!(records, returns: :ids)
   end
 
+  def self.delete_for_model_ids(attrs)
+    attrs.map do |file_id, file_type|
+      delete_worker_class.perform_async(file_type, file_id)
+    end
+  end
+
   def self.with_search(query)
     return all if query.nil?
 
@@ -44,8 +54,11 @@ class Geo::UploadRegistry < Geo::BaseRegistry
 
   def self.with_status(status)
     case status
-    when 'synced', 'never', 'failed'
+    when 'synced', 'failed'
       self.public_send(status) # rubocop: disable GitlabSecurity/PublicSend
+    # Explained via: https://gitlab.com/gitlab-org/gitlab/-/issues/216049
+    when 'pending'
+      self.never
     else
       all
     end

@@ -1,10 +1,16 @@
+---
+stage: Configure
+group: Configure
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Cluster management project (alpha)
 
 CAUTION: **Warning:**
 This is an _alpha_ feature, and it is subject to change at any time without
 prior notice.
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/32810) in GitLab 12.5
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/32810) in GitLab 12.5
 
 A project can be designated as the management project for a cluster.
 A management project can be used to run deployment jobs with

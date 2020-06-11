@@ -2,15 +2,14 @@
 
 require 'spec_helper'
 
-describe 'Subscriptions Content Security Policy' do
+RSpec.describe 'Subscriptions Content Security Policy' do
   subject { response_headers['Content-Security-Policy'] }
 
   let_it_be(:default_csp_values) { "'self' https://some-cdn.test" }
   let_it_be(:zuora_url) { 'https://*.zuora.com' }
 
   before do
-    stub_experiment_for_user(paid_signup_flow: true, signup_flow: true)
-
+    stub_experiment_for_user(signup_flow: true)
     stub_request(:get, /.*gitlab_plans.*/).to_return(status: 200, body: "{}")
 
     expect_next_instance_of(SubscriptionsController) do |controller|

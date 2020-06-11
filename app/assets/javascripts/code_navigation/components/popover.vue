@@ -1,9 +1,11 @@
 <script>
-import { GlDeprecatedButton } from '@gitlab/ui';
+import { GlButton } from '@gitlab/ui';
+import DocLine from './doc_line.vue';
 
 export default {
   components: {
-    GlDeprecatedButton,
+    GlButton,
+    DocLine,
   },
   props: {
     position: {
@@ -15,6 +17,10 @@ export default {
       required: true,
     },
     definitionPathPrefix: {
+      type: String,
+      required: true,
+    },
+    blobPath: {
       type: String,
       required: true,
     },
@@ -32,9 +38,18 @@ export default {
       };
     },
     definitionPath() {
-      return (
-        this.data.definition_path && `${this.definitionPathPrefix}/${this.data.definition_path}`
-      );
+      if (!this.data.definition_path) {
+        return null;
+      }
+
+      if (this.isDefinitionCurrentBlob) {
+        return `#${this.data.definition_path.split('#').pop()}`;
+      }
+
+      return `${this.definitionPathPrefix}/${this.data.definition_path}`;
+    },
+    isDefinitionCurrentBlob() {
+      return this.data.definition_path.indexOf(this.blobPath) === 0;
     },
   },
   watch: {
@@ -70,16 +85,21 @@ export default {
         ref="code-output"
         :class="$options.colorScheme"
         class="border-0 bg-transparent m-0 code highlight"
-        v-html="hover.value"
-      ></pre>
+      ><doc-line v-for="(tokens, tokenIndex) in hover.tokens" :key="tokenIndex" :language="hover.language" :tokens="tokens"/></pre>
       <p v-else ref="doc-output" class="p-3 m-0">
         {{ hover.value }}
       </p>
     </div>
     <div v-if="definitionPath" class="popover-body">
-      <gl-deprecated-button :href="definitionPath" target="_blank" class="w-100" variant="default">
+      <gl-button
+        :href="definitionPath"
+        :target="isDefinitionCurrentBlob ? null : '_blank'"
+        class="w-100"
+        variant="default"
+        data-testid="go-to-definition-btn"
+      >
         {{ __('Go to definition') }}
-      </gl-deprecated-button>
+      </gl-button>
     </div>
   </div>
 </template>

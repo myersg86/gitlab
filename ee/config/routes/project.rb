@@ -11,7 +11,10 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
       # Begin of the /-/ scope.
       # Use this scope for all new project routes.
       scope '-' do
-        resources :requirements, only: [:index]
+        namespace :requirements_management do
+          resources :requirements, only: [:index]
+        end
+
         resources :packages, only: [:index, :show, :destroy], module: :packages
         resources :package_files, only: [], module: :packages do
           member do
@@ -19,17 +22,11 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
-        resources :jobs, only: [], constraints: { id: /\d+/ } do
-          member do
-            get '/proxy.ws/authorize', to: 'jobs#proxy_websocket_authorize', format: false
-            get :proxy
-          end
-        end
-
-        resources :feature_flags
+        resources :feature_flags, param: :iid
         resource :feature_flags_client, only: [] do
           post :reset_token
         end
+        resources :feature_flags_user_lists, param: :iid, only: [:new, :edit, :show]
 
         resources :autocomplete_sources, only: [] do
           collection do
@@ -40,27 +37,6 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         namespace :settings do
           resource :slack, only: [:destroy, :edit, :update] do
             get :slack_auth
-          end
-        end
-
-        # DEPRECATED: Remove this redirection in GitLab 13.0.
-        # This redirection supports old (pre-12.9) routes to Design Management raw images.
-        # https://gitlab.com/gitlab-org/gitlab/issues/208256
-        get '/designs/:id(/*ref)',
-          as: :design,
-          contraints: { id: /\d+/, ref: Gitlab::PathRegex.git_reference_regex },
-          to: redirect { |params|
-            namespace_id, project_id, id, ref = params.values_at(:namespace_id, :project_id, :id, :ref)
-            # The :ref route segment is optional in both this route, and the route
-            # we redirect to (where it is called :sha).
-            ref_path = "/#{ref}" if ref
-            "#{namespace_id}/#{project_id}/-/design_management/designs/#{id}#{ref_path}/raw_image"
-          }
-
-        namespace :design_management do
-          namespace :designs, path: 'designs/:design_id(/:sha)', constraints: -> (params) { params[:sha].nil? || Gitlab::Git.commit_id?(params[:sha]) } do
-            resource :raw_image, only: :show
-            resources :resized_image, only: :show, constraints: -> (params) { DesignManagement::DESIGN_IMAGE_SIZES.include?(params[:id]) }
           end
         end
 
@@ -81,7 +57,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
             get :summary, on: :collection
           end
 
-          resource :network_policies, only: [] do
+          resources :network_policies, only: [:index, :create, :update, :destroy] do
             get :summary, on: :collection
           end
 
@@ -95,7 +71,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
             end
           end
 
-          resources :vulnerabilities, only: [:show, :index] do
+          resources :vulnerabilities, only: [:show] do
             member do
               get :discussions, format: :json
             end
@@ -117,6 +93,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         resources :vulnerability_feedback, only: [:index, :create, :update, :destroy], constraints: { id: /\d+/ }
         resources :dependencies, only: [:index]
         resources :licenses, only: [:index, :create, :update]
+        resources :on_demand_scans, only: [:index], controller: :on_demand_scans
       end
       # End of the /-/ scope.
 
@@ -132,29 +109,10 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
       resource :tracing, only: [:show]
 
-      resources :web_ide_terminals, path: :ide_terminals, only: [:create, :show], constraints: { id: /\d+/, format: :json } do
-        member do
-          post :cancel
-          post :retry
-        end
-
-        collection do
-          post :check_config
-        end
-      end
-
       get '/service_desk' => 'service_desk#show', as: :service_desk
       put '/service_desk' => 'service_desk#update', as: :service_desk_refresh
 
       post '/restore' => '/projects#restore', as: :restore
-
-      resources :pipelines, only: [] do
-        member do
-          get :security
-          get :licenses
-          get :codequality_report
-        end
-      end
 
       resource :insights, only: [:show], trailing_slash: true do
         collection do

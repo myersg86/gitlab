@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Group overview', :js, :aggregate_failures do
+RSpec.describe 'Group overview', :js, :aggregate_failures do
   let(:user) { create(:user) }
   let(:group) { create(:group) }
   let(:empty_project) { create(:project, namespace: group) }
@@ -87,7 +87,7 @@ describe 'Group overview', :js, :aggregate_failures do
         visit_page
 
         page.within(find('.content')) do
-          expect(page).to have_content s_("Security Reports|Either you don't have permission to view this dashboard or "\
+          expect(page).to have_content s_("SecurityReports|Either you don't have permission to view this dashboard or "\
                                        'the dashboard has not been setup. Please check your permission settings '\
                                        'with your administrator or check your dashboard configurations to proceed.')
         end

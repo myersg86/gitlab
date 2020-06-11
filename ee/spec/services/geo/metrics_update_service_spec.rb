@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Geo::MetricsUpdateService, :geo, :prometheus do
+RSpec.describe Geo::MetricsUpdateService, :geo, :prometheus do
   include ::EE::GeoHelpers
 
   let_it_be(:primary) { create(:geo_node, :primary) }
@@ -11,7 +11,7 @@ describe Geo::MetricsUpdateService, :geo, :prometheus do
 
   subject { described_class.new }
 
-  let(:event_date) { Time.now.utc }
+  let(:event_date) { Time.current.utc }
 
   let(:data) do
     {

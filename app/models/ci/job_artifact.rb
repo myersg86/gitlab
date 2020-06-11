@@ -5,6 +5,7 @@ module Ci
     include AfterCommitQueue
     include ObjectStorage::BackgroundMove
     include UpdateProjectStatistics
+    include UsageStatistics
     include Sortable
     extend Gitlab::Ci::Model
 
@@ -12,7 +13,10 @@ module Ci
 
     TEST_REPORT_FILE_TYPES = %w[junit].freeze
     COVERAGE_REPORT_FILE_TYPES = %w[cobertura].freeze
+    ACCESSIBILITY_REPORT_FILE_TYPES = %w[accessibility].freeze
     NON_ERASABLE_FILE_TYPES = %w[trace].freeze
+    TERRAFORM_REPORT_FILE_TYPES = %w[terraform].freeze
+    UNSUPPORTED_FILE_TYPES = %i[license_management].freeze
     DEFAULT_FILE_NAMES = {
       archive: nil,
       metadata: nil,
@@ -20,8 +24,10 @@ module Ci
       metrics_referee: nil,
       network_referee: nil,
       junit: 'junit.xml',
+      accessibility: 'gl-accessibility.json',
       codequality: 'gl-code-quality-report.json',
       sast: 'gl-sast-report.json',
+      secret_detection: 'gl-secret-detection-report.json',
       dependency_scanning: 'gl-dependency-scanning-report.json',
       container_scanning: 'gl-container-scanning-report.json',
       dast: 'gl-dast-report.json',
@@ -32,7 +38,9 @@ module Ci
       lsif: 'lsif.json',
       dotenv: '.env',
       cobertura: 'cobertura-coverage.xml',
-      terraform: 'tfplan.json'
+      terraform: 'tfplan.json',
+      cluster_applications: 'gl-cluster-applications.json',
+      requirements: 'requirements.json'
     }.freeze
 
     INTERNAL_TYPES = {
@@ -46,25 +54,53 @@ module Ci
       metrics: :gzip,
       metrics_referee: :gzip,
       network_referee: :gzip,
-      lsif: :gzip,
       dotenv: :gzip,
       cobertura: :gzip,
+      cluster_applications: :gzip,
+      lsif: :zip,
 
       # All these file formats use `raw` as we need to store them uncompressed
       # for Frontend to fetch the files and do analysis
       # When they will be only used by backend, they can be `gzipped`.
+      accessibility: :raw,
       codequality: :raw,
       sast: :raw,
+      secret_detection: :raw,
       dependency_scanning: :raw,
       container_scanning: :raw,
       dast: :raw,
       license_management: :raw,
       license_scanning: :raw,
       performance: :raw,
-      terraform: :raw
+      terraform: :raw,
+      requirements: :raw
     }.freeze
 
+    DOWNLOADABLE_TYPES = %w[
+      accessibility
+      archive
+      cobertura
+      codequality
+      container_scanning
+      dast
+      dependency_scanning
+      dotenv
+      junit
+      license_management
+      license_scanning
+      lsif
+      metrics
+      performance
+      sast
+      secret_detection
+      requirements
+    ].freeze
+
     TYPE_AND_FORMAT_PAIRS = INTERNAL_TYPES.merge(REPORT_TYPES).freeze
+
+    # This is required since we cannot add a default to the database
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/215418
+    attribute :locked, :boolean, default: false
 
     belongs_to :project
     belongs_to :job, class_name: "Ci::Build", foreign_key: :job_id
@@ -72,16 +108,19 @@ module Ci
     mount_uploader :file, JobArtifactUploader
 
     validates :file_format, presence: true, unless: :trace?, on: :create
-    validate :valid_file_format?, unless: :trace?, on: :create
+    validate :validate_supported_file_format!, on: :create
+    validate :validate_file_format!, unless: :trace?, on: :create
     before_save :set_size, if: :file_changed?
 
     update_project_statistics project_statistics_name: :build_artifacts_size
 
     after_save :update_file_store, if: :saved_change_to_file?
 
+    scope :not_expired, -> { where('expire_at IS NULL OR expire_at > ?', Time.current) }
     scope :with_files_stored_locally, -> { where(file_store: [nil, ::JobArtifactUploader::Store::LOCAL]) }
     scope :with_files_stored_remotely, -> { where(file_store: ::JobArtifactUploader::Store::REMOTE) }
     scope :for_sha, ->(sha, project_id) { joins(job: :pipeline).where(ci_pipelines: { sha: sha, project_id: project_id }) }
+    scope :for_ref, ->(ref, project_id) { joins(job: :pipeline).where(ci_pipelines: { ref: ref, project_id: project_id }) }
     scope :for_job_name, ->(name) { joins(:job).where(ci_builds: { name: name }) }
 
     scope :with_file_types, -> (file_types) do
@@ -98,8 +137,16 @@ module Ci
       with_file_types(TEST_REPORT_FILE_TYPES)
     end
 
+    scope :accessibility_reports, -> do
+      with_file_types(ACCESSIBILITY_REPORT_FILE_TYPES)
+    end
+
     scope :coverage_reports, -> do
       with_file_types(COVERAGE_REPORT_FILE_TYPES)
+    end
+
+    scope :terraform_reports, -> do
+      with_file_types(TERRAFORM_REPORT_FILE_TYPES)
     end
 
     scope :erasable, -> do
@@ -108,7 +155,10 @@ module Ci
       where(file_type: types)
     end
 
-    scope :expired, -> (limit) { where('expire_at < ?', Time.now).limit(limit) }
+    scope :expired, -> (limit) { where('expire_at < ?', Time.current).limit(limit) }
+    scope :downloadable, -> { where(file_type: DOWNLOADABLE_TYPES) }
+    scope :locked, -> { where(locked: true) }
+    scope :unlocked, -> { where(locked: [false, nil]) }
 
     scope :scoped_project, -> { where('ci_job_artifacts.project_id = projects.id') }
 
@@ -133,7 +183,11 @@ module Ci
       lsif: 15, # LSIF data for code navigation
       dotenv: 16,
       cobertura: 17,
-      terraform: 18 # Transformed json
+      terraform: 18, # Transformed json
+      accessibility: 19,
+      cluster_applications: 20,
+      secret_detection: 21, ## EE-specific
+      requirements: 22 ## EE-specific
     }
 
     enum file_format: {
@@ -161,7 +215,15 @@ module Ci
       raw: Gitlab::Ci::Build::Artifacts::Adapters::RawStream
     }.freeze
 
-    def valid_file_format?
+    def validate_supported_file_format!
+      return if Feature.disabled?(:drop_license_management_artifact, project, default_enabled: true)
+
+      if UNSUPPORTED_FILE_TYPES.include?(self.file_type&.to_sym)
+        errors.add(:base, _("File format is no longer supported"))
+      end
+    end
+
+    def validate_file_format!
       unless TYPE_AND_FORMAT_PAIRS[self.file_type&.to_sym] == self.file_format&.to_sym
         errors.add(:base, _('Invalid file format with specified file type'))
       end
@@ -191,8 +253,16 @@ module Ci
       super || self.file_location.nil?
     end
 
+    def expired?
+      expire_at.present? && expire_at < Time.current
+    end
+
+    def expiring?
+      expire_at.present? && expire_at > Time.current
+    end
+
     def expire_in
-      expire_at - Time.now if expire_at
+      expire_at - Time.current if expire_at
     end
 
     def expire_in=(value)

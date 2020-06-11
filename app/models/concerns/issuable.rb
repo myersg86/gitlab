@@ -39,15 +39,6 @@ module Issuable
     locked: 4
   }.with_indifferent_access.freeze
 
-  # This object is used to gather issuable meta data for displaying
-  # upvotes, downvotes, notes and closing merge requests count for issues and merge requests
-  # lists avoiding n+1 queries and improving performance.
-  IssuableMeta = Struct.new(:upvotes, :downvotes, :user_notes_count, :mrs_count) do
-    def merge_requests_count(user = nil)
-      mrs_count
-    end
-  end
-
   included do
     cache_markdown_field :title, pipeline: :single_line
     cache_markdown_field :description, issuable_state_filter_enabled: true
@@ -115,9 +106,30 @@ module Issuable
     end
     # rubocop:enable GitlabSecurity/SqlInjection
 
+    scope :not_assigned_to, ->(users) do
+      assignees_table = Arel::Table.new("#{to_ability_name}_assignees")
+      sql = assignees_table.project('true')
+                .where(assignees_table[:user_id].in(users))
+                .where(Arel::Nodes::SqlLiteral.new("#{to_ability_name}_id = #{to_ability_name}s.id"))
+      where(sql.exists.not)
+    end
+
+    scope :without_particular_labels, ->(label_names) do
+      labels_table = Label.arel_table
+      label_links_table = LabelLink.arel_table
+      issuables_table = klass.arel_table
+      inner_query = label_links_table.project('true')
+                        .join(labels_table, Arel::Nodes::InnerJoin).on(labels_table[:id].eq(label_links_table[:label_id]))
+                        .where(label_links_table[:target_type].eq(name)
+                                   .and(label_links_table[:target_id].eq(issuables_table[:id]))
+                                   .and(labels_table[:title].in(label_names)))
+                        .exists.not
+
+      where(inner_query)
+    end
+
     scope :without_label, -> { joins("LEFT OUTER JOIN label_links ON label_links.target_type = '#{name}' AND label_links.target_id = #{table_name}.id").where(label_links: { id: nil }) }
     scope :with_label_ids, ->(label_ids) { joins(:label_links).where(label_links: { label_id: label_ids }) }
-    scope :any_label, -> { joins(:label_links).group(:id) }
     scope :join_project, -> { joins(:project) }
     scope :inc_notes_with_associations, -> { includes(notes: [:project, :author, :award_emoji]) }
     scope :references_project, -> { references(:project) }
@@ -161,6 +173,10 @@ module Issuable
 
     def has_multiple_assignees?
       assignees.count > 1
+    end
+
+    def supports_weight?
+      false
     end
 
     private
@@ -286,12 +302,19 @@ module Issuable
         .reorder(Gitlab::Database.nulls_last_order('highest_priority', direction))
     end
 
-    def with_label(title, sort = nil, not_query: false)
-      multiple_labels = title.is_a?(Array) && title.size > 1
-      if multiple_labels && !not_query
+    def with_label(title, sort = nil)
+      if title.is_a?(Array) && title.size > 1
         joins(:labels).where(labels: { title: title }).group(*grouping_columns(sort)).having("COUNT(DISTINCT labels.title) = #{title.size}")
       else
         joins(:labels).where(labels: { title: title })
+      end
+    end
+
+    def any_label(sort = nil)
+      if sort
+        joins(:label_links).group(*grouping_columns(sort))
+      else
+        joins(:label_links).distinct
       end
     end
 
@@ -378,6 +401,10 @@ module Issuable
 
   def subscribed_without_subscriptions?(user, project)
     participants(user).include?(user)
+  end
+
+  def can_assign_epic?(user)
+    false
   end
 
   def to_hook_data(user, old_associations: {})

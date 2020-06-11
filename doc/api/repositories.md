@@ -107,6 +107,8 @@ Parameters:
 Get an archive of the repository. This endpoint can be accessed without
 authentication if the repository is publicly accessible.
 
+This endpoint has a rate limit threshold of 5 requests per minute.
+
 ```plaintext
 GET /projects/:id/repository/archive[.format]
 ```
@@ -122,7 +124,7 @@ Parameters:
 - `sha` (optional) - The commit SHA to download. A tag, branch reference, or SHA can be used. This defaults to the tip of the default branch if not specified. For example:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.com/api/v4/projects/<project_id>/repository/archive?sha=<commit_sha>
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.com/api/v4/projects/<project_id>/repository/archive?sha=<commit_sha>"
 ```
 
 ## Compare branches, tags or commits

@@ -28,12 +28,16 @@ gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAA
 
 ## Mail configuration
 
-GitLab.com sends emails from the `mg.gitlab.com` domain via [Mailgun] and has
+GitLab.com sends emails from the `mg.gitlab.com` domain via [Mailgun](https://www.mailgun.com/) and has
 its own dedicated IP address (`198.61.254.240`).
+
+## Backups
+
+[See our backup strategy](https://about.gitlab.com/handbook/engineering/infrastructure/production/#backups).
 
 ## Alternative SSH port
 
-GitLab.com can be reached via a [different SSH port][altssh] for `git+ssh`.
+GitLab.com can be reached via a [different SSH port](https://about.gitlab.com/blog/2016/02/18/gitlab-dot-com-now-supports-an-alternate-git-plus-ssh-port/) for `git+ssh`.
 
 | Setting     | Value               |
 | ---------   | ------------------- |
@@ -78,6 +82,7 @@ Below are the current settings regarding [GitLab CI/CD](../../ci/README.md).
 | Scheduled Pipeline Cron | `*/5 * * * *` | `19 * * * *` |
 | [Max jobs in active pipelines](../../administration/instance_limits.md#number-of-jobs-in-active-pipelines) | `500` for Free tier, unlimited otherwise | Unlimited
 | [Max pipeline schedules in projects](../../administration/instance_limits.md#number-of-pipeline-schedules) | `10` for Free tier, `50` for all paid tiers | Unlimited |
+| [Max number of instance level variables](../../administration/instance_limits.md#number-of-instance-level-variables) | `25` | `25` |
 
 ## Repository size limit
 
@@ -89,7 +94,7 @@ or over the size limit, you can [reduce your repository size with Git](../projec
 | Repository size including LFS | 10G         | Unlimited     |
 
 NOTE: **Note:**
-A single `git push` is limited to 5GB. LFS is not affected by this limit.
+`git push` and GitLab project imports are limited to 5GB per request. Git LFS and imports other than a file upload are not affected by this limit.
 
 ## IP range
 
@@ -115,9 +120,12 @@ A limit of:
 
 GitLab offers Linux and Windows shared runners hosted on GitLab.com for executing your pipelines.
 
+NOTE: **Note:**
+Shared Runners provided by GitLab are **not** configurable. Consider [installing your own Runner](https://docs.gitlab.com/runner/install/) if you have specific configuration needs.
+
 ### Linux Shared Runners
 
-Linux Shared Runners on GitLab.com run in [autoscale mode] and are powered by Google Cloud Platform.
+Linux Shared Runners on GitLab.com run in [autoscale mode](https://docs.gitlab.com/runner/configuration/autoscale.html) and are powered by Google Cloud Platform.
 Autoscaling means reduced waiting times to spin up CI/CD jobs, and isolated VMs for each project,
 thus maximizing security. They're free to use for public open source projects and limited
 to 2000 CI minutes per month per group for private projects. More minutes
@@ -133,16 +141,36 @@ The `gitlab-shared-runners-manager-X.gitlab.com` fleet of Runners are dedicated 
 
 Jobs handled by the shared Runners on GitLab.com (`shared-runners-manager-X.gitlab.com`),
 **will be timed out after 3 hours**, regardless of the timeout configured in a
-project. Check the issues [4010] and [4070] for the reference.
+project. Check the issues [4010](https://gitlab.com/gitlab-com/infrastructure/-/issues/4010) and [4070](https://gitlab.com/gitlab-com/infrastructure/-/issues/4070) for the reference.
 
 Below are the shared Runners settings.
 
 | Setting                               | GitLab.com                                        | Default    |
 | -----------                           | -----------------                                 | ---------- |
-| [GitLab Runner]                       | [Runner versions dashboard](https://dashboards.gitlab.com/d/000000159/ci?from=now-1h&to=now&refresh=5m&orgId=1&panelId=12&fullscreen&theme=light) | - |
+| [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-runner) | [Runner versions dashboard](https://dashboards.gitlab.com/d/000000159/ci?from=now-1h&to=now&refresh=5m&orgId=1&panelId=12&fullscreen&theme=light) | - |
 | Executor                              | `docker+machine`                                  | -          |
 | Default Docker image                  | `ruby:2.5`                                        | -          |
-| `privileged` (run [Docker in Docker]) | `true`                                            | `false`    |
+| `privileged` (run [Docker in Docker](https://hub.docker.com/_/docker/)) | `true`          | `false`    |
+
+#### Pre-clone script
+
+Linux Shared Runners on GitLab.com provide a way to run commands in a CI
+job before the Runner attempts to run `git init` and `git fetch` to
+download a GitLab repository. The
+[pre_clone_script](https://docs.gitlab.com/runner/configuration/advanced-configuration.html#the-runners-section)
+can be used for:
+
+- Seeding the build directory with repository data
+- Sending a request to a server
+- Downloading assets from a CDN
+- Any other commands that must run before the `git init`
+
+To use this feature, define a [CI/CD variable](../../ci/variables/README.md#create-a-custom-variable-in-the-ui) called
+`CI_PRE_CLONE_SCRIPT` that contains a bash script.
+
+[This example](../../development/pipelines.md#pre-clone-step)
+demonstrates how you might use a pre-clone step to seed the build
+directory.
 
 #### `config.toml`
 
@@ -164,6 +192,7 @@ sentry_dsn = "X"
   request_concurrency = X
   url = "https://gitlab.com/"
   token = "SHARED_RUNNER_TOKEN"
+  pre_clone_script = "eval \"$CI_PRE_CLONE_SCRIPT\""
   executor = "docker+machine"
   environment = [
     "DOCKER_DRIVER=overlay2",
@@ -195,7 +224,7 @@ sentry_dsn = "X"
       "google-tags=gitlab-com,srm",
       "google-use-internal-ip",
       "google-zone=us-east1-d",
-      "engine-opt=mtu=1460", # Set MTU for container interface, for more information check https://gitlab.com/gitlab-org/gitlab-runner/issues/3214#note_82892928
+      "engine-opt=mtu=1460", # Set MTU for container interface, for more information check https://gitlab.com/gitlab-org/gitlab-runner/-/issues/3214#note_82892928
       "google-machine-image=PROJECT/global/images/IMAGE",
       "engine-opt=ipv6", # This will create IPv6 interfaces in the containers.
       "engine-opt=fixed-cidr-v6=fc00::/7",
@@ -219,7 +248,7 @@ During the beta period, the
 [shared runner pipeline quota](../admin_area/settings/continuous_integration.md#shared-runners-pipeline-minutes-quota-starter-only)
 will apply for groups and projects in the same way as Linux Runners.
 This may change when the beta period ends, as discussed in this
-[related issue](https://gitlab.com/gitlab-org/gitlab/issues/30834).
+[related issue](https://gitlab.com/gitlab-org/gitlab/-/issues/30834).
 
 Windows Shared Runners on GitLab.com automatically autoscale by
 launching virtual machines on the Google Cloud Platform. This solution uses
@@ -343,7 +372,7 @@ test:
   release we will update the autoscaler to enable
   the pre-provisioning of virtual machines. This will significantly reduce
   the time it takes to provision a VM on the Windows fleet. You can
-  follow along in the [related issue](https://gitlab.com/gitlab-org/ci-cd/custom-executor-drivers/autoscaler/issues/32).
+  follow along in the [related issue](https://gitlab.com/gitlab-org/ci-cd/custom-executor-drivers/autoscaler/-/issues/32).
 - The Windows Shared Runner fleet may be unavailable occasionally
   for maintenance or updates.
 - The Windows Shared Runner virtual machine instances do not use the
@@ -426,13 +455,13 @@ The list of GitLab.com specific settings (and their defaults) is as follows:
 Some of these settings are in the process being adjusted. For example, the value
 for `shared_buffers` is quite high and as such we are looking into adjusting it.
 More information on this particular change can be found at
-<https://gitlab.com/gitlab-com/infrastructure/issues/1555>. An up to date list
+<https://gitlab.com/gitlab-com/infrastructure/-/issues/1555>. An up to date list
 of proposed changes can be found at
-<https://gitlab.com/gitlab-com/infrastructure/issues?scope=all&utf8=%E2%9C%93&state=opened&label_name[]=database&label_name[]=change>.
+<https://gitlab.com/gitlab-com/infrastructure/-/issues?scope=all&utf8=%E2%9C%93&state=opened&label_name[]=database&label_name[]=change>.
 
 ## Unicorn
 
-GitLab.com adjusts the memory limits for the [unicorn-worker-killer][unicorn-worker-killer] gem.
+GitLab.com adjusts the memory limits for the [unicorn-worker-killer](https://rubygems.org/gems/unicorn-worker-killer) gem.
 
 Base default:
 
@@ -529,7 +558,7 @@ GitLab.com:
 
 On GitLab.com, projects, groups, and snippets created
 As of GitLab 12.2 (July 2019), projects, groups, and snippets have the
-[**Internal** visibility](../../public_access/public_access.md#internal-projects) setting [disabled on GitLab.com](https://gitlab.com/gitlab-org/gitlab/issues/12388).
+[**Internal** visibility](../../public_access/public_access.md#internal-projects) setting [disabled on GitLab.com](https://gitlab.com/gitlab-org/gitlab/-/issues/12388).
 
 ### SSH maximum number of connections
 
@@ -538,6 +567,10 @@ using the [MaxStartups setting](http://man.openbsd.org/sshd_config.5#MaxStartups
 If more than the maximum number of allowed connections occur concurrently, they are
 dropped and users get
 [an `ssh_exchange_identification` error](../../topics/git/troubleshooting_git.md#ssh_exchange_identification-error).
+
+### Import/export
+
+To help avoid abuse, project and group imports, exports, and export downloads are rate limited. See [Project import/export rate limits](../../user/project/settings/import_export.md#rate-limits) and [Group import/export rate limits](../../user/group/settings/import_export.md#rate-limits) for details.
 
 ## GitLab.com Logging
 
@@ -600,13 +633,3 @@ Service discovery:
 High Performance TCP/HTTP Load Balancer:
 
 - [`gitlab-cookbooks` / `gitlab-haproxy` · GitLab](https://gitlab.com/gitlab-cookbooks/gitlab-haproxy)
-
-[autoscale mode]: https://docs.gitlab.com/runner/configuration/autoscale.html "How Autoscale works"
-[runners-post]: https://about.gitlab.com/blog/2016/04/05/shared-runners/ "Shared Runners on GitLab.com"
-[GitLab Runner]: https://gitlab.com/gitlab-org/gitlab-runner
-[altssh]: https://about.gitlab.com/blog/2016/02/18/gitlab-dot-com-now-supports-an-alternate-git-plus-ssh-port/ "GitLab.com now supports an alternate git+ssh port"
-[docker in docker]: https://hub.docker.com/_/docker/ "Docker in Docker at DockerHub"
-[mailgun]: https://www.mailgun.com/ "Mailgun website"
-[unicorn-worker-killer]: https://rubygems.org/gems/unicorn-worker-killer "unicorn-worker-killer"
-[4010]: https://gitlab.com/gitlab-com/infrastructure/issues/4010 "Find a good value for maximum timeout for Shared Runners"
-[4070]: https://gitlab.com/gitlab-com/infrastructure/issues/4070 "Configure per-runner timeout for shared-runners-manager-X on GitLab.com"

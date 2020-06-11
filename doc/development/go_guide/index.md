@@ -17,6 +17,22 @@ experiences. Several projects were started with different standards and they
 can still have specifics. They will be described in their respective
 `README.md` or `PROCESS.md` files.
 
+## Dependency Management
+
+Go uses a source-based strategy for dependency management. Dependencies are
+downloaded as source from their source repository. This differs from the more
+common artifact-based strategy where dependencies are downloaded as artifacts
+from a package repository that is separate from the dependency's source
+repository.
+
+Go did not have first-class support for version management prior to 1.11. That
+version introduced Go modules and the use of semantic versioning. Go 1.12
+introduced module proxies, which can serve as an intermediate between clients
+and source version control systems, and checksum databases, which can be used to
+verify the integrity of dependency downloads.
+
+See [Dependency Management in Go](dependencies.md) for more details.
+
 ## Code Review
 
 We follow the common principles of
@@ -63,15 +79,20 @@ file and ask your manager to review and merge.
 ```yaml
 projects:
   gitlab: reviewer go
-  gitlab-foss: reviewer go
 ```
 
 ## Code style and format
 
 - Avoid global variables, even in packages. By doing so you will introduce side
   effects if the package is included multiple times.
-- Use `go fmt` before committing ([Gofmt](https://golang.org/cmd/gofmt/) is a
-  tool that automatically formats Go source code).
+- Use `goimports` before committing.
+  [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
+  is a tool that automatically formats Go source code using
+  [Gofmt](https://golang.org/cmd/gofmt/), in addition to formatting import lines,
+  adding missing ones and removing unreferenced ones.
+
+  Most editors/IDEs will allow you to run commands before/after saving a file, you can set it
+  up to run `goimports` so that it's applied to every file when saving.
 - Place private methods below the first caller method in the source file.
 
 ### Automatic linting
@@ -100,7 +121,7 @@ Including a `.golangci.yml` in the root directory of the project allows for
 configuration of `golangci-lint`. All options for `golangci-lint` are listed in
 this [example](https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml).
 
-Once [recursive includes](https://gitlab.com/gitlab-org/gitlab-foss/issues/56836)
+Once [recursive includes](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/56836)
 become available, you will be able to share job templates like this
 [analyzer](https://gitlab.com/gitlab-org/security-products/ci-templates/raw/master/includes-dev/analyzer.yml).
 
@@ -244,6 +265,59 @@ Programs handling a lot of IO or complex operations should always include
 [benchmarks](https://golang.org/pkg/testing/#hdr-Benchmarks), to ensure
 performance consistency over time.
 
+## Error handling
+
+### Adding context
+
+Adding context before you return the error can be helpful, instead of
+just returning the error. This allows developers to understand what the
+program was trying to do when it entered the error state making it much
+easier to debug.
+
+For example:
+
+```golang
+// Wrap the error
+return nil, fmt.Errorf("get cache %s: %w", f.Name, err)
+
+// Just add context
+return nil, fmt.Errorf("saving cache %s: %v", f.Name, err)
+```
+
+A few things to keep in mind when adding context:
+
+- Decide if you want to expose the underlying error
+  to the caller. If so, use `%w`, if not, you can use `%v`.
+- Don't use words like `failed`, `error`, `didn't`. As it's an error,
+  the user already knows that something failed and this might lead to
+  having strings like `failed xx failed xx failed xx`. Explain _what_
+  failed instead.
+- Error strings should not be capitalized or end with punctuation or a
+  newline. You can use `golint` to check for this.
+
+### Naming
+
+- When using sentinel errors they should always be named like `ErrXxx`.
+- When creating a new error type they should always be named like
+  `XxxError`.
+
+### Checking Error types
+
+- To check error equality don't use `==`. Use
+  [`errors.Is`](https://pkg.go.dev/errors?tab=doc#Is) instead (for Go
+  versions >= 1.13).
+- To check if the error is of a certain type don't use type assertion,
+  use [`errors.As`](https://pkg.go.dev/errors?tab=doc#As) instead (for
+  Go versions >= 1.13).
+
+### References for working with errors
+
+- [Go 1.13 errors](https://blog.golang.org/go1.13-errors).
+- [Programing with
+  errors](https://peter.bourgon.org/blog/2019/09/11/programming-with-errors.html).
+- [Don’t just check errors, handle them
+  gracefully](https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully).
+
 ## CLIs
 
 Every Go program is launched from the command line.
@@ -332,7 +406,7 @@ builds](https://docs.docker.com/develop/develop-images/multistage-build/):
   dependencies.
 - They generate a small, self-contained image, derived from `Scratch`.
 
-Generated docker images should have the program at their `Entrypoint` to create
+Generated Docker images should have the program at their `Entrypoint` to create
 portable commands. That way, anyone can run the image, and without parameters
 it will display its help message (if `cli` has been used).
 
@@ -368,13 +442,13 @@ Once you've picked a new Go version to use, the steps to update Omnibus and CNG
 are:
 
 - [Create a merge request in the CNG project](https://gitlab.com/gitlab-org/build/CNG/edit/master/ci_files/variables.yml?branch_name=update-go-version),
-   updating the `GO_VERSION` in `ci_files/variables.yml`.
+  updating the `GO_VERSION` in `ci_files/variables.yml`.
 - Create a merge request in the [`gitlab-omnibus-builder` project](https://gitlab.com/gitlab-org/gitlab-omnibus-builder),
-   updating every file in the `docker/` directory so the `GO_VERSION` is set
-   appropriately. [Here's an example](https://gitlab.com/gitlab-org/gitlab-omnibus-builder/-/merge_requests/125/diffs).
+  updating every file in the `docker/` directory so the `GO_VERSION` is set
+  appropriately. [Here's an example](https://gitlab.com/gitlab-org/gitlab-omnibus-builder/-/merge_requests/125/diffs).
 - Tag a new release of `gitlab-omnibus-builder` containing the change.
-- [Create a merge request in the `gitlab-omnibus` project](https://gitlab.com/gitlab-org/omnibus-gitlab/edit/master/.gitlab-ci.yml?branch_name=update-gitlab-omnibus-builder-version),
-   updating the `BUILDER_IMAGE_REVISION` to match the newly-created tag.
+- [Create a merge request in the `omnibus-gitlab` project](https://gitlab.com/gitlab-org/omnibus-gitlab/edit/master/.gitlab-ci.yml?branch_name=update-gitlab-omnibus-builder-version),
+  updating the `BUILDER_IMAGE_REVISION` to match the newly-created tag.
 
 To reduce unnecessary differences between two distribution methods, Omnibus and
 CNG **should always use the same Go version**.

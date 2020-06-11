@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe MergeTrains::RefreshMergeRequestsService do
+RSpec.describe MergeTrains::RefreshMergeRequestsService do
   include ExclusiveLeaseHelpers
 
   let(:project) { create(:project) }
@@ -53,19 +53,6 @@ describe MergeTrains::RefreshMergeRequestsService do
         expect(refresh_service_2).to receive(:execute).with(merge_request_2)
 
         subject
-      end
-
-      context 'when merge_trains_parallel_pipelines feature flag is disabled' do
-        before do
-          stub_feature_flags(merge_trains_parallel_pipelines: false)
-        end
-
-        it 'does not refresh merge request 2' do
-          expect(refresh_service_1).to receive(:execute).with(merge_request_1)
-          expect(refresh_service_2).not_to receive(:execute).with(merge_request_2)
-
-          subject
-        end
       end
 
       context 'when refresh service 1 returns error status' do
@@ -183,62 +170,6 @@ describe MergeTrains::RefreshMergeRequestsService do
             subject
           end
         end
-      end
-    end
-  end
-
-  describe '#max_concurrency' do
-    subject { service.send(:max_concurrency) }
-
-    context 'when `merge_trains_parallel_pipelines` feature flag is enabled' do
-      before do
-        stub_feature_flags(merge_trains_parallel_pipelines: true)
-      end
-
-      context 'when `merge_trains_high_concurrency` feature flag is enabled' do
-        before do
-          stub_feature_flags(merge_trains_high_concurrency: true)
-        end
-
-        it 'returns high concurrency' do
-          is_expected.to eq(described_class::HIGH_CONCURRENCY)
-        end
-      end
-
-      context 'when `merge_trains_high_concurrency` feature flag is disabled' do
-        before do
-          stub_feature_flags(merge_trains_high_concurrency: false)
-        end
-
-        context 'when `merge_trains_medium_concurrency` feature flag is enabled' do
-          before do
-            stub_feature_flags(merge_trains_medium_concurrency: true)
-          end
-
-          it 'returns medium concurrency' do
-            is_expected.to eq(described_class::MEDIUM_CONCURRENCY)
-          end
-        end
-
-        context 'when `merge_trains_medium_concurrency` feature flag is disabled' do
-          before do
-            stub_feature_flags(merge_trains_medium_concurrency: false)
-          end
-
-          it 'returns low concurrency' do
-            is_expected.to eq(described_class::LOW_CONCURRENCY)
-          end
-        end
-      end
-    end
-
-    context 'when `merge_trains_parallel_pipelines` feature flag is disabled' do
-      before do
-        stub_feature_flags(merge_trains_parallel_pipelines: false)
-      end
-
-      it 'returns no concurrency' do
-        is_expected.to eq(described_class::NO_CONCURRENCY)
       end
     end
   end

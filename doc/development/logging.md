@@ -167,7 +167,8 @@ Resources:
 #### Logging durations
 
 Similar to timezones, choosing the right time unit to log can impose avoidable overhead. So, whenever
-challenged to choose between seconds, milliseconds or any other unit, lean towards _seconds_ as float.
+challenged to choose between seconds, milliseconds or any other unit, lean towards _seconds_ as float
+(with microseconds precision, i.e. `Gitlab::InstrumentationHelper::DURATION_PRECISION`).
 
 In order to make it easier to track timings in the logs, make sure the log key has `_s` as
 suffix and `duration` within its name (e.g., `view_duration_s`).
@@ -260,6 +261,8 @@ I, [2020-01-13T19:01:17.091Z #11056]  INFO -- : {"message"=>"Message", "project_
 lifecycle, which can then be added to the web request
 or Sidekiq logs.
 
+The API, Rails and Sidekiq logs contain fields starting with `meta.` with this context information.
+
 Entry points can be seen at:
 
 - [`ApplicationController`](https://gitlab.com/gitlab-org/gitlab/blob/master/app/controllers/application_controller.rb)
@@ -281,7 +284,7 @@ creating visualizations in Kibana.
 **Note:**
 The fields of the context are currently only logged for Sidekiq jobs triggered
 through web requests. See the
-[follow-up work](https://gitlab.com/gitlab-com/gl-infra/scalability/issues/68)
+[follow-up work](https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/68)
 for more information.
 
 ## Exception Handling
@@ -355,9 +358,9 @@ end
    for most users, but you may need to tweak them in [Omnibus GitLab](https://gitlab.com/gitlab-org/omnibus-gitlab).
 
 1. If you add a new file, submit an issue to the [production
-   tracker](https://gitlab.com/gitlab-com/gl-infra/production/issues) or
-   a merge request to the [gitlab_fluentd](https://gitlab.com/gitlab-cookbooks/gitlab_fluentd)
+   tracker](https://gitlab.com/gitlab-com/gl-infra/production/-/issues) or
+   a merge request to the [`gitlab_fluentd`](https://gitlab.com/gitlab-cookbooks/gitlab_fluentd)
    project. See [this example](https://gitlab.com/gitlab-cookbooks/gitlab_fluentd/-/merge_requests/51/diffs).
 
 1. Be sure to update the [GitLab CE/EE documentation](../administration/logs.md) and the [GitLab.com
-   runbooks](https://gitlab.com/gitlab-com/runbooks/blob/master/howto/logging.md).
+   runbooks](https://gitlab.com/gitlab-com/runbooks/blob/master/docs/logging/README.md).

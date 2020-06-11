@@ -11,7 +11,7 @@ class ApprovalWrappedRule
   def_delegators(:@approval_rule,
                  :regular?, :any_approver?, :code_owner?, :report_approver?,
                  :overridden?, :id, :name, :users, :groups, :code_owner,
-                 :source_rule, :rule_type, :approvals_required)
+                 :source_rule, :rule_type, :approvals_required, :section)
 
   def self.wrap(merge_request, rule)
     if rule.any_approver?
@@ -36,7 +36,7 @@ class ApprovalWrappedRule
     filter_approvers(@approval_rule.approvers)
   end
 
-  # @return [Array<User>] all approvers related to this rule
+  # @return [Array<User>] of users who have approved the merge request
   #
   # This is dynamically calculated unless it is persisted as `approved_approvers`.
   #

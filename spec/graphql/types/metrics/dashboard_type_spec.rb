@@ -3,11 +3,11 @@
 require 'spec_helper'
 
 describe GitlabSchema.types['MetricsDashboard'] do
-  it { expect(described_class.graphql_name).to eq('MetricsDashboard') }
+  specify { expect(described_class.graphql_name).to eq('MetricsDashboard') }
 
   it 'has the expected fields' do
     expected_fields = %w[
-        path annotations
+        path annotations schema_validation_warnings
       ]
 
     expect(described_class).to have_graphql_fields(*expected_fields)

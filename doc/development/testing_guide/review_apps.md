@@ -102,10 +102,10 @@ subgraph "CNG-mirror pipeline"
 ### Auto-stopping of Review Apps
 
 Review Apps are automatically stopped 2 days after the last deployment thanks to
-the [Environment auto-stop](../../ci/environments.md#environments-auto-stop) feature.
+the [Environment auto-stop](../../ci/environments/index.md#environments-auto-stop) feature.
 
 If you need your Review App to stay up for a longer time, you can
-[pin its environment](../../ci/environments.md#auto-stop-example) or retry the
+[pin its environment](../../ci/environments/index.md#auto-stop-example) or retry the
 `review-deploy` job to update the "latest deployed at" time.
 
 The `review-cleanup` job that automatically runs in scheduled
@@ -152,8 +152,14 @@ used by the `review-deploy` and `review-stop` jobs.
 
 ### Get access to the GCP Review Apps cluster
 
-You need to [open an access request (internal link)](https://gitlab.com/gitlab-com/access-requests/issues/new)
-for the `gcp-review-apps-sg` GCP group.
+You need to [open an access request (internal link)](https://gitlab.com/gitlab-com/access-requests/-/issues/new)
+for the `gcp-review-apps-sg` GCP group. In order to join a group, you must specify the desired GCP role in your access request.
+The role is what will grant you specific permissions in order to engage with Review App containers.
+
+Here are some permissions you may want to have, and the roles that grant them:
+
+- `container.pods.getLogs` - Required to [retrieve pod logs](#dig-into-a-pods-logs). Granted by [Viewer (`roles/viewer`)](https://cloud.google.com/iam/docs/understanding-roles#kubernetes-engine-roles).
+- `container.pods.exec` - Required to [run a Rails console](#run-a-rails-console). Granted by [Kubernetes Engine Developer (`roles/container.developer`)](https://cloud.google.com/iam/docs/understanding-roles#kubernetes-engine-roles).
 
 ### Log into my Review App
 
@@ -175,7 +181,7 @@ secure note named `gitlab-{ce,ee} Review App's root password`.
 
 ### Run a Rails console
 
-1. Make sure you [have access to the cluster](#get-access-to-the-gcp-review-apps-cluster) first.
+1. Make sure you [have access to the cluster](#get-access-to-the-gcp-review-apps-cluster) and the `container.pods.exec` permission first.
 1. [Filter Workloads by your Review App slug](https://console.cloud.google.com/kubernetes/workload?project=gitlab-review-apps),
    e.g. `review-qa-raise-e-12chm0`.
 1. Find and open the `task-runner` Deployment, e.g. `review-qa-raise-e-12chm0-task-runner`.
@@ -191,7 +197,7 @@ secure note named `gitlab-{ce,ee} Review App's root password`.
 
 ### Dig into a Pod's logs
 
-1. Make sure you [have access to the cluster](#get-access-to-the-gcp-review-apps-cluster) first.
+1. Make sure you [have access to the cluster](#get-access-to-the-gcp-review-apps-cluster) and the `container.pods.getLogs` permission first.
 1. [Filter Workloads by your Review App slug](https://console.cloud.google.com/kubernetes/workload?project=gitlab-review-apps),
    e.g. `review-qa-raise-e-12chm0`.
 1. Find and open the `migrations` Deployment, e.g.
@@ -206,8 +212,33 @@ If [Review App Stability](https://app.periscopedata.com/app/gitlab/496118/Engine
 dips this may be a signal that the `review-apps-ce/ee` cluster is unhealthy.
 Leading indicators may be health check failures leading to restarts or majority failure for Review App deployments.
 
-The [Review Apps Overview dashboard](https://app.google.stackdriver.com/dashboards/6798952013815386466?project=gitlab-review-apps&timeDomain=1d)
+The [Review Apps Overview dashboard](https://console.cloud.google.com/monitoring/classic/dashboards/6798952013815386466?project=gitlab-review-apps&timeDomain=1d)
 aids in identifying load spikes on the cluster, and if nodes are problematic or the entire cluster is trending towards unhealthy.
+
+### Release failed with `ImagePullBackOff`
+
+**Potential cause:**
+
+If you see an `ImagePullBackoff` status, check for a missing Docker image.
+
+**Where to look for further debugging:**
+
+To check that the Docker images were created, run the following Docker command:
+
+```shell
+`DOCKER_CLI_EXPERIMENTAL=enabled docker manifest repository:tag`
+```
+
+The output of this command indicates if the Docker image exists. For example:
+
+```shell
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect registry.gitlab.com/gitlab-org/build/cng-mirror/gitlab-rails-ee:39467-allow-a-release-s-associated-milestones-to-be-edited-thro
+```
+
+If the Docker image does not exist:
+
+- Verify the `image.repository` and `image.tag` options in the `helm upgrade --install` command match the repository names used by CNG-mirror pipeline.
+- Look further in the corresponding downstream CNG-mirror pipeline in `review-build-cng` job.
 
 ### Node count is always increasing (i.e. never stabilizing or decreasing)
 
@@ -290,7 +321,7 @@ kubectl get cm --sort-by='{.metadata.creationTimestamp}' | grep 'review-' | grep
 
 #### Finding the problem
 
-[In the past](https://gitlab.com/gitlab-org/gitlab-foss/issues/62834), it happened
+[In the past](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/62834), it happened
 that the `dns-gitlab-review-app-external-dns` Deployment was in a pending state,
 effectively preventing all the Review Apps from getting a DNS record assigned,
 making them unreachable via domain name.
@@ -375,7 +406,7 @@ find a way to limit it to only us.**
 ## Other resources
 
 - [Review Apps integration for CE/EE (presentation)](https://docs.google.com/presentation/d/1QPLr6FO4LduROU8pQIPkX1yfGvD13GEJIBOenqoKxR8/edit?usp=sharing)
-- [Stability issues](https://gitlab.com/gitlab-org/quality/team-tasks/issues/212)
+- [Stability issues](https://gitlab.com/gitlab-org/quality/team-tasks/-/issues/212)
 
 ### Helpful command line tools
 

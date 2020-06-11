@@ -1,5 +1,8 @@
 ---
 type: reference, howto
+stage: Secure
+group: Static Analysis
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 ---
 
 # Security Configuration **(ULTIMATE)**
@@ -11,7 +14,7 @@ type: reference, howto
 The security configuration page displays the configuration state of each of the security
 features and can be accessed through a project's sidebar nav.
 
-![Screenshot of security configuration page](../img/security_configuration_page_v12_9.png)
+![Screenshot of security configuration page](../img/security_configuration_page_v13_1.png)
 
 The page uses the project's latest default branch [CI pipeline](../../../ci/pipelines/index.md) to determine the configuration
 state of each feature. If a job with the expected security report artifact exists in the pipeline,

@@ -6,10 +6,12 @@ issues:
 - assignees
 - updated_by
 - milestone
+- iteration
 - notes
 - resource_label_events
 - resource_weight_events
 - resource_milestone_events
+- resource_state_events
 - sent_notifications
 - sentry_issue
 - label_links
@@ -18,6 +20,7 @@ issues:
 - todos
 - user_agent_detail
 - moved_to
+- moved_from
 - duplicated_to
 - promoted_to_epic
 - events
@@ -39,6 +42,8 @@ issues:
 - related_vulnerabilities
 - user_mentions
 - system_note_metadata
+- alert_management_alert
+- status_page_published_incident
 events:
 - author
 - project
@@ -111,9 +116,11 @@ merge_requests:
 - assignee
 - updated_by
 - milestone
+- iteration
 - notes
 - resource_label_events
 - resource_milestone_events
+- resource_state_events
 - label_links
 - labels
 - last_edited_by
@@ -172,6 +179,7 @@ merge_request_context_commits:
 ci_pipelines:
 - project
 - user
+- ci_ref
 - stages
 - statuses
 - latest_statuses_ordered_by_stage
@@ -188,7 +196,7 @@ ci_pipelines:
 - cancelable_statuses
 - manual_actions
 - scheduled_actions
-- artifacts
+- downloadable_artifacts
 - pipeline_schedule
 - merge_requests_as_head_pipeline
 - merge_request
@@ -212,7 +220,12 @@ ci_pipelines:
 - vulnerability_findings
 - pipeline_config
 - security_scans
+- daily_build_group_report_results
+- latest_builds
 - daily_report_results
+ci_refs:
+- project
+- ci_pipelines
 pipeline_variables:
 - pipeline
 stages:
@@ -222,12 +235,14 @@ stages:
 - processables
 - builds
 - bridges
+- latest_statuses
 statuses:
 - project
 - pipeline
 - stage
 - user
 - auto_canceled_by
+- needs
 variables:
 - project
 triggers:
@@ -343,6 +358,7 @@ project:
 - labels
 - events
 - milestones
+- iterations
 - notes
 - snippets
 - hooks
@@ -408,6 +424,7 @@ project:
 - deploy_tokens
 - settings
 - ci_cd_settings
+- project_settings
 - import_export_upload
 - repository_languages
 - pool_repository
@@ -420,7 +437,6 @@ project:
 - mirror_user
 - push_rule
 - jenkins_service
-- jenkins_deprecated_service
 - index_status
 - feature_usage
 - approval_rules
@@ -443,6 +459,7 @@ project:
 - vulnerability_scanners
 - operations_feature_flags
 - operations_feature_flags_client
+- operations_feature_flags_user_lists
 - prometheus_alerts
 - prometheus_alert_events
 - self_managed_prometheus_alert_events
@@ -470,6 +487,7 @@ project:
 - upstream_project_subscriptions
 - downstream_project_subscriptions
 - service_desk_setting
+- security_setting
 - import_failures
 - container_expiration_policy
 - resource_groups
@@ -477,9 +495,15 @@ project:
 - status_page_setting
 - requirements
 - export_jobs
-- daily_report_results
+- daily_build_group_report_results
 - jira_imports
 - compliance_framework_setting
+- metrics_users_starred_dashboards
+- alert_management_alerts
+- repository_storage_moves
+- freeze_periods
+- webex_teams_service
+- build_report_results
 award_emoji:
 - awardable
 - user
@@ -565,6 +589,7 @@ boards:
 - board_assignee
 - assignee
 - labels
+- user_preferences
 lists:
 - user
 - milestone
@@ -582,6 +607,7 @@ design: &design
 - versions
 - notes
 - user_mentions
+- events
 designs: *design
 actions:
 - design
@@ -631,3 +657,5 @@ epic_issue:
 system_note_metadata:
 - note
 - description_version
+status_page_published_incident:
+- issue

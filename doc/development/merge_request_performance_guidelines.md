@@ -24,7 +24,7 @@ The term `SHOULD` per the [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) means
 > carefully weighed before choosing a different course.
 
 Ideally, each of these tradeoffs should be documented
-in the separate issues, labelled accordingly and linked
+in the separate issues, labeled accordingly and linked
 to original issue and epic.
 
 ## Impact Analysis
@@ -193,7 +193,7 @@ in Puma/Unicorn threads.
 Often, GitLab needs to communicate with an external service such as Kubernetes
 clusters. In this case, it's hard to estimate when the external service finishes
 the requested process, for example, if it's a user-owned cluster that's inactive for some reason,
-GitLab might wait for the response forever ([Example](https://gitlab.com/gitlab-org/gitlab/issues/31475)).
+GitLab might wait for the response forever ([Example](https://gitlab.com/gitlab-org/gitlab/-/issues/31475)).
 This could result in Puma/Unicorn timeout and should be avoided at all cost.
 
 You should set a reasonable timeout, gracefully handle exceptions and surface the
@@ -210,7 +210,7 @@ as an open transaction basically blocks the release of a PostgreSQL backend conn
 For keeping transaction as minimal as possible, please consider using `AfterCommitQueue`
 module or `after_commit` AR hook.
 
-Here is [an example](https://gitlab.com/gitlab-org/gitlab/issues/36154#note_247228859)
+Here is [an example](https://gitlab.com/gitlab-org/gitlab/-/issues/36154#note_247228859)
 that one request to Gitaly instance during transaction triggered a P1 issue.
 
 ## Eager Loading

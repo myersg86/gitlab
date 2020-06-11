@@ -24,13 +24,24 @@ let mermaidModule = {};
 function importMermaidModule() {
   return import(/* webpackChunkName: 'mermaid' */ 'mermaid')
     .then(mermaid => {
+      let theme = 'neutral';
+      const ideDarkThemes = ['dark', 'solarized-dark'];
+
+      if (
+        ideDarkThemes.includes(window.gon?.user_color_scheme) &&
+        // if on the Web IDE page
+        document.querySelector('.ide')
+      ) {
+        theme = 'dark';
+      }
+
       mermaid.initialize({
         // mermaid core options
         mermaid: {
           startOnLoad: false,
         },
         // mermaidAPI options
-        theme: 'neutral',
+        theme,
         flowchart: {
           useMaxWidth: true,
           htmlLabels: false,

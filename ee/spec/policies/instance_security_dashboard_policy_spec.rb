@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe InstanceSecurityDashboardPolicy do
+RSpec.describe InstanceSecurityDashboardPolicy do
   let(:current_user) { create(:user) }
   let(:user) { create(:user) }
 
@@ -21,6 +21,18 @@ describe InstanceSecurityDashboardPolicy do
 
     context 'when the user is logged in' do
       it { is_expected.to be_allowed(:read_instance_security_dashboard) }
+    end
+  end
+
+  describe 'create_vulnerability_export' do
+    context 'when the user is not logged in' do
+      let(:current_user) { nil }
+
+      it { is_expected.not_to be_allowed(:create_vulnerability_export) }
+    end
+
+    context 'when the user is logged in' do
+      it { is_expected.to be_allowed(:create_vulnerability_export) }
     end
   end
 end

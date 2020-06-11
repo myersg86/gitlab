@@ -1,6 +1,12 @@
+---
+stage: Manage
+group: Analytics
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Productivity Analytics **(PREMIUM)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/12079) in [GitLab Premium](https://about.gitlab.com/pricing/) 12.3.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/12079) in [GitLab Premium](https://about.gitlab.com/pricing/) 12.3.
 
 Track development velocity with Productivity Analytics.
 
@@ -42,7 +48,7 @@ The following metrics and visualizations are available on a project or group lev
 
 ## Date ranges
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/13188) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/13188) in GitLab 12.4.
 
 GitLab has the ability to filter analytics based on a date range. To filter results:
 

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Admin::CredentialsController do
+RSpec.describe Admin::CredentialsController do
   describe 'GET #index' do
     context 'admin user' do
       before do
@@ -24,7 +24,7 @@ describe Admin::CredentialsController do
           let_it_be(:personal_access_tokens) { create_list(:personal_access_token, 2) }
 
           shared_examples_for 'filtering by `personal_access_tokens`' do
-            it do
+            specify do
               get :index, params: params
 
               expect(assigns(:credentials)).to match_array(personal_access_tokens)

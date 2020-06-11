@@ -23,6 +23,8 @@ const Api = {
   projectMergeRequestVersionsPath: '/api/:version/projects/:id/merge_requests/:mrid/versions',
   projectRunnersPath: '/api/:version/projects/:id/runners',
   projectProtectedBranchesPath: '/api/:version/projects/:id/protected_branches',
+  projectSearchPath: '/api/:version/projects/:id/search',
+  projectMilestonesPath: '/api/:version/projects/:id/milestones',
   mergeRequestsPath: '/api/:version/merge_requests',
   groupLabelsPath: '/groups/:namespace_path/-/labels',
   issuableTemplatePath: '/:namespace_path/:project_path/templates/:type/:key',
@@ -36,6 +38,7 @@ const Api = {
   userPostStatusPath: '/api/:version/user/status',
   commitPath: '/api/:version/projects/:id/repository/commits',
   applySuggestionPath: '/api/:version/suggestions/:id/apply',
+  applySuggestionBatchPath: '/api/:version/suggestions/batch_apply',
   commitPipelinesPath: '/:project_id/commit/:sha/pipelines',
   branchSinglePath: '/api/:version/projects/:id/repository/branches/:branch',
   createBranchPath: '/api/:version/projects/:id/repository/branches',
@@ -46,10 +49,13 @@ const Api = {
   mergeRequestsPipeline: '/api/:version/projects/:id/merge_requests/:merge_request_iid/pipelines',
   adminStatisticsPath: '/api/:version/application/statistics',
   pipelineSinglePath: '/api/:version/projects/:id/pipelines/:pipeline_id',
+  pipelinesPath: '/api/:version/projects/:id/pipelines/',
   environmentsPath: '/api/:version/projects/:id/environments',
   rawFilePath: '/api/:version/projects/:id/repository/files/:path/raw',
+  issuePath: '/api/:version/projects/:id/issues/:issue_iid',
+  tagsPath: '/api/:version/projects/:id/repository/tags',
 
-  group(groupId, callback) {
+  group(groupId, callback = () => {}) {
     const url = Api.buildUrl(Api.groupPath).replace(':id', groupId);
     return axios.get(url).then(({ data }) => {
       callback(data);
@@ -74,13 +80,11 @@ const Api = {
     const url = Api.buildUrl(Api.groupsPath);
     return axios
       .get(url, {
-        params: Object.assign(
-          {
-            search: query,
-            per_page: DEFAULT_PER_PAGE,
-          },
-          options,
-        ),
+        params: {
+          search: query,
+          per_page: DEFAULT_PER_PAGE,
+          ...options,
+        },
       })
       .then(({ data }) => {
         callback(data);
@@ -247,6 +251,23 @@ const Api = {
       .then(({ data }) => data);
   },
 
+  projectSearch(id, options = {}) {
+    const url = Api.buildUrl(Api.projectSearchPath).replace(':id', encodeURIComponent(id));
+
+    return axios.get(url, {
+      params: {
+        search: options.search,
+        scope: options.scope,
+      },
+    });
+  },
+
+  projectMilestones(id) {
+    const url = Api.buildUrl(Api.projectMilestonesPath).replace(':id', encodeURIComponent(id));
+
+    return axios.get(url);
+  },
+
   mergeRequests(params = {}) {
     const url = Api.buildUrl(Api.mergeRequestsPath);
 
@@ -281,7 +302,7 @@ const Api = {
     };
     return axios
       .get(url, {
-        params: Object.assign({}, defaults, options),
+        params: { ...defaults, ...options },
       })
       .then(({ data }) => callback(data))
       .catch(() => flash(__('Something went wrong while fetching projects')));
@@ -301,6 +322,12 @@ const Api = {
     const url = Api.buildUrl(Api.applySuggestionPath).replace(':id', encodeURIComponent(id));
 
     return axios.put(url);
+  },
+
+  applySuggestionBatch(ids) {
+    const url = Api.buildUrl(Api.applySuggestionBatchPath);
+
+    return axios.put(url, { ids });
   },
 
   commitPipelines(projectId, sha) {
@@ -364,13 +391,11 @@ const Api = {
   users(query, options) {
     const url = Api.buildUrl(this.usersPath);
     return axios.get(url, {
-      params: Object.assign(
-        {
-          search: query,
-          per_page: DEFAULT_PER_PAGE,
-        },
-        options,
-      ),
+      params: {
+        search: query,
+        per_page: DEFAULT_PER_PAGE,
+        ...options,
+      },
     });
   },
 
@@ -401,7 +426,7 @@ const Api = {
     };
     return axios
       .get(url, {
-        params: Object.assign({}, defaults, options),
+        params: { ...defaults, ...options },
       })
       .then(({ data }) => callback(data))
       .catch(() => flash(__('Something went wrong while fetching projects')));
@@ -502,6 +527,15 @@ const Api = {
     return axios.get(url);
   },
 
+  // Return all pipelines for a project or filter by query params
+  pipelines(id, options = {}) {
+    const url = Api.buildUrl(this.pipelinesPath).replace(':id', encodeURIComponent(id));
+
+    return axios.get(url, {
+      params: options,
+    });
+  },
+
   environments(id) {
     const url = Api.buildUrl(this.environmentsPath).replace(':id', encodeURIComponent(id));
     return axios.get(url);
@@ -513,6 +547,34 @@ const Api = {
       .replace(':path', encodeURIComponent(path));
 
     return axios.get(url, { params });
+  },
+
+  updateIssue(project, issue, data = {}) {
+    const url = Api.buildUrl(Api.issuePath)
+      .replace(':id', encodeURIComponent(project))
+      .replace(':issue_iid', encodeURIComponent(issue));
+
+    return axios.put(url, data);
+  },
+
+  updateMergeRequest(project, mergeRequest, data = {}) {
+    const url = Api.buildUrl(Api.projectMergeRequestPath)
+      .replace(':id', encodeURIComponent(project))
+      .replace(':mrid', encodeURIComponent(mergeRequest));
+
+    return axios.put(url, data);
+  },
+
+  tags(id, query = '', options = {}) {
+    const url = Api.buildUrl(this.tagsPath).replace(':id', encodeURIComponent(id));
+
+    return axios.get(url, {
+      params: {
+        search: query,
+        per_page: DEFAULT_PER_PAGE,
+        ...options,
+      },
+    });
   },
 
   buildUrl(url) {

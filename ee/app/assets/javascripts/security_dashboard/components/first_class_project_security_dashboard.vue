@@ -2,6 +2,7 @@
 import { GlBanner } from '@gitlab/ui';
 import Cookies from 'js-cookie';
 import { parseBoolean } from '~/lib/utils/common_utils';
+import axios from '~/lib/utils/axios_utils';
 import ProjectVulnerabilitiesApp from 'ee/vulnerabilities/components/project_vulnerabilities_app.vue';
 import ReportsNotConfigured from 'ee/security_dashboard/components/empty_states/reports_not_configured.vue';
 import SecurityDashboardLayout from 'ee/security_dashboard/components/security_dashboard_layout.vue';
@@ -47,13 +48,26 @@ export default {
     },
     vulnerabilitiesExportEndpoint: {
       type: String,
+      required: false,
+      default: '',
+    },
+    showIntroductionBanner: {
+      type: Boolean,
+      required: true,
+    },
+    userCalloutId: {
+      type: String,
+      required: true,
+    },
+    userCalloutsPath: {
+      type: String,
       required: true,
     },
   },
   data() {
     return {
       filters: {},
-      isBannerVisible: !parseBoolean(Cookies.get(BANNER_COOKIE_KEY)),
+      isBannerVisible: this.showIntroductionBanner && !parseBoolean(Cookies.get(BANNER_COOKIE_KEY)), // The and statement is for backward compatibility. See https://gitlab.com/gitlab-org/gitlab/-/issues/213671 for more information.
     };
   },
   methods: {
@@ -61,8 +75,11 @@ export default {
       this.filters = filters;
     },
     handleBannerClose() {
-      Cookies.set(BANNER_COOKIE_KEY, 'true', { expires: 365 * 10 });
       this.isBannerVisible = false;
+
+      axios.post(this.userCalloutsPath, {
+        feature_name: this.userCalloutId,
+      });
     },
   },
 };
@@ -77,15 +94,15 @@ export default {
             v-if="isBannerVisible"
             class="mt-4"
             variant="introduction"
-            :title="s__('SecurityDashboard|Introducing standalone vulnerabilities')"
-            :button-text="s__('SecurityDashboard|Learn More')"
+            :title="s__('SecurityReports|Introducing standalone vulnerabilities')"
+            :button-text="s__('SecurityReports|Learn More')"
             :button-link="dashboardDocumentation"
             @close="handleBannerClose"
           >
             <div class="mb-2">
               {{
                 s__(
-                  'SecurityDashboard|Each vulnerability now has a unique page that can be directly linked to, shared, referenced, and tracked as the single source of truth. Vulnerability occurrences also persist across scanner runs, which improves tracking and visibility and reduces duplicates between scans.',
+                  'SecurityReports|Each vulnerability now has a unique page that can be directly linked to, shared, referenced, and tracked as the single source of truth. Vulnerability occurrences also persist across scanner runs, which improves tracking and visibility and reduces duplicates between scans.',
                 )
               }}
             </div>

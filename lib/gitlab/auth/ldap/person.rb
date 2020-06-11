@@ -4,8 +4,6 @@ module Gitlab
   module Auth
     module Ldap
       class Person
-        prepend_if_ee('::EE::Gitlab::Auth::Ldap::Person') # rubocop: disable Cop/InjectEnterpriseEditionModule
-
         # Active Directory-specific LDAP filter that checks if bit 2 of the
         # userAccountControl attribute is set.
         # Source: http://ctogonewild.com/2009/09/03/bitmask-searches-in-ldap/
@@ -41,7 +39,7 @@ module Gitlab
             *config.attributes['name'],
             *config.attributes['email'],
             *config.attributes['username']
-          ].compact.uniq
+          ].compact.uniq.reject(&:blank?)
         end
 
         def self.normalize_dn(dn)
@@ -122,3 +120,5 @@ module Gitlab
     end
   end
 end
+
+Gitlab::Auth::Ldap::Person.prepend_if_ee('::EE::Gitlab::Auth::Ldap::Person')

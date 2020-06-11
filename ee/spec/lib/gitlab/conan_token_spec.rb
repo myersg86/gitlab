@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe Gitlab::ConanToken do
+RSpec.describe Gitlab::ConanToken do
   let(:base_secret) { SecureRandom.base64(64) }
 
   let(:jwt_secret) do
@@ -44,6 +44,17 @@ describe Gitlab::ConanToken do
 
       expect(token.access_token_id).to eq(123)
       expect(token.user_id).to eq(456)
+    end
+  end
+
+  describe '.from_deploy_token' do
+    it 'sets access token id and user id' do
+      deploy_token = double(token: '123', username: 'bob')
+
+      token = described_class.from_deploy_token(deploy_token)
+
+      expect(token.access_token_id).to eq('123')
+      expect(token.user_id).to eq('bob')
     end
   end
 

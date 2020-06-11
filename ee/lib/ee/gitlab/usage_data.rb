@@ -19,11 +19,13 @@ module EE
           name: :license_management_jobs
         },
         license_scanning: {
-          name: :license_scanning_jobs,
-          fallback: 0
+          name: :license_scanning_jobs
         },
         sast: {
           name: :sast_jobs
+        },
+        secret_detection: {
+          name: :secret_detection_jobs
         }
       }.freeze
 
@@ -32,16 +34,21 @@ module EE
 
         override :usage_data_counters
         def usage_data_counters
-          super + [::Gitlab::UsageCounters::DesignsCounter, ::Gitlab::UsageDataCounters::LicensesList]
+          super + [::Gitlab::UsageDataCounters::LicensesList]
         end
 
         override :uncached_data
         def uncached_data
-          return super if ::Feature.disabled?(:usage_activity_by_stage, default_enabled: true)
+          super
+            .merge(usage_activity_by_stage)
+            .merge(usage_activity_by_stage(:usage_activity_by_stage_monthly, default_time_period))
+            .merge(recording_ee_finish_data)
+        end
 
-          time_period = { created_at: 28.days.ago..Time.current }
-          usage_activity_by_stage_monthly = usage_activity_by_stage(:usage_activity_by_stage_monthly, time_period)
-          super.merge(usage_activity_by_stage).merge(usage_activity_by_stage_monthly)
+        def recording_ee_finish_data
+          {
+            recording_ee_finished_at: Time.now
+          }
         end
 
         override :features_usage_data
@@ -51,9 +58,9 @@ module EE
 
         def features_usage_data_ee
           {
-            elasticsearch_enabled: alt_usage_data { ::Gitlab::CurrentSettings.elasticsearch_search? },
-            license_trial_ends_on: alt_usage_data { License.trial_ends_on },
-            geo_enabled: alt_usage_data { ::Gitlab::Geo.enabled? }
+            elasticsearch_enabled: alt_usage_data(fallback: nil) { ::Gitlab::CurrentSettings.elasticsearch_search? },
+            license_trial_ends_on: alt_usage_data(fallback: nil) { License.trial_ends_on },
+            geo_enabled: alt_usage_data(fallback: nil) { ::Gitlab::Geo.enabled? }
           }
         end
 
@@ -84,6 +91,14 @@ module EE
           usage_data
         end
 
+        def requirements_counts
+          return {} unless ::License.feature_available?(:requirements)
+
+          {
+            requirements_created: count(RequirementsManagement::Requirement)
+          }
+        end
+
         # rubocop: disable CodeReuse/ActiveRecord
         def service_desk_counts
           return {} unless ::License.feature_available?(:service_desk)
@@ -105,12 +120,12 @@ module EE
 
         def security_products_usage
           results = SECURE_PRODUCT_TYPES.each_with_object({}) do |(secure_type, attribs), response|
-            response[attribs[:name]] = count(::Ci::Build.where(name: secure_type), fallback: attribs.fetch(:fallback, -1)) # rubocop:disable CodeReuse/ActiveRecord
+            response[attribs[:name]] = count(::Ci::Build.where(name: secure_type)) # rubocop:disable CodeReuse/ActiveRecord
           end
 
           # handle license rename https://gitlab.com/gitlab-org/gitlab/issues/8911
           license_scan_count = results.delete(:license_scanning_jobs)
-          results[:license_management_jobs] += license_scan_count
+          results[:license_management_jobs] += license_scan_count > 0 ? license_scan_count : 0
 
           results
         end
@@ -142,15 +157,17 @@ module EE
           super.tap do |usage_data|
             usage_data[:counts].merge!(
               {
-                dependency_list_usages_total: ::Gitlab::UsageCounters::DependencyList.usage_totals[:total],
+                confidential_epics: count(::Epic.confidential),
+                dependency_list_usages_total: redis_usage_data { ::Gitlab::UsageCounters::DependencyList.usage_totals[:total] },
                 epics: count(::Epic),
                 feature_flags: count(Operations::FeatureFlag),
                 geo_nodes: count(::GeoNode),
+                geo_event_log_max_id: alt_usage_data { Geo::EventLog.maximum(:id) || 0 },
                 ldap_group_links: count(::LdapGroupLink),
                 issues_with_health_status: count(::Issue.with_health_status),
                 ldap_keys: count(::LDAPKey),
                 ldap_users: count(::User.ldap, 'users.id'),
-                pod_logs_usages_total: ::Gitlab::UsageCounters::PodLogs.usage_totals[:total],
+                pod_logs_usages_total: redis_usage_data { ::Gitlab::UsageCounters::PodLogs.usage_totals[:total] },
                 projects_enforcing_code_owner_approval: count(::Project.without_deleted.non_archived.requiring_code_owner_approval),
                 merge_requests_with_optional_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_optional, :merge_request_id),
                 merge_requests_with_required_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_required, :merge_request_id),
@@ -162,6 +179,7 @@ module EE
                 status_page_issues: count(::Issue.on_status_page),
                 template_repositories: count(::Project.with_repos_templates) + count(::Project.with_groups_level_repos_templates)
               },
+              requirements_counts,
               service_desk_counts,
               security_products_usage,
               epics_deepest_relationship_level,
@@ -237,15 +255,15 @@ module EE
             projects_imported_from_github: distinct_count(::Project.github_imported.where(time_period), :creator_id),
             projects_with_repositories_enabled: distinct_count(::Project.with_repositories_enabled.where(time_period),
                                                                :creator_id,
-                                                               start: ::User.minimum(:id),
-                                                               finish: ::User.maximum(:id)),
-            protected_branches: distinct_count(::Project.with_protected_branches.where(time_period), :creator_id, start: ::User.minimum(:id), finish: ::User.maximum(:id)),
+                                                               start: user_minimum_id,
+                                                               finish: user_maximum_id),
+            protected_branches: distinct_count(::Project.with_protected_branches.where(time_period), :creator_id, start: user_minimum_id, finish: user_maximum_id),
             remote_mirrors: distinct_count(::Project.with_remote_mirrors.where(time_period), :creator_id),
             snippets: distinct_count(::Snippet.where(time_period), :author_id),
             suggestions: distinct_count(::Note.with_suggestions.where(time_period),
                                         :author_id,
-                                        start: ::User.minimum(:id),
-                                        finish: ::User.maximum(:id))
+                                        start: user_minimum_id,
+                                        finish: user_maximum_id)
           }
         end
 
@@ -256,8 +274,14 @@ module EE
             groups: distinct_count(::GroupMember.where(time_period), :user_id),
             ldap_keys: distinct_count(::LDAPKey.where(time_period), :user_id),
             ldap_users: distinct_count(::GroupMember.of_ldap_type.where(time_period), :user_id),
-            users_created: count(::User.where(time_period)),
-            value_stream_management_customized_group_stages: count(::Analytics::CycleAnalytics::GroupStage.where(custom: true))
+            users_created: count(::User.where(time_period), start: user_minimum_id, finish: user_maximum_id),
+            value_stream_management_customized_group_stages: count(::Analytics::CycleAnalytics::GroupStage.where(custom: true)),
+            projects_with_compliance_framework: count(::ComplianceManagement::ComplianceFramework::ProjectSettings),
+            ldap_servers: ldap_available_servers.size,
+            ldap_group_sync_enabled: ldap_config_present_for_any_provider?(:group_base),
+            ldap_admin_sync_enabled: ldap_config_present_for_any_provider?(:admin_group),
+            omniauth_providers: filtered_omniauth_provider_names.reject { |name| name == 'group_saml' },
+            group_saml_enabled: omniauth_provider_names.include?('group_saml')
           }
         end
 
@@ -265,7 +289,9 @@ module EE
           {
             clusters: distinct_count(::Clusters::Cluster.where(time_period), :user_id),
             clusters_applications_prometheus: cluster_applications_user_distinct_count(::Clusters::Applications::Prometheus, time_period),
-            operations_dashboard_default_dashboard: count(::User.active.with_dashboard('operations').where(time_period)),
+            operations_dashboard_default_dashboard: count(::User.active.with_dashboard('operations').where(time_period),
+                                                          start: user_minimum_id,
+                                                          finish: user_maximum_id),
             operations_dashboard_users_with_projects_added: distinct_count(UsersOpsDashboardProject.joins(:user).merge(::User.active).where(time_period), :user_id),
             projects_prometheus_active: distinct_count(::Project.with_active_prometheus_service.where(time_period), :creator_id),
             projects_with_error_tracking_enabled: distinct_count(::Project.with_enabled_error_tracking.where(time_period), :creator_id),
@@ -315,12 +341,12 @@ module EE
         def usage_activity_by_stage_verify(time_period)
           {
             ci_builds: distinct_count(::Ci::Build.where(time_period), :user_id),
-            ci_external_pipelines: distinct_count(::Ci::Pipeline.external.where(time_period), :user_id),
-            ci_internal_pipelines: distinct_count(::Ci::Pipeline.internal.where(time_period), :user_id),
-            ci_pipeline_config_auto_devops: distinct_count(::Ci::Pipeline.auto_devops_source.where(time_period), :user_id),
-            ci_pipeline_config_repository: distinct_count(::Ci::Pipeline.repository_source.where(time_period), :user_id),
+            ci_external_pipelines: distinct_count(::Ci::Pipeline.external.where(time_period), :user_id, start: user_minimum_id, finish: user_maximum_id),
+            ci_internal_pipelines: distinct_count(::Ci::Pipeline.internal.where(time_period), :user_id, start: user_minimum_id, finish: user_maximum_id),
+            ci_pipeline_config_auto_devops: distinct_count(::Ci::Pipeline.auto_devops_source.where(time_period), :user_id, start: user_minimum_id, finish: user_maximum_id),
+            ci_pipeline_config_repository: distinct_count(::Ci::Pipeline.repository_source.where(time_period), :user_id, start: user_minimum_id, finish: user_maximum_id),
             ci_pipeline_schedules: distinct_count(::Ci::PipelineSchedule.where(time_period), :owner_id),
-            ci_pipelines: distinct_count(::Ci::Pipeline.where(time_period), :user_id),
+            ci_pipelines: distinct_count(::Ci::Pipeline.where(time_period), :user_id, start: user_minimum_id, finish: user_maximum_id),
             ci_triggers: distinct_count(::Ci::Trigger.where(time_period), :owner_id),
             clusters_applications_runner: cluster_applications_user_distinct_count(::Clusters::Applications::Runner, time_period),
             projects_reporting_ci_cd_back_to_github: distinct_count(::Project.with_github_service_pipeline_events.where(time_period), :creator_id)
@@ -328,7 +354,7 @@ module EE
         end
 
         # Currently too complicated and to get reliable counts for these stats:
-        # container_scanning_jobs, dast_jobs, dependency_scanning_jobs, license_management_jobs, sast_jobs
+        # container_scanning_jobs, dast_jobs, dependency_scanning_jobs, license_management_jobs, sast_jobs, secret_detection_jobs
         # Once https://gitlab.com/gitlab-org/gitlab/merge_requests/17568 is merged, this might be doable
         def usage_activity_by_stage_secure(time_period)
           prefix = 'user_'
@@ -338,13 +364,16 @@ module EE
           }
 
           SECURE_PRODUCT_TYPES.each do |secure_type, attribs|
-            results["#{prefix}#{attribs[:name]}".to_sym] = distinct_count(::Ci::Build.where(name: secure_type).where(time_period), :user_id, fallback: attribs.fetch(:fallback, -1))
+            results["#{prefix}#{attribs[:name]}".to_sym] = distinct_count(::Ci::Build.where(name: secure_type).where(time_period),
+                                                                          :user_id,
+                                                                          start: user_minimum_id,
+                                                                          finish: user_maximum_id)
           end
 
           # handle license rename https://gitlab.com/gitlab-org/gitlab/issues/8911
           combined_license_key = "#{prefix}license_management_jobs".to_sym
           license_scan_count = results.delete("#{prefix}license_scanning_jobs".to_sym)
-          results[combined_license_key] += license_scan_count
+          results[combined_license_key] += license_scan_count > 0 ? license_scan_count : 0
 
           results
         end
@@ -352,8 +381,8 @@ module EE
         private
 
         def distinct_count_service_desk_enabled_projects(time_period)
-          project_creator_id_start = ::User.minimum(:id)
-          project_creator_id_finish = ::User.maximum(:id)
+          project_creator_id_start = user_minimum_id
+          project_creator_id_finish = user_maximum_id
 
           distinct_count(::Project.service_desk_enabled.where(time_period), :creator_id, start: project_creator_id_start, finish: project_creator_id_finish)
         end
@@ -366,6 +395,26 @@ module EE
           distinct_count(clusters.where(time_period), :user_id)
         end
         # rubocop:enable CodeReuse/ActiveRecord
+
+        def ldap_available_servers
+          ::Gitlab::Auth::Ldap::Config.available_servers
+        end
+
+        def ldap_config_present_for_any_provider?(configuration_item)
+          ldap_available_servers.any? { |server_config| server_config[configuration_item.to_s] }
+        end
+
+        def omniauth_provider_names
+          ::Gitlab.config.omniauth.providers.map(&:name)
+        end
+
+        # LDAP provider names are set by customers and could include
+        # sensitive info (server names, etc). LDAP providers normally
+        # don't appear in omniauth providers but filter to ensure
+        # no internal details leak via usage ping.
+        def filtered_omniauth_provider_names
+          omniauth_provider_names.reject { |name| name.starts_with?('ldap') }
+        end
       end
     end
   end

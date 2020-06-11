@@ -1,21 +1,24 @@
 ---
+stage: Verify
+group: Continuous Integration
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: howto
 ---
 
 # Building images with kaniko and GitLab CI/CD
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/45512) in GitLab 11.2. Requires GitLab Runner 11.2 and above.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/45512) in GitLab 11.2. Requires GitLab Runner 11.2 and above.
 
 [kaniko](https://github.com/GoogleContainerTools/kaniko) is a tool to build
 container images from a Dockerfile, inside a container or Kubernetes cluster.
 
 kaniko solves two problems with using the
-[docker-in-docker
+[Docker-in-Docker
 build](using_docker_build.md#use-docker-in-docker-workflow-with-docker-executor) method:
 
-- Docker-in-docker requires [privileged mode](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities)
+- Docker-in-Docker requires [privileged mode](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities)
   in order to function, which is a significant security concern.
-- Docker-in-docker generally incurs a performance penalty and can be quite slow.
+- Docker-in-Docker generally incurs a performance penalty and can be quite slow.
 
 ## Requirements
 
@@ -82,12 +85,25 @@ store:
 
 ```yaml
   before_script:
+    - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - |
       echo "-----BEGIN CERTIFICATE-----
       ...
       -----END CERTIFICATE-----" >> /kaniko/ssl/certs/ca-certificates.crt
 ```
+
+## Video walkthrough of a working example
+
+The [Least Privilege Container Builds with Kaniko on GitLab](https://www.youtube.com/watch?v=d96ybcELpFs)
+video is a walkthrough of the [Kaniko Docker Build](https://gitlab.com/guided-explorations/containers/kaniko-docker-build)
+Guided Exploration project pipeline. It was tested on:
+
+- [GitLab.com Shared Runners](../../user/gitlab_com/index.md#shared-runners)
+- [The Kubernetes Runner executor](https://docs.gitlab.com/runner/executors/kubernetes.html)
+
+The example can be copied to your own group or instance for testing. More details
+on what other GitLab CI patterns are demonstrated are available at the project page.
 
 <!-- ## Troubleshooting
 

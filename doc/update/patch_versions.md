@@ -12,7 +12,7 @@ You can select the tag in the version dropdown in the top left corner of GitLab 
 
 ### 0. Backup
 
-It's useful to make a backup just in case things go south. Depending on the installation method, backup commands vary, see the [backing up and restoring GitLab](../raketasks/backup_restore.md#creating-a-backup-of-the-gitlab-system) documentation.
+It's useful to make a backup just in case things go south. Depending on the installation method, backup commands vary. See the [backing up and restoring GitLab](../raketasks/backup_restore.md) documentation.
 
 ### 1. Stop server
 
@@ -49,10 +49,9 @@ sudo -u git -H bundle clean
 sudo -u git -H bundle exec rake db:migrate RAILS_ENV=production
 
 # Compile GetText PO files
-# Internationalization was added in `v9.2.0` so these commands are only
+# Internationalization was added in `v9.2.0` so this command is only
 # required for versions equal or major to it.
-sudo -u git -H bundle exec rake gettext:pack RAILS_ENV=production
-sudo -u git -H bundle exec rake gettext:po_to_json RAILS_ENV=production
+sudo -u git -H bundle exec rake gettext:compile RAILS_ENV=production
 
 # Clean up assets and cache
 sudo -u git -H bundle exec rake yarn:install gitlab:assets:clean gitlab:assets:compile cache:clear RAILS_ENV=production NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096"

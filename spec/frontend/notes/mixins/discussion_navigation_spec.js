@@ -3,6 +3,7 @@ import { shallowMount, createLocalVue } from '@vue/test-utils';
 import * as utils from '~/lib/utils/common_utils';
 import discussionNavigation from '~/notes/mixins/discussion_navigation';
 import eventHub from '~/notes/event_hub';
+import createEventHub from '~/helpers/event_hub_factory';
 import notesModule from '~/notes/stores/modules';
 import { setHTMLFixture } from 'helpers/fixtures';
 
@@ -40,7 +41,7 @@ describe('Discussion navigation mixin', () => {
         .join(''),
     );
 
-    jest.spyOn(utils, 'scrollToElement');
+    jest.spyOn(utils, 'scrollToElementWithContext');
 
     expandDiscussion = jest.fn();
     const { actions, ...notesRest } = notesModule();
@@ -67,8 +68,7 @@ describe('Discussion navigation mixin', () => {
 
   describe('cycle through discussions', () => {
     beforeEach(() => {
-      // eslint-disable-next-line new-cap
-      window.mrTabs = { eventHub: new localVue(), tabShown: jest.fn() };
+      window.mrTabs = { eventHub: createEventHub(), tabShown: jest.fn() };
     });
 
     describe.each`
@@ -102,7 +102,7 @@ describe('Discussion navigation mixin', () => {
         });
 
         it('scrolls to element', () => {
-          expect(utils.scrollToElement).toHaveBeenCalledWith(
+          expect(utils.scrollToElementWithContext).toHaveBeenCalledWith(
             findDiscussion('div.discussion', expected),
           );
         });
@@ -123,11 +123,13 @@ describe('Discussion navigation mixin', () => {
         });
 
         it('scrolls when scrollToDiscussion is emitted', () => {
-          expect(utils.scrollToElement).not.toHaveBeenCalled();
+          expect(utils.scrollToElementWithContext).not.toHaveBeenCalled();
 
           eventHub.$emit('scrollToDiscussion');
 
-          expect(utils.scrollToElement).toHaveBeenCalledWith(findDiscussion('ul.notes', expected));
+          expect(utils.scrollToElementWithContext).toHaveBeenCalledWith(
+            findDiscussion('ul.notes', expected),
+          );
         });
       });
 
@@ -167,7 +169,7 @@ describe('Discussion navigation mixin', () => {
           });
 
           it('scrolls to discussion', () => {
-            expect(utils.scrollToElement).toHaveBeenCalledWith(
+            expect(utils.scrollToElementWithContext).toHaveBeenCalledWith(
               findDiscussion('div.discussion', expected),
             );
           });

@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 describe Gitlab::JiraImport::Stage::ImportLabelsWorker do
+  include JiraServiceHelper
+
   let_it_be(:user) { create(:user) }
   let_it_be(:project) { create(:project, import_type: 'jira') }
 
@@ -11,43 +13,33 @@ describe Gitlab::JiraImport::Stage::ImportLabelsWorker do
   end
 
   describe '#perform' do
-    context 'when feature flag disabled' do
-      before do
-        stub_feature_flags(jira_issue_import: false)
-      end
+    let_it_be(:jira_import, reload: true) { create(:jira_import_state, :scheduled, project: project) }
 
-      it_behaves_like 'cannot do jira import'
+    context 'when import did not start' do
+      it_behaves_like 'cannot do Jira import'
       it_behaves_like 'does not advance to next stage'
     end
 
-    context 'when feature flag enabled' do
-      let_it_be(:jira_import, reload: true) { create(:jira_import_state, :scheduled, project: project) }
+    context 'when import started' do
+      let!(:jira_service) { create(:jira_service, project: project) }
 
       before do
-        stub_feature_flags(jira_issue_import: true)
+        stub_jira_service_test
+
+        jira_import.start!
+
+        WebMock.stub_request(:get, 'https://jira.example.com/rest/api/2/label?maxResults=500&startAt=0')
+          .to_return(body: {}.to_json )
       end
 
-      context 'when import did not start' do
-        it_behaves_like 'cannot do jira import'
-        it_behaves_like 'does not advance to next stage'
-      end
+      it_behaves_like 'advance to next stage', :issues
 
-      context 'when import started' do
-        let!(:jira_service) { create(:jira_service, project: project) }
-
-        before do
-          jira_import.start!
+      it 'executes labels importer' do
+        expect_next_instance_of(Gitlab::JiraImport::LabelsImporter) do |instance|
+          expect(instance).to receive(:execute).and_return(Gitlab::JobWaiter.new)
         end
 
-        it_behaves_like 'advance to next stage', :issues
-
-        it 'executes labels importer' do
-          expect_next_instance_of(Gitlab::JiraImport::LabelsImporter) do |instance|
-            expect(instance).to receive(:execute).and_return(Gitlab::JobWaiter.new)
-          end
-
-          described_class.new.perform(project.id)
-        end
+        described_class.new.perform(project.id)
       end
     end
   end

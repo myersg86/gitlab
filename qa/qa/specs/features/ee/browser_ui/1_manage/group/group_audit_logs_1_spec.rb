@@ -113,13 +113,13 @@ module QA
           sign_in
           project.visit!
 
-          Page::Project::Menu.perform(&:go_to_members_settings)
-          Page::Project::Settings::Members.perform do |members|
+          Page::Project::Menu.perform(&:click_members)
+          Page::Project::Members.perform do |members|
             members.invite_group(@group.path)
           end
 
-          Page::Project::Menu.perform(&:go_to_members_settings)
-          Page::Project::Settings::Members.perform do |members|
+          Page::Project::Menu.perform(&:click_members)
+          Page::Project::Members.perform do |members|
             members.remove_group(@group.path)
           end
 
@@ -148,7 +148,7 @@ module QA
       new_event_count = @event_count + expected_events.length
 
       Support::Retrier.retry_until(max_duration: QA::Support::Repeater::DEFAULT_MAX_WAIT_TIME, sleep_interval: 1) do
-        get_audit_event_count(group) == new_event_count
+        get_audit_event_count(group) >= new_event_count
       end
     end
   end

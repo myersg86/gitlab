@@ -44,6 +44,12 @@ To add Container Scanning, follow the steps listed in the [Container Scanning do
 
 To further configure any of the other scanners, refer to each scanner's documentation.
 
+### Override the default registry base address
+
+By default, GitLab security scanners use `registry.gitlab.com/gitlab-org/security-products/analyzers` as the
+base address for Docker images. You can override this globally by setting the variable
+`SECURE_ANALYZERS_PREFIX` to another location. Note that this affects all scanners at once.
+
 ## Security scanning tools
 
 GitLab uses the following tools to scan and report known vulnerabilities found in your project.
@@ -54,6 +60,7 @@ GitLab uses the following tools to scan and report known vulnerabilities found i
 | [Dependency List](dependency_list/index.md) **(ULTIMATE)**                   | View your project's dependencies and their known vulnerabilities.      |
 | [Dependency Scanning](dependency_scanning/index.md) **(ULTIMATE)**           | Analyze your dependencies for known vulnerabilities.                   |
 | [Dynamic Application Security Testing (DAST)](dast/index.md) **(ULTIMATE)**  | Analyze running web applications for known vulnerabilities.            |
+| [Secret Detection](secret_detection/index.md) **(ULTIMATE)**                | Analyze Git history for leaked secrets.                                |
 | [Security Dashboard](security_dashboard/index.md) **(ULTIMATE)**             | View vulnerabilities in all your projects and groups.                  |
 | [Static Application Security Testing (SAST)](sast/index.md) **(ULTIMATE)**   | Analyze source code for known vulnerabilities.                         |
 
@@ -63,25 +70,23 @@ The scanning tools and vulnerabilities database are updated regularly.
 
 | Secure scanning tool                                         | Vulnerabilities database updates          |
 |:-------------------------------------------------------------|-------------------------------------------|
-| [Container Scanning](container_scanning/index.md)            | Uses `clair`. The latest `clair-db` version is used for each job by running the [`latest` docker image tag](https://gitlab.com/gitlab-org/gitlab/blob/438a0a56dc0882f22bdd82e700554525f552d91b/lib/gitlab/ci/templates/Security/Container-Scanning.gitlab-ci.yml#L37). The `clair-db` database [is updated daily according to the author](https://github.com/arminc/clair-local-scan#clair-server-or-local). |
+| [Container Scanning](container_scanning/index.md)            | Uses `clair`. The latest `clair-db` version is used for each job by running the [`latest` Docker image tag](https://gitlab.com/gitlab-org/gitlab/blob/438a0a56dc0882f22bdd82e700554525f552d91b/lib/gitlab/ci/templates/Security/Container-Scanning.gitlab-ci.yml#L37). The `clair-db` database [is updated daily according to the author](https://github.com/arminc/clair-local-scan#clair-server-or-local). |
 | [Dependency Scanning](dependency_scanning/index.md)          | Relies on `bundler-audit` (for Rubygems), `retire.js` (for NPM packages), and `gemnasium` (GitLab's own tool for all libraries). Both `bundler-audit` and `retire.js` fetch their vulnerabilities data from GitHub repositories, so vulnerabilities added to `ruby-advisory-db` and `retire.js` are immediately available. The tools themselves are updated once per month if there's a new version. The [Gemnasium DB](https://gitlab.com/gitlab-org/security-products/gemnasium-db) is updated at least once a week. See our [current measurement of time from CVE being issued to our product being updated](https://about.gitlab.com/handbook/engineering/development/performance-indicators/#cve-issue-to-update). |
 | [Dynamic Application Security Testing (DAST)](dast/index.md) | The scanning engine is updated on a periodic basis. See the [version of the underlying tool `zaproxy`](https://gitlab.com/gitlab-org/security-products/dast/blob/master/Dockerfile#L1). The scanning rules are downloaded at scan runtime. |
 | [Static Application Security Testing (SAST)](sast/index.md)  | Relies exclusively on [the tools GitLab wraps](sast/index.md#supported-languages-and-frameworks). The underlying analyzers are updated at least once per month if a relevant update is available. The vulnerabilities database is updated by the upstream tools. |
 
 Currently, you do not have to update GitLab to benefit from the latest vulnerabilities definitions.
-The security tools are released as Docker images. The vendored job definitions to enable them use
-the `x-y-stable` image tags that get overridden each time a new release of the tools is pushed. The
-Docker images are updated to match the previous GitLab releases, so users automatically get the
+The security tools are released as Docker images. The vendored job definitions that enable them use
+major release tags according to [Semantic Versioning](https://semver.org/). Each new release of the
+tools overrides these tags.
+The Docker images are updated to match the previous GitLab releases, so users automatically get the
 latest versions of the scanning tools without having to do anything. There are some known issues
 with this approach, however, and there is a
-[plan to resolve them](https://gitlab.com/gitlab-org/gitlab/issues/9725).
+[plan to resolve them](https://gitlab.com/gitlab-org/gitlab/-/issues/9725).
 
 ## Interacting with the vulnerabilities
 
 > Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 10.8.
-
-CAUTION: **Warning:**
-This feature is currently [Alpha](https://about.gitlab.com/handbook/product/#alpha-beta-ga) and while you can start using it, it may receive important changes in the future.
 
 Each security vulnerability in the merge request report or the
 [Security Dashboard](security_dashboard/index.md) is actionable. Click an entry to view detailed
@@ -95,25 +100,27 @@ information with several options:
 - [Solution](#solutions-for-vulnerabilities-auto-remediation): For some vulnerabilities,
   a solution is provided for how to fix the vulnerability.
 
-![Interacting with security reports](img/interactive_reports.png)
+![Interacting with security reports](img/interacting_with_vulnerability_v13_0.png)
 
 ### Dismissing a vulnerability
 
-You can dismiss vulnerabilities by clicking the **Dismiss vulnerability** button.
-This will dismiss the vulnerability and re-render it to reflect its dismissed state.
-If you wish to undo this dismissal, you can click the **Undo dismiss** button.
+To dismiss a vulnerability, you must set its status to Dismissed. Follow these steps to do so:
+
+1. Select the vulnerability in the Security Dashboard.
+1. Select **Dismissed** from the **Status** selector menu at the top-right.
+
+You can undo this action by selecting a different status from the same menu.
 
 #### Adding a dismissal reason
 
 > Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.0.
 
-When dismissing a vulnerability, it's often helpful to provide a reason for doing so.
-If you press the comment button next to **Dismiss vulnerability** in the modal,
-a text box appears for you to add a comment with your dismissal.
-Once added, you can edit or delete it. This allows you to add and update
-context for a vulnerability as you learn more over time.
+When dismissing a vulnerability, it's often helpful to provide a reason for doing so. Upon setting a
+vulnerability's status to Dismissed, a text box appears for you to add a comment with your
+dismissal. Once added, you can edit or delete it. This allows you to add and update context for a
+vulnerability as you learn more over time.
 
-![Dismissed vulnerability comment](img/dismissed_info_v12_3.png)
+![Dismissed vulnerability comment](img/adding_a_dismissal_reason_v13_0.png)
 
 #### Dismissing multiple vulnerabilities
 
@@ -146,7 +153,7 @@ to the name.
 
 ### Solutions for vulnerabilities (auto-remediation)
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/5656) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.7.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/5656) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.7.
 
 Some vulnerabilities can be fixed by applying the solution that GitLab
 automatically generates. The following scanners are supported:
@@ -171,7 +178,7 @@ generated by GitLab. To apply the fix:
 
 #### Creating a merge request from a vulnerability
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/9224) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9224) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.9.
 
 In certain cases, GitLab allows you to create a merge request that automatically remediates the
 vulnerability. Any vulnerability that has a
@@ -185,7 +192,7 @@ Click this button to create a merge request to apply the solution onto the sourc
 
 ## Security approvals in merge requests
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/9928) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.2.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9928) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.2.
 
 Merge Request Approvals can be configured to require approval from a member of your
 security team when a merge request would introduce one of the following security issues:
@@ -193,9 +200,19 @@ security team when a merge request would introduce one of the following security
 - A security vulnerability
 - A software license compliance violation
 
-This threshold is defined as `high`, `critical`, or `unknown` severity. When any vulnerabilities are
-present within a merge request, an approval is required from the `Vulnerability-Check` approver
-group.
+The security vulnerability threshold is defined as `high`, `critical`, or `unknown` severity. The
+`Vulnerability-Check` approver group must approve merge requests that contain vulnerabilities.
+
+When GitLab can assess vulnerability severity, the rating can be one of the following:
+
+- `unknown`
+- `low`
+- `medium`
+- `high`
+- `critical`
+
+The rating `unknown` indicates that the underlying scanner doesn't contain or provide a severity
+rating.
 
 ### Enabling Security Approvals within a project
 
@@ -209,7 +226,7 @@ Any code changes cause the approvals required to reset.
 
 An approval is required when a security report:
 
-- Contains a new vulnerability of `high`, `critical`, or `unknown` severity.
+- Contains a new vulnerability of `high`, `critical`, or `unknown` severity, regardless of dismissal.
 - Is not generated during pipeline execution.
 
 An approval is optional when a security report:
@@ -219,7 +236,7 @@ An approval is optional when a security report:
 
 ## Enabling License Approvals within a project
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/13067) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.3.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/13067) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.3.
 
 To enable License Approvals, a [project approval rule](../project/merge_requests/merge_request_approvals.md#multiple-approval-rules-premium)
 must be created with the case-sensitive name `License-Check`. This approval group must be set
@@ -259,7 +276,7 @@ to pass a username and password. You can set it under your project's settings
 so that your credentials aren't exposed in `.gitlab-ci.yml`.
 
 If the username is `myuser` and the password is `verysecret` then you would
-[set the following variable](../../ci/variables/README.md#via-the-ui)
+[set the following variable](../../ci/variables/README.md#create-a-custom-variable-in-the-ui)
 under your project's settings:
 
 | Type | Key | Value |
@@ -282,7 +299,7 @@ under your project's settings:
 
 ## Outdated security reports
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/4913) in GitLab 12.7.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/4913) in GitLab 12.7.
 
 When a security report generated for a merge request becomes outdated, the merge request shows a warning
 message in the security widget and prompts you to take an appropriate action.
@@ -313,7 +330,8 @@ You can do it quickly by following the hyperlink given to run a new pipeline.
 
 ### Getting error message `sast job: stage parameter should be [some stage name here]`
 
-When including a security job template like [`SAST`](sast/index.md#configuration),
+When [including](../../ci/yaml/README.md#includetemplate) a `.gitlab-ci.yml` template
+like [`SAST.gitlab-ci.yml`](https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml),
 the following error may occur, depending on your GitLab CI/CD configuration:
 
 ```plaintext
@@ -326,15 +344,115 @@ This error appears when the included job's stage (named `test`) isn't declared i
 To fix this issue, you can either:
 
 - Add a `test` stage in your `.gitlab-ci.yml`.
-- Change the default stage of the included security jobs. For example, with `SAST`:
+- Change the default stage of the included security jobs. For example, with SpotBugs (SAST):
 
   ```yaml
   include:
     template: SAST.gitlab-ci.yml
 
-  sast:
+  spotbugs-sast:
     stage: unit-tests
   ```
 
-[Learn more on overriding the SAST template](sast/index.md#overriding-the-sast-template).
+[Learn more on overriding SAST jobs](sast/index.md#overriding-sast-jobs).
 All the security scanning tools define their stage, so this error can occur with all of them.
+
+### Getting error message `sast job: config key may not be used with 'rules': only/except`
+
+When [including](../../ci/yaml/README.md#includetemplate) a `.gitlab-ci.yml` template
+like [`SAST.gitlab-ci.yml`](https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml),
+the following error may occur, depending on your GitLab CI/CD configuration:
+
+```plaintext
+Found errors in your .gitlab-ci.yml:
+
+    jobs:sast config key may not be used with `rules`: only/except
+```
+
+This error appears when the included job's `rules` configuration has been [overridden](sast/index.md#overriding-sast-jobs)
+with [the deprecated `only` or `except` syntax.](../../ci/yaml/README.md#onlyexcept-basic)
+To fix this issue, you must either:
+
+- [Transition your `only/except` syntax to `rules`](#transitioning-your-onlyexcept-syntax-to-rules).
+- (Temporarily) [Pin your templates to the deprecated versions](#pin-your-templates-to-the-deprecated-versions)
+
+[Learn more on overriding SAST jobs](sast/index.md#overriding-sast-jobs).
+
+#### Transitioning your `only/except` syntax to `rules`
+
+When overriding the template to control job execution, previous instances of
+[`only` or `except`](../../ci/yaml/README.md#onlyexcept-basic) are no longer compatible
+and must be transitioned to [the `rules` syntax](../../ci/yaml/README.md#rules).
+
+If your override is aimed at limiting jobs to only run on `master`, the previous syntax
+would look similar to:
+
+```yaml
+include:
+  - template: SAST.gitlab-ci.yml
+
+# Ensure that the scanning is only executed on master or merge requests
+spotbugs-sast:
+  only:
+    refs:
+      - master
+      - merge_requests
+```
+
+To transition the above configuration to the new `rules` syntax, the override
+would be written as follows:
+
+```yaml
+include:
+  - template: SAST.gitlab-ci.yml
+
+# Ensure that the scanning is only executed on master or merge requests
+spotbugs-sast:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_MERGE_REQUEST_ID
+```
+
+If your override is aimed at limiting jobs to only run on branches, not tags,
+it would look similar to:
+
+```yaml
+include:
+  - template: SAST.gitlab-ci.yml
+
+# Ensure that the scanning is not executed on tags
+spotbugs-sast:
+  except:
+    - tags
+```
+
+To transition to the new `rules` syntax, the override would be rewritten as:
+
+```yaml
+include:
+  - template: SAST.gitlab-ci.yml
+
+# Ensure that the scanning is not executed on tags
+spotbugs-sast:
+  rules:
+    - if: $CI_COMMIT_TAG == null
+```
+
+[Learn more on the usage of `rules`](../../ci/yaml/README.md#rules).
+
+#### Pin your templates to the deprecated versions
+
+To ensure the latest support, we **strongly** recommend that you migrate to [`rules`](../../ci/yaml/README.md#rules).
+
+If you're unable to immediately update your CI configuration, there are several workarounds that
+involve pinning to the previous template versions, for example:
+
+  ```yaml
+  include:
+    remote: 'https://gitlab.com/gitlab-org/gitlab/-/raw/12-10-stable-ee/lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml'
+  ```
+
+Additionally, we provide a dedicated project containing the versioned legacy templates.
+This can be useful for offline setups or anyone wishing to use [Auto DevOps](../../topics/autodevops/index.md).
+
+Instructions are available in the [legacy template project](https://gitlab.com/gitlab-org/auto-devops-v12-10).

@@ -3,6 +3,9 @@ import { mapActions } from 'vuex';
 
 import Translate from '~/vue_shared/translate';
 
+import EpicItem from './components/epic_item.vue';
+import EpicItemContainer from './components/epic_item_container.vue';
+
 import {
   parseBoolean,
   urlParamsToObject,
@@ -38,6 +41,9 @@ export default () => {
     });
   }
 
+  Vue.component('epic-item', EpicItem);
+  Vue.component('epic-item-container', EpicItemContainer);
+
   return new Vue({
     el,
     store: createStore(),
@@ -72,6 +78,7 @@ export default () => {
       return {
         emptyStateIllustrationPath: dataset.emptyStateIllustration,
         hasFiltersApplied: parseBoolean(dataset.hasFiltersApplied),
+        allowSubEpics: parseBoolean(dataset.allowSubEpics),
         defaultInnerHeight: Number(dataset.innerHeight),
         isChildEpics: parseBoolean(dataset.childEpics),
         currentGroupId: parseInt(dataset.groupId, 0),
@@ -103,6 +110,7 @@ export default () => {
         initialEpicsPath: this.initialEpicsPath,
         defaultInnerHeight: this.defaultInnerHeight,
         isChildEpics: this.isChildEpics,
+        allowSubEpics: this.allowSubEpics,
       });
     },
     methods: {

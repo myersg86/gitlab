@@ -255,7 +255,7 @@ html.group-epics-roadmap-html {
   &:hover {
     .epic-details-cell,
     .epic-timeline-cell {
-      background-color: $gray-100;
+      background-color: $gray-50;
     }
   }
 
@@ -546,4 +546,15 @@ html.group-epics-roadmap-html {
       height: 100%;
     }
   }
+}
+
+.milestone-item-type {
+  .gl-icon {
+    padding-right: $gl-spacing-scale-1;
+  }
+}
+
+.milestone-item-date {
+  color: $gray-700;
+  padding-top: $gl-spacing-scale-1;
 }

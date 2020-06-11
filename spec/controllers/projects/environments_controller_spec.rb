@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::EnvironmentsController do
+RSpec.describe Projects::EnvironmentsController do
   include MetricsDashboardHelpers
 
   let_it_be(:project) { create(:project) }
@@ -354,6 +354,19 @@ describe Projects::EnvironmentsController do
       expect(response).to redirect_to(environment_metrics_path(environment))
     end
 
+    context 'with anonymous user and public dashboard visibility' do
+      let(:project) { create(:project, :public) }
+      let(:user) { create(:user) }
+
+      it 'redirects successfully' do
+        project.project_feature.update!(metrics_dashboard_access_level: ProjectFeature::ENABLED)
+
+        get :metrics_redirect, params: { namespace_id: project.namespace, project_id: project }
+
+        expect(response).to redirect_to(environment_metrics_path(environment))
+      end
+    end
+
     context 'when there are no environments' do
       let(:environment) { }
 
@@ -408,6 +421,31 @@ describe Projects::EnvironmentsController do
         expect(json_response['success']).to be(true)
         expect(json_response['metrics']).to eq({})
         expect(json_response['last_update']).to eq(42)
+      end
+    end
+
+    context 'permissions' do
+      before do
+        allow(controller).to receive(:can?).and_return true
+      end
+
+      it 'checks :metrics_dashboard ability' do
+        expect(controller).to receive(:can?).with(anything, :metrics_dashboard, anything)
+
+        get :metrics, params: environment_params
+      end
+    end
+
+    context 'with anonymous user and public dashboard visibility' do
+      let(:project) { create(:project, :public) }
+      let(:user) { create(:user) }
+
+      it 'returns success' do
+        project.project_feature.update!(metrics_dashboard_access_level: ProjectFeature::ENABLED)
+
+        get :metrics, params: environment_params
+
+        expect(response).to have_gitlab_http_status(:ok)
       end
     end
   end
@@ -471,6 +509,38 @@ describe Projects::EnvironmentsController do
       it 'raises an error when end is missing' do
         expect { additional_metrics(start: '1552647300.651094') }
           .to raise_error(ActionController::ParameterMissing)
+      end
+    end
+
+    context 'permissions' do
+      before do
+        allow(controller).to receive(:can?).and_return true
+      end
+
+      it 'checks :metrics_dashboard ability' do
+        expect(controller).to receive(:can?).with(anything, :metrics_dashboard, anything)
+
+        get :metrics, params: environment_params
+      end
+    end
+
+    context 'with anonymous user and public dashboard visibility' do
+      let(:project) { create(:project, :public) }
+      let(:user) { create(:user) }
+
+      it 'does not fail' do
+        allow(environment)
+          .to receive(:additional_metrics)
+          .and_return({
+            success: true,
+            data: {},
+            last_update: 42
+          })
+        project.project_feature.update!(metrics_dashboard_access_level: ProjectFeature::ENABLED)
+
+        additional_metrics(window_params)
+
+        expect(response).to have_gitlab_http_status(:ok)
       end
     end
   end
@@ -648,6 +718,29 @@ describe Projects::EnvironmentsController do
     it_behaves_like 'the default dashboard'
     it_behaves_like 'dashboard can be specified'
     it_behaves_like 'dashboard can be embedded'
+
+    context 'with anonymous user and public dashboard visibility' do
+      let(:project) { create(:project, :public) }
+      let(:user) { create(:user) }
+
+      before do
+        project.project_feature.update!(metrics_dashboard_access_level: ProjectFeature::ENABLED)
+      end
+
+      it_behaves_like 'the default dashboard'
+    end
+
+    context 'permissions' do
+      before do
+        allow(controller).to receive(:can?).and_return true
+      end
+
+      it 'checks :metrics_dashboard ability' do
+        expect(controller).to receive(:can?).with(anything, :metrics_dashboard, anything)
+
+        get :metrics, params: environment_params
+      end
+    end
   end
 
   describe 'GET #search' do

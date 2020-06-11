@@ -97,14 +97,14 @@ describe('SidebarLabelsComponent', () => {
         wrapper.vm.handleLabelClick(labelIsAny);
 
         expect(Array.isArray(wrapper.vm.epicContext.labels)).toBe(true);
-        expect(wrapper.vm.epicContext.labels.length).toBe(0);
+        expect(wrapper.vm.epicContext.labels).toHaveLength(0);
       });
 
       it('adds provided `label` to epicContext.labels', () => {
         wrapper.vm.handleLabelClick(label);
         // epicContext.labels gets initialized with initialLabels, hence
         // newly insert label will be at second position (index `1`)
-        expect(wrapper.vm.epicContext.labels.length).toBe(2);
+        expect(wrapper.vm.epicContext.labels).toHaveLength(2);
         expect(wrapper.vm.epicContext.labels[1].id).toBe(label.id);
         wrapper.vm.handleLabelClick(label);
       });
@@ -113,8 +113,64 @@ describe('SidebarLabelsComponent', () => {
         wrapper.vm.handleLabelClick(label); // Select
         wrapper.vm.handleLabelClick(label); // Un-select
 
-        expect(wrapper.vm.epicContext.labels.length).toBe(1);
+        expect(wrapper.vm.epicContext.labels).toHaveLength(1);
         expect(wrapper.vm.epicContext.labels[0].id).toBe(mockLabels[0].id);
+      });
+    });
+
+    describe('handleUpdateSelectedLabels', () => {
+      const updatingLabel = {
+        id: 1,
+        title: 'Foo Label',
+        description: 'Foobar',
+        color: '#BADA55',
+        text_color: '#FFFFFF',
+      };
+
+      beforeEach(() => {
+        jest.spyOn(wrapper.vm, 'updateEpicLabels').mockImplementation();
+      });
+
+      it('calls action `updateEpicLabels` when there is a label to apply', () => {
+        store.state.labels = mockLabels;
+        const appliedLabel = {
+          ...updatingLabel,
+          set: true,
+        };
+
+        wrapper.vm.handleUpdateSelectedLabels([appliedLabel]);
+
+        expect(wrapper.vm.updateEpicLabels).toHaveBeenCalledWith(
+          expect.arrayContaining([appliedLabel]),
+        );
+      });
+
+      it('calls action `updateEpicLabels` when there is a label to remove', () => {
+        const removedLabel = {
+          ...updatingLabel,
+          set: false,
+        };
+
+        store.state.labels = [...mockLabels, removedLabel];
+
+        wrapper.vm.handleUpdateSelectedLabels([removedLabel]);
+
+        expect(wrapper.vm.updateEpicLabels).toHaveBeenCalledWith(
+          expect.arrayContaining([removedLabel]),
+        );
+      });
+
+      it('does not call action `updateEpicLabels` when there are no labels to apply or remove', () => {
+        const appliedLabel = {
+          ...updatingLabel,
+          set: true,
+        };
+
+        store.state.labels = [...mockLabels, appliedLabel];
+
+        wrapper.vm.handleUpdateSelectedLabels([appliedLabel]);
+
+        expect(wrapper.vm.updateEpicLabels).not.toHaveBeenCalled();
       });
     });
   });

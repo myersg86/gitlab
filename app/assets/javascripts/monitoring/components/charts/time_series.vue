@@ -2,18 +2,19 @@
 import { omit, throttle } from 'lodash';
 import { GlLink, GlDeprecatedButton, GlTooltip, GlResizeObserverDirective } from '@gitlab/ui';
 import { GlAreaChart, GlLineChart, GlChartSeriesLabel } from '@gitlab/ui/dist/charts';
-import dateFormat from 'dateformat';
-import { s__, __ } from '~/locale';
+import { s__ } from '~/locale';
 import { getSvgIconPathContent } from '~/lib/utils/icon_utils';
 import Icon from '~/vue_shared/components/icon.vue';
-import { chartHeight, lineTypes, lineWidths, dateFormats } from '../../constants';
-import { getYAxisOptions, getChartGrid, getTooltipFormatter } from './options';
+import { panelTypes, chartHeight, lineTypes, lineWidths } from '../../constants';
+import { getYAxisOptions, getTimeAxisOptions, getChartGrid, getTooltipFormatter } from './options';
 import { annotationsYAxis, generateAnnotationsSeries } from './annotations';
 import { makeDataSeries } from '~/helpers/monitor_helper';
 import { graphDataValidatorForValues } from '../../utils';
+import { formatDate, timezones } from '../../format_date';
+
+export const timestampToISODate = timestamp => new Date(timestamp).toISOString();
 
 const THROTTLED_DATAZOOM_WAIT = 1000; // milliseconds
-const timestampToISODate = timestamp => new Date(timestamp).toISOString();
 
 const events = {
   datazoom: 'datazoom',
@@ -64,10 +65,10 @@ export default {
       required: false,
       default: '',
     },
-    singleEmbed: {
-      type: Boolean,
+    height: {
+      type: Number,
       required: false,
-      default: false,
+      default: chartHeight,
     },
     thresholds: {
       type: Array,
@@ -89,6 +90,11 @@ export default {
       required: false,
       default: '',
     },
+    timezone: {
+      type: String,
+      required: false,
+      default: timezones.LOCAL,
+    },
   },
   data() {
     return {
@@ -100,7 +106,6 @@ export default {
         sha: '',
       },
       width: 0,
-      height: chartHeight,
       svgs: {},
       primaryColor: null,
       throttledDatazoom: null,
@@ -155,21 +160,14 @@ export default {
       const { yAxis, xAxis } = this.option;
       const option = omit(this.option, ['series', 'yAxis', 'xAxis']);
 
+      const timeXAxis = {
+        ...getTimeAxisOptions({ timezone: this.timezone }),
+        ...xAxis,
+      };
+
       const dataYAxis = {
         ...getYAxisOptions(this.graphData.yAxis),
         ...yAxis,
-      };
-
-      const timeXAxis = {
-        name: __('Time'),
-        type: 'time',
-        axisLabel: {
-          formatter: date => dateFormat(date, dateFormats.timeOfDay),
-        },
-        axisPointer: {
-          snap: true,
-        },
-        ...xAxis,
       };
 
       return {
@@ -211,8 +209,8 @@ export default {
     },
     glChartComponent() {
       const chartTypes = {
-        'area-chart': GlAreaChart,
-        'line-chart': GlLineChart,
+        [panelTypes.AREA_CHART]: GlAreaChart,
+        [panelTypes.LINE_CHART]: GlLineChart,
       };
       return chartTypes[this.graphData.type] || GlAreaChart;
     },
@@ -272,12 +270,13 @@ export default {
      */
     formatAnnotationsTooltipText(params) {
       return {
-        title: dateFormat(params.data?.tooltipData?.title, dateFormats.default),
+        title: formatDate(params.data?.tooltipData?.title, { timezone: this.timezone }),
         content: params.data?.tooltipData?.content,
       };
     },
     formatTooltipText(params) {
-      this.tooltip.title = dateFormat(params.value, dateFormats.default);
+      this.tooltip.title = formatDate(params.value, { timezone: this.timezone });
+
       this.tooltip.content = [];
 
       params.seriesData.forEach(dataPoint => {

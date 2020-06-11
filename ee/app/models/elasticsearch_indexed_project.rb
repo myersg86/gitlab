@@ -14,34 +14,17 @@ class ElasticsearchIndexedProject < ApplicationRecord
     :project_id
   end
 
-  def self.limited(ignore_namespaces: false)
-    return Project.inc_routes.where(id: target_ids) if ignore_namespaces
-
-    Project.inc_routes.from_union(
-      [
-        Project.where(namespace_id: ElasticsearchIndexedNamespace.limited.select(:id)),
-        Project.where(id: target_ids)
-      ]
-    )
-  end
-
   private
 
   def index
     if Gitlab::CurrentSettings.elasticsearch_indexing? && project.searchable?
-      ElasticIndexerWorker.perform_async(:index, project.class.to_s, project.id, project.es_id)
+      ::Elastic::ProcessInitialBookkeepingService.backfill_projects!(project) # rubocop: disable CodeReuse/ServiceClass
     end
   end
 
   def delete_from_index
     if Gitlab::CurrentSettings.elasticsearch_indexing? && project.searchable?
-      ElasticIndexerWorker.perform_async(
-        :delete,
-        project.class.to_s,
-        project.id,
-        project.es_id,
-        es_parent: project.es_parent
-      )
+      ElasticDeleteProjectWorker.perform_async(project.id, project.es_id)
     end
   end
 end

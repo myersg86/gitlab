@@ -1,3 +1,18 @@
+# This template is deprecated and will be removed as part of GitLab 13.2!
+#
+# If you have referenced this template in your CI pipeline, please
+# update your CI configuration by replacing the following occurrence(s):
+#
+# template: Deploy-ECS.gitlab-ci.yml
+#
+# with
+#
+# template: AWS/Deploy-ECS.gitlab-ci.yml
+#
+# --------------------
+#
+# Documentation: https://docs.gitlab.com/ee/ci/cloud_deployment/#deploy-your-application-to-the-aws-elastic-container-service-ecs
+
 stages:
   - build
   - test
@@ -5,32 +20,12 @@ stages:
   - deploy
   - production
 
+before_script:
+  - printf '\nWARNING!\nThis job includes "Deploy-ECS.gitlab-ci.yml". Please rename this to "AWS/Deploy-ECS.gitlab-ci.yml".\n'
+
+variables:
+  AUTO_DEVOPS_PLATFORM_TARGET: ECS
+
 include:
   - template: Jobs/Build.gitlab-ci.yml
-
-.deploy_to_ecs:
-  image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-ecs:latest
-  script:
-    - ecs update-task-definition
-
-review:
-  extends: .deploy_to_ecs
-  stage: review
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-  only:
-    refs:
-      - branches
-      - tags
-  except:
-    refs:
-      - master
-
-production:
-  extends: .deploy_to_ecs
-  stage: production
-  environment:
-    name: production
-  only:
-    refs:
-      - master
+  - template: Jobs/Deploy/ECS.gitlab-ci.yml

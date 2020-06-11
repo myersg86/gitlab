@@ -1,5 +1,8 @@
 ---
 type: reference, howto
+stage: Manage
+group: Access
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 ---
 
 # SAML SSO for GitLab.com groups **(SILVER ONLY)**
@@ -54,14 +57,14 @@ We recommend setting the NameID format to `Persistent` unless using a field (suc
 
 ### SSO enforcement
 
-- [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/5291) in GitLab 11.8.
-- [Improved](https://gitlab.com/gitlab-org/gitlab/issues/9255) in GitLab 11.11 with ongoing enforcement in the GitLab UI.
+- [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/5291) in GitLab 11.8.
+- [Improved](https://gitlab.com/gitlab-org/gitlab/-/issues/9255) in GitLab 11.11 with ongoing enforcement in the GitLab UI.
 
 With this option enabled, users must use your group's GitLab single sign on URL to be added to the group or be added via SCIM. Users cannot be added manually, and may only access project/group resources via the UI by signing in through the SSO URL.
 
-However, users will not be prompted to log via SSO on each visit. GitLab will check whether a user has authenticated through the SSO link, and will only prompt the user to login via SSO if it has been longer than 7 days.
+However, users will not be prompted to log via SSO on each visit. GitLab will check whether a user has authenticated through the SSO link, and will only prompt the user to login via SSO if the session has expired.
 
-We intend to add a similar SSO requirement for [Git and API activity](https://gitlab.com/gitlab-org/gitlab/issues/9152) in the future.
+We intend to add a similar SSO requirement for [Git and API activity](https://gitlab.com/gitlab-org/gitlab/-/issues/9152) in the future.
 
 When SSO enforcement is enabled for a group, users cannot share a project in the group outside the top-level group, even if the project is forked.
 
@@ -82,7 +85,7 @@ When this option is enabled:
 Upon successful authentication, GitLab prompts the user with options, based on the email address received from the configured identity provider:
 
 - To create a unique account with the newly received email address.
-- If the received email address matches one of the user's verified GitLab email addresses, the option to convert the existing account to a group-managed account. ([Introduced in GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/issues/13481).)
+- If the received email address matches one of the user's verified GitLab email addresses, the option to convert the existing account to a group-managed account. ([Introduced in GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/-/issues/13481).)
 
 Since use of the group-managed account requires the use of SSO, users of group-managed accounts will lose access to these accounts when they are no longer able to authenticate with the connected identity provider. In the case of an offboarded employee who has been removed from your identity provider:
 
@@ -100,7 +103,7 @@ Feature.enable(:group_managed_accounts)
 
 ##### Credentials inventory for Group-managed accounts **(ULTIMATE)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/38133) in GitLab 12.8.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/38133) in GitLab 12.8.
 
 Owners who manage user accounts in a group can view the following details of personal access tokens and SSH keys:
 
@@ -140,7 +143,7 @@ Once a lifetime for personal access tokens is set, GitLab will:
 
 ##### Outer forks restriction for Group-managed accounts
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/34648) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/34648) in GitLab 12.9.
 
 Groups with group-managed accounts can disallow forking of projects to destinations outside the group.
 To do so, enable the "Prohibit outer forks" option in **Settings > SAML SSO**.
@@ -148,7 +151,7 @@ When enabled, projects within the group can only be forked to other destinations
 
 ##### Other restrictions for Group-managed accounts
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/12420) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/12420) in GitLab 12.9.
 
 Projects within groups with enabled group-managed accounts are not to be shared with:
 
@@ -189,6 +192,9 @@ Once you've set up your identity provider to work with GitLab, you'll need to co
 
 ![Group SAML Settings for GitLab.com](img/group_saml_settings.png)
 
+NOTE: **Note:**
+Please note that the certificate [fingerprint algorithm](#additional-setup-options) must be in SHA1. When configuring the identity provider, use a secure [signature algorithm](#additional-setup-options).
+
 ## User access and management
 
 Once Group SSO is configured and enabled, users can access the GitLab.com group through the identity provider's dashboard. If [SCIM](scim_setup.md) is configured, please see the [user access and linking setup section on the SCIM page](scim_setup.md#user-access-and-linking-setup).
@@ -228,7 +234,7 @@ NOTE: **Note:** GitLab is unable to provide support for IdPs that are not listed
 |----------|---------------|
 | ADFS (Active Directory Federation Services) | [Create a Relying Party Trust](https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/operations/create-a-relying-party-trust) |
 | Azure | [Configuring single sign-on to applications](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-single-sign-on-non-gallery-applications) |
-| Okta | [Setting up a SAML application in Okta](https://developer.okta.com/docs/guides/saml-application-setup/overview/) |
+| Okta | [Setting up a SAML application in Okta](https://developer.okta.com/docs/guides/build-sso-integration/saml2/overview/) |
 | OneLogin | [Use the OneLogin SAML Test Connector](https://onelogin.service-now.com/support?id=kb_article&sys_id=93f95543db109700d5505eea4b96198f) |
 
 When [configuring your identify provider](#configuring-your-identity-provider), please consider the notes below for specific providers to help avoid common issues and as a guide for terminology used.
@@ -253,6 +259,9 @@ We recommend:
 Set other user attributes and claims according to the [assertions table](#assertions).
 
 ### Okta setup notes
+
+<i class="fa fa-youtube-play youtube" aria-hidden="true"></i>
+For a demo of the Okta SAML setup including SCIM, see [Demo: Okta Group SAML & SCIM setup](https://youtu.be/0ES9HsZq0AQ).
 
 | GitLab Setting | Okta Field |
 |--------------|----------------|
@@ -297,7 +306,7 @@ GitLab [isn't limited to the SAML providers listed above](#my-identity-provider-
 | SAML Request Binding | HTTP Redirect | GitLab (the service provider) redirects users to your Identity Provider with a base64 encoded `SAMLRequest` HTTP parameter. |
 | SAML Response Binding | HTTP POST | Your Identity Provider responds to users with an HTTP form including the `SAMLResponse`, which a user's browser submits back to GitLab. |
 | Sign SAML Response | Yes | We require this to prevent tampering. |
-| X509 Certificate in response | Yes | This is used to sign the response and checked against the provided fingerprint. |
+| X.509 Certificate in response | Yes | This is used to sign the response and checked against the provided fingerprint. |
 | Fingerprint Algorithm | SHA-1  | We need a SHA-1 hash of the certificate used to sign the SAML Response. |
 | Signature Algorithm | SHA-1/SHA-256/SHA-384/SHA-512 | Also known as the Digest Method, this can be specified in the SAML response. It determines how a response is signed. |
 | Encrypt SAML Assertion | No | TLS is used between your Identity Provider, the user's browser, and GitLab. |
@@ -367,8 +376,8 @@ To proceed with configuring Group SAML SSO instead, you'll need to enable the `g
 Group SAML on a self-managed instance is limited when compared to the recommended
 [instance-wide SAML](../../../integration/saml.md). The recommended solution allows you to take advantage of:
 
-- [LDAP compatibility](../../../administration/auth/ldap.md).
-- [LDAP group Sync](../../../administration/auth/how_to_configure_ldap_gitlab_ee/index.md#group-sync).
+- [LDAP compatibility](../../../administration/auth/ldap/index.md).
+- [LDAP Group Sync](../index.md#manage-group-memberships-via-ldap)
 - [Required groups](../../../integration/saml.md#required-groups-starter-only).
 - [Admin groups](../../../integration/saml.md#admin-groups-starter-only).
 - [Auditor groups](../../../integration/saml.md#auditor-groups-starter-only).

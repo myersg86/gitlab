@@ -2,10 +2,13 @@ inherit_gem:
   gitlab-styles:
     - rubocop-default.yml
 
-inherit_from: .rubocop_todo.yml
 require:
   - ./rubocop/rubocop
   - rubocop-rspec
+
+inherit_from:
+  - .rubocop_todo.yml
+  - ./rubocop/rubocop-migrations.yml
 
 inherit_mode:
   merge:
@@ -13,7 +16,7 @@ inherit_mode:
 
 AllCops:
   TargetRubyVersion: 2.6
-  TargetRailsVersion: 5.0
+  TargetRailsVersion: 6.0
   Exclude:
     - 'vendor/**/*'
     - 'node_modules/**/*'
@@ -27,6 +30,13 @@ AllCops:
     - 'plugins/**/*'
     - 'file_hooks/**/*'
   CacheRootDirectory: tmp
+  MaxFilesInCache: 18000
+
+Cop/AvoidKeywordArgumentsInSidekiqWorkers:
+  Enabled: true
+  Include:
+    - 'app/workers/**/*'
+    - 'ee/app/workers/**/*'
 
 Cop/StaticTranslationDefinition:
   Enabled: true
@@ -172,6 +182,9 @@ Rails/ApplicationRecord:
     - ee/db/**/*.rb
     - ee/spec/**/*.rb
 
+Cop/DefaultScope:
+  Enabled: true
+
 Rails/FindBy:
   Enabled: true
   Include:
@@ -179,6 +192,14 @@ Rails/FindBy:
     - 'ee/lib/**/*.rb'
     - 'spec/**/*.rb'
     - 'ee/spec/**/*.rb'
+
+# This is currently exiting with a rubocop exception error and should be
+# resolved hopefully a future update
+# An error occurred while Rails/UniqueValidationWithoutIndex cop was inspecting
+# app/models/abuse_report.rb:15:2.
+# To see the complete backtrace run rubocop -d.
+Rails/UniqueValidationWithoutIndex:
+  Enabled: false
 
 # GitLab ###################################################################
 
@@ -200,11 +221,26 @@ Gitlab/ConstGetInheritFalse:
   Exclude:
     - 'qa/bin/*'
 
+Gitlab/ChangeTimezone:
+  Enabled: true
+  Exclude:
+    - config/initializers/time_zone.rb
+
 Gitlab/HTTParty:
   Enabled: true
   Exclude:
     - 'spec/**/*'
     - 'ee/spec/**/*'
+
+Gitlab/Json:
+  Enabled: true
+  Exclude:
+    - 'db/**/*'
+    - 'qa/**/*'
+    - 'scripts/**/*'
+    - 'lib/rspec_flaky/**/*'
+    - 'lib/quality/**/*'
+    - 'lib/gitlab/danger/**/*'
 
 GitlabSecurity/PublicSend:
   Enabled: true
@@ -220,12 +256,7 @@ GitlabSecurity/PublicSend:
     - 'ee/spec/**/*'
 
 Gitlab/DuplicateSpecLocation:
-  Exclude:
-    - ee/spec/helpers/auth_helper_spec.rb
-    - ee/spec/lib/gitlab/gl_repository_spec.rb
-    - ee/spec/services/merge_requests/refresh_service_spec.rb
-    - ee/spec/helpers/ee/auth_helper_spec.rb
-    - ee/spec/services/ee/merge_requests/refresh_service_spec.rb
+  Enabled: true
 
 Cop/InjectEnterpriseEditionModule:
   Enabled: true
@@ -241,11 +272,14 @@ Style/ReturnNil:
 Performance/RegexpMatch:
   Enabled: false
 
-ActiveRecordAssociationReload:
+Cop/ActiveRecordAssociationReload:
   Enabled: true
   Exclude:
     - 'spec/**/*'
     - 'ee/spec/**/*'
+
+Gitlab/AvoidFeatureGet:
+  Enabled: true
 
 Naming/PredicateName:
   Enabled: true
@@ -325,11 +359,23 @@ RSpec/AnyInstanceOf:
 RSpec/ImplicitSubject:
   Enabled: false
 
+# WIP See https://gitlab.com/gitlab-org/gitlab/-/issues/211580
 RSpec/LeakyConstantDeclaration:
   Enabled: true
   Exclude:
-    - 'spec/**/*.rb'
-    - 'qa/spec/**/*.rb'
+    - 'spec/db/schema_spec.rb'
+    - 'spec/lib/feature_spec.rb'
+    - 'spec/lib/gitlab/config/entry/simplifiable_spec.rb'
+    - 'spec/lib/gitlab/quick_actions/dsl_spec.rb'
+    - 'spec/lib/marginalia_spec.rb'
+    - 'spec/mailers/notify_spec.rb'
+    - 'spec/models/concerns/batch_destroy_dependent_associations_spec.rb'
+    - 'spec/models/concerns/bulk_insert_safe_spec.rb'
+    - 'spec/models/concerns/bulk_insertable_associations_spec.rb'
+    - 'spec/models/concerns/triggerable_hooks_spec.rb'
+    - 'spec/models/repository_spec.rb'
+    - 'spec/services/clusters/applications/check_installation_progress_service_spec.rb'
+    - 'spec/support/shared_examples/quick_actions/issuable/issuable_quick_actions_shared_examples.rb'
 
 RSpec/EmptyLineAfterHook:
   Enabled: false
@@ -387,3 +433,29 @@ Performance/ChainArrayAllocation:
     - 'lib/gitlab/import_export/**/*'
     - 'ee/lib/gitlab/import_export/**/*'
     - 'ee/lib/ee/gitlab/import_export/**/*'
+
+Rails/TimeZone:
+  Enabled: true
+  EnforcedStyle: 'flexible'
+  Include:
+    - 'app/controllers/**/*'
+    - 'app/services/**/*'
+    - 'spec/controllers/**/*'
+    - 'spec/services/**/*'
+    - 'ee/app/controllers/**/*'
+    - 'ee/app/services/**/*'
+    - 'ee/spec/controllers/**/*'
+    - 'ee/spec/services/**/*'
+    - 'app/models/**/*'
+    - 'spec/models/**/*'
+    - 'ee/app/models/**/*'
+    - 'ee/spec/models/**/*'
+
+# WIP: See https://gitlab.com/gitlab-org/gitlab/-/issues/220040
+Rails/SaveBang:
+  Enabled: true
+  Include:
+    - 'spec/**/*.rb'
+    - 'ee/spec/**/*.rb'
+    - 'qa/spec/**/*.rb'
+    - 'qa/qa/specs/**/*.rb'

@@ -2,6 +2,7 @@
 
 class PagesDomain < ApplicationRecord
   include Presentable
+  include FromUnion
 
   VERIFICATION_KEY = 'gitlab-pages-verification-code'
   VERIFICATION_THRESHOLD = 3.days.freeze
@@ -48,25 +49,27 @@ class PagesDomain < ApplicationRecord
   after_update :update_daemon, if: :saved_change_to_pages_config?
   after_destroy :update_daemon
 
-  scope :enabled, -> { where('enabled_until >= ?', Time.now ) }
+  scope :enabled, -> { where('enabled_until >= ?', Time.current ) }
   scope :needs_verification, -> do
     verified_at = arel_table[:verified_at]
     enabled_until = arel_table[:enabled_until]
-    threshold = Time.now + VERIFICATION_THRESHOLD
+    threshold = Time.current + VERIFICATION_THRESHOLD
 
     where(verified_at.eq(nil).or(enabled_until.eq(nil).or(enabled_until.lt(threshold))))
   end
 
   scope :need_auto_ssl_renewal, -> do
-    expiring = where(certificate_valid_not_after: nil).or(
-      where(arel_table[:certificate_valid_not_after].lt(SSL_RENEWAL_THRESHOLD.from_now)))
+    enabled_and_not_failed = where(auto_ssl_enabled: true, auto_ssl_failed: false)
 
-    user_provided_or_expiring = certificate_user_provided.or(expiring)
+    user_provided = enabled_and_not_failed.certificate_user_provided
+    certificate_not_valid = enabled_and_not_failed.where(certificate_valid_not_after: nil)
+    certificate_expiring = enabled_and_not_failed
+                             .where(arel_table[:certificate_valid_not_after].lt(SSL_RENEWAL_THRESHOLD.from_now))
 
-    where(auto_ssl_enabled: true).merge(user_provided_or_expiring)
+    from_union([user_provided, certificate_not_valid, certificate_expiring])
   end
 
-  scope :for_removal, -> { where("remove_at < ?", Time.now) }
+  scope :for_removal, -> { where("remove_at < ?", Time.current) }
 
   scope :with_logging_info, -> { includes(project: [:namespace, :route]) }
 
@@ -138,7 +141,7 @@ class PagesDomain < ApplicationRecord
   def expired?
     return false unless x509
 
-    current = Time.new
+    current = Time.current
     current < x509.not_before || x509.not_after < current
   end
 

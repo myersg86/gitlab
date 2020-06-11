@@ -94,7 +94,7 @@ projects that need updating. Those projects can be:
   [Geo admin panel](../user/admin_area/geo_nodes.md).
 
 When we fail to fetch a repository on the secondary `RETRIES_BEFORE_REDOWNLOAD`
-times, Geo does a so-called _redownload_. It will do a clean clone
+times, Geo does a so-called _re-download_. It will do a clean clone
 into the `@geo-temporary` directory in the root of the storage. When
 it's successful, we replace the main repo with the newly cloned one.
 
@@ -216,21 +216,17 @@ bundle exec rake geo:db:migrate
 Foreign Data Wrapper ([FDW](#fdw)) is used by the [Geo Log Cursor](#geo-log-cursor) and improves
 the performance of many synchronization operations.
 
-FDW is a PostgreSQL extension ([`postgres_fdw`](https://www.postgresql.org/docs/current/postgres-fdw.html)) that is enabled within
+FDW is a PostgreSQL extension ([`postgres_fdw`](https://www.postgresql.org/docs/11/postgres-fdw.html)) that is enabled within
 the Geo Tracking Database (on a **secondary** node), which allows it
-to connect to the readonly database replica and perform queries and filter
+to connect to the read-only database replica and perform queries and filter
 data from both instances.
-
-While FDW is available in older versions of PostgreSQL, we needed to
-raise the minimum required version to 9.6 as this includes many
-performance improvements to the FDW implementation.
 
 This persistent connection is configured as an FDW server
 named `gitlab_secondary`. This configuration exists within the database's user
 context only. To access the `gitlab_secondary`, GitLab needs to use the
 same database user that had previously been configured.
 
-The Geo Tracking Database accesses the readonly database replica via FDW as a regular user,
+The Geo Tracking Database accesses the read-only database replica via FDW as a regular user,
 limited by its own restrictions. The credentials are configured as a
 `USER MAPPING` associated with the `SERVER` mapped previously
 (`gitlab_secondary`).

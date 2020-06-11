@@ -1,4 +1,7 @@
 ---
+stage: Verify
+group: Runner
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
@@ -114,6 +117,16 @@ For exact parameters accepted by
 for [`git clean`](https://git-scm.com/docs/git-clean). The available parameters
 are dependent on Git version.
 
+## Git fetch extra flags
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4142) in GitLab Runner 13.1.
+
+[`GIT_FETCH_EXTRA_FLAGS`](../yaml/README.md#git-fetch-extra-flags) allows you
+to modify `git fetch` behavior by passing extra flags.
+
+See the [`GIT_FETCH_EXTRA_FLAGS` documentation](../yaml/README.md#git-fetch-extra-flags)
+for more information.
+
 ## Fork-based workflow
 
 > Introduced in GitLab Runner 11.10.
@@ -130,7 +143,7 @@ other using `docker` executor.
 
 ### `shell` executor example
 
-Let's assume that you have the following [config.toml](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
+Let's assume that you have the following [`config.toml`](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
 
 ```toml
 concurrent = 4
@@ -155,7 +168,7 @@ This `config.toml`:
 
 ### `docker` executor example
 
-Let's assume that you have the following [config.toml](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
+Let's assume that you have the following [`config.toml`](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
 
 ```toml
 concurrent = 4
@@ -216,7 +229,7 @@ but this brings administrative overhead as the `.gitlab-ci.yml` needs to be upda
 In such cases, it might be desirable to keep the `.gitlab-ci.yml` clone path agnostic, but make it
 a configuration of Runner.
 
-We can extend our [config.toml](https://docs.gitlab.com/runner/configuration/advanced-configuration.html)
+We can extend our [`config.toml`](https://docs.gitlab.com/runner/configuration/advanced-configuration.html)
 with the following specification that will be used by Runner if `.gitlab-ci.yml` will not override it:
 
 ```toml

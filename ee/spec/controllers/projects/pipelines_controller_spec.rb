@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::PipelinesController do
+RSpec.describe Projects::PipelinesController do
   let_it_be(:user) { create(:user) }
   let_it_be(:project) { create(:project, :repository) }
   let_it_be(:pipeline) { create(:ci_pipeline, project: project, ref: 'master', sha: project.commit.id) }
@@ -74,7 +74,7 @@ describe Projects::PipelinesController do
     let!(:mit_license) { create(:software_license, :mit) }
     let!(:software_license_policy) { create(:software_license_policy, software_license: mit_license, project: project) }
 
-    let(:payload) { JSON.parse(licenses_with_json.body) }
+    let(:payload) { Gitlab::Json.parse(licenses_with_json.body) }
 
     context 'with a license scanning artifact' do
       before do

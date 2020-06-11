@@ -99,7 +99,7 @@ describe 'lograge', type: :request do
   end
 
   context 'with a log subscriber' do
-    let(:subscriber) { Lograge::RequestLogSubscriber.new }
+    let(:subscriber) { Lograge::LogSubscribers::ActionController.new }
 
     let(:event) do
       ActiveSupport::Notifications::Event.new(
@@ -123,7 +123,7 @@ describe 'lograge', type: :request do
     let(:logger) do
       Logger.new(log_output).tap { |logger| logger.formatter = ->(_, _, _, msg) { msg } }
     end
-    let(:log_data) { JSON.parse(log_output.string) }
+    let(:log_data) { Gitlab::Json.parse(log_output.string) }
 
     before do
       Lograge.logger = logger

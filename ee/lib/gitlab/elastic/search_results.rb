@@ -5,6 +5,8 @@ module Gitlab
     class SearchResults
       include Gitlab::Utils::StrongMemoize
 
+      DEFAULT_PER_PAGE = Gitlab::SearchResults::DEFAULT_PER_PAGE
+
       attr_reader :current_user, :query, :public_and_internal_projects
 
       # Limit search results by passed project ids
@@ -22,20 +24,20 @@ module Gitlab
         @public_and_internal_projects = public_and_internal_projects
       end
 
-      def objects(scope, page = 1)
+      def objects(scope, page: 1, per_page: DEFAULT_PER_PAGE, preload_method: nil)
         page = (page || 1).to_i
 
         case scope
         when 'projects'
-          eager_load(projects, page, eager: [:route, :namespace])
+          eager_load(projects, page, per_page, preload_method, [:route, :namespace])
         when 'issues'
-          eager_load(issues, page, eager: { project: [:route, :namespace] })
+          eager_load(issues, page, per_page, preload_method, project: [:route, :namespace], labels: [], timelogs: [], assignees: [])
         when 'merge_requests'
-          eager_load(merge_requests, page, eager: { target_project: [:route, :namespace] })
+          eager_load(merge_requests, page, per_page, preload_method, target_project: [:route, :namespace])
         when 'milestones'
-          eager_load(milestones, page, eager: { project: [:route, :namespace] })
+          eager_load(milestones, page, per_page, preload_method, project: [:route, :namespace])
         when 'notes'
-          eager_load(notes, page, eager: { project: [:route, :namespace] })
+          eager_load(notes, page, per_page, preload_method, project: [:route, :namespace])
         when 'blobs'
           blobs(page: page, per_page: per_page)
         when 'wiki_blobs'
@@ -164,10 +166,12 @@ module Gitlab
       private
 
       # Apply some eager loading to the `records` of an ES result object without
-      # losing pagination information
-      def eager_load(es_result, page, eager:)
+      # losing pagination information. Also, take advantage of preload method if
+      # provided by the caller.
+      def eager_load(es_result, page, per_page, preload_method, eager)
         paginated_base = es_result.page(page).per(per_page)
         relation = paginated_base.records.includes(eager) # rubocop:disable CodeReuse/ActiveRecord
+        relation = relation.public_send(preload_method) if preload_method # rubocop:disable GitlabSecurity/PublicSend
 
         Kaminari.paginate_array(
           relation,
@@ -226,7 +230,7 @@ module Gitlab
         end
       end
 
-      def blobs(page: 1, per_page: 20)
+      def blobs(page: 1, per_page: DEFAULT_PER_PAGE)
         return Kaminari.paginate_array([]) if query.blank?
 
         strong_memoize(:blobs) do
@@ -243,7 +247,7 @@ module Gitlab
         end
       end
 
-      def wiki_blobs(page: 1, per_page: 20)
+      def wiki_blobs(page: 1, per_page: DEFAULT_PER_PAGE)
         return Kaminari.paginate_array([]) if query.blank?
 
         strong_memoize(:wiki_blobs) do
@@ -266,7 +270,7 @@ module Gitlab
       # hitting ES twice for any page that's not page 1, and that's something we want to avoid.
       #
       # It is safe to memoize the page we get here because this method is _always_ called before `#commits_count`
-      def commits(page: 1, per_page: 20)
+      def commits(page: 1, per_page: DEFAULT_PER_PAGE)
         return Kaminari.paginate_array([]) if query.blank?
 
         strong_memoize(:commits) do
@@ -369,10 +373,6 @@ module Gitlab
 
       def default_scope
         'projects'
-      end
-
-      def per_page
-        20
       end
     end
   end

@@ -66,6 +66,7 @@ We follow a simple formula roughly based on hungarian notation.
   - `_placeholder`: a temporary element that appears while content is loading. For example, the elements that are displayed instead of discussions while the discussions are being fetched.
   - `_radio`
   - `_tab`
+  - `_menu_item`
 
 *Note: If none of the listed types are suitable, please open a merge request to add an appropriate type to the list.*
 
@@ -122,7 +123,7 @@ Capybara DSL, potentially leading to confusion and bugs.
 **Good**
 
 ```ruby
-Page::Project::Settings::Members.perform do |members|
+Page::Project::Members.perform do |members|
   members.do_something
 end
 ```
@@ -148,7 +149,7 @@ end
 **Bad**
 
 ```ruby
-Page::Project::Settings::Members.perform do |project_settings_members_page|
+Page::Project::Members.perform do |project_settings_members_page|
   project_settings_members_page.do_something
 end
 ```

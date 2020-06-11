@@ -12,7 +12,7 @@ class Service < ApplicationRecord
     alerts asana assembla bamboo bugzilla buildkite campfire custom_issue_tracker discord
     drone_ci emails_on_push external_wiki flowdock hangouts_chat hipchat irker jira
     mattermost mattermost_slash_commands microsoft_teams packagist pipelines_email
-    pivotaltracker prometheus pushover redmine slack slack_slash_commands teamcity unify_circuit youtrack
+    pivotaltracker prometheus pushover redmine slack slack_slash_commands teamcity unify_circuit webex_teams youtrack
   ].freeze
 
   DEV_SERVICE_NAMES = %w[
@@ -22,6 +22,7 @@ class Service < ApplicationRecord
   serialize :properties, JSON # rubocop:disable Cop/ActiveRecordSerialize
 
   default_value_for :active, false
+  default_value_for :alert_events, true
   default_value_for :push_events, true
   default_value_for :issues_events, true
   default_value_for :confidential_issues_events, true
@@ -72,6 +73,7 @@ class Service < ApplicationRecord
   scope :pipeline_hooks, -> { where(pipeline_events: true, active: true) }
   scope :wiki_page_hooks, -> { where(wiki_page_events: true, active: true) }
   scope :deployment_hooks, -> { where(deployment_events: true, active: true) }
+  scope :alert_hooks, -> { where(alert_events: true, active: true) }
   scope :external_issue_trackers, -> { issue_trackers.active.without_defaults }
   scope :deployment, -> { where(category: 'deployment') }
 
@@ -79,6 +81,10 @@ class Service < ApplicationRecord
 
   def activated?
     active
+  end
+
+  def operating?
+    active && persisted?
   end
 
   def show_active_box?
@@ -130,8 +136,12 @@ class Service < ApplicationRecord
     %w(active)
   end
 
-  def test_data(project, user)
-    Gitlab::DataBuilder::Push.build_sample(project, user)
+  def to_service_hash
+    as_json(methods: :type, except: %w[id template instance project_id])
+  end
+
+  def to_data_fields_hash
+    data_fields.as_json(only: data_fields.class.column_names).except('id', 'service_id')
   end
 
   def event_channel_names
@@ -160,7 +170,7 @@ class Service < ApplicationRecord
   end
 
   def configurable_events
-    events = self.class.supported_events
+    events = supported_events
 
     # No need to disable individual triggers when there is only one
     if events.count == 1
@@ -331,26 +341,20 @@ class Service < ApplicationRecord
     services_names.map { |service_name| "#{service_name}_service".camelize }
   end
 
-  def self.build_from_template(project_id, template)
-    service = template.dup
+  def self.build_from_integration(project_id, integration)
+    service = integration.dup
 
-    if template.supports_data_fields?
-      data_fields = template.data_fields.dup
+    if integration.supports_data_fields?
+      data_fields = integration.data_fields.dup
       data_fields.service = service
     end
 
     service.template = false
+    service.instance = false
+    service.inherit_from_id = integration.id if integration.instance?
     service.project_id = project_id
-    service.active = false if service.active? && service.invalid?
+    service.active = false if service.invalid?
     service
-  end
-
-  def deprecated?
-    false
-  end
-
-  def deprecation_message
-    nil
   end
 
   # override if needed
@@ -398,6 +402,8 @@ class Service < ApplicationRecord
       "Event will be triggered when a commit is created/updated"
     when "deployment"
       "Event will be triggered when a deployment finishes"
+    when "alert"
+      "Event will be triggered when a new, unique alert is recorded"
     end
   end
 

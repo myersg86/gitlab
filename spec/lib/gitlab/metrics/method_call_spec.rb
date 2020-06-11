@@ -26,7 +26,7 @@ describe Gitlab::Metrics::MethodCall do
 
       context 'prometheus instrumentation is enabled' do
         before do
-          Feature.get(:prometheus_metrics_method_instrumentation).enable
+          stub_feature_flags(prometheus_metrics_method_instrumentation: true)
         end
 
         around do |example|
@@ -50,7 +50,7 @@ describe Gitlab::Metrics::MethodCall do
 
       context 'prometheus instrumentation is disabled' do
         before do
-          Feature.get(:prometheus_metrics_method_instrumentation).disable
+          stub_feature_flags(prometheus_metrics_method_instrumentation: false)
         end
 
         it 'observes using NullMetric' do
@@ -73,25 +73,6 @@ describe Gitlab::Metrics::MethodCall do
 
         method_call.measure { 'foo' }
       end
-    end
-  end
-
-  describe '#to_metric' do
-    it 'returns a Metric instance' do
-      expect(method_call).to receive(:real_time).and_return(4.0001).twice
-      expect(method_call).to receive(:cpu_time).and_return(3.0001)
-
-      method_call.measure { 'foo' }
-      metric = method_call.to_metric
-
-      expect(metric).to be_an_instance_of(Gitlab::Metrics::Metric)
-      expect(metric.series).to eq('rails_method_calls')
-
-      expect(metric.values[:duration]).to eq(4000)
-      expect(metric.values[:cpu_duration]).to eq(3000)
-      expect(metric.values[:call_count]).to be_an(Integer)
-
-      expect(metric.tags).to eq({ method: 'Foo#bar' })
     end
   end
 

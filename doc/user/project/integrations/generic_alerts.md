@@ -1,7 +1,13 @@
+---
+stage: Monitor
+group: Health
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Generic alerts integration
 
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/13203) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.4.
-> - [Moved](https://gitlab.com/gitlab-org/gitlab/issues/42640) to [GitLab Core](https://about.gitlab.com/pricing/) in 12.8.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/13203) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.4.
+> - [Moved](https://gitlab.com/gitlab-org/gitlab/-/issues/42640) to [GitLab Core](https://about.gitlab.com/pricing/) in 12.8.
 
 GitLab can accept alerts from any source via a generic webhook receiver.
 When you set up the generic alerts integration, a unique endpoint will
@@ -11,6 +17,9 @@ create an issue with the payload in the body of the issue. You can always
 
 The entire payload will be posted in the issue discussion as a comment
 authored by the GitLab Alert Bot.
+
+NOTE: **Note**
+In GitLab versions 13.1 and greater, you can configure [External Prometheus instances](prometheus.md#external-prometheus-instances) to use this endpoint.
 
 ## Setting up generic alerts
 
@@ -22,16 +31,21 @@ To set up the generic alerts integration:
 
 ## Customizing the payload
 
-You can customize the payload by sending the following parameters. All fields are optional:
+You can customize the payload by sending the following parameters. All fields other than `title` are optional:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `title` | String | The title of the incident. If none is provided, then `New: Incident #N` will be used, where `#N` is the number of incident |
+| `title` | String | The title of the incident. Required. |
 | `description` | String | A high-level summary of the problem. |
 | `start_time` | DateTime | The time of the incident. If none is provided, a timestamp of the issue will be used. |
 | `service` | String | The affected service. |
 | `monitoring_tool` | String |  The name of the associated monitoring tool. |
 | `hosts` | String or Array | One or more hosts, as to where this incident occurred. |
+| `severity` | String | The severity of the alert. Must be one of `critical`, `high`, `medium`, `low`, `info`, `unknown`. Default is `critical`. |
+| `fingerprint` | String or Array | The unique identifier of the alert. This can be used to group occurrences of the same alert. |
+
+TIP: **Payload size:**
+Ensure your requests are smaller than the [payload application limits](../../../administration/instance_limits.md#generic-alert-json-payloads).
 
 Example request:
 
@@ -55,5 +69,7 @@ Example payload:
   "service": "service affected",
   "monitoring_tool": "value",
   "hosts": "value",
+  "severity": "high",
+  "fingerprint": "d19381d4e8ebca87b55cda6e8eee7385"
 }
 ```

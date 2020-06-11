@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::AutocompleteService do
+RSpec.describe Groups::AutocompleteService do
   let!(:group) { create(:group, :nested, :private, avatar: fixture_file_upload('spec/fixtures/dk.png')) }
   let!(:sub_group) { create(:group, :private, parent: group) }
   let(:user) { create(:user) }
@@ -83,15 +83,19 @@ describe Groups::AutocompleteService do
   end
 
   describe '#epics' do
-    it 'returns nothing if not allowed' do
-      allow(Ability).to receive(:allowed?).with(user, :read_epic, group).and_return(false)
+    before do
+      stub_licensed_features(epics: true)
+    end
 
-      expect(subject.epics).to eq([])
+    it 'returns nothing if not allowed' do
+      guest = create(:user)
+
+      epics = described_class.new(group, guest).epics
+
+      expect(epics).to be_empty
     end
 
     it 'returns epics from group' do
-      allow(Ability).to receive(:allowed?).with(user, :read_epic, group).and_return(true)
-
       expect(subject.epics.map(&:iid)).to contain_exactly(epic.iid)
     end
   end

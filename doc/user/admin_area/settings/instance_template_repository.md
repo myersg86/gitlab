@@ -4,7 +4,7 @@ type: reference
 
 # Instance template repository **(PREMIUM ONLY)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/5986) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.3.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/5986) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.3.
 
 ## Overview
 
@@ -40,7 +40,7 @@ are supported:
 Each template must go in its respective subdirectory, have the correct
 extension and not be empty. So, the hierarchy should look like this:
 
-```text
+```plaintext
 |-- README.md
 |-- Dockerfile
     |-- custom_dockerfile.dockerfile

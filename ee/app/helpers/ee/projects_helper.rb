@@ -25,27 +25,11 @@ module EE
       ]
     end
 
-    # rubocop: disable Metrics/CyclomaticComplexity
     override :get_project_nav_tabs
     def get_project_nav_tabs(project, current_user)
       nav_tabs = super
 
-      if can?(current_user, :read_project_security_dashboard, @project)
-        nav_tabs << :security
-        nav_tabs << :security_configuration
-      end
-
-      if can?(current_user, :read_dependencies, @project)
-        nav_tabs << :dependencies
-      end
-
-      if can?(current_user, :read_licenses, project)
-        nav_tabs << :licenses
-      end
-
-      if can?(current_user, :read_threat_monitoring, project)
-        nav_tabs << :threat_monitoring
-      end
+      nav_tabs += get_project_security_nav_tabs(project, current_user)
 
       if ::Gitlab.config.packages.enabled &&
           project.feature_available?(:packages) &&
@@ -71,7 +55,6 @@ module EE
 
       nav_tabs
     end
-    # rubocop: enable Metrics/CyclomaticComplexity
 
     override :tab_ability_map
     def tab_ability_map
@@ -137,10 +120,10 @@ module EE
       ::Gitlab.config.alternative_gitlab_kerberos_url?
     end
 
-    def can_change_push_rule?(push_rule, rule)
+    def can_change_push_rule?(push_rule, rule, context)
       return true if push_rule.global?
 
-      can?(current_user, :"change_#{rule}", @project)
+      can?(current_user, :"change_#{rule}", context)
     end
 
     def ci_cd_projects_available?
@@ -148,7 +131,7 @@ module EE
     end
 
     def first_class_vulnerabilities_available?(project)
-      ::Feature.enabled?(:first_class_vulnerabilities, project)
+      ::Feature.enabled?(:first_class_vulnerabilities, project, default_enabled: true)
     end
 
     def merge_pipelines_available?
@@ -167,7 +150,7 @@ module EE
       %w[
         projects/security/configuration#show
         projects/security/dashboard#index
-        projects/security/vulnerabilities#index
+        projects/on_demand_scans#index
         projects/dependencies#index
         projects/licenses#index
         projects/threat_monitoring#show
@@ -178,25 +161,6 @@ module EE
       show_lfs = project.lfs_enabled? ? 'including files in LFS' : ''
 
       "The total size of this project's repository #{show_lfs} will be limited to this size. 0 for unlimited. Leave empty to inherit the group/global value."
-    end
-
-    def subscription_message
-      return unless ::Gitlab.com?
-
-      ::Gitlab::ExpiringSubscriptionMessage.new(
-        subscribable: decorated_subscription,
-        signed_in: signed_in?,
-        is_admin: can?(current_user, :owner_access, @project),
-        namespace: @project.namespace
-      ).message
-    end
-
-    def decorated_subscription
-      subscription = @project.gitlab_subscription
-
-      return unless subscription
-
-      SubscriptionPresenter.new(subscription)
     end
 
     override :membership_locked?
@@ -240,7 +204,10 @@ module EE
           ref_path: project_commits_url(project, pipeline.ref),
           pipeline_path: pipeline_url(pipeline),
           pipeline_created: pipeline.created_at.to_s(:iso8601),
-          has_pipeline_data: "true"
+          has_pipeline_data: "true",
+          user_callouts_path: user_callouts_path,
+          user_callout_id: UserCalloutsHelper::STANDALONE_VULNERABILITIES_INTRODUCTION_BANNER,
+          show_introduction_banner: show_standalone_vulnerabilities_introduction_banner?.to_s
         }.merge(project_vulnerabilities_config(project))
       end
     end
@@ -248,7 +215,7 @@ module EE
     def project_vulnerabilities_config(project)
       return {} unless first_class_vulnerabilities_available?(project)
 
-      { vulnerabilities_export_endpoint: api_v4_projects_vulnerability_exports_path(id: project.id) }
+      { vulnerabilities_export_endpoint: api_v4_security_projects_vulnerability_exports_path(id: project.id) }
     end
 
     def can_create_feedback?(project, feedback_type)
@@ -298,6 +265,39 @@ module EE
     override :can_import_members?
     def can_import_members?
       super && !membership_locked?
+    end
+
+    def show_compliance_framework_badge?(project)
+      project&.compliance_framework_setting&.present?
+    end
+
+    private
+
+    def get_project_security_nav_tabs(project, current_user)
+      nav_tabs = []
+
+      if can?(current_user, :read_project_security_dashboard, project)
+        nav_tabs << :security
+        nav_tabs << :security_configuration
+      end
+
+      if can?(current_user, :read_on_demand_scans, @project)
+        nav_tabs << :on_demand_scans
+      end
+
+      if can?(current_user, :read_dependencies, project)
+        nav_tabs << :dependencies
+      end
+
+      if can?(current_user, :read_licenses, project)
+        nav_tabs << :licenses
+      end
+
+      if can?(current_user, :read_threat_monitoring, project)
+        nav_tabs << :threat_monitoring
+      end
+
+      nav_tabs
     end
   end
 end

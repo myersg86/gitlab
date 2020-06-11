@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe API::FeatureFlags do
+RSpec.describe API::FeatureFlags do
   include FeatureFlagHelpers
 
   let(:project) { create(:project, :repository) }
@@ -238,7 +238,7 @@ describe API::FeatureFlags do
   end
 
   describe 'POST /projects/:id/feature_flags' do
-    def default_scope
+    def scope_default
       {
         environment_scope: '*',
         active: false,
@@ -253,7 +253,7 @@ describe API::FeatureFlags do
     let(:params) do
       {
         name: 'awesome-feature',
-        scopes: [default_scope]
+        scopes: [scope_default]
       }
     end
 
@@ -328,7 +328,7 @@ describe API::FeatureFlags do
           name: 'awesome-feature',
           description: 'this is awesome',
           scopes: [
-            default_scope,
+            scope_default,
             scope_with_user_with_id
           ]
         }
@@ -354,7 +354,7 @@ describe API::FeatureFlags do
         feature_flag.scopes.ordered.each_with_index do |scope, index|
           expect(scope.environment_scope).to eq(params[:scopes][index][:environment_scope])
           expect(scope.active).to eq(params[:scopes][index][:active])
-          expect(scope.strategies).to eq(JSON.parse(params[:scopes][index][:strategies]))
+          expect(scope.strategies).to eq(Gitlab::Json.parse(params[:scopes][index][:strategies]))
         end
       end
     end
@@ -480,7 +480,7 @@ describe API::FeatureFlags do
         expect(response).to have_gitlab_http_status(:ok)
         expect(response).to match_response_schema('public_api/v4/feature_flag', dir: 'ee')
         expect(feature_flag.name).to eq(params[:name])
-        expect(scope.strategies).to eq([JSON.parse(params[:strategy])])
+        expect(scope.strategies).to eq([Gitlab::Json.parse(params[:strategy])])
         expect(feature_flag.version).to eq('legacy_flag')
       end
 
@@ -507,7 +507,7 @@ describe API::FeatureFlags do
 
           scope = feature_flag.scopes.find_by_environment_scope(params[:environment_scope])
           expect(response).to have_gitlab_http_status(:ok)
-          expect(scope.strategies).to eq([JSON.parse(params[:strategy])])
+          expect(scope.strategies).to eq([Gitlab::Json.parse(params[:strategy])])
         end
 
         it_behaves_like 'check user permission'
@@ -525,11 +525,11 @@ describe API::FeatureFlags do
 
           scope = feature_flag.scopes.find_by_environment_scope(params[:environment_scope])
           expect(response).to have_gitlab_http_status(:ok)
-          expect(scope.strategies).to eq([defined_strategy.deep_stringify_keys, JSON.parse(params[:strategy])])
+          expect(scope.strategies).to eq([defined_strategy.deep_stringify_keys, Gitlab::Json.parse(params[:strategy])])
         end
 
         context 'when the specified strategy exists already' do
-          let(:defined_strategy) { JSON.parse(params[:strategy]) }
+          let(:defined_strategy) { Gitlab::Json.parse(params[:strategy]) }
 
           it 'does not add a duplicate strategy' do
             subject

@@ -189,9 +189,9 @@ Parameters:
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `new_issue_url` | string | true |  New Issue url |
-| `issues_url` | string | true | Issue url |
-| `project_url` | string | true | Project url |
+| `new_issue_url` | string | true |  New Issue URL |
+| `issues_url` | string | true | Issue URL |
+| `project_url` | string | true | Project URL |
 | `description` | string | false | Description |
 | `title` | string | false | Title |
 | `push_events` | boolean | false | Enable notifications for push events |
@@ -331,6 +331,51 @@ Get Unify Circuit service settings for a project.
 GET /projects/:id/services/unify-circuit
 ```
 
+## Webex Teams
+
+Webex Teams collaboration tool.
+
+### Create/Edit Webex Teams service
+
+Set Webex Teams service for a project.
+
+```plaintext
+PUT /projects/:id/services/webex-teams
+```
+
+Parameters:
+
+| Parameter | Type | Required | Description |
+| --------- | ---- | -------- | ----------- |
+| `webhook` | string | true | The Webex Teams webhook. For example, `https://api.ciscospark.com/v1/webhooks/incoming/...`. |
+| `notify_only_broken_pipelines` | boolean | false | Send notifications for broken pipelines |
+| `branches_to_be_notified` | string | all | Branches to send notifications for. Valid options are "all", "default", "protected", and "default_and_protected" |
+| `push_events` | boolean | false | Enable notifications for push events |
+| `issues_events` | boolean | false | Enable notifications for issue events |
+| `confidential_issues_events` | boolean | false | Enable notifications for confidential issue events |
+| `merge_requests_events` | boolean | false | Enable notifications for merge request events |
+| `tag_push_events` | boolean | false | Enable notifications for tag push events |
+| `note_events` | boolean | false | Enable notifications for note events |
+| `confidential_note_events` | boolean | false | Enable notifications for confidential note events |
+| `pipeline_events` | boolean | false | Enable notifications for pipeline events |
+| `wiki_page_events` | boolean | false | Enable notifications for wiki page events |
+
+### Delete Webex Teams service
+
+Delete Webex Teams service for a project.
+
+```plaintext
+DELETE /projects/:id/services/webex-teams
+```
+
+### Get Webex Teams service settings
+
+Get Webex Teams service settings for a project.
+
+```plaintext
+GET /projects/:id/services/webex-teams
+```
+
 ## Custom Issue Tracker
 
 Custom issue tracker
@@ -347,11 +392,11 @@ Parameters:
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `new_issue_url` | string | true |  New Issue url
-| `issues_url` | string | true | Issue url
-| `project_url` | string | true | Project url
-| `description` | string | false | Description
-| `title` | string | false | Title
+| `new_issue_url` | string | true |  New Issue URL |
+| `issues_url` | string | true | Issue URL |
+| `project_url` | string | true | Project URL |
+| `description` | string | false | Description |
+| `title` | string | false | Title |
 | `push_events` | boolean | false | Enable notifications for push events |
 
 ### Delete Custom Issue Tracker service
@@ -567,7 +612,7 @@ Set Hangouts Chat service for a project.
 PUT /projects/:id/services/hangouts-chat
 ```
 
->**Note:** Specific event parameters (for example, `push_events` flag) were [introduced in v10.4][11435]
+>**Note:** Specific event parameters (for example, `push_events` flag) were [introduced in v10.4](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/11435)
 
 Parameters:
 
@@ -669,7 +714,7 @@ Parameters:
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
 | `recipients` | string | true | Recipients/channels separated by whitespaces |
-| `default_irc_uri` | string | false | irc://irc.network.net:6697/ |
+| `default_irc_uri` | string | false | `irc://irc.network.net:6697/` |
 | `server_host` | string | false | localhost |
 | `server_port` | integer | false | 6659 |
 | `colorize_messages` | boolean | false | Colorize messages |
@@ -962,6 +1007,8 @@ Parameters:
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
 | `api_url` | string | true | Prometheus API Base URL. For example, `http://prometheus.example.com/`. |
+| `google_iap_audience_client_id` | string | false | Client ID of the IAP secured resource (looks like IAP_CLIENT_ID.apps.googleusercontent.com) |
+| `google_iap_service_account_json` | string | false | credentials.json file for your service account, like { "type": "service_account", "project_id": ... } |
 
 ### Delete Prometheus service
 
@@ -1034,9 +1081,9 @@ Parameters:
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `new_issue_url` | string | true | New Issue url |
-| `project_url` | string | true | Project url |
-| `issues_url` | string | true | Issue url |
+| `new_issue_url` | string | true | New Issue URL |
+| `project_url` | string | true | Project URL |
+| `issues_url` | string | true | Issue URL |
 | `description` | string | false | Description |
 | `push_events` | boolean | false | Enable notifications for push events |
 
@@ -1068,7 +1115,7 @@ Set Slack service for a project.
 PUT /projects/:id/services/slack
 ```
 
->**Note:** Specific event parameters (for example, `push_events` flag and `push_channel`) were [introduced in v10.4][11435]
+>**Note:** Specific event parameters (for example, `push_events` flag and `push_channel`) were [introduced in v10.4](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/11435)
 
 Parameters:
 
@@ -1177,7 +1224,7 @@ Set Mattermost service for a project.
 PUT /projects/:id/services/mattermost
 ```
 
->**Note:** Specific event parameters (for example, `push_events` flag and `push_channel`) were [introduced in v10.4][11435]
+>**Note:** Specific event parameters (for example, `push_events` flag and `push_channel`) were [introduced in v10.4](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/11435)
 
 Parameters:
 
@@ -1232,7 +1279,7 @@ A continuous integration and build server
 
 Set JetBrains TeamCity CI service for a project.
 
-> The build configuration in Teamcity must use the build format number %build.vcs.number% you will also want to configure monitoring of all branches so merge requests build, that setting is in the vsc root advanced settings.
+> The build configuration in TeamCity must use the build format number `%build.vcs.number%` you will also want to configure monitoring of all branches so merge requests build, that setting is in the VSC root advanced settings.
 
 ```plaintext
 PUT /projects/:id/services/teamcity
@@ -1303,6 +1350,9 @@ GET /projects/:id/services/jenkins
 
 A continuous integration and build server
 
+NOTE: **Note:**
+This service was [removed in v13.0](https://gitlab.com/gitlab-org/gitlab/-/issues/1600)
+
 ### Create/Edit Jenkins CI (Deprecated) service
 
 Set Jenkins CI (Deprecated) service for a project.
@@ -1369,8 +1419,6 @@ Get MockCI service settings for a project.
 GET /projects/:id/services/mock-ci
 ```
 
-[11435]: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/11435
-
 ## YouTrack
 
 YouTrack issue tracker
@@ -1387,8 +1435,8 @@ Parameters:
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `issues_url` | string | true | Issue url |
-| `project_url` | string | true | Project url |
+| `issues_url` | string | true | Issue URL |
+| `project_url` | string | true | Project URL |
 | `description` | string | false | Description |
 | `push_events` | boolean | false | Enable notifications for push events |
 

@@ -232,7 +232,7 @@ export default {
           v-if="canUserConfigure"
           v-gl-modal="'configure-feature-flags'"
           type="button"
-          class="js-ff-configure append-right-8 btn-inverted btn btn-primary"
+          class="js-ff-configure gl-mr-3 btn-inverted btn btn-primary"
         >
           {{ s__('FeatureFlags|Configure') }}
         </button>
@@ -271,7 +271,7 @@ export default {
       :title="emptyStateTitle"
       :svg-path="errorStateSvgPath"
     >
-      <template v-slot:description>
+      <template #description>
         {{
           s__(
             'FeatureFlags|Feature flags allow you to configure your code into different flavors by dynamically toggling certain functionality.',

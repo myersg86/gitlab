@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe ApplicationController do
+RSpec.describe ApplicationController do
   include TermsHelper
 
   let(:user) { create(:user) }
@@ -14,7 +14,7 @@ describe ApplicationController do
     end
 
     it 'redirects if the user is over their password expiry' do
-      user.password_expires_at = Time.new(2002)
+      user.password_expires_at = Time.zone.local(2002)
 
       expect(user.ldap_user?).to be_falsey
       allow(controller).to receive(:current_user).and_return(user)
@@ -25,7 +25,7 @@ describe ApplicationController do
     end
 
     it 'does not redirect if the user is under their password expiry' do
-      user.password_expires_at = Time.now + 20010101
+      user.password_expires_at = Time.current + 20010101
 
       expect(user.ldap_user?).to be_falsey
       allow(controller).to receive(:current_user).and_return(user)
@@ -35,7 +35,7 @@ describe ApplicationController do
     end
 
     it 'does not redirect if the user is over their password expiry but they are an ldap user' do
-      user.password_expires_at = Time.new(2002)
+      user.password_expires_at = Time.zone.local(2002)
 
       allow(user).to receive(:ldap_user?).and_return(true)
       allow(controller).to receive(:current_user).and_return(user)
@@ -47,7 +47,7 @@ describe ApplicationController do
     it 'does not redirect if the user is over their password expiry but password authentication is disabled for the web interface' do
       stub_application_setting(password_authentication_enabled_for_web: false)
       stub_application_setting(password_authentication_enabled_for_git: false)
-      user.password_expires_at = Time.new(2002)
+      user.password_expires_at = Time.zone.local(2002)
 
       allow(controller).to receive(:current_user).and_return(user)
       expect(controller).not_to receive(:redirect_to)
@@ -310,13 +310,6 @@ describe ApplicationController do
 
         expect(subject).to be_truthy
       end
-
-      it 'returns true if user has signed up using omniauth-ultraauth' do
-        user = create(:omniauth_user, provider: 'ultraauth')
-        allow(controller).to receive(:current_user).and_return(user)
-
-        expect(subject).to be_truthy
-      end
     end
 
     describe '#two_factor_grace_period' do
@@ -529,6 +522,14 @@ describe ApplicationController do
       end
 
       expect(controller.last_payload).to include('correlation_id' => 'new-id')
+    end
+
+    it 'adds context metadata to the payload' do
+      sign_in user
+
+      get :index
+
+      expect(controller.last_payload[:metadata]).to include('meta.user' => user.username)
     end
   end
 
@@ -891,7 +892,7 @@ describe ApplicationController do
     end
 
     it 'sets the group if it was available' do
-      group = build(:group)
+      group = build_stubbed(:group)
       controller.instance_variable_set(:@group, group)
 
       get :index, format: :json
@@ -900,7 +901,7 @@ describe ApplicationController do
     end
 
     it 'sets the project if one was available' do
-      project = build(:project)
+      project = build_stubbed(:project)
       controller.instance_variable_set(:@project, project)
 
       get :index, format: :json
@@ -912,6 +913,59 @@ describe ApplicationController do
       get :index, format: :json
 
       expect(json_response['meta.caller_id']).to eq('AnonymousController#index')
+    end
+
+    it 'assigns the context to a variable for logging' do
+      get :index, format: :json
+
+      expect(assigns(:current_context)).to include('meta.user' => user.username)
+    end
+
+    it 'assigns the context when the action caused an error' do
+      allow(controller).to receive(:index) { raise 'Broken' }
+
+      expect { get :index, format: :json }.to raise_error('Broken')
+
+      expect(assigns(:current_context)).to include('meta.user' => user.username)
+    end
+  end
+
+  describe '#current_user' do
+    controller(described_class) do
+      def index; end
+    end
+
+    let_it_be(:impersonator) { create(:user) }
+    let_it_be(:user) { create(:user) }
+
+    before do
+      sign_in(user)
+    end
+
+    context 'when being impersonated' do
+      before do
+        allow(controller).to receive(:session).and_return({ impersonator_id: impersonator.id })
+      end
+
+      it 'returns a User with impersonator', :aggregate_failures do
+        get :index
+
+        expect(controller.current_user).to be_a(User)
+        expect(controller.current_user.impersonator).to eq(impersonator)
+      end
+    end
+
+    context 'when not being impersonated' do
+      before do
+        allow(controller).to receive(:session).and_return({})
+      end
+
+      it 'returns a User', :aggregate_failures do
+        get :index
+
+        expect(controller.current_user).to be_a(User)
+        expect(controller.current_user.impersonator).to be_nil
+      end
     end
   end
 end

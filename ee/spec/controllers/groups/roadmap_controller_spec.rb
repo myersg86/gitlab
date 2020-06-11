@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe Groups::RoadmapController do
+RSpec.describe Groups::RoadmapController do
   let(:group) { create(:group, :private) }
   let(:epic)  { create(:epic, group: group) }
   let(:user)  { create(:user) }
@@ -9,7 +9,7 @@ describe Groups::RoadmapController do
   describe '#show' do
     context 'when the user is signed in' do
       shared_examples_for 'returns 404 status' do
-        it do
+        specify do
           get :show, params: { group_id: group }
 
           expect(response).to have_gitlab_http_status(:not_found)

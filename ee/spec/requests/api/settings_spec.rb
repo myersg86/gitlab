@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe API::Settings, 'EE Settings' do
+RSpec.describe API::Settings, 'EE Settings' do
   include StubENV
 
   let(:user) { create(:user) }
@@ -139,6 +139,13 @@ describe API::Settings, 'EE Settings' do
   context 'default project deletion protection' do
     let(:settings) { { default_project_deletion_protection: true } }
     let(:feature) { :default_project_deletion_protection }
+
+    it_behaves_like 'settings for licensed features'
+  end
+
+  context 'group_owners_can_manage_default_branch_protection setting' do
+    let(:settings) { { group_owners_can_manage_default_branch_protection: false } }
+    let(:feature) { :default_branch_protection_restriction_in_groups }
 
     it_behaves_like 'settings for licensed features'
   end

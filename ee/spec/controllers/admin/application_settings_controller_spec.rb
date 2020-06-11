@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Admin::ApplicationSettingsController do
+RSpec.describe Admin::ApplicationSettingsController do
   include StubENV
 
   let(:admin) { create(:admin) }
@@ -107,6 +107,13 @@ describe Admin::ApplicationSettingsController do
     context 'updating name disabled for users setting' do
       let(:settings) { { updating_name_disabled_for_users: true } }
       let(:feature) { :disable_name_update_for_users }
+
+      it_behaves_like 'settings for licensed features'
+    end
+
+    context 'updating `group_owners_can_manage_default_branch_protection` setting' do
+      let(:settings) { { group_owners_can_manage_default_branch_protection: false } }
+      let(:feature) { :default_branch_protection_restriction_in_groups }
 
       it_behaves_like 'settings for licensed features'
     end
@@ -217,22 +224,6 @@ describe Admin::ApplicationSettingsController do
         end
       end
     end
-
-    describe 'GET #geo_redirection' do
-      subject { get :geo_redirection }
-
-      it 'redirects the user to the admin_geo_settings_url' do
-        subject
-
-        expect(response).to redirect_to(admin_geo_settings_url)
-      end
-
-      it 'fires a notice about the redirection' do
-        subject
-
-        expect(response).to set_flash[:notice]
-      end
-    end
   end
 
   describe 'GET #seat_link_payload' do
@@ -249,7 +240,7 @@ describe Admin::ApplicationSettingsController do
     end
 
     context 'when an admin user attempts a request' do
-      let_it_be(:yesterday) { Time.now.utc.yesterday.to_date }
+      let_it_be(:yesterday) { Time.current.utc.yesterday.to_date }
       let_it_be(:max_count) { 15 }
       let_it_be(:current_count) { 10 }
 

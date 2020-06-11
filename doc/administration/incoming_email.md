@@ -1,3 +1,9 @@
+---
+stage: Plan
+group: Project Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Incoming email
 
 GitLab has several features based on receiving incoming emails:
@@ -92,13 +98,13 @@ authenticate solely based on access to an email domain such as `*.hooli.com.`
 Alternatively, use a dedicated domain for GitLab email communications such as
 `hooli-gitlab.com`.
 
-See GitLab issue [#30366](https://gitlab.com/gitlab-org/gitlab-foss/issues/30366)
+See GitLab issue [#30366](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/30366)
 for a real-world example of this exploit.
 
 ### Omnibus package installations
 
 1. Find the `incoming_email` section in `/etc/gitlab/gitlab.rb`, enable the feature
-    and fill in the details for your specific IMAP server and email account (see [examples](#config-examples) below).
+    and fill in the details for your specific IMAP server and email account (see [examples](#configuration-examples) below).
 
 1. Reconfigure GitLab for the changes to take effect:
 
@@ -124,7 +130,7 @@ Reply by email should now be working.
    ```
 
 1. Find the `incoming_email` section in `config/gitlab.yml`, enable the feature
-  and fill in the details for your specific IMAP server and email account (see [examples](#config-examples) below).
+  and fill in the details for your specific IMAP server and email account (see [examples](#configuration-examples) below).
 
 1. Enable `mail_room` in the init script at `/etc/default/gitlab`:
 
@@ -147,7 +153,7 @@ Reply by email should now be working.
 
 Reply by email should now be working.
 
-### Config examples
+### Configuration examples
 
 #### Postfix
 
@@ -182,6 +188,9 @@ gitlab_rails['incoming_email_start_tls'] = false
 gitlab_rails['incoming_email_mailbox_name'] = "inbox"
 # The IDLE command timeout.
 gitlab_rails['incoming_email_idle_timeout'] = 60
+
+# Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+gitlab_rails['incoming_email_expunge_deleted'] = true
 ```
 
 Example for source installs:
@@ -214,11 +223,17 @@ incoming_email:
     mailbox: "inbox"
     # The IDLE command timeout.
     idle_timeout: 60
+
+    # Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+    expunge_deleted: true
 ```
 
 #### Gmail
 
 Example configuration for Gmail/G Suite. Assumes mailbox `gitlab-incoming@gmail.com`.
+
+NOTE: **Note:**
+`incoming_email_email` cannot be a Gmail alias account.
 
 Example for Omnibus installs:
 
@@ -249,6 +264,9 @@ gitlab_rails['incoming_email_start_tls'] = false
 gitlab_rails['incoming_email_mailbox_name'] = "inbox"
 # The IDLE command timeout.
 gitlab_rails['incoming_email_idle_timeout'] = 60
+
+# Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+gitlab_rails['incoming_email_expunge_deleted'] = true
 ```
 
 Example for source installs:
@@ -281,6 +299,9 @@ incoming_email:
     mailbox: "inbox"
     # The IDLE command timeout.
     idle_timeout: 60
+
+    # Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+    expunge_deleted: true
 ```
 
 #### Microsoft Exchange Server

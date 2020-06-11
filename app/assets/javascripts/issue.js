@@ -6,11 +6,24 @@ import { addDelimiter } from './lib/utils/text_utility';
 import flash from './flash';
 import CreateMergeRequestDropdown from './create_merge_request_dropdown';
 import IssuablesHelper from './helpers/issuables_helper';
+import { joinPaths } from '~/lib/utils/url_utility';
 import { __ } from './locale';
 
 export default class Issue {
   constructor() {
     if ($('a.btn-close').length) this.initIssueBtnEventListeners();
+
+    if ($('.js-close-blocked-issue-warning').length) this.initIssueWarningBtnEventListener();
+
+    if ($('.js-alert-moved-from-service-desk-warning').length) {
+      const trimmedPathname = window.location.pathname.slice(1);
+      this.alertMovedFromServiceDeskDismissedKey = joinPaths(
+        trimmedPathname,
+        'alert-issue-moved-from-service-desk-dismissed',
+      );
+
+      this.initIssueMovedFromServiceDeskDismissHandler();
+    }
 
     Issue.$btnNewBranch = $('#new-branch');
     Issue.createMrDropdownWrap = document.querySelector('.create-mr-dropdown-wrap');
@@ -87,9 +100,10 @@ export default class Issue {
   initIssueBtnEventListeners() {
     const issueFailMessage = __('Unable to update this issue at this time.');
 
-    return $(document).on(
+    // NOTE: data attribute seems unnecessary but is actually necessary
+    return $('.js-issuable-buttons[data-action="close-reopen"]').on(
       'click',
-      '.js-issuable-actions a.btn-close, .js-issuable-actions a.btn-reopen',
+      'a.btn-close, a.btn-reopen, a.btn-close-anyway',
       e => {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -99,19 +113,31 @@ export default class Issue {
           Issue.submitNoteForm($button.closest('form'));
         }
 
-        this.disableCloseReopenButton($button);
+        const shouldDisplayBlockedWarning = $button.hasClass('btn-issue-blocked');
+        const warningBanner = $('.js-close-blocked-issue-warning');
+        if (shouldDisplayBlockedWarning) {
+          this.toggleWarningAndCloseButton();
+        } else {
+          this.disableCloseReopenButton($button);
 
-        const url = $button.attr('href');
-        return axios
-          .put(url)
-          .then(({ data }) => {
-            const isClosed = $button.hasClass('btn-close');
-            this.updateTopState(isClosed, data);
-          })
-          .catch(() => flash(issueFailMessage))
-          .then(() => {
-            this.disableCloseReopenButton($button, false);
-          });
+          const url = $button.attr('href');
+
+          return axios
+            .put(url)
+            .then(({ data }) => {
+              const isClosed = $button.is('.btn-close, .btn-close-anyway');
+              this.updateTopState(isClosed, data);
+              if ($button.hasClass('btn-close-anyway')) {
+                warningBanner.addClass('hidden');
+                if (this.closeReopenReportToggle)
+                  $('.js-issuable-close-dropdown').removeClass('hidden');
+              }
+            })
+            .catch(() => flash(issueFailMessage))
+            .then(() => {
+              this.disableCloseReopenButton($button, false);
+            });
+        }
       },
     );
   }
@@ -135,6 +161,38 @@ export default class Issue {
     if (this.closeReopenReportToggle) this.closeReopenReportToggle.updateButton(isClosed);
     this.closeButtons.toggleClass('hidden', isClosed);
     this.reopenButtons.toggleClass('hidden', !isClosed);
+  }
+
+  toggleWarningAndCloseButton() {
+    const warningBanner = $('.js-close-blocked-issue-warning');
+    warningBanner.toggleClass('hidden');
+    $('.btn-close').toggleClass('hidden');
+    if (this.closeReopenReportToggle) {
+      $('.js-issuable-close-dropdown').toggleClass('hidden');
+    }
+  }
+
+  initIssueWarningBtnEventListener() {
+    return $(document).on('click', '.js-close-blocked-issue-warning button.btn-secondary', e => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      this.toggleWarningAndCloseButton();
+    });
+  }
+
+  initIssueMovedFromServiceDeskDismissHandler() {
+    const alertMovedFromServiceDeskWarning = $('.js-alert-moved-from-service-desk-warning');
+
+    if (!localStorage.getItem(this.alertMovedFromServiceDeskDismissedKey)) {
+      alertMovedFromServiceDeskWarning.show();
+    }
+
+    alertMovedFromServiceDeskWarning.on('click', '.js-close', e => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      alertMovedFromServiceDeskWarning.remove();
+      localStorage.setItem(this.alertMovedFromServiceDeskDismissedKey, true);
+    });
   }
 
   static submitNoteForm(form) {

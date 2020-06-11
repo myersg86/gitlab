@@ -143,22 +143,54 @@ describe RemoteMirror, :mailer do
   end
 
   describe '#update_repository' do
-    let(:git_remote_mirror) { spy }
+    it 'performs update including options' do
+      git_remote_mirror = stub_const('Gitlab::Git::RemoteMirror', spy)
+      mirror = build(:remote_mirror)
 
-    before do
-      stub_const('Gitlab::Git::RemoteMirror', git_remote_mirror)
-    end
-
-    it 'includes the `keep_divergent_refs` setting' do
-      mirror = build_stubbed(:remote_mirror, keep_divergent_refs: true)
-
-      mirror.update_repository({})
+      expect(mirror).to receive(:options_for_update).and_return(keep_divergent_refs: true)
+      mirror.update_repository
 
       expect(git_remote_mirror).to have_received(:new).with(
-        anything,
+        mirror.project.repository.raw,
         mirror.remote_name,
-        hash_including(keep_divergent_refs: true)
+        keep_divergent_refs: true
       )
+      expect(git_remote_mirror).to have_received(:update)
+    end
+  end
+
+  describe '#options_for_update' do
+    it 'includes the `keep_divergent_refs` option' do
+      mirror = build_stubbed(:remote_mirror, keep_divergent_refs: true)
+
+      options = mirror.options_for_update
+
+      expect(options).to include(keep_divergent_refs: true)
+    end
+
+    it 'includes the `only_branches_matching` option' do
+      branch = create(:protected_branch)
+      mirror = build_stubbed(:remote_mirror, project: branch.project, only_protected_branches: true)
+
+      options = mirror.options_for_update
+
+      expect(options).to include(only_branches_matching: [branch.name])
+    end
+
+    it 'includes the `ssh_key` option' do
+      mirror = build(:remote_mirror, :ssh, ssh_private_key: 'private-key')
+
+      options = mirror.options_for_update
+
+      expect(options).to include(ssh_key: 'private-key')
+    end
+
+    it 'includes the `known_hosts` option' do
+      mirror = build(:remote_mirror, :ssh, ssh_known_hosts: 'known-hosts')
+
+      options = mirror.options_for_update
+
+      expect(options).to include(known_hosts: 'known-hosts')
     end
   end
 
@@ -274,7 +306,7 @@ describe RemoteMirror, :mailer do
 
         context 'when it did not update in the last minute' do
           it 'schedules a RepositoryUpdateRemoteMirrorWorker to run now' do
-            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_async).with(remote_mirror.id, Time.now)
+            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_async).with(remote_mirror.id, Time.current)
 
             remote_mirror.sync
           end
@@ -282,9 +314,9 @@ describe RemoteMirror, :mailer do
 
         context 'when it did update in the last minute' do
           it 'schedules a RepositoryUpdateRemoteMirrorWorker to run in the next minute' do
-            remote_mirror.last_update_started_at = Time.now - 30.seconds
+            remote_mirror.last_update_started_at = Time.current - 30.seconds
 
-            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_in).with(RemoteMirror::PROTECTED_BACKOFF_DELAY, remote_mirror.id, Time.now)
+            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_in).with(RemoteMirror::PROTECTED_BACKOFF_DELAY, remote_mirror.id, Time.current)
 
             remote_mirror.sync
           end
@@ -298,7 +330,7 @@ describe RemoteMirror, :mailer do
 
         context 'when it did not update in the last 5 minutes' do
           it 'schedules a RepositoryUpdateRemoteMirrorWorker to run now' do
-            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_async).with(remote_mirror.id, Time.now)
+            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_async).with(remote_mirror.id, Time.current)
 
             remote_mirror.sync
           end
@@ -306,9 +338,9 @@ describe RemoteMirror, :mailer do
 
         context 'when it did update within the last 5 minutes' do
           it 'schedules a RepositoryUpdateRemoteMirrorWorker to run in the next 5 minutes' do
-            remote_mirror.last_update_started_at = Time.now - 30.seconds
+            remote_mirror.last_update_started_at = Time.current - 30.seconds
 
-            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_in).with(RemoteMirror::UNPROTECTED_BACKOFF_DELAY, remote_mirror.id, Time.now)
+            expect(RepositoryUpdateRemoteMirrorWorker).to receive(:perform_in).with(RemoteMirror::UNPROTECTED_BACKOFF_DELAY, remote_mirror.id, Time.current)
 
             remote_mirror.sync
           end
@@ -345,9 +377,9 @@ describe RemoteMirror, :mailer do
     let(:remote_mirror) { create(:project, :repository, :remote_mirror).remote_mirrors.first }
 
     it 'resets all the columns when URL changes' do
-      remote_mirror.update(last_error: Time.now,
-                           last_update_at: Time.now,
-                           last_successful_update_at: Time.now,
+      remote_mirror.update(last_error: Time.current,
+                           last_update_at: Time.current,
+                           last_successful_update_at: Time.current,
                            update_status: 'started',
                            error_notification_sent: true)
 
@@ -362,14 +394,14 @@ describe RemoteMirror, :mailer do
 
   describe '#updated_since?' do
     let(:remote_mirror) { create(:project, :repository, :remote_mirror).remote_mirrors.first }
-    let(:timestamp) { Time.now - 5.minutes }
+    let(:timestamp) { Time.current - 5.minutes }
 
     around do |example|
       Timecop.freeze { example.run }
     end
 
     before do
-      remote_mirror.update(last_update_started_at: Time.now)
+      remote_mirror.update(last_update_started_at: Time.current)
     end
 
     context 'when remote mirror does not have status failed' do
@@ -378,7 +410,7 @@ describe RemoteMirror, :mailer do
       end
 
       it 'returns false when last update started before the timestamp' do
-        expect(remote_mirror.updated_since?(Time.now + 5.minutes)).to be false
+        expect(remote_mirror.updated_since?(Time.current + 5.minutes)).to be false
       end
     end
 

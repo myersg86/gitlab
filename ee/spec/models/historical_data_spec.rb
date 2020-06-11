@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe HistoricalData do
+RSpec.describe HistoricalData do
   before do
     (1..12).each do |i|
       described_class.create!(date: Date.new(2014, i, 1), active_user_count: i * 100)
@@ -45,7 +45,7 @@ describe HistoricalData do
     context 'with multiple historical data points for the current license' do
       before do
         (1..3).each do |i|
-          described_class.create!(date: Time.now - i.days, active_user_count: i * 100)
+          described_class.create!(date: Time.current - i.days, active_user_count: i * 100)
         end
       end
 
@@ -102,7 +102,7 @@ describe HistoricalData do
     end
 
     context 'with data outside of the license period' do
-      let!(:license) { create(:license) }
+      let!(:license) { create(:license, starts_at: Date.current - 1.month) }
 
       context 'with stats before the license period' do
         before do

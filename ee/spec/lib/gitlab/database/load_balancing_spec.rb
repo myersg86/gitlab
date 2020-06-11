@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Database::LoadBalancing do
+RSpec.describe Gitlab::Database::LoadBalancing do
   describe '.proxy' do
     context 'when configured' do
       before do
@@ -171,7 +171,7 @@ describe Gitlab::Database::LoadBalancing do
 
     context 'without a license' do
       before do
-        License.destroy_all # rubocop: disable DestroyAll
+        License.destroy_all # rubocop: disable Cop/DestroyAll
       end
 
       it 'is disabled' do

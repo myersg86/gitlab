@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import HeaderApp from 'ee/vulnerabilities/components/header.vue';
+import DetailsApp from 'ee/vulnerabilities/components/details.vue';
 import FooterApp from 'ee/vulnerabilities/components/footer.vue';
 
 function createHeaderApp() {
@@ -8,7 +9,7 @@ function createHeaderApp() {
   const pipeline = JSON.parse(el.dataset.pipelineJson);
   const finding = JSON.parse(el.dataset.findingJson);
 
-  const { projectFingerprint, createIssueUrl } = el.dataset;
+  const { projectFingerprint, createIssueUrl, createMrUrl } = el.dataset;
 
   return new Vue({
     el,
@@ -16,6 +17,7 @@ function createHeaderApp() {
     render: h =>
       h(HeaderApp, {
         props: {
+          createMrUrl,
           initialVulnerability,
           finding,
           pipeline,
@@ -26,6 +28,17 @@ function createHeaderApp() {
   });
 }
 
+function createDetailsApp() {
+  const el = document.getElementById('js-vulnerability-details');
+  const vulnerability = JSON.parse(el.dataset.vulnerabilityJson);
+  const finding = JSON.parse(el.dataset.findingJson);
+
+  return new Vue({
+    el,
+    render: h => h(DetailsApp, { props: { vulnerability, finding } }),
+  });
+}
+
 function createFooterApp() {
   const el = document.getElementById('js-vulnerability-footer');
 
@@ -33,7 +46,7 @@ function createFooterApp() {
     return false;
   }
 
-  const { vulnerabilityFeedbackHelpPath, hasMr } = el.dataset;
+  const { vulnerabilityFeedbackHelpPath, hasMr, discussionsUrl, notesUrl } = el.dataset;
   const vulnerability = JSON.parse(el.dataset.vulnerabilityJson);
   const finding = JSON.parse(el.dataset.findingJson);
   const { issue_feedback: feedback, remediation, solution } = finding;
@@ -42,6 +55,8 @@ function createFooterApp() {
   );
 
   const props = {
+    discussionsUrl,
+    notesUrl,
     solutionInfo: {
       solution,
       remediation,
@@ -69,5 +84,6 @@ function createFooterApp() {
 
 window.addEventListener('DOMContentLoaded', () => {
   createHeaderApp();
+  createDetailsApp();
   createFooterApp();
 });

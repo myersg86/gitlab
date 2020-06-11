@@ -238,12 +238,32 @@ describe DiffNote do
     end
 
     context 'when the discussion was created in the diff' do
-      it 'returns correct diff file' do
-        diff_file = subject.diff_file
+      context 'when file_identifier_hash is disabled' do
+        before do
+          stub_feature_flags(file_identifier_hash: false)
+        end
 
-        expect(diff_file.old_path).to eq(position.old_path)
-        expect(diff_file.new_path).to eq(position.new_path)
-        expect(diff_file.diff_refs).to eq(position.diff_refs)
+        it 'returns correct diff file' do
+          diff_file = subject.diff_file
+
+          expect(diff_file.old_path).to eq(position.old_path)
+          expect(diff_file.new_path).to eq(position.new_path)
+          expect(diff_file.diff_refs).to eq(position.diff_refs)
+        end
+      end
+
+      context 'when file_identifier_hash is enabled' do
+        before do
+          stub_feature_flags(file_identifier_hash: true)
+        end
+
+        it 'returns correct diff file' do
+          diff_file = subject.diff_file
+
+          expect(diff_file.old_path).to eq(position.old_path)
+          expect(diff_file.new_path).to eq(position.new_path)
+          expect(diff_file.diff_refs).to eq(position.diff_refs)
+        end
       end
     end
 
@@ -285,6 +305,24 @@ describe DiffNote do
         expect(CreateNoteDiffFileWorker).not_to receive(:perform_async).with(reply_diff_note.id)
 
         reply_diff_note.reload.diff_file
+      end
+    end
+
+    context 'when noteable is a Design' do
+      it 'does not return a diff file' do
+        diff_note = create(:diff_note_on_design)
+
+        expect(diff_note.diff_file).to be_nil
+      end
+    end
+  end
+
+  describe '#latest_diff_file' do
+    context 'when noteable is a Design' do
+      it 'does not return a diff file' do
+        diff_note = create(:diff_note_on_design)
+
+        expect(diff_note.latest_diff_file).to be_nil
       end
     end
   end

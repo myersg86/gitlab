@@ -1,3 +1,10 @@
+---
+type: reference, howto
+stage: Manage
+group: Import
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Import your project from Bitbucket Server to GitLab
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/20164) in GitLab 11.2.
@@ -73,3 +80,7 @@ namespace that started the import process.
    imported.
 
    ![Import projects](img/bitbucket_server_import_select_project_v12_3.png)
+
+## Troubleshooting
+
+See the [troubleshooting](bitbucket.md#troubleshooting) section for [Bitbucket](bitbucket.md).

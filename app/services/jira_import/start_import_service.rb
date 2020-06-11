@@ -28,8 +28,8 @@ module JiraImport
     rescue => ex
       # in case project.save! raises an erorr
       Gitlab::ErrorTracking.track_exception(ex, project_id: project.id)
+      jira_import&.do_fail!(error_message: ex.message)
       build_error_response(ex.message)
-      jira_import.do_fail!
     end
 
     def build_jira_import
@@ -56,13 +56,13 @@ module JiraImport
       import_start_time = Time.zone.now
       jira_imports_for_project = project.jira_imports.by_jira_project_key(jira_project_key).size + 1
       title = "jira-import::#{jira_project_key}-#{jira_imports_for_project}"
-      description = "Label for issues that were imported from jira on #{import_start_time.strftime('%Y-%m-%d %H:%M:%S')}"
+      description = "Label for issues that were imported from Jira on #{import_start_time.strftime('%Y-%m-%d %H:%M:%S')}"
       color = "#{Label.color_for(title)}"
       { title: title, description: description, color: color }
     end
 
     def validate
-      project.validate_jira_import_settings!(user: user)
+      Gitlab::JiraImport.validate_project_settings!(project, user: user)
 
       return build_error_response(_('Unable to find Jira project to import data from.')) if jira_project_key.blank?
       return build_error_response(_('Jira import is already running.')) if import_in_progress?

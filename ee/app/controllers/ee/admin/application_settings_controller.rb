@@ -58,12 +58,11 @@ module EE
           attrs << :npm_package_requests_forwarding
         end
 
-        attrs
-      end
+        if License.feature_available?(:default_branch_protection_restriction_in_groups)
+          attrs << :group_owners_can_manage_default_branch_protection
+        end
 
-      def geo_redirection
-        redirect_to admin_geo_settings_url, notice: 'You were automatically redirected to <strong>Admin Area > Geo > Settings</strong><br /> '\
-                                                    'From GitLab 13.0 on, this will be the only place for Geo settings and <strong>Admin Area > Settings > Geo</strong> will be removed.'.html_safe
+        attrs
       end
 
       def seat_link_payload
@@ -71,7 +70,7 @@ module EE
 
         respond_to do |format|
           format.html do
-            seat_link_json = JSON.pretty_generate(data)
+            seat_link_json = ::Gitlab::Json.pretty_generate(data)
 
             render html: ::Gitlab::Highlight.highlight('payload.json', seat_link_json, language: 'json')
           end

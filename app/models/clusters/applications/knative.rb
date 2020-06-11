@@ -4,8 +4,8 @@ module Clusters
   module Applications
     class Knative < ApplicationRecord
       VERSION = '0.9.0'
-      REPOSITORY = 'https://storage.googleapis.com/triggermesh-charts'
-      METRICS_CONFIG = 'https://storage.googleapis.com/triggermesh-charts/istio-metrics.yaml'
+      REPOSITORY = 'https://charts.gitlab.io'
+      METRICS_CONFIG = 'https://gitlab.com/gitlab-org/charts/knative/-/raw/v0.9.0/vendor/istio-metrics.yml'
       FETCH_IP_ADDRESS_DELAY = 30.seconds
       API_GROUPS_PATH = 'config/knative/api_groups.yml'
 
@@ -77,7 +77,8 @@ module Clusters
           chart: chart,
           files: files,
           repository: REPOSITORY,
-          postinstall: install_knative_metrics
+          postinstall: install_knative_metrics,
+          local_tiller_enabled: cluster.local_tiller_enabled?
         )
       end
 
@@ -99,7 +100,8 @@ module Clusters
           rbac: cluster.platform_kubernetes_rbac?,
           files: files,
           predelete: delete_knative_services_and_metrics,
-          postdelete: delete_knative_istio_leftovers
+          postdelete: delete_knative_istio_leftovers,
+          local_tiller_enabled: cluster.local_tiller_enabled?
         )
       end
 

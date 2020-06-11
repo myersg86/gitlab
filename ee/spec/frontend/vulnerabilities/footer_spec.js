@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils';
 import VulnerabilityFooter from 'ee/vulnerabilities/components/footer.vue';
 import HistoryEntry from 'ee/vulnerabilities/components/history_entry.vue';
+import VulnerabilitiesEventBus from 'ee/vulnerabilities/components/vulnerabilities_event_bus';
 import SolutionCard from 'ee/vue_shared/security_reports/components/solution_card.vue';
 import IssueNote from 'ee/vue_shared/security_reports/components/issue_note.vue';
 import { TEST_HOST } from 'helpers/test_constants';
@@ -15,6 +16,7 @@ describe('Vulnerability Footer', () => {
   let wrapper;
 
   const minimumProps = {
+    discussionsUrl: `/discussions`,
     solutionInfo: {
       hasDownload: false,
       hasMr: false,
@@ -29,12 +31,12 @@ describe('Vulnerability Footer', () => {
       url: '/root/security-reports',
       value: 'Administrator / Security Reports',
     },
+    notesUrl: '/notes',
   };
 
   const solutionInfoProp = {
     hasDownload: true,
     hasMr: false,
-    hasRemediation: true,
     isStandaloneVulnerability: true,
     remediation: {},
     solution: 'Upgrade to fixed version.\n',
@@ -63,7 +65,17 @@ describe('Vulnerability Footer', () => {
 
   afterEach(() => {
     wrapper.destroy();
+    wrapper = null;
     mockAxios.reset();
+  });
+
+  describe('vulnerabilities event bus listener', () => {
+    it('calls the discussion url on vulnerabilities event bus emit of VULNERABILITY_STATE_CHANGE', () => {
+      createWrapper();
+      jest.spyOn(axios, 'get');
+      VulnerabilitiesEventBus.$emit('VULNERABILITY_STATE_CHANGE');
+      expect(axios.get).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('solution card', () => {
@@ -111,12 +123,12 @@ describe('Vulnerability Footer', () => {
       // The shape of this object doesn't matter for this test, we just need to verify that it's passed to the history
       // entry.
       const historyItems = [{ id: 1, note: 'some note' }, { id: 2, note: 'another note' }];
-      mockAxios.onGet(discussionUrl).replyOnce(200, historyItems);
+      mockAxios.onGet(discussionUrl).replyOnce(200, historyItems, { date: Date.now() });
       createWrapper();
 
       return axios.waitForAll().then(() => {
         expect(historyList().exists()).toBe(true);
-        expect(historyEntries().length).toBe(2);
+        expect(historyEntries()).toHaveLength(2);
         const entry1 = historyEntries().at(0);
         const entry2 = historyEntries().at(1);
         expect(entry1.props('discussion')).toEqual(historyItems[0]);
@@ -130,6 +142,72 @@ describe('Vulnerability Footer', () => {
 
       return axios.waitForAll().then(() => {
         expect(createFlash).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('new notes polling', () => {
+      const getDiscussion = (entries, index) => entries.at(index).props('discussion');
+      const createNotesRequest = note =>
+        mockAxios
+          .onGet(minimumProps.notesUrl)
+          .replyOnce(200, { notes: [note], last_fetched_at: Date.now() });
+
+      beforeEach(() => {
+        const historyItems = [
+          { id: 1, notes: [{ id: 100, note: 'some note', discussion_id: 1 }] },
+          { id: 2, notes: [{ id: 200, note: 'another note', discussion_id: 2 }] },
+        ];
+        mockAxios.onGet(discussionUrl).replyOnce(200, historyItems, { date: Date.now() });
+        createWrapper();
+      });
+
+      it('updates an existing note if it already exists', () => {
+        const note = { id: 100, note: 'updated note', discussion_id: 1 };
+        createNotesRequest(note);
+
+        return axios.waitForAll().then(() => {
+          const entries = historyEntries();
+          expect(entries).toHaveLength(2);
+          const discussion = getDiscussion(entries, 0);
+          expect(discussion.notes.length).toBe(1);
+          expect(discussion.notes[0].note).toBe('updated note');
+        });
+      });
+
+      it('adds a new note to an existing discussion if the note does not exist', () => {
+        const note = { id: 101, note: 'new note', discussion_id: 1 };
+        createNotesRequest(note);
+
+        return axios.waitForAll().then(() => {
+          const entries = historyEntries();
+          expect(entries).toHaveLength(2);
+          const discussion = getDiscussion(entries, 0);
+          expect(discussion.notes.length).toBe(2);
+          expect(discussion.notes[1].note).toBe('new note');
+        });
+      });
+
+      it('creates a new discussion with a new note if the discussion does not exist', () => {
+        const note = { id: 300, note: 'new note on a new discussion', discussion_id: 3 };
+        createNotesRequest(note);
+
+        return axios.waitForAll().then(() => {
+          const entries = historyEntries();
+          expect(entries).toHaveLength(3);
+          const discussion = getDiscussion(entries, 2);
+          expect(discussion.notes.length).toBe(1);
+          expect(discussion.notes[0].note).toBe('new note on a new discussion');
+        });
+      });
+
+      it('shows an error if the notes poll fails', () => {
+        mockAxios.onGet(minimumProps.notesUrl).replyOnce(500);
+
+        return axios.waitForAll().then(() => {
+          expect(historyEntries()).toHaveLength(2);
+          expect(mockAxios.history.get).toHaveLength(2);
+          expect(createFlash).toHaveBeenCalled();
+        });
       });
     });
   });

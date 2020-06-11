@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe EpicPresenter do
+RSpec.describe EpicPresenter do
   include UsersHelper
   include Gitlab::Routing.url_helpers
 
@@ -30,7 +30,7 @@ describe EpicPresenter do
     end
 
     it 'has correct ancestors' do
-      metadata     = JSON.parse(presenter.show_data[:meta])
+      metadata     = Gitlab::Json.parse(presenter.show_data[:meta])
       ancestor_url = metadata['ancestors'].first['url']
 
       expect(ancestor_url).to eq "/groups/#{parent_epic.group.full_path}/-/epics/#{parent_epic.iid}"

@@ -3,8 +3,38 @@
 module Gitlab
   module Elastic
     class Helper
-      # rubocop: disable CodeReuse/ActiveRecord
-      def self.create_empty_index(version = ::Elastic::MultiVersionUtil::TARGET_VERSION, client = nil)
+      attr_reader :version, :client
+      attr_accessor :target_name
+
+      def initialize(
+        version: ::Elastic::MultiVersionUtil::TARGET_VERSION,
+        client: nil,
+        target_name: nil)
+
+        proxy = self.class.create_proxy(version)
+
+        @client = client || proxy.client
+        @target_name = target_name || proxy.index_name
+        @version = version
+      end
+
+      class << self
+        def create_proxy(version = nil)
+          Project.__elasticsearch__.version(version)
+        end
+
+        def default
+          @default ||= self.new
+        end
+      end
+
+      def create_empty_index(with_alias: true, options: {})
+        if index_exists?
+          raise "Index under '#{target_name}' already exists, use `recreate_index` to recreate it."
+        end
+
+        new_index_name = with_alias ? "#{target_name}-#{Time.now.strftime("%Y%m%d-%H%M")}" : target_name
+
         settings = {}
         mappings = {}
 
@@ -22,12 +52,11 @@ module Gitlab
           mappings.deep_merge!(klass.__elasticsearch__.mappings.to_hash)
         end
 
-        proxy = Project.__elasticsearch__.version(version)
-        client ||= proxy.client
-        index_name = proxy.index_name
+        settings.merge!(options[:settings]) if options[:settings]
+        mappings.merge!(options[:mappings]) if options[:mappings]
 
         create_index_options = {
-          index: index_name,
+          index: new_index_name,
           body: {
             settings: settings.to_hash,
             mappings: mappings.to_hash
@@ -44,65 +73,46 @@ module Gitlab
           create_index_options[:include_type_name] = true
         end
 
-        if client.indices.exists? index: index_name
-          client.indices.delete index: index_name
-        end
-
         client.indices.create create_index_options
-      end
-      # rubocop: enable CodeReuse/ActiveRecord
-
-      def self.reindex_to_another_cluster(source_cluster_url, destination_cluster_url, version = ::Elastic::MultiVersionUtil::TARGET_VERSION)
-        proxy = Project.__elasticsearch__.version(version)
-        index_name = proxy.index_name
-
-        destination_client = Gitlab::Elastic::Client.build(url: destination_cluster_url)
-
-        create_empty_index(version, destination_client)
-
-        optimize_for_write_settings = { index: { number_of_replicas: 0, refresh_interval: "-1" } }
-        destination_client.indices.put_settings(index: index_name, body: optimize_for_write_settings)
-
-        source_addressable = Addressable::URI.parse(source_cluster_url)
-
-        response = destination_client.reindex(body: {
-          source: {
-            remote: {
-              host: source_addressable.omit(:user, :password).to_s,
-              username: source_addressable.user,
-              password: source_addressable.password
-            },
-            index: index_name
-          },
-          dest: {
-            index: index_name
-          }
-        }, wait_for_completion: false)
-
-        response['task']
+        client.indices.put_alias(name: target_name, index: new_index_name) if with_alias
       end
 
-      def self.delete_index(version = ::Elastic::MultiVersionUtil::TARGET_VERSION)
-        Project.__elasticsearch__.version(version).delete_index!
+      def delete_index
+        result = client.indices.delete(index: target_index_name)
+        result['acknowledged']
+      rescue ::Elasticsearch::Transport::Transport::Errors::NotFound => e
+        Gitlab::ErrorTracking.log_exception(e)
+        false
       end
 
-      def self.index_exists?(version = ::Elastic::MultiVersionUtil::TARGET_VERSION)
-        proxy = Project.__elasticsearch__.version(version)
-        client = proxy.client
-        index_name = proxy.index_name
+      def index_exists?
+        client.indices.exists?(index: target_name) # rubocop:disable CodeReuse/ActiveRecord
+      end
 
-        client.indices.exists? index: index_name # rubocop:disable CodeReuse/ActiveRecord
+      def alias_exists?
+        client.indices.exists_alias(name: target_name)
       end
 
       # Calls Elasticsearch refresh API to ensure data is searchable
       # immediately.
       # https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-refresh.html
-      def self.refresh_index
-        Project.__elasticsearch__.refresh_index!
+      def refresh_index
+        client.indices.refresh(index: target_name)
       end
 
-      def self.index_size(version = ::Elastic::MultiVersionUtil::TARGET_VERSION)
-        Project.__elasticsearch__.version(version).client.indices.stats['indices'][Project.__elasticsearch__.index_name]['total']
+      def index_size
+        client.indices.stats['indices'][target_index_name]['total']
+      end
+
+      private
+
+      # This method is used when we need to get an actual index name (if it's used through an alias)
+      def target_index_name
+        if alias_exists?
+          client.indices.get_alias(name: target_name).each_key.first
+        else
+          target_name
+        end
       end
     end
   end

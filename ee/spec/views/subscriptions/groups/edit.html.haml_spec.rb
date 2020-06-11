@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'subscriptions/groups/edit' do
+RSpec.describe 'subscriptions/groups/edit' do
   before do
     assign(:group, Group.new)
 
@@ -11,6 +11,7 @@ describe 'subscriptions/groups/edit' do
     allow(view).to receive(:group_path).and_return('')
     allow(view).to receive(:subscriptions_groups_path).and_return('')
     allow(view).to receive(:current_user).and_return(User.new)
+    allow(view).to receive(:experiment_enabled?).with(:onboarding_issues).and_return(false)
   end
 
   let(:quantity) { '1' }

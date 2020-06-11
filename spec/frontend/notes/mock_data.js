@@ -57,6 +57,7 @@ export const noteableDataMock = {
   updated_by_id: 1,
   web_url: '/gitlab-org/gitlab-foss/issues/26',
   noteableType: 'issue',
+  blocked_by_issues: [],
 };
 
 export const lastFetchedAt = '1501862675';
@@ -1251,5 +1252,18 @@ export const discussionFiltersMock = [
   {
     title: 'Show system notes only',
     value: 2,
+  },
+];
+
+export const batchSuggestionsInfoMock = [
+  {
+    suggestionId: 'a123',
+    noteId: 'b456',
+    discussionId: 'c789',
+  },
+  {
+    suggestionId: 'a001',
+    noteId: 'b002',
+    discussionId: 'c003',
   },
 ];

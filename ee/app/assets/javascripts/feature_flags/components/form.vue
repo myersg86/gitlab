@@ -3,14 +3,16 @@ import Vue from 'vue';
 import { memoize, isString, cloneDeep, isNumber } from 'lodash';
 import {
   GlDeprecatedButton,
-  GlBadge,
+  GlDeprecatedBadge as GlBadge,
   GlTooltip,
   GlTooltipDirective,
   GlFormTextarea,
   GlFormCheckbox,
   GlSprintf,
 } from '@gitlab/ui';
+import Api from 'ee/api';
 import { s__ } from '~/locale';
+import flash, { FLASH_TYPES } from '~/flash';
 import featureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import ToggleButton from '~/vue_shared/components/toggle_button.vue';
 import Icon from '~/vue_shared/components/icon.vue';
@@ -59,6 +61,10 @@ export default {
       type: String,
       required: false,
       default: '',
+    },
+    projectId: {
+      type: String,
+      required: true,
     },
     scopes: {
       type: Array,
@@ -118,6 +124,7 @@ export default {
       formStrategies: cloneDeep(this.strategies),
 
       newScope: '',
+      userLists: [],
     };
   },
   computed: {
@@ -140,6 +147,17 @@ export default {
     canDeleteStrategy() {
       return this.formStrategies.length > 1;
     },
+  },
+  mounted() {
+    if (this.supportsStrategies) {
+      Api.fetchFeatureFlagUserLists(this.projectId)
+        .then(({ data }) => {
+          this.userLists = data;
+        })
+        .catch(() => {
+          flash(s__('FeatureFlags|There was an error retrieving user lists'), FLASH_TYPES.WARNING);
+        });
+    }
   },
   methods: {
     addStrategy() {
@@ -252,13 +270,8 @@ export default {
         scope.rolloutUserIds.length > 0 &&
         scope.rolloutStrategy === ROLLOUT_STRATEGY_PERCENT_ROLLOUT;
     },
-    onFormStrategyChange({ id, name, parameters, scopes }, index) {
-      Object.assign(this.filteredStrategies[index], {
-        id,
-        name,
-        parameters,
-        scopes,
-      });
+    onFormStrategyChange(strategy, index) {
+      Object.assign(this.filteredStrategies[index], strategy);
     },
   },
 };
@@ -305,7 +318,7 @@ export default {
             </div>
           </div>
         </div>
-        <template v-if="filteredStrategies.length > 0">
+        <div v-if="filteredStrategies.length > 0" data-testid="feature-flag-strategies">
           <strategy
             v-for="(strategy, index) in filteredStrategies"
             :key="strategy.id"
@@ -313,10 +326,11 @@ export default {
             :index="index"
             :endpoint="environmentsEndpoint"
             :can-delete="canDeleteStrategy"
+            :user-lists="userLists"
             @change="onFormStrategyChange($event, index)"
             @delete="deleteStrategy(strategy)"
           />
-        </template>
+        </div>
         <div v-else class="flex justify-content-center border-top py-4 w-100">
           <span>{{ $options.translations.noStrategiesText }}</span>
         </div>

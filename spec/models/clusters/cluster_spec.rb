@@ -172,6 +172,41 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     end
   end
 
+  describe '.with_application_prometheus' do
+    subject { described_class.with_application_prometheus }
+
+    let!(:cluster) { create(:cluster) }
+
+    context 'cluster has prometheus application' do
+      let!(:application) { create(:clusters_applications_prometheus, :installed, cluster: cluster) }
+
+      it { is_expected.to include(cluster) }
+    end
+
+    context 'cluster does not have prometheus application' do
+      let(:cluster) { create(:cluster) }
+
+      it { is_expected.not_to include(cluster) }
+    end
+  end
+
+  describe '.with_project_alert_service_data' do
+    subject { described_class.with_project_alert_service_data(project_id) }
+
+    let!(:cluster) { create(:cluster, :project) }
+    let!(:project_id) { cluster.first_project.id }
+
+    context 'project has alert service data' do
+      let!(:alerts_service) { create(:alerts_service, project: cluster.clusterable) }
+
+      it { is_expected.to include(cluster) }
+    end
+
+    context 'project has no alert service data' do
+      it { is_expected.not_to include(cluster) }
+    end
+  end
+
   describe '.for_project_namespace' do
     subject { described_class.for_project_namespace(namespace_id) }
 
@@ -573,19 +608,46 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     end
 
     context 'when applications are created' do
-      let!(:helm) { create(:clusters_applications_helm, cluster: cluster) }
-      let!(:ingress) { create(:clusters_applications_ingress, cluster: cluster) }
-      let!(:cert_manager) { create(:clusters_applications_cert_manager, cluster: cluster) }
-      let!(:crossplane) { create(:clusters_applications_crossplane, cluster: cluster) }
-      let!(:prometheus) { create(:clusters_applications_prometheus, cluster: cluster) }
-      let!(:runner) { create(:clusters_applications_runner, cluster: cluster) }
-      let!(:jupyter) { create(:clusters_applications_jupyter, cluster: cluster) }
-      let!(:knative) { create(:clusters_applications_knative, cluster: cluster) }
-      let!(:elastic_stack) { create(:clusters_applications_elastic_stack, cluster: cluster) }
-      let!(:fluentd) { create(:clusters_applications_fluentd, cluster: cluster) }
+      let(:cluster) { create(:cluster, :with_all_applications) }
 
-      it 'returns a list of created applications' do
-        is_expected.to contain_exactly(helm, ingress, cert_manager, crossplane, prometheus, runner, jupyter, knative, elastic_stack, fluentd)
+      it 'returns a list of created applications', :aggregate_failures do
+        is_expected.to have_attributes(size: described_class::APPLICATIONS.size)
+        is_expected.to all(be_kind_of(::Clusters::Concerns::ApplicationCore))
+        is_expected.to all(be_persisted)
+      end
+    end
+  end
+
+  describe '#find_or_build_application' do
+    let_it_be(:cluster, reload: true) { create(:cluster) }
+
+    it 'rejects classes that are not applications' do
+      expect do
+        cluster.find_or_build_application(Project)
+      end.to raise_error(ArgumentError)
+    end
+
+    context 'when none of applications are created' do
+      it 'returns the new application', :aggregate_failures do
+        described_class::APPLICATIONS.values.each do |application_class|
+          application = cluster.find_or_build_application(application_class)
+
+          expect(application).to be_a(application_class)
+          expect(application).not_to be_persisted
+        end
+      end
+    end
+
+    context 'when application is persisted' do
+      let(:cluster) { create(:cluster, :with_all_applications) }
+
+      it 'returns the persisted application', :aggregate_failures do
+        described_class::APPLICATIONS.each_value do |application_class|
+          application = cluster.find_or_build_application(application_class)
+
+          expect(application).to be_kind_of(::Clusters::Concerns::ApplicationCore)
+          expect(application).to be_persisted
+        end
       end
     end
   end
@@ -889,9 +951,9 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     end
 
     describe '#make_cleanup_errored!' do
-      NON_ERRORED_STATES = Clusters::Cluster.state_machines[:cleanup_status].states.keys - [:cleanup_errored]
+      non_errored_states = Clusters::Cluster.state_machines[:cleanup_status].states.keys - [:cleanup_errored]
 
-      NON_ERRORED_STATES.each do |state|
+      non_errored_states.each do |state|
         it "transitions cleanup_status from #{state} to cleanup_errored" do
           cluster = create(:cluster, state)
 
@@ -948,6 +1010,22 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     end
   end
 
+  describe '#nodes' do
+    let(:cluster) { create(:cluster) }
+
+    subject { cluster.nodes }
+
+    it { is_expected.to be_nil }
+
+    context 'with a cached status' do
+      before do
+        stub_reactive_cache(cluster, nodes: [kube_node])
+      end
+
+      it { is_expected.to eq([kube_node]) }
+    end
+  end
+
   describe '#calculate_reactive_cache' do
     subject { cluster.calculate_reactive_cache }
 
@@ -956,6 +1034,7 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
 
       it 'does not populate the cache' do
         expect(cluster).not_to receive(:retrieve_connection_status)
+        expect(cluster).not_to receive(:retrieve_nodes)
 
         is_expected.to be_nil
       end
@@ -964,12 +1043,12 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     context 'cluster is enabled' do
       let(:cluster) { create(:cluster, :provided_by_user, :group) }
 
-      context 'connection to the cluster is successful' do
-        before do
-          stub_kubeclient_discover(cluster.platform.api_url)
-        end
+      before do
+        stub_kubeclient_nodes_and_nodes_metrics(cluster.platform.api_url)
+      end
 
-        it { is_expected.to eq(connection_status: :connected) }
+      context 'connection to the cluster is successful' do
+        it { is_expected.to eq(connection_status: :connected, nodes: [kube_node.merge(kube_node_metrics)]) }
       end
 
       context 'cluster cannot be reached' do
@@ -978,7 +1057,7 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
             .and_raise(SocketError)
         end
 
-        it { is_expected.to eq(connection_status: :unreachable) }
+        it { is_expected.to eq(connection_status: :unreachable, nodes: nil) }
       end
 
       context 'cluster cannot be authenticated to' do
@@ -987,7 +1066,7 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
             .and_raise(OpenSSL::X509::CertificateError.new("Certificate error"))
         end
 
-        it { is_expected.to eq(connection_status: :authentication_failure) }
+        it { is_expected.to eq(connection_status: :authentication_failure, nodes: nil) }
       end
 
       describe 'Kubeclient::HttpError' do
@@ -999,18 +1078,18 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
             .and_raise(Kubeclient::HttpError.new(error_code, error_message, nil))
         end
 
-        it { is_expected.to eq(connection_status: :authentication_failure) }
+        it { is_expected.to eq(connection_status: :authentication_failure, nodes: nil) }
 
         context 'generic timeout' do
           let(:error_message) { 'Timed out connecting to server'}
 
-          it { is_expected.to eq(connection_status: :unreachable) }
+          it { is_expected.to eq(connection_status: :unreachable, nodes: nil) }
         end
 
         context 'gateway timeout' do
           let(:error_message) { '504 Gateway Timeout for GET https://kubernetes.example.com/api/v1'}
 
-          it { is_expected.to eq(connection_status: :unreachable) }
+          it { is_expected.to eq(connection_status: :unreachable, nodes: nil) }
         end
       end
 
@@ -1020,11 +1099,12 @@ describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
             .and_raise(StandardError)
         end
 
-        it { is_expected.to eq(connection_status: :unknown_failure) }
+        it { is_expected.to eq(connection_status: :unknown_failure, nodes: nil) }
 
         it 'notifies Sentry' do
           expect(Gitlab::ErrorTracking).to receive(:track_exception)
             .with(instance_of(StandardError), hash_including(cluster_id: cluster.id))
+            .twice
 
           subject
         end

@@ -1,6 +1,12 @@
+---
+stage: Package
+group: Package
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Dependency Proxy **(PREMIUM ONLY)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/7934) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.11.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/7934) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.11.
 
 NOTE: **Note:**
 This is the user guide. In order to use the dependency proxy, an administrator
@@ -12,7 +18,7 @@ receiving a request and returning the upstream image from a registry, acting
 as a pull-through cache.
 
 The dependency proxy is available in the group level. To access it, navigate to
-a group's **Packages > Dependency Proxy**.
+a group's **Packages & Registries > Dependency Proxy**.
 
 ![Dependency Proxy group page](img/group_dependency_proxy.png)
 
@@ -33,7 +39,7 @@ The following dependency proxies are supported.
 With the Docker dependency proxy, you can use GitLab as a source for a Docker image.
 To get a Docker image into the dependency proxy:
 
-1. Find the proxy URL on your group's page under **Packages > Dependency Proxy**,
+1. Find the proxy URL on your group's page under **Packages & Registries > Dependency Proxy**,
    for example `gitlab.com/groupname/dependency_proxy/containers`.
 1. Trigger GitLab to pull the Docker image you want (e.g., `alpine:latest` or
    `linuxserver/nextcloud:latest`) and store it in the proxy storage by using

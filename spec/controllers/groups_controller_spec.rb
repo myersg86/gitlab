@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe GroupsController do
+RSpec.describe GroupsController do
   include ExternalAuthorizationServiceHelpers
 
   let(:user) { create(:user) }
@@ -37,6 +37,8 @@ describe GroupsController do
   end
 
   shared_examples 'details view' do
+    let(:namespace) { group }
+
     it { is_expected.to render_template('groups/show') }
 
     context 'as atom' do
@@ -50,6 +52,8 @@ describe GroupsController do
         expect(assigns(:events).map(&:id)).to contain_exactly(event.id)
       end
     end
+
+    it_behaves_like 'namespace storage limit alert'
   end
 
   describe 'GET #show' do
@@ -270,6 +274,97 @@ describe GroupsController do
 
       it { expect(subject).to render_template(:new) }
     end
+
+    context 'when creating a group with `default_branch_protection` attribute' do
+      before do
+        sign_in(user)
+      end
+
+      subject do
+        post :create, params: { group: { name: 'new_group', path: 'new_group', default_branch_protection: Gitlab::Access::PROTECTION_NONE } }
+      end
+
+      context 'for users who have the ability to create a group with `default_branch_protection`' do
+        it 'creates group with the specified branch protection level' do
+          subject
+
+          expect(response).to have_gitlab_http_status(:found)
+          expect(Group.last.default_branch_protection).to eq(Gitlab::Access::PROTECTION_NONE)
+        end
+      end
+
+      context 'for users who do not have the ability to create a group with `default_branch_protection`' do
+        it 'does not create the group with the specified branch protection level' do
+          allow(Ability).to receive(:allowed?).and_call_original
+          allow(Ability).to receive(:allowed?).with(user, :create_group_with_default_branch_protection) { false }
+
+          subject
+
+          expect(response).to have_gitlab_http_status(:found)
+          expect(Group.last.default_branch_protection).not_to eq(Gitlab::Access::PROTECTION_NONE)
+        end
+      end
+    end
+
+    describe 'tracking group creation for onboarding issues experiment' do
+      before do
+        sign_in(user)
+      end
+
+      subject(:create_namespace) { post :create, params: { group: { name: 'new_group', path: 'new_group' } } }
+
+      context 'experiment disabled' do
+        before do
+          stub_experiment(onboarding_issues: false)
+        end
+
+        it 'does not track anything' do
+          expect(Gitlab::Tracking).not_to receive(:event)
+
+          create_namespace
+        end
+      end
+
+      context 'experiment enabled' do
+        before do
+          stub_experiment(onboarding_issues: true)
+        end
+
+        context 'and the user is part of the control group' do
+          before do
+            stub_experiment_for_user(onboarding_issues: false)
+          end
+
+          it 'tracks the event with the "created_namespace" action with the "control_group" property' do
+            expect(Gitlab::Tracking).to receive(:event).with(
+              'Growth::Conversion::Experiment::OnboardingIssues',
+              'created_namespace',
+              label: anything,
+              property: 'control_group'
+            )
+
+            create_namespace
+          end
+        end
+
+        context 'and the user is part of the experimental group' do
+          before do
+            stub_experiment_for_user(onboarding_issues: true)
+          end
+
+          it 'tracks the event with the "created_namespace" action with the "experimental_group" property' do
+            expect(Gitlab::Tracking).to receive(:event).with(
+              'Growth::Conversion::Experiment::OnboardingIssues',
+              'created_namespace',
+              label: anything,
+              property: 'experimental_group'
+            )
+
+            create_namespace
+          end
+        end
+      end
+    end
   end
 
   describe 'GET #index' do
@@ -423,11 +518,31 @@ describe GroupsController do
       expect(group.reload.project_creation_level).to eq(::Gitlab::Access::MAINTAINER_PROJECT_ACCESS)
     end
 
-    it 'updates the default_branch_protection successfully' do
-      post :update, params: { id: group.to_param, group: { default_branch_protection: ::Gitlab::Access::PROTECTION_DEV_CAN_MERGE } }
+    context 'updating default_branch_protection' do
+      subject do
+        put :update, params: { id: group.to_param, group: { default_branch_protection: ::Gitlab::Access::PROTECTION_DEV_CAN_MERGE } }
+      end
 
-      expect(response).to have_gitlab_http_status(:found)
-      expect(group.reload.default_branch_protection).to eq(::Gitlab::Access::PROTECTION_DEV_CAN_MERGE)
+      context 'for users who have the ability to update default_branch_protection' do
+        it 'updates the attribute' do
+          subject
+
+          expect(response).to have_gitlab_http_status(:found)
+          expect(group.reload.default_branch_protection).to eq(::Gitlab::Access::PROTECTION_DEV_CAN_MERGE)
+        end
+      end
+
+      context 'for users who do not have the ability to update default_branch_protection' do
+        it 'does not update the attribute' do
+          allow(Ability).to receive(:allowed?).and_call_original
+          allow(Ability).to receive(:allowed?).with(user, :update_default_branch_protection, group) { false }
+
+          subject
+
+          expect(response).to have_gitlab_http_status(:found)
+          expect(group.reload.default_branch_protection).not_to eq(::Gitlab::Access::PROTECTION_DEV_CAN_MERGE)
+        end
+      end
     end
 
     context 'when a project inside the group has container repositories' do
@@ -811,14 +926,17 @@ describe GroupsController do
     context 'when the endpoint receives requests above the rate limit' do
       before do
         sign_in(admin)
-        allow(Gitlab::ApplicationRateLimiter).to receive(:throttled?).and_return(true)
+
+        allow(Gitlab::ApplicationRateLimiter)
+          .to receive(:increment)
+          .and_return(Gitlab::ApplicationRateLimiter.rate_limits[:group_export][:threshold] + 1)
       end
 
       it 'throttles the endpoint' do
         post :export, params: { id: group.to_param }
 
-        expect(flash[:alert]).to eq('This endpoint has been requested too many times. Try again later.')
-        expect(response).to have_gitlab_http_status(:found)
+        expect(response.body).to eq('This endpoint has been requested too many times. Try again later.')
+        expect(response).to have_gitlab_http_status :too_many_requests
       end
     end
   end
@@ -882,14 +1000,17 @@ describe GroupsController do
     context 'when the endpoint receives requests above the rate limit' do
       before do
         sign_in(admin)
-        allow(Gitlab::ApplicationRateLimiter).to receive(:throttled?).and_return(true)
+
+        allow(Gitlab::ApplicationRateLimiter)
+          .to receive(:increment)
+          .and_return(Gitlab::ApplicationRateLimiter.rate_limits[:group_download_export][:threshold] + 1)
       end
 
       it 'throttles the endpoint' do
         get :download_export, params: { id: group.to_param }
 
-        expect(flash[:alert]).to eq('This endpoint has been requested too many times. Try again later.')
-        expect(response).to have_gitlab_http_status(:found)
+        expect(response.body).to eq('This endpoint has been requested too many times. Try again later.')
+        expect(response).to have_gitlab_http_status :too_many_requests
       end
     end
   end

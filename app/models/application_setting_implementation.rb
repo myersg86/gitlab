@@ -43,7 +43,10 @@ module ApplicationSettingImplementation
         authorized_keys_enabled: true, # TODO default to false if the instance is configured to use AuthorizedKeysCommand
         commit_email_hostname: default_commit_email_hostname,
         container_expiration_policies_enable_historic_entries: false,
+        container_registry_features: [],
         container_registry_token_expire_delay: 5,
+        container_registry_vendor: '',
+        container_registry_version: '',
         default_artifacts_expire_in: '30 days',
         default_branch_protection: Settings.gitlab['default_branch_protection'],
         default_ci_config_path: nil,
@@ -83,6 +86,7 @@ module ApplicationSettingImplementation
         local_markdown_version: 0,
         max_artifacts_size: Settings.artifacts['max_size'],
         max_attachment_size: Settings.gitlab['max_attachment_size'],
+        max_import_size: 50,
         mirror_available: true,
         outbound_local_requests_whitelist: [],
         password_authentication_enabled_for_git: true,
@@ -93,7 +97,7 @@ module ApplicationSettingImplementation
         plantuml_url: nil,
         polling_interval_multiplier: 1,
         project_export_enabled: true,
-        protected_ci_variables: false,
+        protected_ci_variables: true,
         push_event_hooks_limit: 3,
         push_event_activities_limit: 3,
         raw_blob_request_limit: 300,
@@ -101,6 +105,7 @@ module ApplicationSettingImplementation
         login_recaptcha_protection_enabled: false,
         repository_checks_enabled: true,
         repository_storages: ['default'],
+        repository_storages_weighted: { default: 100 },
         require_two_factor_authentication: false,
         restricted_visibility_levels: Settings.gitlab['restricted_visibility_levels'],
         session_expire_delay: Settings.gitlab['session_expire_delay'],
@@ -112,6 +117,8 @@ module ApplicationSettingImplementation
         sourcegraph_enabled: false,
         sourcegraph_url: nil,
         sourcegraph_public_only: true,
+        spam_check_endpoint_enabled: false,
+        spam_check_endpoint_url: nil,
         minimum_password_length: DEFAULT_MINIMUM_PASSWORD_LENGTH,
         namespace_storage_size_limit: 0,
         terminal_max_session_time: 0,
@@ -148,7 +155,7 @@ module ApplicationSettingImplementation
         snowplow_app_id: nil,
         snowplow_iglu_registry_url: nil,
         custom_http_clone_url_root: nil,
-        productivity_analytics_start_date: Time.now,
+        productivity_analytics_start_date: Time.current,
         snippet_size_limit: 50.megabytes
       }
     end
@@ -255,6 +262,10 @@ module ApplicationSettingImplementation
 
   def repository_storages
     Array(read_attribute(:repository_storages))
+  end
+
+  def repository_storages_weighted
+    read_attribute(:repository_storages_weighted)
   end
 
   def commit_email_hostname
@@ -414,6 +425,12 @@ module ApplicationSettingImplementation
   def check_repository_storages
     invalid = repository_storages - Gitlab.config.repositories.storages.keys
     errors.add(:repository_storages, "can't include: #{invalid.join(", ")}") unless
+      invalid.empty?
+  end
+
+  def check_repository_storages_weighted
+    invalid = repository_storages_weighted.keys - Gitlab.config.repositories.storages.keys
+    errors.add(:repository_storages_weighted, "can't include: %{invalid_storages}" % { invalid_storages: invalid.join(", ") }) unless
       invalid.empty?
   end
 

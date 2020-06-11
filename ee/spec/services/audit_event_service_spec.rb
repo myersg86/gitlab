@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe AuditEventService do
+RSpec.describe AuditEventService do
   let(:project) { create(:project) }
   let(:user) { create(:user, current_sign_in_ip: '192.168.68.104') }
   let(:project_member) { create(:project_member, user: user, expires_at: 1.day.from_now) }
@@ -142,6 +142,23 @@ describe AuditEventService do
           expect(event[:details][:ip_address]).to eq(user.current_sign_in_ip)
         end
       end
+
+      context 'for an impersonated user' do
+        let(:impersonator) { build(:user, name: 'Donald Duck', current_sign_in_ip: '192.168.88.88') }
+        let(:user) { build(:user, impersonator: impersonator) }
+
+        it 'has the impersonator IP address' do
+          event = service.security_event
+
+          expect(event[:details][:ip_address]).to eq('192.168.88.88')
+        end
+
+        it 'has the impersonator name' do
+          event = service.security_event
+
+          expect(event[:details][:impersonated_by]).to eq('Donald Duck')
+        end
+      end
     end
   end
 
@@ -247,6 +264,10 @@ describe AuditEventService do
 
     it 'has the right author' do
       expect(event.details[:author_name]).to eq(author_name)
+    end
+
+    it 'has the right target_details' do
+      expect(event.details[:target_details]).to eq(author_name)
     end
 
     it 'has the right auth method for OAUTH' do

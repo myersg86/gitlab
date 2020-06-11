@@ -13,7 +13,8 @@ module Projects
         dependency_scanning: 'user/application_security/dependency_scanning/index',
         license_management: 'user/compliance/license_compliance/index',
         license_scanning: 'user/compliance/license_compliance/index',
-        sast: 'user/application_security/sast/index'
+        sast: 'user/application_security/sast/index',
+        secret_detection: 'user/application_security/secret_detection/index'
       }.freeze
 
       def self.localized_scan_descriptions
@@ -23,7 +24,8 @@ module Projects
           dependency_scanning: _('Analyze your dependencies for known vulnerabilities.'),
           license_management: _('Search your project dependencies for their licenses and apply policies.'),
           license_scanning: _('Search your project dependencies for their licenses and apply policies.'),
-          sast: _('Analyze your source code for known vulnerabilities.')
+          sast: _('Analyze your source code for known vulnerabilities.'),
+          secret_detection: _('Analyze your source code and git history for secrets')
         }.freeze
       end
 
@@ -34,7 +36,8 @@ module Projects
           dependency_scanning: _('Dependency Scanning'),
           license_management: 'License Management',
           license_scanning: _('License Compliance'),
-          sast: _('Static Application Security Testing (SAST)')
+          sast: _('Static Application Security Testing (SAST)'),
+          secret_detection: _('Secret Detection')
         }.freeze
       end
 
@@ -44,7 +47,13 @@ module Projects
           auto_devops_help_page_path: help_page_path('topics/autodevops/index'),
           features: features.to_json,
           help_page_path: help_page_path('user/application_security/index'),
-          latest_pipeline_path: latest_pipeline_path
+          latest_pipeline_path: latest_pipeline_path,
+          auto_fix_enabled: {
+            dependency_scanning: true,
+            container_scanning: true
+          }.to_json,
+          can_toggle_auto_fix_settings: auto_fix_permission,
+          auto_fix_user_path: '/' # TODO: real link will be updated with https://gitlab.com/gitlab-org/gitlab/-/issues/215669
         }
       end
 

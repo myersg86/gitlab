@@ -1,5 +1,6 @@
 <script>
-import { GlIcon, GlPopover, GlLink } from '@gitlab/ui';
+import { GlIcon, GlPopover, GlLink, GlSprintf } from '@gitlab/ui';
+import { s__ } from '~/locale';
 import popover from '~/vue_shared/directives/popover';
 
 import { VALUE_TYPE, CUSTOM_TYPE, REPLICATION_HELP_URL } from '../constants';
@@ -16,6 +17,7 @@ export default {
     GlIcon,
     GlPopover,
     GlLink,
+    GlSprintf,
   },
   directives: {
     popover,
@@ -38,16 +40,6 @@ export default {
     itemValue: {
       type: [Object, String, Number],
       required: true,
-    },
-    itemValueStale: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    itemValueStaleTooltip: {
-      type: String,
-      required: false,
-      default: '',
     },
     itemValueType: {
       type: String,
@@ -87,6 +79,7 @@ export default {
     },
   },
   replicationHelpUrl: REPLICATION_HELP_URL,
+  disabledText: s__('Geo|Synchronization of %{itemTitle} is disabled.'),
 };
 </script>
 
@@ -104,10 +97,7 @@ export default {
         :item-enabled="itemEnabled"
         :item-title="itemTitle"
         :item-value="itemValue"
-        :item-value-stale="itemValueStale"
-        :item-value-stale-tooltip="itemValueStaleTooltip"
         :details-path="detailsPath"
-        :class="{ 'd-flex': itemValueStale }"
         class="mt-1"
       />
       <template v-if="isValueTypeCustom">
@@ -126,7 +116,7 @@ export default {
         class="d-inline-flex align-items-center cursor-pointer"
       >
         <gl-icon name="canceled-circle" :size="14" class="mr-1 text-secondary-300" />
-        <span ref="disabledText" class="text-secondary-600 gl-font-size-small">{{
+        <span ref="disabledText" class="text-secondary-600 gl-font-sm">{{
           __('Synchronization disabled')
         }}</span>
       </div>
@@ -137,14 +127,13 @@ export default {
         :css-classes="['w-100']"
       >
         <section>
-          <p>{{ __('Synchronization of container repositories is disabled.') }}</p>
+          <gl-sprintf :message="$options.disabledText">
+            <template #itemTitle>{{ itemTitle.toLowerCase() }}</template>
+          </gl-sprintf>
           <div class="mt-3">
-            <gl-link
-              class="gl-font-size-small"
-              :href="$options.replicationHelpUrl"
-              target="_blank"
-              >{{ __('Learn how to enable synchronization') }}</gl-link
-            >
+            <gl-link class="gl-font-sm" :href="$options.replicationHelpUrl" target="_blank">{{
+              __('Learn how to enable synchronization')
+            }}</gl-link>
           </div>
         </section>
       </gl-popover>

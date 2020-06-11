@@ -1,46 +1,43 @@
-import { mount } from '@vue/test-utils';
-import { GlTable, GlPagination, GlSkeletonLoader } from '@gitlab/ui';
+import { shallowMount } from '@vue/test-utils';
+import { GlPagination } from '@gitlab/ui';
 import Tracking from '~/tracking';
-import stubChildren from 'helpers/stub_children';
 import component from '~/registry/explorer/pages/details.vue';
-import store from '~/registry/explorer/stores/';
-import { SET_MAIN_LOADING } from '~/registry/explorer/stores/mutation_types/';
+import DeleteAlert from '~/registry/explorer/components/details_page/delete_alert.vue';
+import DetailsHeader from '~/registry/explorer/components/details_page/details_header.vue';
+import TagsLoader from '~/registry/explorer/components/details_page/tags_loader.vue';
+import EmptyTagsState from '~/registry/explorer/components/details_page/empty_tags_state.vue';
+import { createStore } from '~/registry/explorer/stores/';
 import {
-  DELETE_TAG_SUCCESS_MESSAGE,
-  DELETE_TAG_ERROR_MESSAGE,
-  DELETE_TAGS_SUCCESS_MESSAGE,
-  DELETE_TAGS_ERROR_MESSAGE,
-} from '~/registry/explorer/constants';
+  SET_MAIN_LOADING,
+  SET_TAGS_LIST_SUCCESS,
+  SET_TAGS_PAGINATION,
+  SET_INITIAL_STATE,
+} from '~/registry/explorer/stores/mutation_types/';
+
 import { tagsListResponse } from '../mock_data';
-import { GlModal } from '../stubs';
-import { $toast } from '../../shared/mocks';
+import { TagsTable, DeleteModal } from '../stubs';
 
 describe('Details Page', () => {
   let wrapper;
   let dispatchSpy;
+  let store;
 
-  const findDeleteModal = () => wrapper.find(GlModal);
+  const findDeleteModal = () => wrapper.find(DeleteModal);
   const findPagination = () => wrapper.find(GlPagination);
-  const findSkeletonLoader = () => wrapper.find(GlSkeletonLoader);
-  const findMainCheckbox = () => wrapper.find({ ref: 'mainCheckbox' });
-  const findFirstRowItem = ref => wrapper.find({ ref });
-  const findBulkDeleteButton = () => wrapper.find({ ref: 'bulkDeleteButton' });
-  // findAll and refs seems to no work falling back to class
-  const findAllDeleteButtons = () => wrapper.findAll('.js-delete-registry');
-  const findAllCheckboxes = () => wrapper.findAll('.js-row-checkbox');
-  const findCheckedCheckboxes = () => findAllCheckboxes().filter(c => c.attributes('checked'));
-  const findFirsTagColumn = () => wrapper.find('.js-tag-column');
+  const findTagsLoader = () => wrapper.find(TagsLoader);
+  const findTagsTable = () => wrapper.find(TagsTable);
+  const findDeleteAlert = () => wrapper.find(DeleteAlert);
+  const findDetailsHeader = () => wrapper.find(DetailsHeader);
+  const findEmptyTagsState = () => wrapper.find(EmptyTagsState);
 
   const routeId = window.btoa(JSON.stringify({ name: 'foo', tags_path: 'bar' }));
 
   const mountComponent = options => {
-    wrapper = mount(component, {
+    wrapper = shallowMount(component, {
       store,
       stubs: {
-        ...stubChildren(component),
-        GlModal,
-        GlSprintf: false,
-        GlTable,
+        TagsTable,
+        DeleteModal,
       },
       mocks: {
         $route: {
@@ -48,41 +45,54 @@ describe('Details Page', () => {
             id: routeId,
           },
         },
-        $toast,
       },
       ...options,
     });
   };
 
   beforeEach(() => {
+    store = createStore();
     dispatchSpy = jest.spyOn(store, 'dispatch');
-    store.dispatch('receiveTagsListSuccess', tagsListResponse);
+    dispatchSpy.mockResolvedValue();
+    store.commit(SET_TAGS_LIST_SUCCESS, tagsListResponse.data);
+    store.commit(SET_TAGS_PAGINATION, tagsListResponse.headers);
     jest.spyOn(Tracking, 'event');
   });
 
   afterEach(() => {
     wrapper.destroy();
+    wrapper = null;
   });
 
   describe('when isLoading is true', () => {
     beforeEach(() => {
       mountComponent();
-      store.dispatch('receiveTagsListSuccess', { ...tagsListResponse, data: [] });
       store.commit(SET_MAIN_LOADING, true);
+      return wrapper.vm.$nextTick();
     });
 
-    afterAll(() => store.commit(SET_MAIN_LOADING, false));
+    afterEach(() => store.commit(SET_MAIN_LOADING, false));
 
-    it('has a skeleton loader', () => {
-      expect(findSkeletonLoader().exists()).toBe(true);
-    });
-
-    it('does not have list items', () => {
-      expect(findFirstRowItem('rowCheckbox').exists()).toBe(false);
+    it('binds isLoading to tags-table', () => {
+      expect(findTagsTable().props('isLoading')).toBe(true);
     });
 
     it('does not show pagination', () => {
       expect(findPagination().exists()).toBe(false);
+    });
+  });
+
+  describe('table slots', () => {
+    beforeEach(() => {
+      mountComponent();
+    });
+
+    it('has the empty state', () => {
+      expect(findEmptyTagsState().exists()).toBe(true);
+    });
+
+    it('has a skeleton loader', () => {
+      expect(findTagsLoader().exists()).toBe(true);
     });
   });
 
@@ -91,177 +101,56 @@ describe('Details Page', () => {
       mountComponent();
     });
 
-    it.each([
-      'rowCheckbox',
-      'rowName',
-      'rowShortRevision',
-      'rowSize',
-      'rowTime',
-      'singleDeleteButton',
-    ])('%s exist in the table', element => {
-      expect(findFirstRowItem(element).exists()).toBe(true);
+    it('exists', () => {
+      expect(findTagsTable().exists()).toBe(true);
     });
 
-    describe('header checkbox', () => {
-      beforeEach(() => {
-        mountComponent();
-      });
-
-      it('exists', () => {
-        expect(findMainCheckbox().exists()).toBe(true);
-      });
-
-      it('if selected set selectedItem and allSelected', () => {
-        findMainCheckbox().vm.$emit('change');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(findMainCheckbox().attributes('checked')).toBeTruthy();
-          expect(findCheckedCheckboxes()).toHaveLength(store.state.tags.length);
-        });
-      });
-
-      it('if deselect unset selectedItem and allSelected', () => {
-        wrapper.setData({ selectedItems: [1, 2], selectAllChecked: true });
-        findMainCheckbox().vm.$emit('change');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(findMainCheckbox().attributes('checked')).toBe(undefined);
-          expect(findCheckedCheckboxes()).toHaveLength(0);
-        });
+    it('has the correct props bound', () => {
+      expect(findTagsTable().props()).toMatchObject({
+        isDesktop: true,
+        isLoading: false,
+        tags: store.state.tags,
       });
     });
 
-    describe('row checkbox', () => {
-      beforeEach(() => {
-        mountComponent();
-      });
-
-      it('if selected adds item to selectedItems', () => {
-        findFirstRowItem('rowCheckbox').vm.$emit('change');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(wrapper.vm.selectedItems).toEqual([1]);
-          expect(findFirstRowItem('rowCheckbox').attributes('checked')).toBeTruthy();
-        });
-      });
-
-      it('if deselect remove index from selectedItems', () => {
-        wrapper.setData({ selectedItems: [1] });
-        findFirstRowItem('rowCheckbox').vm.$emit('change');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(wrapper.vm.selectedItems.length).toBe(0);
-          expect(findFirstRowItem('rowCheckbox').attributes('checked')).toBe(undefined);
-        });
-      });
-    });
-
-    describe('header delete button', () => {
-      beforeEach(() => {
-        mountComponent();
-      });
-
-      it('exists', () => {
-        expect(findBulkDeleteButton().exists()).toBe(true);
-      });
-
-      it('is disabled if no item is selected', () => {
-        expect(findBulkDeleteButton().attributes('disabled')).toBe('true');
-      });
-
-      it('is enabled if at least one item is selected', () => {
-        wrapper.setData({ selectedItems: [1] });
-        return wrapper.vm.$nextTick().then(() => {
-          expect(findBulkDeleteButton().attributes('disabled')).toBeFalsy();
-        });
-      });
-
-      describe('on click', () => {
-        it('when one item is selected', () => {
-          wrapper.setData({ selectedItems: [1] });
-          findBulkDeleteButton().vm.$emit('click');
-          return wrapper.vm.$nextTick().then(() => {
-            expect(findDeleteModal().html()).toContain(
-              'You are about to remove <b>foo</b>. Are you sure?',
-            );
-            expect(GlModal.methods.show).toHaveBeenCalled();
-            expect(Tracking.event).toHaveBeenCalledWith(undefined, 'click_button', {
-              label: 'registry_tag_delete',
-            });
-          });
+    describe('deleteEvent', () => {
+      describe('single item', () => {
+        beforeEach(() => {
+          findTagsTable().vm.$emit('delete', [store.state.tags[0].name]);
         });
 
-        it('when multiple items are selected', () => {
-          wrapper.setData({ selectedItems: [0, 1] });
-          findBulkDeleteButton().vm.$emit('click');
-          return wrapper.vm.$nextTick().then(() => {
-            expect(findDeleteModal().html()).toContain(
-              'You are about to remove <b>2</b> tags. Are you sure?',
-            );
-            expect(GlModal.methods.show).toHaveBeenCalled();
-            expect(Tracking.event).toHaveBeenCalledWith(undefined, 'click_button', {
-              label: 'bulk_registry_tag_delete',
-            });
-          });
+        it('open the modal', () => {
+          expect(DeleteModal.methods.show).toHaveBeenCalled();
         });
-      });
-    });
 
-    describe('row delete button', () => {
-      beforeEach(() => {
-        mountComponent();
-      });
+        it('maps the selection to itemToBeDeleted', () => {
+          expect(wrapper.vm.itemsToBeDeleted).toEqual([store.state.tags[0]]);
+        });
 
-      it('exists', () => {
-        expect(
-          findAllDeleteButtons()
-            .at(0)
-            .exists(),
-        ).toBe(true);
-      });
-
-      it('is disabled if the item has no destroy_path', () => {
-        expect(
-          findAllDeleteButtons()
-            .at(1)
-            .attributes('disabled'),
-        ).toBe('true');
-      });
-
-      it('on click', () => {
-        findAllDeleteButtons()
-          .at(0)
-          .vm.$emit('click');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(findDeleteModal().html()).toContain(
-            'You are about to remove <b>bar</b>. Are you sure?',
-          );
-          expect(GlModal.methods.show).toHaveBeenCalled();
+        it('tracks a single delete event', () => {
           expect(Tracking.event).toHaveBeenCalledWith(undefined, 'click_button', {
             label: 'registry_tag_delete',
           });
         });
       });
-    });
 
-    describe('tag cell', () => {
-      describe('on desktop viewport', () => {
+      describe('multiple items', () => {
         beforeEach(() => {
-          mountComponent();
+          findTagsTable().vm.$emit('delete', store.state.tags.map(t => t.name));
         });
 
-        it('has class w-25', () => {
-          expect(findFirsTagColumn().classes()).toContain('w-25');
+        it('open the modal', () => {
+          expect(DeleteModal.methods.show).toHaveBeenCalled();
         });
-      });
 
-      describe('on mobile viewport', () => {
-        beforeEach(() => {
-          mountComponent({
-            data() {
-              return { isDesktop: false };
-            },
+        it('maps the selection to itemToBeDeleted', () => {
+          expect(wrapper.vm.itemsToBeDeleted).toEqual(store.state.tags);
+        });
+
+        it('tracks a single delete event', () => {
+          expect(Tracking.event).toHaveBeenCalledWith(undefined, 'click_button', {
+            label: 'bulk_registry_tag_delete',
           });
-        });
-
-        it('does not has class w-25', () => {
-          expect(findFirsTagColumn().classes()).not.toContain('w-25');
         });
       });
     });
@@ -294,105 +183,86 @@ describe('Details Page', () => {
   });
 
   describe('modal', () => {
-    beforeEach(() => {
-      mountComponent();
-    });
-
     it('exists', () => {
+      mountComponent();
       expect(findDeleteModal().exists()).toBe(true);
     });
 
-    describe('when ok event is emitted', () => {
-      beforeEach(() => {
-        dispatchSpy.mockResolvedValue();
-      });
-
-      it('tracks confirm_delete', () => {
-        const deleteModal = findDeleteModal();
-        deleteModal.vm.$emit('ok');
-        return wrapper.vm.$nextTick().then(() => {
-          expect(Tracking.event).toHaveBeenCalledWith(undefined, 'confirm_delete', {
-            label: 'registry_tag_delete',
-          });
-        });
-      });
-
-      describe('when only one element is selected', () => {
-        it('execute the delete and remove selection', () => {
-          wrapper.setData({ itemsToBeDeleted: [0] });
-          findDeleteModal().vm.$emit('ok');
-
-          expect(store.dispatch).toHaveBeenCalledWith('requestDeleteTag', {
-            tag: store.state.tags[0],
-            params: wrapper.vm.$route.params.id,
-          });
-          // itemsToBeDeleted is not represented in the DOM, is used as parking variable between selected and deleted items
-          expect(wrapper.vm.itemsToBeDeleted).toEqual([]);
-          expect(findCheckedCheckboxes()).toHaveLength(0);
-        });
-
-        it('show success toast on successful delete', () => {
-          return wrapper.vm.handleSingleDelete(0).then(() => {
-            expect(wrapper.vm.$toast.show).toHaveBeenCalledWith(DELETE_TAG_SUCCESS_MESSAGE, {
-              type: 'success',
-            });
-          });
-        });
-
-        it('show error toast on erred delete', () => {
-          dispatchSpy.mockRejectedValue();
-          return wrapper.vm.handleSingleDelete(0).then(() => {
-            expect(wrapper.vm.$toast.show).toHaveBeenCalledWith(DELETE_TAG_ERROR_MESSAGE, {
-              type: 'error',
-            });
-          });
-        });
-      });
-
-      describe('when multiple elements are selected', () => {
-        beforeEach(() => {
-          wrapper.setData({ itemsToBeDeleted: [0, 1] });
-        });
-
-        it('execute the delete and remove selection', () => {
-          findDeleteModal().vm.$emit('ok');
-
-          expect(store.dispatch).toHaveBeenCalledWith('requestDeleteTags', {
-            ids: store.state.tags.map(t => t.name),
-            params: wrapper.vm.$route.params.id,
-          });
-          // itemsToBeDeleted is not represented in the DOM, is used as parking variable between selected and deleted items
-          expect(wrapper.vm.itemsToBeDeleted).toEqual([]);
-          expect(findCheckedCheckboxes()).toHaveLength(0);
-        });
-
-        it('show success toast on successful delete', () => {
-          return wrapper.vm.handleMultipleDelete(0).then(() => {
-            expect(wrapper.vm.$toast.show).toHaveBeenCalledWith(DELETE_TAGS_SUCCESS_MESSAGE, {
-              type: 'success',
-            });
-          });
-        });
-
-        it('show error toast on erred delete', () => {
-          dispatchSpy.mockRejectedValue();
-          return wrapper.vm.handleMultipleDelete(0).then(() => {
-            expect(wrapper.vm.$toast.show).toHaveBeenCalledWith(DELETE_TAGS_ERROR_MESSAGE, {
-              type: 'error',
-            });
-          });
-        });
-      });
-    });
-
-    it('tracks cancel_delete when cancel event is emitted', () => {
-      const deleteModal = findDeleteModal();
-      deleteModal.vm.$emit('cancel');
-      return wrapper.vm.$nextTick().then(() => {
+    describe('cancel event', () => {
+      it('tracks cancel_delete', () => {
+        mountComponent();
+        findDeleteModal().vm.$emit('cancel');
         expect(Tracking.event).toHaveBeenCalledWith(undefined, 'cancel_delete', {
           label: 'registry_tag_delete',
         });
       });
+    });
+
+    describe('confirmDelete event', () => {
+      describe('when one item is selected to be deleted', () => {
+        beforeEach(() => {
+          mountComponent();
+          findTagsTable().vm.$emit('delete', [store.state.tags[0].name]);
+        });
+
+        it('dispatch requestDeleteTag with the right parameters', () => {
+          findDeleteModal().vm.$emit('confirmDelete');
+          expect(dispatchSpy).toHaveBeenCalledWith('requestDeleteTag', {
+            tag: store.state.tags[0],
+            params: routeId,
+          });
+        });
+      });
+
+      describe('when more than one item is selected to be deleted', () => {
+        beforeEach(() => {
+          mountComponent();
+          findTagsTable().vm.$emit('delete', store.state.tags.map(t => t.name));
+        });
+
+        it('dispatch requestDeleteTags with the right parameters', () => {
+          findDeleteModal().vm.$emit('confirmDelete');
+          expect(dispatchSpy).toHaveBeenCalledWith('requestDeleteTags', {
+            ids: store.state.tags.map(t => t.name),
+            params: routeId,
+          });
+        });
+      });
+    });
+  });
+
+  describe('Header', () => {
+    it('exists', () => {
+      mountComponent();
+      expect(findDetailsHeader().exists()).toBe(true);
+    });
+
+    it('has the correct props', () => {
+      mountComponent();
+      expect(findDetailsHeader().props()).toEqual({ imageName: 'foo' });
+    });
+  });
+
+  describe('Delete Alert', () => {
+    const config = {
+      isAdmin: true,
+      garbageCollectionHelpPagePath: 'baz',
+    };
+    const deleteAlertType = 'success_tag';
+
+    it('exists', () => {
+      mountComponent();
+      expect(findDeleteAlert().exists()).toBe(true);
+    });
+
+    it('has the correct props', () => {
+      store.commit(SET_INITIAL_STATE, { ...config });
+      mountComponent({
+        data: () => ({
+          deleteAlertType,
+        }),
+      });
+      expect(findDeleteAlert().props()).toEqual({ ...config, deleteAlertType });
     });
   });
 });

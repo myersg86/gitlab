@@ -6,7 +6,7 @@ FactoryBot.define do
       failure_reason { Ci::Build.failure_reasons[:protected_environment_failure] }
     end
 
-    %i[codequality container_scanning dast dependency_scanning license_management license_scanning performance sast].each do |report_type|
+    %i[codequality container_scanning dast dependency_scanning license_management license_scanning performance sast secret_detection].each do |report_type|
       trait "legacy_#{report_type}".to_sym do
         success
         artifacts
@@ -54,6 +54,12 @@ FactoryBot.define do
       end
     end
 
+    trait :secret_detection_feature_branch do
+      after(:build) do |build|
+        build.job_artifacts << create(:ee_ci_job_artifact, :secret_detection_feature_branch, job: build)
+      end
+    end
+
     trait :dast_feature_branch do
       after(:build) do |build|
         build.job_artifacts << create(:ee_ci_job_artifact, :dast_feature_branch, job: build)
@@ -69,12 +75,6 @@ FactoryBot.define do
     trait :corrupted_container_scanning_report do
       after(:build) do |build|
         build.job_artifacts << create(:ee_ci_job_artifact, :corrupted_container_scanning_report, job: build)
-      end
-    end
-
-    trait :deprecated_container_scanning_report do
-      after(:build) do |build|
-        build.job_artifacts << create(:ee_ci_job_artifact, :deprecated_container_scanning_report, job: build)
       end
     end
 
@@ -119,6 +119,12 @@ FactoryBot.define do
         after :build do |build|
           build.job_artifacts << build(:ee_ci_job_artifact, :license_scan, :"v#{version}", job: build)
         end
+      end
+    end
+
+    trait :requirements_report do
+      after(:build) do |build|
+        build.job_artifacts << create(:ee_ci_job_artifact, :requirements, job: build)
       end
     end
   end

@@ -6,19 +6,15 @@ module API
       expose :merged_by, using: Entities::UserBasic do |merge_request, _options|
         merge_request.metrics&.merged_by
       end
-
       expose :merged_at do |merge_request, _options|
         merge_request.metrics&.merged_at
       end
-
       expose :closed_by, using: Entities::UserBasic do |merge_request, _options|
         merge_request.metrics&.latest_closed_by
       end
-
       expose :closed_at do |merge_request, _options|
         merge_request.metrics&.latest_closed_at
       end
-
       expose :title_html, if: -> (_, options) { options[:render_html] } do |entity|
         MarkupHelper.markdown_field(entity, :title)
       end
@@ -33,7 +29,6 @@ module API
         merge_request.assignee
       end
       expose :author, :assignees, using: Entities::UserBasic
-
       expose :source_project_id, :target_project_id
       expose :labels do |merge_request, options|
         if options[:with_labels_details]
@@ -50,8 +45,10 @@ module API
       # use `MergeRequest#mergeable?` instead (boolean).
       # See https://gitlab.com/gitlab-org/gitlab-foss/issues/42344 for more
       # information.
-      expose :merge_status do |merge_request|
-        merge_request.check_mergeability(async: true)
+      #
+      # For list endpoints, we skip the recheck by default, since it's expensive
+      expose :merge_status do |merge_request, options|
+        merge_request.check_mergeability(async: true) unless options[:skip_merge_status_recheck]
         merge_request.public_merge_status
       end
       expose :diff_head_sha, as: :sha
@@ -83,11 +80,8 @@ module API
       end
 
       expose :squash
-
       expose :task_completion_status
-
       expose :cannot_be_merged?, as: :has_conflicts
-
       expose :mergeable_discussions_state?, as: :blocking_discussions_resolved
     end
   end

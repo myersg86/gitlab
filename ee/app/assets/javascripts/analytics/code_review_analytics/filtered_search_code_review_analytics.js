@@ -1,7 +1,9 @@
 import CodeReviewAnalyticsFilteredSearchTokenKeys from './code_review_analytics_filtered_search_token_keys';
-import FilteredSearchManager from '~/filtered_search/filtered_search_manager';
+import FilteredSearchManager from 'ee_else_ce/filtered_search/filtered_search_manager';
 import { urlParamsToObject } from '~/lib/utils/common_utils';
+import { __ } from '~/locale';
 import store from './store';
+import transformFilters from './utils';
 
 export default class FilteredSearchCodeReviewAnalytics extends FilteredSearchManager {
   constructor() {
@@ -11,6 +13,7 @@ export default class FilteredSearchCodeReviewAnalytics extends FilteredSearchMan
       stateFiltersSelector: '.issues-state-filters',
       isGroup: true,
       filteredSearchTokenKeys: CodeReviewAnalyticsFilteredSearchTokenKeys,
+      placeholder: __('Filter results...'),
     });
 
     this.isHandledAsync = true;
@@ -21,6 +24,11 @@ export default class FilteredSearchCodeReviewAnalytics extends FilteredSearchMan
    */
   updateObject = path => {
     const filters = urlParamsToObject(path);
-    store.dispatch('setFilters', filters);
+    const { selectedLabels, selectedMilestone } = transformFilters(filters);
+
+    store.dispatch('filters/setFilters', {
+      labelNames: selectedLabels,
+      milestoneTitle: selectedMilestone,
+    });
   };
 }

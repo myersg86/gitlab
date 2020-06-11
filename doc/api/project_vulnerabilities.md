@@ -1,6 +1,6 @@
 # Project Vulnerabilities API **(ULTIMATE)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/10242) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/10242) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.6.
 
 CAUTION: **Caution:**
 This API is currently in development and is protected by a **disabled**
@@ -43,8 +43,8 @@ GET /projects/:id/vulnerabilities
 | ------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `id`          | integer or string | yes      | The ID or [URL-encoded path of the project](README.md#namespaced-path-encoding) owned by the authenticated user.                                                            |
 
-```bash
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/4/vulnerabilities
+```shell
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/4/vulnerabilities"
 ```
 
 Example response:
@@ -133,7 +133,7 @@ its source Vulnerability Finding, or with these default values:
 | `confidence` | The `confidence` attribute of a Vulnerability Finding |
 
 ```shell
-curl --header POST "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/1/vulnerabilities?finding_id=1
+curl --header POST "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/vulnerabilities?finding_id=1"
 ```
 
 Example response:

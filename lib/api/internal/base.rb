@@ -30,10 +30,6 @@ module API
           project.http_url_to_repo
         end
 
-        def ee_post_receive_response_hook(response)
-          # Hook for EE to add messages
-        end
-
         def check_allowed(params)
           # This is a separate method so that EE can alter its behaviour more
           # easily.
@@ -43,12 +39,9 @@ module API
           Gitlab::Git::HookEnv.set(gl_repository, env) if container
 
           actor.update_last_used_at!
-          access_checker = access_checker_for(actor, params[:protocol])
 
           check_result = begin
-                           result = access_checker.check(params[:action], params[:changes])
-                           @project ||= access_checker.project
-                           result
+                           access_check!(actor, params)
                          rescue Gitlab::GitAccess::ForbiddenError => e
                            # The return code needs to be 401. If we return 403
                            # the custom message we return won't be shown to the user
@@ -76,13 +69,14 @@ module API
             }
 
             # Custom option for git-receive-pack command
+            if Feature.enabled?(:gitaly_upload_pack_filter, project, default_enabled: true)
+              payload[:git_config_options] << "uploadpack.allowFilter=true" << "uploadpack.allowAnySHA1InWant=true"
+            end
+
             receive_max_input_size = Gitlab::CurrentSettings.receive_max_input_size.to_i
+
             if receive_max_input_size > 0
               payload[:git_config_options] << "receive.maxInputSize=#{receive_max_input_size.megabytes}"
-
-              if Feature.enabled?(:gitaly_upload_pack_filter, project)
-                payload[:git_config_options] << "uploadpack.allowFilter=true" << "uploadpack.allowAnySHA1InWant=true"
-              end
             end
 
             response_with_status(**payload)
@@ -90,6 +84,17 @@ module API
             response_with_status(code: 300, payload: check_result.payload, gl_console_messages: check_result.console_messages)
           else
             response_with_status(code: 500, success: false, message: UNKNOWN_CHECK_RESULT_ERROR)
+          end
+        end
+
+        def access_check!(actor, params)
+          access_checker = access_checker_for(actor, params[:protocol])
+          access_checker.check(params[:action], params[:changes]).tap do |result|
+            break result if @project || !repo_type.project?
+
+            # If we have created a project directly from a git push
+            # we have to assign its value to both @project and @container
+            @project = @container = access_checker.project
           end
         end
       end
@@ -108,10 +113,6 @@ module API
         #   check_ip - optional, only in EE version, may limit access to
         #     group resources based on its IP restrictions
         post "/allowed" do
-          if repo_type.snippet? && params[:protocol] != 'web' && Feature.disabled?(:version_snippets, actor.user)
-            break response_with_status(code: 401, success: false, message: 'Snippet git access is disabled.')
-          end
-
           # It was moved to a separate method so that EE can alter its behaviour more
           # easily.
           check_allowed(params)
@@ -207,8 +208,6 @@ module API
           status 200
 
           response = PostReceiveService.new(actor.user, repository, project, params).execute
-
-          ee_post_receive_response_hook(response)
 
           present response, with: Entities::InternalPostReceive::Response
         end

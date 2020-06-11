@@ -1,8 +1,8 @@
 import Vuex from 'vuex';
 import { createLocalVue, shallowMount } from '@vue/test-utils';
 import MockAdapter from 'axios-mock-adapter';
-import { GlToggle } from '@gitlab/ui';
-import { LEGACY_FLAG, NEW_VERSION_FLAG } from 'ee/feature_flags/constants';
+import { GlToggle, GlAlert } from '@gitlab/ui';
+import { LEGACY_FLAG, NEW_VERSION_FLAG, NEW_FLAG_ALERT } from 'ee/feature_flags/constants';
 import Form from 'ee/feature_flags/components/form.vue';
 import editModule from 'ee/feature_flags/store/modules/edit';
 import EditFeatureFlag from 'ee/feature_flags/components/edit_feature_flag.vue';
@@ -22,7 +22,7 @@ describe('Edit feature flag form', () => {
     },
   });
 
-  const factory = () => {
+  const factory = (opts = {}) => {
     if (wrapper) {
       wrapper.destroy();
       wrapper = null;
@@ -33,6 +33,7 @@ describe('Edit feature flag form', () => {
         endpoint: `${TEST_HOST}/feature_flags.json`,
         path: '/feature_flags',
         environmentsEndpoint: 'environments.json',
+        projectId: '8',
       },
       store,
       provide: {
@@ -40,6 +41,7 @@ describe('Edit feature flag form', () => {
           featureFlagsNewVersion: true,
         },
       },
+      ...opts,
     });
   };
 
@@ -90,6 +92,10 @@ describe('Edit feature flag form', () => {
     expect(wrapper.find(GlToggle).props('value')).toBe(true);
   });
 
+  it('should not alert users that feature flags are changing soon', () => {
+    expect(wrapper.find(GlAlert).text()).not.toBe(NEW_FLAG_ALERT);
+  });
+
   describe('with error', () => {
     it('should render the error', () => {
       store.dispatch('edit/receiveUpdateFeatureFlagError', { message: ['The name is required'] });
@@ -134,6 +140,13 @@ describe('Edit feature flag form', () => {
       return axios.waitForAll().then(() => {
         expect(wrapper.find(Form).props('version')).toBe(NEW_VERSION_FLAG);
       });
+    });
+  });
+
+  describe('without new version flags', () => {
+    beforeEach(() => factory({ provide: { glFeatures: { featureFlagsNewVersion: false } } }));
+    it('should alert users that feature flags are changing soon', () => {
+      expect(wrapper.find(GlAlert).text()).toBe(NEW_FLAG_ALERT);
     });
   });
 });

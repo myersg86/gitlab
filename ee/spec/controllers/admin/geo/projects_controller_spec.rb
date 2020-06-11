@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Admin::Geo::ProjectsController, :geo do
+RSpec.describe Admin::Geo::ProjectsController, :geo do
   include EE::GeoHelpers
 
   let_it_be(:admin) { create(:admin) }
@@ -62,16 +62,6 @@ describe Admin::Geo::ProjectsController, :geo do
           expect(subject).to have_gitlab_http_status(:ok)
           expect(subject).to render_template(:index)
           expect(subject).to render_template(partial: 'admin/geo/projects/_failed')
-        end
-      end
-
-      context 'with sync_status=never' do
-        subject { get :index, params: { sync_status: 'never' } }
-
-        it 'renders failed template' do
-          expect(subject).to have_gitlab_http_status(:ok)
-          expect(subject).to render_template(:index)
-          expect(subject).to render_template(partial: 'admin/geo/projects/_never')
         end
       end
 
@@ -173,7 +163,7 @@ describe Admin::Geo::ProjectsController, :geo do
       it 'redirects back and display confirmation' do
         Sidekiq::Testing.inline! do
           expect(subject).to redirect_to(admin_geo_projects_path)
-          expect(flash[:toast]).to include('All projects are being scheduled for re-verify')
+          expect(flash[:toast]).to include('All projects are being scheduled for reverify')
         end
       end
     end
@@ -198,7 +188,7 @@ describe Admin::Geo::ProjectsController, :geo do
 
       it 'redirects back and display confirmation' do
         expect(subject).to redirect_to(admin_geo_projects_path)
-        expect(flash[:toast]).to include('All projects are being scheduled for re-sync')
+        expect(flash[:toast]).to include('All projects are being scheduled for resync')
       end
     end
   end

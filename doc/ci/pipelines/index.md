@@ -1,4 +1,7 @@
 ---
+stage: Verify
+group: Continuous Integration
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 disqus_identifier: 'https://docs.gitlab.com/ee/ci/pipelines.html'
 type: reference
 ---
@@ -74,7 +77,7 @@ You can also configure specific aspects of your pipelines through the GitLab UI.
 
 - [Pipeline settings](settings.md) for each project.
 - [Pipeline schedules](schedules.md).
-- [Custom CI/CD variables](../variables/README.md#creating-a-custom-environment-variable).
+- [Custom CI/CD variables](../variables/README.md#custom-environment-variables).
 
 ### View pipelines
 
@@ -82,16 +85,24 @@ You can find the current and historical pipeline runs under your project's
 **CI/CD > Pipelines** page. You can also access pipelines for a merge request by navigating
 to its **Pipelines** tab.
 
-![Pipelines index page](img/pipelines_index.png)
+![Pipelines index page](img/pipelines_index_v13_0.png)
 
 Clicking a pipeline will bring you to the **Pipeline Details** page and show
 the jobs that were run for that pipeline. From here you can cancel a running pipeline,
 retry jobs on a failed pipeline, or [delete a pipeline](#delete-a-pipeline).
 
-[Starting in GitLab 12.3](https://gitlab.com/gitlab-org/gitlab-foss/issues/50499), a link to the
+[Starting in GitLab 12.3](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/50499), a link to the
 latest pipeline for the last commit of a given branch is available at `/project/pipelines/[branch]/latest`.
 Also, `/project/pipelines/latest` will redirect you to the latest pipeline for the last commit
 on the project's default branch.
+
+[Starting in GitLab 13.0](https://gitlab.com/gitlab-org/gitlab/-/issues/215367),
+you can filter the pipeline list by:
+
+- Trigger author
+- Branch name
+- Status ([since GitLab 13.1](https://gitlab.com/gitlab-org/gitlab/-/issues/217617))
+- Tag ([since GitLab 13.1](https://gitlab.com/gitlab-org/gitlab/-/issues/217617))
 
 ### Run a pipeline manually
 
@@ -113,7 +124,7 @@ The pipeline will execute the jobs as configured.
 
 ### Run a pipeline by using a URL query string
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/24146) in GitLab 12.5.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/24146) in GitLab 12.5.
 
 You can use a query string to pre-populate the **Run Pipeline** page. For example, the query string
 `.../pipelines/new?ref=my_branch&var[foo]=bar&file_var[file_foo]=file_bar` will pre-populate the
@@ -153,7 +164,7 @@ You can do this straight from the pipeline graph. Just click the play button
 to execute that particular job.
 
 For example, your pipeline might start automatically, but it requires manual action to
-[deploy to production](../environments.md#configuring-manual-deployments). In the example below, the `production`
+[deploy to production](../environments/index.md#configuring-manual-deployments). In the example below, the `production`
 stage has a job with a manual action.
 
 ![Pipelines example](img/pipelines.png)
@@ -173,7 +184,7 @@ This functionality is only available:
 
 ### Delete a pipeline
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/24851) in GitLab 12.7.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/24851) in GitLab 12.7.
 
 Users with [owner permissions](../../user/permissions.md) in a project can delete a pipeline
 by clicking on the pipeline in the **CI/CD > Pipelines** to get to the **Pipeline Details**
@@ -216,7 +227,7 @@ In the example:
 
 Visually, it can be viewed as:
 
-```text
+```plaintext
 0  1  2  3  4  5  6  7
    AAAAAAA
       BBBBBBB
@@ -225,7 +236,7 @@ Visually, it can be viewed as:
 
 The union of A, B, and C is (1, 4) and (6, 7). Therefore, the total running time is:
 
-```text
+```plaintext
 (4 - 1) + (7 - 6) => 4
 ```
 
@@ -343,7 +354,7 @@ build ruby 2/3:
   stage: build
   script:
   - echo "ruby2"
-  
+
 build ruby 3/3:
   stage: build
   script:
@@ -367,10 +378,14 @@ evaluates the job names: `\d+[\s:\/\\]+\d+\s*`.
 When running manual jobs you can supply additional job specific variables.
 
 You can do this from the job page of the manual job you want to run with
-additional variables.
+additional variables. To access this page, click on the **name** of the manual job in
+the pipeline view, *not* the play (**{play}**) button.
 
-This is useful when you want to alter the execution of a job by using
-environment variables.
+This is useful when you want to alter the execution of a job that uses
+[custom environment variables](../variables/README.md#custom-environment-variables).
+Adding a variable name (key) and value here will override the value defined in
+[the UI or `.gitlab-ci.yml`](../variables/README.md#custom-environment-variables),
+for a single run of the manual job.
 
 ![Manual job variables](img/manual_job_variables.png)
 
@@ -387,13 +402,13 @@ For example, if you start rolling out new code and:
 
 - Users do not experience trouble, GitLab can automatically complete the deployment from 0% to 100%.
 - Users experience trouble with the new code, you can stop the timed incremental rollout by canceling the pipeline
-  and [rolling](../environments.md#retrying-and-rolling-back) back to the last stable version.
+  and [rolling](../environments/index.md#retrying-and-rolling-back) back to the last stable version.
 
 ![Pipelines example](img/pipeline_incremental_rollout.png)
 
 ### Expand and collapse job log sections
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/14664) in GitLab 12.0.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/14664) in GitLab 12.0.
 
 Job logs are divided into sections that can be collapsed or expanded. Each section will display
 the duration.
@@ -490,7 +505,7 @@ Stages in pipeline mini graphs are collapsible. Hover your mouse over them and c
 ### Pipeline success and duration charts
 
 > - Introduced in GitLab 3.1.1 as Commit Stats, and later renamed to Pipeline Charts.
-> - [Renamed](https://gitlab.com/gitlab-org/gitlab/issues/38318) to CI / CD Analytics in GitLab 12.8.
+> - [Renamed](https://gitlab.com/gitlab-org/gitlab/-/issues/38318) to CI / CD Analytics in GitLab 12.8.
 
 GitLab tracks the history of your pipeline successes and failures, as well as how long each pipeline ran. To view this information, go to **Analytics > CI / CD Analytics**.
 
@@ -545,15 +560,3 @@ To illustrate its life cycle:
    even if the commit history of the `example` branch has been overwritten by force-push.
 1. GitLab Runner fetches the persistent pipeline ref and gets source code from the checkout-SHA.
 1. When the pipeline finished, its persistent ref is cleaned up in a background process.
-
-NOTE: **NOTE**: At this moment, this feature is on by default and can be manually disabled
-by disabling `depend_on_persistent_pipeline_ref` feature flag. If you're interested in
-manually disabling this behavior, please ask the administrator
-to execute the following commands in rails console.
-
-```shell
-> sudo gitlab-rails console                                        # Login to Rails console of GitLab instance.
-> project = Project.find_by_full_path('namespace/project-name')    # Get the project instance.
-> Feature.disable(:depend_on_persistent_pipeline_ref, project)     # Disable the feature flag for specific project
-> Feature.disable(:depend_on_persistent_pipeline_ref)              # Disable the feature flag system-wide
-```

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Geo::RepositorySyncService do
+RSpec.describe Geo::RepositorySyncService do
   include ::EE::GeoHelpers
   include ExclusiveLeaseHelpers
 
@@ -365,7 +365,7 @@ describe Geo::RepositorySyncService do
       end
 
       it 'successfully redownloads the repository even if the retry time exceeds max value' do
-        timestamp = Time.now.utc
+        timestamp = Time.current.utc
         registry = create(
           :geo_project_registry,
           project: project,

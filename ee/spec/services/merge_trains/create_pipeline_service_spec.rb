@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe MergeTrains::CreatePipelineService do
+RSpec.describe MergeTrains::CreatePipelineService do
   let(:project) { create(:project, :repository, :auto_devops) }
   let_it_be(:maintainer) { create(:user) }
   let(:service) { described_class.new(project, maintainer) }
@@ -28,7 +28,7 @@ describe MergeTrains::CreatePipelineService do
     shared_examples_for 'returns an error' do
       let(:expected_reason) { 'unknown' }
 
-      it do
+      specify do
         expect(subject[:status]).to eq(:error)
         expect(subject[:message]).to eq(expected_reason)
       end

@@ -14,6 +14,7 @@ import {
   INGRESS_DOMAIN_SUFFIX,
   CROSSPLANE,
   KNATIVE,
+  FLUENTD,
 } from './constants';
 import ClustersService from './services/clusters_service';
 import ClustersStore from './stores/clusters_store';
@@ -49,6 +50,7 @@ export default class Clusters {
       installElasticStackPath,
       installCrossplanePath,
       installPrometheusPath,
+      installFluentdPath,
       managePrometheusPath,
       clusterEnvironmentsPath,
       hasRbac,
@@ -102,10 +104,10 @@ export default class Clusters {
       updateKnativeEndpoint: updateKnativePath,
       installElasticStackEndpoint: installElasticStackPath,
       clusterEnvironmentsEndpoint: clusterEnvironmentsPath,
+      installFluentdEndpoint: installFluentdPath,
     });
 
     this.installApplication = this.installApplication.bind(this);
-    this.showToken = this.showToken.bind(this);
 
     this.errorContainer = document.querySelector('.js-cluster-error');
     this.successContainer = document.querySelector('.js-cluster-success');
@@ -116,7 +118,6 @@ export default class Clusters {
     );
     this.errorReasonContainer = this.errorContainer.querySelector('.js-error-reason');
     this.successApplicationContainer = document.querySelector('.js-cluster-application-notice');
-    this.showTokenButton = document.querySelector('.js-show-cluster-token');
     this.tokenField = document.querySelector('.js-cluster-token');
     this.ingressDomainHelpText = document.querySelector('.js-ingress-domain-help-text');
     this.ingressDomainSnippet =
@@ -255,7 +256,6 @@ export default class Clusters {
   }
 
   addListeners() {
-    if (this.showTokenButton) this.showTokenButton.addEventListener('click', this.showToken);
     eventHub.$on('installApplication', this.installApplication);
     eventHub.$on('updateApplication', data => this.updateApplication(data));
     eventHub.$on('saveKnativeDomain', data => this.saveKnativeDomain(data));
@@ -265,13 +265,13 @@ export default class Clusters {
     eventHub.$on('setIngressModSecurityEnabled', data => this.setIngressModSecurityEnabled(data));
     eventHub.$on('setIngressModSecurityMode', data => this.setIngressModSecurityMode(data));
     eventHub.$on('resetIngressModSecurityChanges', id => this.resetIngressModSecurityChanges(id));
+    eventHub.$on('setFluentdSettings', data => this.setFluentdSettings(data));
     // Add event listener to all the banner close buttons
     this.addBannerCloseHandler(this.unreachableContainer, 'unreachable');
     this.addBannerCloseHandler(this.authenticationFailureContainer, 'authentication_failure');
   }
 
   removeListeners() {
-    if (this.showTokenButton) this.showTokenButton.removeEventListener('click', this.showToken);
     eventHub.$off('installApplication', this.installApplication);
     eventHub.$off('updateApplication', this.updateApplication);
     eventHub.$off('saveKnativeDomain');
@@ -281,6 +281,7 @@ export default class Clusters {
     eventHub.$off('setIngressModSecurityEnabled');
     eventHub.$off('setIngressModSecurityMode');
     eventHub.$off('resetIngressModSecurityChanges');
+    eventHub.$off('setFluentdSettings');
   }
 
   initPolling(method, successCallback, errorCallback) {
@@ -320,7 +321,7 @@ export default class Clusters {
 
   handleClusterStatusSuccess(data) {
     const prevStatus = this.store.state.status;
-    const prevApplicationMap = Object.assign({}, this.store.state.applications);
+    const prevApplicationMap = { ...this.store.state.applications };
 
     this.store.updateStateFromServer(data.data);
 
@@ -336,18 +337,6 @@ export default class Clusters {
 
     if (this.store.state.applications[KNATIVE]?.status === APPLICATION_STATUS.INSTALLED) {
       initServerlessSurveyBanner();
-    }
-  }
-
-  showToken() {
-    const type = this.tokenField.getAttribute('type');
-
-    if (type === 'password') {
-      this.tokenField.setAttribute('type', 'text');
-      this.showTokenButton.textContent = s__('ClusterIntegration|Hide');
-    } else {
-      this.tokenField.setAttribute('type', 'password');
-      this.showTokenButton.textContent = s__('ClusterIntegration|Show');
     }
   }
 
@@ -479,6 +468,11 @@ export default class Clusters {
         return;
       }
 
+      if (appId === KNATIVE && !params.hostname && !params.pages_domain_id) {
+        reject(s__('ClusterIntegration|You must specify a domain before you can install Knative.'));
+        return;
+      }
+
       resolve();
     });
   }
@@ -506,6 +500,12 @@ export default class Clusters {
     });
   }
 
+  setFluentdSettings(settings = {}) {
+    Object.entries(settings).forEach(([key, value]) => {
+      this.store.updateAppProperty(FLUENTD, key, value);
+    });
+  }
+
   toggleIngressDomainHelpText({ externalIp }, { externalIp: newExternalIp }) {
     if (externalIp !== newExternalIp) {
       this.ingressDomainHelpText.classList.toggle('hide', !newExternalIp);
@@ -525,6 +525,7 @@ export default class Clusters {
     this.store.updateAppProperty(appId, 'isEditingDomain', true);
     this.store.updateAppProperty(appId, 'hostname', domain);
     this.store.updateAppProperty(appId, 'pagesDomain', domainId ? { id: domainId, domain } : null);
+    this.store.updateAppProperty(appId, 'validationError', null);
   }
 
   setCrossplaneProviderStack(data) {

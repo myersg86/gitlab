@@ -8,6 +8,7 @@ class Environment < ApplicationRecord
   self.reactive_cache_refresh_interval = 1.minute
   self.reactive_cache_lifetime = 55.seconds
   self.reactive_cache_hard_limit = 10.megabytes
+  self.reactive_cache_work_type = :external_dependency
 
   belongs_to :project, required: true
 
@@ -149,6 +150,14 @@ class Environment < ApplicationRecord
                .where(status: HasStatus::BLOCKED_STATUS)
                .preload_project_and_pipeline_project
                .preload(:user, :metadata, :deployment)
+    end
+
+    def count_by_state
+      environments_count_by_state = group(:state).count
+
+      valid_states.each_with_object({}) do |state, count_hash|
+        count_hash[state] = environments_count_by_state[state.to_s] || 0
+      end
     end
 
     private
@@ -330,7 +339,7 @@ class Environment < ApplicationRecord
   end
 
   def auto_stop_in
-    auto_stop_at - Time.now if auto_stop_at
+    auto_stop_at - Time.current if auto_stop_at
   end
 
   def auto_stop_in=(value)

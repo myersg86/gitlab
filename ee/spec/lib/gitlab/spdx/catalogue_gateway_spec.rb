@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::SPDX::CatalogueGateway do
+RSpec.describe Gitlab::SPDX::CatalogueGateway do
   include StubRequests
 
   describe "#fetch" do
@@ -11,7 +11,7 @@ describe Gitlab::SPDX::CatalogueGateway do
 
     context "when the licenses.json endpoint is healthy" do
       let(:spdx_json) { IO.read(Rails.root.join("spec", "fixtures", "spdx.json")) }
-      let(:catalogue_hash) { JSON.parse(spdx_json, symbolize_names: true) }
+      let(:catalogue_hash) { Gitlab::Json.parse(spdx_json, symbolize_names: true) }
 
       before do
         stub_full_request(url, method: :get).to_return(status: 200, body: spdx_json)

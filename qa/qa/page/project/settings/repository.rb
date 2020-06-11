@@ -5,7 +5,7 @@ module QA
     module Project
       module Settings
         class Repository < Page::Base
-          include Common
+          include QA::Page::Settings::Common
 
           view 'app/views/projects/protected_branches/shared/_index.html.haml' do
             element :protected_branches_settings
@@ -13,6 +13,26 @@ module QA
 
           view 'app/views/projects/mirrors/_mirror_repos.html.haml' do
             element :mirroring_repositories_settings_section
+          end
+
+          view 'app/views/shared/deploy_tokens/_index.html.haml' do
+            element :deploy_tokens_settings
+          end
+
+          view 'app/views/shared/deploy_keys/_index.html.haml' do
+            element :deploy_keys_settings
+          end
+
+          def expand_deploy_tokens(&block)
+            expand_section(:deploy_tokens_settings) do
+              Settings::DeployTokens.perform(&block)
+            end
+          end
+
+          def expand_deploy_keys(&block)
+            expand_section(:deploy_keys_settings) do
+              Settings::DeployKeys.perform(&block)
+            end
           end
 
           def expand_protected_branches(&block)

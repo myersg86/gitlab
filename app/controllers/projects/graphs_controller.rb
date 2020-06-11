@@ -6,7 +6,7 @@ class Projects::GraphsController < Projects::ApplicationController
   # Authorize
   before_action :require_non_empty_project
   before_action :assign_ref_vars
-  before_action :authorize_download_code!
+  before_action :authorize_read_repository_graphs!
 
   def show
     respond_to do |format|
@@ -28,6 +28,7 @@ class Projects::GraphsController < Projects::ApplicationController
   def charts
     get_commits
     get_languages
+    get_daily_coverage_options
   end
 
   def ci
@@ -50,6 +51,33 @@ class Projects::GraphsController < Projects::ApplicationController
       ::Projects::RepositoryLanguagesService.new(@project, current_user).execute.map do |lang|
         { value: lang.share, label: lang.name, color: lang.color, highlight: lang.color }
       end
+  end
+
+  def get_daily_coverage_options
+    return unless Feature.enabled?(:ci_download_daily_code_coverage, @project, default_enabled: true)
+    return unless can?(current_user, :read_build_report_results, project)
+
+    date_today = Date.current
+    report_window = Projects::Ci::DailyBuildGroupReportResultsController::REPORT_WINDOW
+
+    @daily_coverage_options = {
+      base_params: {
+        start_date: date_today - report_window,
+        end_date: date_today,
+        ref_path: @project.repository.expand_ref(@ref),
+        param_type: 'coverage'
+      },
+      download_path: namespace_project_ci_daily_build_group_report_results_path(
+        namespace_id: @project.namespace,
+        project_id: @project,
+        format: :csv
+      ),
+      graph_api_path: namespace_project_ci_daily_build_group_report_results_path(
+        namespace_id: @project.namespace,
+        project_id: @project,
+        format: :json
+      )
+    }
   end
 
   def fetch_graph

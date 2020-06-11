@@ -240,6 +240,18 @@ describe NotificationService, :mailer do
     end
   end
 
+  describe '#unknown_sign_in' do
+    let_it_be(:user) { create(:user) }
+    let_it_be(:ip) { '127.0.0.1' }
+    let_it_be(:time) { Time.current }
+
+    subject { notification.unknown_sign_in(user, ip, time) }
+
+    it 'sends email to the user' do
+      expect { subject }.to have_enqueued_email(user, ip, time, mail: 'unknown_sign_in_email')
+    end
+  end
+
   describe 'Notes' do
     context 'issue note' do
       let(:project) { create(:project, :private) }
@@ -698,9 +710,60 @@ describe NotificationService, :mailer do
         end
       end
     end
+
+    context 'when notified of a new design diff note' do
+      include DesignManagementTestHelpers
+
+      let_it_be(:design) { create(:design, :with_file) }
+      let_it_be(:project) { design.project }
+      let_it_be(:dev) { create(:user) }
+      let_it_be(:stranger) { create(:user) }
+      let_it_be(:note) do
+        create(:diff_note_on_design,
+           noteable: design,
+           note: "Hello #{dev.to_reference}, G'day #{stranger.to_reference}")
+      end
+      let(:mailer) { double(deliver_later: true) }
+
+      context 'design management is enabled' do
+        before do
+          enable_design_management
+          project.add_developer(dev)
+          allow(Notify).to receive(:note_design_email) { mailer }
+        end
+
+        it 'sends new note notifications' do
+          expect(subject).to receive(:send_new_note_notifications).with(note)
+
+          subject.new_note(note)
+        end
+
+        it 'sends a mail to the developer' do
+          expect(Notify)
+            .to receive(:note_design_email).with(dev.id, note.id, 'mentioned')
+
+          subject.new_note(note)
+        end
+
+        it 'does not notify non-developers' do
+          expect(Notify)
+            .not_to receive(:note_design_email).with(stranger.id, note.id)
+
+          subject.new_note(note)
+        end
+      end
+
+      context 'design management is disabled' do
+        it 'does not notify the user' do
+          expect(Notify).not_to receive(:note_design_email)
+
+          subject.new_note(note)
+        end
+      end
+    end
   end
 
-  describe '#send_new_release_notifications', :deliver_mails_inline, :sidekiq_inline do
+  describe '#send_new_release_notifications', :deliver_mails_inline do
     context 'when recipients for a new release exist' do
       let(:release) { create(:release) }
 
@@ -712,7 +775,7 @@ describe NotificationService, :mailer do
         recipient_2 = NotificationRecipient.new(user_2, :custom, custom_action: :new_release)
         allow(NotificationRecipients::BuildService).to receive(:build_new_release_recipients).and_return([recipient_1, recipient_2])
 
-        release
+        notification.send_new_release_notifications(release)
 
         should_email(user_1)
         should_email(user_2)
@@ -2395,6 +2458,8 @@ describe NotificationService, :mailer do
               group = create(:group)
 
               project.update(group: group)
+
+              create(:email, :confirmed, user: u_custom_notification_enabled, email: group_notification_email)
               create(:notification_setting, user: u_custom_notification_enabled, source: group, notification_email: group_notification_email)
             end
 
@@ -2429,6 +2494,7 @@ describe NotificationService, :mailer do
               group = create(:group)
 
               project.update(group: group)
+              create(:email, :confirmed, user: u_member, email: group_notification_email)
               create(:notification_setting, user: u_member, source: group, notification_email: group_notification_email)
             end
 
@@ -2522,6 +2588,7 @@ describe NotificationService, :mailer do
               group = create(:group)
 
               project.update(group: group)
+              create(:email, :confirmed, user: u_member, email: group_notification_email)
               create(:notification_setting, user: u_member, source: group, notification_email: group_notification_email)
             end
 
@@ -2794,6 +2861,57 @@ describe NotificationService, :mailer do
       let(:alert_params) { { 'labels' => { 'gitlab_alert_id' => 'unknown' } } }
       let(:notification_target)  { prometheus_alert.project }
       let(:notification_trigger) { subject.prometheus_alerts_fired(prometheus_alert.project, [alert_params]) }
+
+      around do |example|
+        perform_enqueued_jobs { example.run }
+      end
+    end
+  end
+
+  describe '#new_review' do
+    let(:project) { create(:project, :repository) }
+    let(:user) { create(:user) }
+    let(:user2) { create(:user) }
+    let(:reviewer) { create(:user) }
+    let(:merge_request) { create(:merge_request, source_project: project, assignees: [user, user2], author: create(:user)) }
+    let(:review) { create(:review, merge_request: merge_request, project: project, author: reviewer) }
+    let(:note) { create(:diff_note_on_merge_request, project: project, noteable: merge_request, author: reviewer, review: review) }
+
+    before do
+      build_team(review.project)
+      add_users(review.project)
+      add_user_subscriptions(merge_request)
+      project.add_maintainer(merge_request.author)
+      project.add_maintainer(reviewer)
+      merge_request.assignees.each { |assignee| project.add_maintainer(assignee) }
+
+      create(:diff_note_on_merge_request,
+             project: project,
+             noteable: merge_request,
+             author: reviewer,
+             review: review,
+             note: "cc @mention")
+    end
+
+    it 'sends emails' do
+      expect(Notify).not_to receive(:new_review_email).with(review.author.id, review.id)
+      expect(Notify).not_to receive(:new_review_email).with(@unsubscriber.id, review.id)
+      merge_request.assignee_ids.each do |assignee_id|
+        expect(Notify).to receive(:new_review_email).with(assignee_id, review.id).and_call_original
+      end
+      expect(Notify).to receive(:new_review_email).with(merge_request.author.id, review.id).and_call_original
+      expect(Notify).to receive(:new_review_email).with(@u_watcher.id, review.id).and_call_original
+      expect(Notify).to receive(:new_review_email).with(@u_mentioned.id, review.id).and_call_original
+      expect(Notify).to receive(:new_review_email).with(@subscriber.id, review.id).and_call_original
+      expect(Notify).to receive(:new_review_email).with(@watcher_and_subscriber.id, review.id).and_call_original
+      expect(Notify).to receive(:new_review_email).with(@subscribed_participant.id, review.id).and_call_original
+
+      subject.new_review(review)
+    end
+
+    it_behaves_like 'project emails are disabled' do
+      let(:notification_target)  { review }
+      let(:notification_trigger) { subject.new_review(review) }
 
       around do |example|
         perform_enqueued_jobs { example.run }

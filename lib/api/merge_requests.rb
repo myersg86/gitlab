@@ -8,7 +8,6 @@ module API
 
     before { authenticate_non_get! }
 
-    helpers ::Gitlab::IssuableMetadata
     helpers Helpers::MergeRequestsHelpers
 
     # EE::API::MergeRequests would override the following helpers
@@ -26,6 +25,8 @@ module API
         assignee_ids
         description
         labels
+        add_labels
+        remove_labels
         milestone_id
         remove_source_branch
         state_event
@@ -90,7 +91,8 @@ module API
         if params[:view] == 'simple'
           options[:with] = Entities::MergeRequestSimple
         else
-          options[:issuable_metadata] = issuable_meta_data(merge_requests, 'MergeRequest', current_user)
+          options[:issuable_metadata] = Gitlab::IssuableMetadata.new(current_user, merge_requests).data
+          options[:skip_merge_status_recheck] = !declared_params[:with_merge_status_recheck]
         end
 
         options
@@ -180,6 +182,8 @@ module API
           optional :assignee_ids, type: Array[Integer], desc: 'The array of user IDs to assign issue'
           optional :milestone_id, type: Integer, desc: 'The ID of a milestone to assign the merge request'
           optional :labels, type: Array[String], coerce_with: Validations::Types::LabelsList.coerce, desc: 'Comma-separated list of label names'
+          optional :add_labels, type: Array[String], coerce_with: Validations::Types::LabelsList.coerce, desc: 'Comma-separated list of label names'
+          optional :remove_labels, type: Array[String], coerce_with: Validations::Types::LabelsList.coerce, desc: 'Comma-separated list of label names'
           optional :remove_source_branch, type: Boolean, desc: 'Remove source branch when merging'
           optional :allow_collaboration, type: Boolean, desc: 'Allow commits from members who can merge to the target branch'
           optional :allow_maintainer_to_push, type: Boolean, as: :allow_collaboration, desc: '[deprecated] See allow_collaboration'
@@ -471,7 +475,7 @@ module API
           squash_commit_message: params[:squash_commit_message],
           should_remove_source_branch: params[:should_remove_source_branch],
           sha: params[:sha] || merge_request.diff_head_sha
-        )
+        ).compact
 
         if immediately_mergeable
           ::MergeRequests::MergeService

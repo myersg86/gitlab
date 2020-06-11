@@ -34,7 +34,6 @@ contains some settings that are common for all providers.
 - [OAuth2Generic](oauth2_generic.md)
 - [JWT](../administration/auth/jwt.md)
 - [OpenID Connect](../administration/auth/oidc.md)
-- [UltraAuth](ultra_auth.md)
 - [Salesforce](salesforce.md)
 - [AWS Cognito](../administration/auth/cognito.md)
 
@@ -51,7 +50,7 @@ that are in common for all providers that we need to consider.
   automatically create an account. It defaults to `false`. If `false` users must
   be created manually or they will not be able to sign in via OmniAuth.
 - `auto_link_ldap_user` can be used if you have [LDAP / ActiveDirectory](ldap.md)
-  integration enabled. It defaults to false. When enabled, users automatically
+  integration enabled. It defaults to `false`. When enabled, users automatically
   created through an OmniAuth provider will have their LDAP identity created in GitLab as well.
 - `block_auto_created_users` defaults to `true`. If `true` auto created users will
   be blocked by default and will have to be unblocked by an administrator before

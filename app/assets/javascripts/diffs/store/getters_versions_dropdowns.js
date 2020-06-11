@@ -39,6 +39,7 @@ export const diffCompareDropdownTargetVersions = (state, getters) => {
       ...v,
     };
   };
+
   return [...state.mergeRequestDiffs.slice(1).map(formatVersion), baseVersion, headVersion];
 };
 

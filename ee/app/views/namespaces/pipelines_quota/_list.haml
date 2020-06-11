@@ -1,12 +1,13 @@
 - namespace = locals.fetch(:namespace)
 - projects = locals.fetch(:projects)
+- minutes_quota = namespace.ci_minutes_quota
 
 .pipeline-quota.container-fluid
   .row
     .col-sm-6.offset-sm-6
       - if ::Gitlab.com?
         = link_to s_('UsageQuota|Buy additional minutes'),
-        EE::SUBSCRIPTIONS_PLANS_URL,
+        EE::SUBSCRIPTIONS_MORE_MINUTES_URL,
         target: '_blank',
         class: 'btn btn-inverted btn-success float-right',
         data: { track_event: 'click_buy_ci_minutes', track_label: namespace.actual_plan_name, track_property: 'pipeline_quota_page' }
@@ -21,19 +22,19 @@
         - else
           = s_('UsageQuota|Current period usage')
       %div
-        = namespace_shared_runner_limits_quota(namespace)
+        = ci_minutes_report(minutes_quota.monthly_minutes_report)
         minutes
         = link_to icon('question-circle'), help_page_path('user/admin_area/settings/continuous_integration', anchor: 'shared-runners-build-minutes-quota'), target: '_blank', 'aria-label': _('Shared runners help link')
 
     .col-sm-6.right
       - if namespace.shared_runners_minutes_limit_enabled?
-        #{namespace_shared_runner_limits_percent_used(namespace)}% used
+        #{minutes_quota.monthly_percent_used}% used
       - elsif !namespace.shared_runners_enabled?
         0% used
       - else
         = s_('UsageQuota|Unlimited')
 
-      = namespace_shared_runner_limits_progress_bar(namespace)
+      = ci_minutes_progress_bar(minutes_quota.monthly_percent_used)
 
   = render 'namespaces/pipelines_quota/extra_shared_runners_minutes_quota', namespace: namespace
 

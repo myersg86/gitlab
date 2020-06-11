@@ -10,7 +10,7 @@ performance, data, or could even exhaust the allocated resources for the applica
 
 ## Number of comments per issue, merge request or commit
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/22388) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/22388) in GitLab 12.4.
 
 There's a limit to the number of comments that can be submitted on an issue,
 merge request, or commit. When the limit is reached, system notes can still be
@@ -21,7 +21,7 @@ will fail.
 
 ## Size of comments and descriptions of issues, merge requests, and epics
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/61974) in GitLab 12.2.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/61974) in GitLab 12.2.
 
 There is a limit to the size of comments and descriptions of issues, merge requests, and epics.
 Attempting to add a body of text larger than the limit will result in an error, and the
@@ -43,7 +43,7 @@ When the number exceeds the limit the page displays an alert and links to a pagi
 
 ## Number of pipelines per Git push
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/51401) in GitLab 11.10.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/51401) in GitLab 11.10.
 
 The number of pipelines that can be created in a single push is 4.
 This is to prevent the accidental creation of pipelines when `git push --all`
@@ -53,9 +53,9 @@ Read more in the [CI documentation](../ci/yaml/README.md#processing-git-pushes).
 
 ## Retention of activity history
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/21164) in GitLab 8.12.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/21164) in GitLab 8.12.
 
-Activity history for projects and individuals' profiles was limited to one year until [GitLab 11.4](https://gitlab.com/gitlab-org/gitlab-foss/issues/52246) when it was extended to two years, and in [GitLab 12.4](https://gitlab.com/gitlab-org/gitlab/issues/33840) to three years.
+Activity history for projects and individuals' profiles was limited to one year until [GitLab 11.4](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/52246) when it was extended to two years, and in [GitLab 12.4](https://gitlab.com/gitlab-org/gitlab/-/issues/33840) to three years.
 
 ## Number of embedded metrics
 
@@ -87,7 +87,7 @@ NOTE: **Note:** Set the limit to `0` to disable it.
 
 ## Incoming emails from auto-responders
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/30327) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/30327) in GitLab 12.4.
 
 GitLab ignores all incoming emails sent from auto-responders by looking for the `X-Autoreply`
 header. Such emails don't create comments on issues or merge requests.
@@ -99,11 +99,34 @@ header. Such emails don't create comments on issues or merge requests.
 Sentry payloads sent to GitLab have a 1 MB maximum limit, both for security reasons
 and to limit memory consumption.
 
+## Max offset allowed via REST API for offset-based pagination
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/34565) in GitLab 13.0.
+
+When using offset-based pagination in the REST API, there is a limit to the maximum
+requested offset into the set of results. This limit is only applied to endpoints that
+support keyset-based pagination. More information about pagination options can be
+found in the [API docs section on pagination](../api/README.md#pagination).
+
+To set this limit on a self-managed installation, run the following in the
+[GitLab Rails console](troubleshooting/debug.md#starting-a-rails-console-session):
+
+```ruby
+# If limits don't exist for the default plan, you can create one with:
+# Plan.default.create_limits!
+
+Plan.default.limits.update!(offset_pagination_limit: 10000)
+```
+
+- **Default offset pagination limit:** 50000
+
+NOTE: **Note:** Set the limit to `0` to disable it.
+
 ## CI/CD limits
 
 ### Number of jobs in active pipelines
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/32823) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/32823) in GitLab 12.6.
 
 The total number of jobs in active pipelines can be limited per project. This limit is checked
 each time a new pipeline is created. An active pipeline is any pipeline in one of the following states:
@@ -133,7 +156,7 @@ NOTE: **Note:** Set the limit to `0` to disable it.
 
 ### Number of CI/CD subscriptions to a project
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/9045) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9045) in GitLab 12.9.
 
 The total number of subscriptions can be limited per project. This limit is
 checked each time a new subscription is created.
@@ -176,11 +199,29 @@ To set this limit on a self-managed installation, run the following in the
 Plan.default.limits.update!(ci_pipeline_schedules: 100)
 ```
 
+### Number of instance level variables
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/216097) in GitLab 13.1.
+
+The total number of instance level CI/CD variables is limited at the instance level.
+This limit is checked each time a new instance level variable is created. If a new variable
+would cause the total number of variables to exceed the limit, the new variable will not be created.
+
+On self-managed instances this limit is defined for the `default` plan. By default,
+this limit is set to `25`.
+
+To update this limit to a new value on a self-managed installation, run the following in the
+[GitLab Rails console](troubleshooting/debug.md#starting-a-rails-console-session):
+
+```ruby
+Plan.default.limits.update!(ci_instance_level_variables: 30)
+```
+
 ## Instance monitoring and metrics
 
 ### Incident Management inbound alert limits
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/14932) in GitLab 12.5.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/17859) in GitLab 12.5.
 
 Limiting inbound alerts for an incident reduces the number of alerts (issues)
 that can be created within a period of time, which can help prevent overloading
@@ -192,9 +233,15 @@ alerts in the following ways:
 
 ### Prometheus Alert JSON payloads
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/14929) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/19940) in GitLab 12.6.
 
 Prometheus alert payloads sent to the `notify.json` endpoint are limited to 1 MB in size.
+
+### Generic Alert JSON payloads
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/16441) in GitLab 12.4.
+
+Alert payloads sent to the `notify.json` endpoint are limited to 1 MB in size.
 
 ## Environment data on Deploy Boards
 
@@ -206,7 +253,7 @@ Kubernetes won't be shown.
 
 Reports that go over the 20 MB limit won't be loaded. Affected reports:
 
-- [Merge Request security reports](../user/project/merge_requests/index.md#security-reports-ultimate)
+- [Merge Request security reports](../user/project/merge_requests/testing_and_reports_in_merge_requests.md#security-reports-ultimate)
 - [CI/CD parameter `artifacts:expose_as`](../ci/yaml/README.md#artifactsexpose_as)
 - [JUnit test reports](../ci/junit_test_reports.md)
 
@@ -214,7 +261,7 @@ Reports that go over the 20 MB limit won't be loaded. Affected reports:
 
 ### Maximum field length
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/201826) in GitLab 12.8.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/201826) in GitLab 12.8.
 
 You can set a limit on the content of text fields indexed for Global Search.
 Setting a maximum helps to reduce the load of the indexing processes. If any
@@ -233,11 +280,15 @@ NOTE: **Note:** Set the limit to `0` to disable it.
 
 - [Length restrictions for file and directory names](../user/project/wiki/index.md#length-restrictions-for-file-and-directory-names).
 
+## Snippets limits
+
+See the [documentation on Snippets settings](snippets/index.md).
+
 ## Push Event Limits
 
 ### Webhooks and Project Services
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/31009) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/31009) in GitLab 12.4.
 
 Total number of changes (branches or tags) in a single push. If changes are more
 than the specified limit, hooks won't be executed.
@@ -249,7 +300,7 @@ More information can be found in these docs:
 
 ### Activities
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/31007) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/31007) in GitLab 12.4.
 
 Total number of changes (branches or tags) in a single push to determine whether
 individual push events or bulk push event will be created.

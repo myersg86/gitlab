@@ -1,4 +1,7 @@
+import { inactiveListId } from '~/boards/constants';
+
 export default () => ({
+  endpoints: {},
   isShowingLabels: true,
-  activeListId: 0,
+  activeListId: inactiveListId,
 });

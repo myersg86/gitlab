@@ -4,7 +4,10 @@ module Projects
   module Settings
     class RepositoryController < Projects::ApplicationController
       before_action :authorize_admin_project!
-      before_action :remote_mirror, only: [:show]
+      before_action :define_variables, only: [:create_deploy_token]
+      before_action do
+        push_frontend_feature_flag(:ajax_new_deploy_token, @project)
+      end
 
       def show
         render_show
@@ -24,13 +27,47 @@ module Projects
         redirect_to project_settings_repository_path(project)
       end
 
+      def create_deploy_token
+        result = Projects::DeployTokens::CreateService.new(@project, current_user, deploy_token_params).execute
+        @new_deploy_token = result[:deploy_token]
+
+        if result[:status] == :success
+          respond_to do |format|
+            format.json do
+              # IMPORTANT: It's a security risk to expose the token value more than just once here!
+              json = API::Entities::DeployTokenWithToken.represent(@new_deploy_token).as_json
+              render json: json, status: result[:http_status]
+            end
+            format.html do
+              flash.now[:notice] = s_('DeployTokens|Your new project deploy token has been created.')
+              render :show
+            end
+          end
+        else
+          respond_to do |format|
+            format.json { render json: { message: result[:message] }, status: result[:http_status] }
+            format.html do
+              flash.now[:alert] = result[:message]
+              render :show
+            end
+          end
+        end
+      end
+
       private
 
       def render_show
-        define_protected_refs
-        remote_mirror
+        define_variables
 
         render 'show'
+      end
+
+      def define_variables
+        @deploy_keys = DeployKeysPresenter.new(@project, current_user: current_user)
+
+        define_deploy_token_variables
+        define_protected_refs
+        remote_mirror
       end
 
       # rubocop: disable CodeReuse/ActiveRecord
@@ -49,6 +86,10 @@ module Projects
 
       def remote_mirror
         @remote_mirror = project.remote_mirrors.first_or_initialize
+      end
+
+      def deploy_token_params
+        params.require(:deploy_token).permit(:name, :expires_at, :read_repository, :read_registry, :write_registry, :read_package_registry, :write_package_registry, :username)
       end
 
       def access_levels_options
@@ -72,6 +113,12 @@ module Projects
 
       def protectable_branches_for_dropdown
         { open_branches: ProtectableDropdown.new(@project, :branches).hash }
+      end
+
+      def define_deploy_token_variables
+        @deploy_tokens = @project.deploy_tokens.active
+
+        @new_deploy_token ||= DeployToken.new
       end
 
       def load_gon_index

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe JiraConnect::SyncService do
+RSpec.describe JiraConnect::SyncService do
   describe '#execute' do
     let_it_be(:project) { create(:project, :repository) }
     let(:branches) { [project.repository.find_branch('master')] }
@@ -31,10 +31,11 @@ describe JiraConnect::SyncService do
     def expect_log(type, message)
       expect(Gitlab::ProjectServiceLogger)
         .to receive(type).with(
+          message: 'response from jira dev_info api',
           integration: 'JiraConnect',
           project_id: project.id,
           project_path: project.full_path,
-          response: message
+          jira_response: message&.to_json
         )
     end
 

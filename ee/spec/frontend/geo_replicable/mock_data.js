@@ -1,8 +1,6 @@
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 
-export const MOCK_GEO_SVG_PATH = 'illustrations/empty-state/geo-empty.svg';
-
-export const MOCK_ISSUES_SVG_PATH = 'illustrations/issues.svg';
+export const MOCK_GEO_REPLICATION_SVG_PATH = 'illustrations/empty-state/geo-replication-empty.svg';
 
 export const MOCK_GEO_TROUBLESHOOTING_LINK =
   'https://docs.gitlab.com/ee/administration/geo/replication/troubleshooting.html';
@@ -32,10 +30,49 @@ export const MOCK_BASIC_FETCH_RESPONSE = {
   },
 };
 
-export const MOCK_BASIC_FETCH_DATA_MAP = {
-  data: convertObjectPropsToCamelCase(MOCK_BASIC_FETCH_RESPONSE.data, { deep: true }),
+export const MOCK_BASIC_FETCH_DATA_MAP = convertObjectPropsToCamelCase(
+  MOCK_BASIC_FETCH_RESPONSE.data,
+  { deep: true },
+);
+
+export const MOCK_RESTFUL_PAGINATION_DATA = {
   perPage: MOCK_BASIC_FETCH_RESPONSE.headers['x-per-page'],
   total: MOCK_BASIC_FETCH_RESPONSE.headers['x-total'],
+};
+
+export const MOCK_GRAPHQL_PAGINATION_DATA = {
+  hasNextPage: true,
+  hasPreviousPage: true,
+  startCursor: 'abc123',
+  endCursor: 'abc124',
+};
+
+export const MOCK_BASIC_GRAPHQL_QUERY_RESPONSE = {
+  geoNode: {
+    packageFileRegistries: {
+      pageInfo: MOCK_GRAPHQL_PAGINATION_DATA,
+      edges: [
+        {
+          cursor: 'abc123',
+          node: {
+            id: 'git/1',
+            packageFileId: '1',
+            state: 'PENDING',
+            lastSyncedAt: null,
+          },
+        },
+        {
+          cursor: 'abc124',
+          node: {
+            id: 'git/2',
+            packageFileId: '2',
+            state: 'SYNCED',
+            lastSyncedAt: null,
+          },
+        },
+      ],
+    },
+  },
 };
 
 export const MOCK_BASIC_POST_RESPONSE = {

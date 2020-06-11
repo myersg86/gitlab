@@ -62,6 +62,7 @@ RSpec.shared_context 'project navbar structure' do
         nav_item: _('Operations'),
         nav_sub_items: [
           _('Metrics'),
+          _('Alerts'),
           _('Environments'),
           _('Error Tracking'),
           _('Serverless'),
@@ -79,12 +80,16 @@ RSpec.shared_context 'project navbar structure' do
         nav_sub_items: []
       },
       {
+        nav_item: _('Members'),
+        nav_sub_items: []
+      },
+      {
         nav_item: _('Settings'),
         nav_sub_items: [
           _('General'),
-          _('Members'),
           _('Integrations'),
           _('Webhooks'),
+          _('Access Tokens'),
           _('Repository'),
           _('CI / CD'),
           _('Operations'),
@@ -111,6 +116,7 @@ RSpec.shared_context 'group navbar structure' do
       nav_sub_items: [
         _('General'),
         _('Projects'),
+        _('Repository'),
         _('CI / CD'),
         _('Integrations'),
         _('Webhooks'),

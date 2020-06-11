@@ -1,3 +1,9 @@
+---
+stage: Plan
+group: Project Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Labels API
 
 NOTE: **Note:**
@@ -6,6 +12,8 @@ The `description_html` - was added to response JSON in [GitLab 12.7](https://git
 ## List labels
 
 Get all labels for a given project.
+
+By default, this request returns 20 results at a time because the API results [are paginated](README.md#pagination).
 
 ```plaintext
 GET /projects/:id/labels
@@ -18,7 +26,7 @@ GET /projects/:id/labels
 | `include_ancestor_groups` | boolean | no | Include ancestor groups. Defaults to `true`. |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/1/labels?with_counts=true
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/labels?with_counts=true"
 ```
 
 Example response:
@@ -109,11 +117,11 @@ GET /projects/:id/labels/:label_id
 | Attribute     | Type           | Required | Description                                                                                                                                                                  |
 | ---------     | -------        | -------- | ---------------------                                                                                                                                                        |
 | `id`          | integer/string | yes      | The ID or [URL-encoded path of the project](README.md#namespaced-path-encoding) owned by the authenticated user                                                              |
-| `label_id` | integer or string | yes | The ID or title of a group's label. |
+| `label_id` | integer or string | yes | The ID or title of a project's label. |
 | `include_ancestor_groups` | boolean | no | Include ancestor groups. Defaults to `true`. |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/1/labels/bug
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/labels/bug"
 ```
 
 Example response:
@@ -289,7 +297,7 @@ POST /projects/:id/labels/:label_id/subscribe
 | `label_id` | integer or string | yes      | The ID or title of a project's label |
 
 ```shell
-curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/5/labels/1/subscribe
+curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/labels/1/subscribe"
 ```
 
 Example response:
@@ -327,5 +335,5 @@ POST /projects/:id/labels/:label_id/unsubscribe
 | `label_id` | integer or string | yes      | The ID or title of a project's label |
 
 ```shell
-curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/5/labels/1/unsubscribe
+curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/labels/1/unsubscribe"
 ```

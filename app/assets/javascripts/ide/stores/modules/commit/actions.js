@@ -1,9 +1,8 @@
-import $ from 'jquery';
 import { sprintf, __ } from '~/locale';
 import flash from '~/flash';
+import httpStatusCodes from '~/lib/utils/http_status';
 import * as rootTypes from '../../mutation_types';
 import { createCommitPayload, createNewMergeRequestUrl } from '../../utils';
-import router from '../../../ide_router';
 import service from '../../../services';
 import * as types from './mutation_types';
 import consts from './constants';
@@ -196,8 +195,10 @@ export const commitChanges = ({ commit, state, getters, dispatch, rootState, roo
             dispatch('updateViewer', 'editor', { root: true });
 
             if (rootGetters.activeFile) {
-              router.push(
+              dispatch(
+                'router/push',
                 `/project/${rootState.currentProjectId}/blob/${branchName}/-/${rootGetters.activeFile.path}`,
+                { root: true },
               );
             }
           }
@@ -215,27 +216,22 @@ export const commitChanges = ({ commit, state, getters, dispatch, rootState, roo
         );
     })
     .catch(err => {
-      if (err.response.status === 400) {
-        $('#ide-create-branch-modal').modal('show');
-      } else {
-        dispatch(
-          'setErrorMessage',
-          {
-            text: __('An error occurred while committing your changes.'),
-            action: () =>
-              dispatch('commitChanges').then(() =>
-                dispatch('setErrorMessage', null, { root: true }),
-              ),
-            actionText: __('Please try again'),
-          },
-          { root: true },
-        );
-        window.dispatchEvent(new Event('resize'));
-      }
-
       commit(types.UPDATE_LOADING, false);
+
+      // don't catch bad request errors, let the view handle them
+      if (err.response.status === httpStatusCodes.BAD_REQUEST) throw err;
+
+      dispatch(
+        'setErrorMessage',
+        {
+          text: __('An error occurred while committing your changes.'),
+          action: () =>
+            dispatch('commitChanges').then(() => dispatch('setErrorMessage', null, { root: true })),
+          actionText: __('Please try again'),
+        },
+        { root: true },
+      );
+
+      window.dispatchEvent(new Event('resize'));
     });
 };
-
-// prevent babel-plugin-rewire from generating an invalid default during karma tests
-export default () => {};

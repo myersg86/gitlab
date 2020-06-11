@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-describe Gitlab::Geo::LogCursor::Events::Event, :clean_gitlab_redis_shared_state do
+RSpec.describe Gitlab::Geo::LogCursor::Events::Event, :clean_gitlab_redis_shared_state do
   let(:logger) { Gitlab::Geo::LogCursor::Logger.new(described_class, Logger::INFO) }
   let(:event) { create(:geo_event, :package_file, event_name: "created" ) }
   let(:event_log) { create(:geo_event_log, geo_event: event) }
@@ -25,8 +25,8 @@ describe Gitlab::Geo::LogCursor::Events::Event, :clean_gitlab_redis_shared_state
     it "eventually calls Replicator#consume", :sidekiq_inline do
       expect_next_instance_of(::Geo::PackageFileReplicator) do |replicator|
         expect(replicator).to receive(:consume).with(
-          "created",
-          { "model_record_id" => replicable.id }
+          :created,
+          { model_record_id: replicable.id }
         )
       end
 

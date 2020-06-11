@@ -27,16 +27,22 @@ module Projects
       remote_mirror.update_start!
 
       remote_mirror.ensure_remote!
-      repository.fetch_remote(remote_mirror.remote_name, ssh_auth: remote_mirror, no_tags: true)
 
-      opts = {}
-      if remote_mirror.only_protected_branches?
-        opts[:only_branches_matching] = project.protected_branches.select(:name).map(&:name)
+      # https://gitlab.com/gitlab-org/gitaly/-/issues/2670
+      if Feature.disabled?(:gitaly_ruby_remote_branches_ls_remote)
+        repository.fetch_remote(remote_mirror.remote_name, ssh_auth: remote_mirror, no_tags: true)
       end
 
-      remote_mirror.update_repository(opts)
+      response = remote_mirror.update_repository
 
-      remote_mirror.update_finish!
+      if response.divergent_refs.any?
+        message = "Some refs have diverged and have not been updated on the remote:"
+        message += "\n\n#{response.divergent_refs.join("\n")}"
+
+        remote_mirror.mark_as_failed!(message)
+      else
+        remote_mirror.update_finish!
+      end
     end
 
     def retry_or_fail(mirror, message, tries)

@@ -3,6 +3,8 @@
 module QA
   context 'Plan', :smoke do
     describe 'Issue creation' do
+      let(:closed_issue) { Resource::Issue.fabricate_via_api! }
+
       before do
         Flow::Login.sign_in
       end
@@ -17,7 +19,26 @@ module QA
         end
       end
 
-      context 'when using attachments in comments', :object_storage, quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/issues/205408', type: :bug } do
+      it 'closes an issue' do
+        closed_issue.visit!
+
+        Page::Project::Issue::Show.perform do |issue_page|
+          issue_page.click_close_issue_button
+
+          expect(issue_page).to have_element(:reopen_issue_button)
+        end
+
+        Page::Project::Menu.perform(&:click_issues)
+        Page::Project::Issue::Index.perform do |index|
+          expect(index).not_to have_issue(closed_issue)
+
+          index.click_closed_issues_link
+
+          expect(index).to have_issue(closed_issue)
+        end
+      end
+
+      context 'when using attachments in comments', :object_storage do
         let(:gif_file_name) { 'banana_sample.gif' }
         let(:file_to_attach) do
           File.absolute_path(File.join('spec', 'fixtures', gif_file_name))

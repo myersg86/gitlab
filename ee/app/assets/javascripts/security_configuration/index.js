@@ -9,7 +9,18 @@ export default function init() {
     features,
     helpPagePath,
     latestPipelinePath,
+    autoFixEnabled,
+    autoFixHelpPath,
+    autoFixUserPath,
+    containerScanningHelpPath,
+    dependencyScanningHelpPath,
+    toggleAutofixSettingEndpoint,
   } = el.dataset;
+
+  // When canToggleAutoFixSettings is false in the backend, it is undefined in the frontend,
+  // and when it's true in the backend, it comes in as an empty string in the frontend. The next
+  // line ensures that we cast it to a boolean.
+  const canToggleAutoFixSettings = el.dataset.canToggleAutoFixSettings !== undefined;
 
   return new Vue({
     el,
@@ -24,6 +35,15 @@ export default function init() {
           features: JSON.parse(features),
           helpPagePath,
           latestPipelinePath,
+          autoFixSettingsProps: {
+            autoFixEnabled: JSON.parse(autoFixEnabled),
+            autoFixHelpPath,
+            autoFixUserPath,
+            containerScanningHelpPath,
+            dependencyScanningHelpPath,
+            canToggleAutoFixSettings,
+            toggleAutofixSettingEndpoint,
+          },
         },
       });
     },

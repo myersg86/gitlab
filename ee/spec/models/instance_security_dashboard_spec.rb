@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe InstanceSecurityDashboard do
+RSpec.describe InstanceSecurityDashboard do
   let_it_be(:project1) { create(:project) }
   let_it_be(:project2) { create(:project) }
   let_it_be(:pipeline1) { create(:ci_pipeline, project: project1) }
@@ -113,6 +113,14 @@ describe InstanceSecurityDashboard do
       it "returns vulnerabilities from all projects on the user's dashboard" do
         expect(subject.vulnerabilities).to contain_exactly(vulnerability1, vulnerability2)
       end
+    end
+  end
+
+  describe '#full_path' do
+    let(:user) { create(:user) }
+
+    it 'returns the full_path of the user' do
+      expect(subject.full_path).to eql(user.full_path)
     end
   end
 end

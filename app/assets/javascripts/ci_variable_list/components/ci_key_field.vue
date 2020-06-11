@@ -132,7 +132,7 @@ export default {
           aria-controls="token-suggestions"
           aria-haspopup="listbox"
           :aria-expanded="showSuggestions"
-          data-qa-selector="variable_key"
+          data-qa-selector="ci_variable_key_field"
           @input="onEntry"
           @keydown.down="onArrowDown"
           @keydown.up="onArrowUp"
@@ -154,7 +154,7 @@ export default {
               v-for="(result, i) in results"
               :key="i"
               role="option"
-              :class="{ 'gl-bg-gray-100': i === arrowCounter }"
+              :class="{ 'gl-bg-gray-50': i === arrowCounter }"
               :aria-selected="i === arrowCounter"
             >
               <gl-button tabindex="-1" class="btn-transparent pl-2" @click="selectToken(result)">{{

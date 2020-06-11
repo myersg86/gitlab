@@ -5,11 +5,11 @@
   .col-md-5.new-session-forms-container
     .login-page
       #signin-container
-        = render 'admin/sessions/tabs_normal', tab_title: _('Enter Admin Mode')
+        = render 'devise/shared/tabs_normal', tab_title: _('Enter Admin Mode'), render_signup_link: false
         .tab-content
           .login-box.tab-pane.active{ id: 'login-pane', role: 'tabpanel' }
             .login-body
               - if current_user.two_factor_otp_enabled?
                 = render 'admin/sessions/two_factor_otp'
               - if current_user.two_factor_u2f_enabled?
-                = render 'admin/sessions/two_factor_u2f'
+                = render 'u2f/authenticate', render_remember_me: false, target_path: admin_session_path

@@ -33,6 +33,15 @@
                   = link_to _('Index all projects'), admin_elasticsearch_enqueue_index_path,
                       class: ['btn', 'btn-success'], method: :post
 
+          .card-body
+            .form-group
+              .form-check
+                = f.check_box :elasticsearch_pause_indexing, class: 'form-check-input', data: { qa_selector: 'pause_checkbox' }, disabled: !Gitlab::CurrentSettings.elasticsearch_indexing?
+                = f.label :elasticsearch_pause_indexing, class: 'form-check-label' do
+                  Pause Elasticsearch indexing
+                .form-text.text-muted
+                  = _('Changes are still tracked. Useful for cluster/index migrations.')
+
           .form-group
             .form-check
               = f.check_box :elasticsearch_search, class: 'form-check-input', data: { qa_selector: 'search_checkbox' }
@@ -92,14 +101,14 @@
             - if elasticsearch_too_many_namespaces?
               %p= _('Too many namespaces enabled. You will need to manage them via the console or the API.')
             - else
-              = f.text_field :elasticsearch_namespace_ids, class: 'js-elasticsearch-namespaces', value: elasticsearch_namespace_ids, data: { selected: elasticsearch_objects_options(@application_setting.elasticsearch_limited_namespaces(ignore_descendants: true)).to_json }
+              = f.text_field :elasticsearch_namespace_ids, class: 'js-elasticsearch-namespaces', value: elasticsearch_namespace_ids, data: { selected: elasticsearch_objects_options(@application_setting.elasticsearch_limited_namespaces(true)).to_json }
 
           .form-group.js-limit-projects{ class: ('hidden' unless @application_setting.elasticsearch_limit_indexing) }
             = f.label :elasticsearch_project_ids, _('Projects to index'), class: 'label-bold'
             - if elasticsearch_too_many_projects?
               %p= _('Too many projects enabled. You will need to manage them via the console or the API.')
             - else
-              = f.text_field :elasticsearch_project_ids, class: 'js-elasticsearch-projects', value: elasticsearch_project_ids, data: { selected: elasticsearch_objects_options(@application_setting.elasticsearch_limited_projects(ignore_namespaces: true)).to_json }
+              = f.text_field :elasticsearch_project_ids, class: 'js-elasticsearch-projects', value: elasticsearch_project_ids, data: { selected: elasticsearch_objects_options(@application_setting.elasticsearch_limited_projects(true)).to_json }
 
         .sub-section
           %h4= _('Elasticsearch AWS IAM credentials')

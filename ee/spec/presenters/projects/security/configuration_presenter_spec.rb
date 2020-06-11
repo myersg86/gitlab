@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::Security::ConfigurationPresenter do
+RSpec.describe Projects::Security::ConfigurationPresenter do
   include Gitlab::Routing.url_helpers
 
   let(:project) { create(:project, :repository) }
@@ -14,7 +14,7 @@ describe Projects::Security::ConfigurationPresenter do
   end
 
   describe '#to_h' do
-    subject { described_class.new(project).to_h }
+    subject { described_class.new(project, auto_fix_permission: true).to_h }
 
     it 'includes links to auto devops and secure product docs' do
       expect(subject[:auto_devops_help_page_path]).to eq(help_page_path('topics/autodevops/index'))
@@ -36,13 +36,18 @@ describe Projects::Security::ConfigurationPresenter do
         expect(subject[:auto_devops_enabled]).to be_truthy
       end
 
+      it 'reports auto_fix permissions' do
+        expect(subject[:can_toggle_auto_fix_settings]).to be_truthy
+      end
+
       it 'reports that all security jobs are configured' do
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: true),
           security_scan(:sast, configured: true),
           security_scan(:container_scanning, configured: true),
           security_scan(:dependency_scanning, configured: true),
-          security_scan(:license_scanning, configured: true)
+          security_scan(:license_scanning, configured: true),
+          security_scan(:secret_detection, configured: true)
         )
       end
     end
@@ -57,12 +62,13 @@ describe Projects::Security::ConfigurationPresenter do
       end
 
       it 'reports all security jobs as unconfigured' do
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: false),
           security_scan(:sast, configured: false),
           security_scan(:container_scanning, configured: false),
           security_scan(:dependency_scanning, configured: false),
-          security_scan(:license_scanning, configured: false)
+          security_scan(:license_scanning, configured: false),
+          security_scan(:secret_detection, configured: false)
         )
       end
     end
@@ -80,15 +86,17 @@ describe Projects::Security::ConfigurationPresenter do
       before do
         create(:ci_build, :sast, pipeline: pipeline)
         create(:ci_build, :dast, pipeline: pipeline)
+        create(:ci_build, :secret_detection, pipeline: pipeline)
       end
 
       it 'uses the latest default branch pipeline to determine whether a security job is configured' do
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: true),
           security_scan(:sast, configured: true),
           security_scan(:container_scanning, configured: false),
           security_scan(:dependency_scanning, configured: false),
-          security_scan(:license_scanning, configured: false)
+          security_scan(:license_scanning, configured: false),
+          security_scan(:secret_detection, configured: true)
         )
       end
 
@@ -97,12 +105,13 @@ describe Projects::Security::ConfigurationPresenter do
 
         create(:ci_build, :sast, pipeline: pipeline)
 
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: false),
           security_scan(:sast, configured: true),
           security_scan(:container_scanning, configured: false),
           security_scan(:dependency_scanning, configured: false),
-          security_scan(:license_scanning, configured: false)
+          security_scan(:license_scanning, configured: false),
+          security_scan(:secret_detection, configured: false)
         )
       end
 
@@ -117,24 +126,26 @@ describe Projects::Security::ConfigurationPresenter do
 
         subject
 
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: false),
           security_scan(:sast, configured: true),
           security_scan(:container_scanning, configured: false),
           security_scan(:dependency_scanning, configured: false),
-          security_scan(:license_scanning, configured: false)
+          security_scan(:license_scanning, configured: false),
+          security_scan(:secret_detection, configured: false)
         )
       end
 
       it 'detect new license compliance job' do
         create(:ci_build, :license_scanning, pipeline: pipeline)
 
-        expect(JSON.parse(subject[:features])).to contain_exactly(
+        expect(Gitlab::Json.parse(subject[:features])).to contain_exactly(
           security_scan(:dast, configured: true),
           security_scan(:sast, configured: true),
           security_scan(:container_scanning, configured: false),
           security_scan(:dependency_scanning, configured: false),
-          security_scan(:license_scanning, configured: true)
+          security_scan(:license_scanning, configured: true),
+          security_scan(:secret_detection, configured: true)
         )
       end
 

@@ -19,6 +19,9 @@ module UsageDataHelpers
       cycle_analytics_views
       productivity_analytics_views
       source_code_pushes
+      design_management_designs_create
+      design_management_designs_update
+      design_management_designs_delete
     ).freeze
 
   COUNTS_KEYS = %i(
@@ -96,12 +99,36 @@ module UsageDataHelpers
       projects_with_error_tracking_enabled
       projects_with_alerts_service_enabled
       projects_with_prometheus_alerts
+      projects_with_expiration_policy_enabled
+      projects_with_expiration_policy_disabled
+      projects_with_expiration_policy_enabled_with_keep_n_unset
+      projects_with_expiration_policy_enabled_with_keep_n_set_to_1
+      projects_with_expiration_policy_enabled_with_keep_n_set_to_5
+      projects_with_expiration_policy_enabled_with_keep_n_set_to_10
+      projects_with_expiration_policy_enabled_with_keep_n_set_to_25
+      projects_with_expiration_policy_enabled_with_keep_n_set_to_50
+      projects_with_expiration_policy_enabled_with_older_than_unset
+      projects_with_expiration_policy_enabled_with_older_than_set_to_7d
+      projects_with_expiration_policy_enabled_with_older_than_set_to_14d
+      projects_with_expiration_policy_enabled_with_older_than_set_to_30d
+      projects_with_expiration_policy_enabled_with_older_than_set_to_90d
+      projects_with_expiration_policy_enabled_with_cadence_set_to_1d
+      projects_with_expiration_policy_enabled_with_cadence_set_to_7d
+      projects_with_expiration_policy_enabled_with_cadence_set_to_14d
+      projects_with_expiration_policy_enabled_with_cadence_set_to_1month
+      projects_with_expiration_policy_enabled_with_cadence_set_to_3month
+      projects_with_terraform_reports
+      projects_with_terraform_states
       pages_domains
       protected_branches
       releases
       remote_mirrors
       snippets
+      personal_snippets
+      project_snippets
       suggestions
+      terraform_reports
+      terraform_states
       todos
       uploads
       web_hooks
@@ -130,28 +157,79 @@ module UsageDataHelpers
       gitaly
       database
       avg_cycle_analytics
-      influxdb_metrics_enabled
       prometheus_metrics_enabled
       web_ide_clientside_preview_enabled
       ingress_modsecurity_enabled
-      projects_with_expiration_policy_disabled
-      projects_with_expiration_policy_enabled
-      projects_with_expiration_policy_enabled_with_keep_n_unset
-      projects_with_expiration_policy_enabled_with_older_than_unset
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_1
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_5
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_10
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_25
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_50
-      projects_with_expiration_policy_enabled_with_keep_n_set_to_100
-      projects_with_expiration_policy_enabled_with_cadence_set_to_1d
-      projects_with_expiration_policy_enabled_with_cadence_set_to_7d
-      projects_with_expiration_policy_enabled_with_cadence_set_to_14d
-      projects_with_expiration_policy_enabled_with_cadence_set_to_1month
-      projects_with_expiration_policy_enabled_with_cadence_set_to_3month
-      projects_with_expiration_policy_enabled_with_older_than_set_to_7d
-      projects_with_expiration_policy_enabled_with_older_than_set_to_14d
-      projects_with_expiration_policy_enabled_with_older_than_set_to_30d
-      projects_with_expiration_policy_enabled_with_older_than_set_to_90d
+      object_store
     ).freeze
+
+  def stub_usage_data_connections
+    allow(ActiveRecord::Base.connection).to receive(:transaction_open?).and_return(false)
+    allow(Gitlab::Prometheus::Internal).to receive(:prometheus_enabled?).and_return(false)
+  end
+
+  def stub_object_store_settings
+    allow(Settings).to receive(:[]).with('artifacts')
+      .and_return(
+        { 'enabled' => true,
+         'object_store' =>
+         { 'enabled' => true,
+          'remote_directory' => 'artifacts',
+          'direct_upload' => true,
+          'connection' =>
+         { 'provider' => 'AWS', 'aws_access_key_id' => 'minio', 'aws_secret_access_key' => 'gdk-minio', 'region' => 'gdk', 'endpoint' => 'http://127.0.0.1:9000', 'path_style' => true },
+           'background_upload' => false,
+           'proxy_download' => false } }
+      )
+
+    allow(Settings).to receive(:[]).with('external_diffs').and_return({ 'enabled' => false })
+
+    allow(Settings).to receive(:[]).with('lfs')
+      .and_return(
+        { 'enabled' => true,
+         'object_store' =>
+         { 'enabled' => false,
+          'remote_directory' => 'lfs-objects',
+          'direct_upload' => true,
+          'connection' =>
+         { 'provider' => 'AWS', 'aws_access_key_id' => 'minio', 'aws_secret_access_key' => 'gdk-minio', 'region' => 'gdk', 'endpoint' => 'http://127.0.0.1:9000', 'path_style' => true },
+           'background_upload' => false,
+           'proxy_download' => false } }
+      )
+    allow(Settings).to receive(:[]).with('uploads')
+      .and_return(
+        { 'object_store' =>
+          { 'enabled' => false,
+          'remote_directory' => 'uploads',
+          'direct_upload' => true,
+          'connection' =>
+          { 'provider' => 'AWS', 'aws_access_key_id' => 'minio', 'aws_secret_access_key' => 'gdk-minio', 'region' => 'gdk', 'endpoint' => 'http://127.0.0.1:9000', 'path_style' => true },
+           'background_upload' => false,
+           'proxy_download' => false } }
+      )
+    allow(Settings).to receive(:[]).with('packages')
+      .and_return(
+        { 'enabled' => true,
+         'object_store' =>
+         { 'enabled' => false,
+          'remote_directory' => 'packages',
+          'direct_upload' => false,
+          'connection' =>
+         { 'provider' => 'AWS', 'aws_access_key_id' => 'minio', 'aws_secret_access_key' => 'gdk-minio', 'region' => 'gdk', 'endpoint' => 'http://127.0.0.1:9000', 'path_style' => true },
+           'background_upload' => true,
+           'proxy_download' => false } }
+      )
+  end
+
+  def expect_prometheus_api_to(*receive_matchers)
+    expect_next_instance_of(Gitlab::PrometheusClient) do |client|
+      receive_matchers.each { |m| expect(client).to m }
+    end
+  end
+
+  def allow_prometheus_queries
+    allow_next_instance_of(Gitlab::PrometheusClient) do |client|
+      allow(client).to receive(:aggregate).and_return({})
+    end
+  end
 end

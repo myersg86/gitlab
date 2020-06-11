@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::GitAccessWiki do
+RSpec.describe Gitlab::GitAccessWiki do
   let(:user) { create(:user) }
   let(:project) { create(:project, :wiki_repo) }
   let(:changes) { ['6f6d7e7ed 570e7b2ab refs/heads/master'] }
@@ -38,6 +38,10 @@ describe Gitlab::GitAccessWiki do
   end
 
   private
+
+  def pull_changes(changes = Gitlab::GitAccess::ANY)
+    access.check('git-upload-pack', changes)
+  end
 
   def push_changes(changes = Gitlab::GitAccess::ANY)
     access.check('git-receive-pack', changes)

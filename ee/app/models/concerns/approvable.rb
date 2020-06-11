@@ -17,6 +17,7 @@ module Approvable
     authors_can_approve?
     committers_can_approve?
     approvers_overwritten?
+    total_approvals_count
   }.freeze
 
   delegate(*FORWARDABLE_METHODS, to: :approval_state)
@@ -42,7 +43,7 @@ module Approvable
   end
 
   def approvals_given
-    approvals.size
+    approvals_required - approvals_left
   end
 
   def approvals_before_merge

@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe 'Analytics (JavaScript fixtures)', :sidekiq_inline do
+RSpec.describe 'Analytics (JavaScript fixtures)', :sidekiq_inline do
   include JavaScriptFixturesHelpers
 
   let(:group) { create(:group)}
   let(:project) { create(:project, :repository, namespace: group) }
   let(:user) { create(:user, :admin) }
-  # let(:issue) { create(:issue, project: project, created_at: 4.days.ago) }
   let(:milestone) { create(:milestone, project: project) }
-  # let(:mr) { create_merge_request_closing_issue(user, project, issue, commit_message: "References #{issue.to_reference}") }
 
   let(:issue) { create(:issue, project: project, created_at: 4.days.ago) }
   let(:issue_1) { create(:issue, project: project, created_at: 5.days.ago) }
@@ -189,17 +187,34 @@ describe 'Analytics (JavaScript fixtures)', :sidekiq_inline do
 
     let(:params) { { created_after: 3.months.ago, created_before: Time.now, group_id: group.full_path } }
 
+    def prepare_cycle_time_data
+      issue.update!(created_at: 5.days.ago)
+      issue.metrics.update!(first_mentioned_in_commit_at: 4.days.ago)
+      issue.update!(closed_at: 3.days.ago)
+
+      issue_1.update!(created_at: 8.days.ago)
+      issue_1.metrics.update!(first_mentioned_in_commit_at: 6.days.ago)
+      issue_1.update!(closed_at: 1.day.ago)
+    end
+
     before do
       stub_feature_flags(Gitlab::Analytics::CYCLE_ANALYTICS_FEATURE_FLAG => true)
       stub_licensed_features(cycle_analytics_for_groups: true)
 
       prepare_cycle_analytics_data
+      prepare_cycle_time_data
 
       sign_in(user)
     end
 
     it 'analytics/value_stream_analytics/summary.json' do
       get(:show, params: params, format: :json)
+
+      expect(response).to be_successful
+    end
+
+    it 'analytics/value_stream_analytics/time_summary.json' do
+      get(:time_summary, params: params, format: :json)
 
       expect(response).to be_successful
     end
@@ -220,7 +235,6 @@ describe 'Analytics (JavaScript fixtures)', :sidekiq_inline do
       end
 
       stub_licensed_features(type_of_work_analytics: true)
-      stub_feature_flags(Gitlab::Analytics::TASKS_BY_TYPE_CHART_FEATURE_FLAG => true)
 
       group.add_maintainer(user)
 

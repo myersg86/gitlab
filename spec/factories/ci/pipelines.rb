@@ -21,6 +21,12 @@ FactoryBot.define do
     end
 
     factory :ci_pipeline do
+      transient { ci_ref_presence { true } }
+
+      after(:build) do |pipeline, evaluator|
+        pipeline.ensure_ci_ref! if evaluator.ci_ref_presence && pipeline.ci_ref_id.nil?
+      end
+
       trait :invalid do
         status { :failed }
         yaml_errors { 'invalid YAML' }
@@ -75,11 +81,36 @@ FactoryBot.define do
         end
       end
 
+      trait :with_broken_test_reports do
+        status { :success }
+
+        after(:build) do |pipeline, _evaluator|
+          pipeline.builds << build(:ci_build, :broken_test_reports, pipeline: pipeline, project: pipeline.project)
+        end
+      end
+
+      trait :with_accessibility_reports do
+        status { :success }
+
+        after(:build) do |pipeline, evaluator|
+          pipeline.builds << build(:ci_build, :accessibility_reports, pipeline: pipeline, project: pipeline.project)
+        end
+      end
+
       trait :with_coverage_reports do
         status { :success }
 
         after(:build) do |pipeline, evaluator|
           pipeline.builds << build(:ci_build, :coverage_reports, pipeline: pipeline, project: pipeline.project)
+        end
+      end
+
+      trait :with_terraform_reports do
+        status { :success }
+
+        after(:build) do |pipeline, evaluator|
+          pipeline.builds << build(:ci_build, :terraform_reports, pipeline: pipeline, project: pipeline.project)
+          pipeline.builds << build(:ci_build, :terraform_reports, pipeline: pipeline, project: pipeline.project)
         end
       end
 
@@ -130,6 +161,11 @@ FactoryBot.define do
         ref { merge_request.merge_ref_path }
         source_sha { merge_request.source_branch_sha }
         target_sha { merge_request.target_branch_sha }
+      end
+
+      trait :webide do
+        source { :webide }
+        config_source { :webide_source }
       end
     end
   end

@@ -21,14 +21,14 @@ Valid values for snippet visibility levels are:
 
 Get a list of the current user's snippets.
 
-```text
+```plaintext
 GET /snippets
 ```
 
 Example request:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/snippets
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/snippets"
 ```
 
 Example response:
@@ -47,13 +47,13 @@ Example response:
             "username": "user0",
             "state": "active",
             "avatar_url": "https://www.gravatar.com/avatar/52e4ce24a915fb7e51e1ad3b57f4b00a?s=80&d=identicon",
-            "web_url": "http://localhost:3000/user0"
+            "web_url": "http://example.com/user0"
         },
         "updated_at": "2018-09-18T01:12:26.383Z",
         "created_at": "2018-09-18T01:12:26.383Z",
         "project_id": null,
-        "web_url": "http://localhost:3000/snippets/42",
-        "raw_url": "http://localhost:3000/snippets/42/raw"
+        "web_url": "http://example.com/snippets/42",
+        "raw_url": "http://example.com/snippets/42/raw"
     },
     {
         "id": 41,
@@ -67,13 +67,13 @@ Example response:
             "username": "user0",
             "state": "active",
             "avatar_url": "https://www.gravatar.com/avatar/52e4ce24a915fb7e51e1ad3b57f4b00a?s=80&d=identicon",
-            "web_url": "http://localhost:3000/user0"
+            "web_url": "http://example.com/user0"
         },
         "updated_at": "2018-09-18T01:12:26.360Z",
         "created_at": "2018-09-18T01:12:26.360Z",
-        "project_id": null,
-        "web_url": "http://localhost:3000/snippets/41",
-        "raw_url": "http://localhost:3000/snippets/41/raw"
+        "project_id": 1,
+        "web_url": "http://example.com/gitlab-org/gitlab-test/snippets/41",
+        "raw_url": "http://example.com/gitlab-org/gitlab-test/snippets/41/raw"
     }
 ]
 ```
@@ -82,7 +82,7 @@ Example response:
 
 Get a single snippet.
 
-```text
+```plaintext
 GET /snippets/:id
 ```
 
@@ -95,7 +95,7 @@ Parameters:
 Example request:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/snippets/1
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/snippets/1"
 ```
 
 Example response:
@@ -118,7 +118,9 @@ Example response:
   "expires_at": null,
   "updated_at": "2012-06-28T10:52:04Z",
   "created_at": "2012-06-28T10:52:04Z",
+  "project_id": null,
   "web_url": "http://example.com/snippets/1",
+  "raw_url": "http://example.com/snippets/1/raw"
 }
 ```
 
@@ -126,7 +128,7 @@ Example response:
 
 Get a single snippet's raw contents.
 
-```text
+```plaintext
 GET /snippets/:id/raw
 ```
 
@@ -139,12 +141,12 @@ Parameters:
 Example request:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/snippets/1/raw
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/snippets/1/raw"
 ```
 
 Example response:
 
-```text
+```plaintext
 Hello World snippet
 ```
 
@@ -155,7 +157,7 @@ Create a new snippet.
 NOTE: **Note:**
 The user must have permission to create new snippets.
 
-```text
+```plaintext
 POST /snippets
 ```
 
@@ -175,8 +177,8 @@ Example request:
 curl --request POST \
      --data '{"title": "This is a snippet", "content": "Hello world", "description": "Hello World snippet", "file_name": "test.txt", "visibility": "internal" }' \
      --header 'Content-Type: application/json' \
-     --header "PRIVATE-TOKEN: valid_api_token" \
-     https://gitlab.example.com/api/v4/snippets
+     --header "PRIVATE-TOKEN: <your_access_token>" \
+     "https://gitlab.example.com/api/v4/snippets"
 ```
 
 Example response:
@@ -199,7 +201,9 @@ Example response:
   "expires_at": null,
   "updated_at": "2012-06-28T10:52:04Z",
   "created_at": "2012-06-28T10:52:04Z",
+  "project_id": null,
   "web_url": "http://example.com/snippets/1",
+  "raw_url": "http://example.com/snippets/1/raw"
 }
 ```
 
@@ -210,7 +214,7 @@ Update an existing snippet.
 NOTE: **Note:**
 The user must have permission to change an existing snippet.
 
-```text
+```plaintext
 PUT /snippets/:id
 ```
 
@@ -231,8 +235,8 @@ Example request:
 curl --request PUT \
      --data '{"title": "foo", "content": "bar"}' \
      --header 'Content-Type: application/json' \
-     --header "PRIVATE-TOKEN: valid_api_token" \
-     https://gitlab.example.com/api/v4/snippets/1
+     --header "PRIVATE-TOKEN: <your_access_token>" \
+     "https://gitlab.example.com/api/v4/snippets/1"
 ```
 
 Example response:
@@ -255,7 +259,9 @@ Example response:
   "expires_at": null,
   "updated_at": "2012-06-28T10:52:04Z",
   "created_at": "2012-06-28T10:52:04Z",
+  "project_id": null,
   "web_url": "http://example.com/snippets/1",
+  "raw_url": "http://example.com/snippets/1/raw"
 }
 ```
 
@@ -263,7 +269,7 @@ Example response:
 
 Delete an existing snippet.
 
-```text
+```plaintext
 DELETE /snippets/:id
 ```
 
@@ -290,7 +296,7 @@ The following are possible return codes:
 
 List all public snippets.
 
-```text
+```plaintext
 GET /snippets/public
 ```
 
@@ -304,7 +310,7 @@ Parameters:
 Example request:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/snippets/public?per_page=2&page=1
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/snippets/public?per_page=2&page=1"
 ```
 
 Example response:
@@ -318,15 +324,16 @@ Example response:
             "name": "Libby Rolfson",
             "state": "active",
             "username": "elton_wehner",
-            "web_url": "http://localhost:3000/elton_wehner"
+            "web_url": "http://example.com/elton_wehner"
         },
         "created_at": "2016-11-25T16:53:34.504Z",
         "file_name": "oconnerrice.rb",
         "id": 49,
-        "raw_url": "http://localhost:3000/snippets/49/raw",
         "title": "Ratione cupiditate et laborum temporibus.",
         "updated_at": "2016-11-25T16:53:34.504Z",
-        "web_url": "http://localhost:3000/snippets/49"
+        "project_id": null,
+        "web_url": "http://example.com/snippets/49",
+        "raw_url": "http://example.com/snippets/49/raw"
     },
     {
         "author": {
@@ -335,15 +342,16 @@ Example response:
             "name": "Llewellyn Flatley",
             "state": "active",
             "username": "adaline",
-            "web_url": "http://localhost:3000/adaline"
+            "web_url": "http://example.com/adaline"
         },
         "created_at": "2016-11-25T16:53:34.479Z",
         "file_name": "muellershields.rb",
         "id": 48,
-        "raw_url": "http://localhost:3000/snippets/48/raw",
         "title": "Minus similique nesciunt vel fugiat qui ullam sunt.",
         "updated_at": "2016-11-25T16:53:34.479Z",
-        "web_url": "http://localhost:3000/snippets/48",
+        "project_id": null,
+        "web_url": "http://example.com/snippets/48",
+        "raw_url": "http://example.com/snippets/49/raw",
         "visibility": "public"
     }
 ]
@@ -356,7 +364,7 @@ Example response:
 NOTE: **Note:**
 Available only for administrators.
 
-```text
+```plaintext
 GET /snippets/:id/user_agent_detail
 ```
 
@@ -367,7 +375,7 @@ GET /snippets/:id/user_agent_detail
 Example request:
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/snippets/1/user_agent_detail
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/snippets/1/user_agent_detail"
 ```
 
 Example response:

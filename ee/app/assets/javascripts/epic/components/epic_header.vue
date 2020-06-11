@@ -6,7 +6,6 @@ import { __ } from '~/locale';
 
 import tooltip from '~/vue_shared/directives/tooltip';
 import Icon from '~/vue_shared/components/icon.vue';
-import LoadingButton from '~/vue_shared/components/loading_button.vue';
 import UserAvatarLink from '~/vue_shared/components/user_avatar/user_avatar_link.vue';
 import TimeagoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 
@@ -20,9 +19,10 @@ export default {
   components: {
     Icon,
     GlDeprecatedButton,
-    LoadingButton,
     UserAvatarLink,
     TimeagoTooltip,
+    GitlabTeamMemberBadge: () =>
+      import('ee_component/vue_shared/components/user_avatar/badges/gitlab_team_member_badge.vue'),
   },
   computed: {
     ...mapState([
@@ -89,7 +89,7 @@ export default {
         {{ __('Opened') }}
         <timeago-tooltip :time="created" />
         {{ __('by') }}
-        <strong>
+        <strong class="text-nowrap">
           <user-avatar-link
             :link-href="author.url"
             :img-src="author.src"
@@ -98,16 +98,21 @@ export default {
             :username="author.name"
             img-css-classes="avatar-inline"
           />
+          <gitlab-team-member-badge
+            v-if="author && author.isGitlabEmployee"
+            ref="gitlabTeamMemberBadge"
+          />
         </strong>
       </div>
     </div>
     <div v-if="canUpdate" class="detail-page-header-actions js-issuable-actions">
-      <loading-button
-        :label="actionButtonText"
+      <gl-deprecated-button
         :loading="epicStatusChangeInProgress"
-        :container-class="actionButtonClass"
+        :class="actionButtonClass"
         @click="toggleEpicStatus(isEpicOpen)"
-      />
+      >
+        {{ actionButtonText }}
+      </gl-deprecated-button>
     </div>
     <gl-deprecated-button
       :aria-label="__('Toggle sidebar')"

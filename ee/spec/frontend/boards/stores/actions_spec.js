@@ -3,6 +3,7 @@ import boardsStoreEE from 'ee/boards/stores/boards_store_ee';
 import actions from 'ee/boards/stores/actions';
 import * as types from 'ee/boards/stores/mutation_types';
 import testAction from 'helpers/vuex_action_helper';
+import { inactiveListId } from '~/boards/constants';
 
 jest.mock('axios');
 
@@ -25,7 +26,7 @@ describe('toggleShowLabels', () => {
 describe('setActiveListId', () => {
   it('should commit mutation SET_ACTIVE_LIST_ID', done => {
     const state = {
-      activeListId: 0,
+      activeListId: inactiveListId,
     };
 
     testAction(
@@ -88,4 +89,50 @@ describe('updateIssueWeight', () => {
 
 describe('togglePromotionState', () => {
   expectNotImplemented(actions.updateIssueWeight);
+});
+
+describe('toggleEpicSwimlanes', () => {
+  it('should commit mutation TOGGLE_EPICS_SWIMLANES', () => {
+    const state = {
+      isShowingEpicsSwimlanes: false,
+      endpoints: {
+        fullPath: 'gitlab-org',
+        boardId: 1,
+      },
+    };
+
+    return testAction(
+      actions.toggleEpicSwimlanes,
+      null,
+      state,
+      [{ type: types.TOGGLE_EPICS_SWIMLANES }],
+      [],
+    );
+  });
+});
+
+describe('receiveSwimlanesSuccess', () => {
+  it('should commit mutation RECEIVE_SWIMLANES_SUCCESS', done => {
+    testAction(
+      actions.receiveSwimlanesSuccess,
+      {},
+      {},
+      [{ type: types.RECEIVE_SWIMLANES_SUCCESS, payload: {} }],
+      [],
+      done,
+    );
+  });
+});
+
+describe('receiveSwimlanesFailure', () => {
+  it('should commit mutation RECEIVE_SWIMLANES_SUCCESS', done => {
+    testAction(
+      actions.receiveSwimlanesFailure,
+      null,
+      {},
+      [{ type: types.RECEIVE_SWIMLANES_FAILURE }],
+      [],
+      done,
+    );
+  });
 });

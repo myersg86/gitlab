@@ -22,9 +22,15 @@ export default {
       default: false,
     },
   },
+  methods: {
+    valueText(metric) {
+      const { value = null, unit = null } = metric;
+      if (!value || value === '-') return '-';
+      return unit && value ? `${value} ${unit}` : value;
+    },
+  },
 };
 </script>
-
 <template>
   <gl-card>
     <template #header>
@@ -39,13 +45,8 @@ export default {
           ref="metricItem"
           class="js-metric-card-item flex-grow text-center"
         >
-          <h3 class="my-2">
-            <template v-if="metric.value === null"
-              >-</template
-            >
-            <template v-else>{{ metric.value }}</template>
-          </h3>
-          <p class="text-secondary gl-font-size-small mb-2">{{ metric.label }}</p>
+          <h3 class="my-2">{{ valueText(metric) }}</h3>
+          <p class="text-secondary gl-font-sm mb-2">{{ metric.label }}</p>
         </div>
       </div>
     </template>

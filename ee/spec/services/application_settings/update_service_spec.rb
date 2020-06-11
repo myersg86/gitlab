@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ApplicationSettings::UpdateService do
+RSpec.describe ApplicationSettings::UpdateService do
   let(:user)    { create(:user) }
   let(:setting) { ApplicationSetting.create_from_defaults }
   let(:service) { described_class.new(setting, user, opts) }
@@ -46,7 +46,7 @@ describe ApplicationSettings::UpdateService do
 
       with_them do
         before do
-          allow(Gitlab::Elastic::Helper).to(receive(:index_exists?)).and_return(index_exists)
+          allow(Gitlab::Elastic::Helper.default).to(receive(:index_exists?)).and_return(index_exists)
           allow(service.application_setting).to(receive(:elasticsearch_indexing)).and_return(indexing_enabled)
         end
 

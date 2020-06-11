@@ -13,7 +13,6 @@ module QA
 
     module Page
       module Component
-        autoload :DesignManagement, 'qa/ee/page/component/design_management'
         autoload :LicenseManagement, 'qa/ee/page/component/license_management'
         autoload :SecureReport, 'qa/ee/page/component/secure_report'
 
@@ -117,13 +116,14 @@ module QA
 
         module Settings
           autoload :ProtectedBranches, 'qa/ee/page/project/settings/protected_branches'
+          autoload :Main, 'qa/ee/page/project/settings/main'
           autoload :MirroringRepositories, 'qa/ee/page/project/settings/mirroring_repositories'
           autoload :MergeRequest, 'qa/ee/page/project/settings/merge_request'
+          autoload :MergeRequestApprovals, 'qa/ee/page/project/settings/merge_request_approvals'
           autoload :Integrations, 'qa/ee/page/project/settings/integrations'
           autoload :Repository, 'qa/ee/page/project/settings/repository'
           autoload :PushRules, 'qa/ee/page/project/settings/push_rules'
-          autoload :CICD, 'qa/ee/page/project/settings/ci_cd.rb'
-          autoload :LicenseCompliance, 'qa/ee/page/project/settings/license_compliance.rb'
+          autoload :LicenseCompliance, 'qa/ee/page/project/settings/license_compliance'
 
           module Services
             autoload :Jenkins, 'qa/ee/page/project/settings/services/jenkins'
@@ -186,7 +186,6 @@ module QA
     module Resource
       autoload :License, 'qa/ee/resource/license'
       autoload :Epic, 'qa/ee/resource/epic'
-      autoload :ProjectMilestone, 'qa/ee/resource/project_milestone'
       autoload :GroupLabel, 'qa/ee/resource/group_label.rb'
 
       module Board

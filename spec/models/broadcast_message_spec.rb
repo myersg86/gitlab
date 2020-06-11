@@ -66,7 +66,7 @@ describe BroadcastMessage do
     end
 
     it 'expires the value if a broadcast message has ended', :request_store do
-      message = create(:broadcast_message, broadcast_type: broadcast_type, ends_at: Time.now.utc + 1.day)
+      message = create(:broadcast_message, broadcast_type: broadcast_type, ends_at: Time.current.utc + 1.day)
 
       expect(subject.call).to match_array([message])
       expect(described_class.cache).to receive(:expire).and_call_original
@@ -87,8 +87,8 @@ describe BroadcastMessage do
 
       future = create(
         :broadcast_message,
-        starts_at: Time.now + 10.minutes,
-        ends_at: Time.now + 20.minutes,
+        starts_at: Time.current + 10.minutes,
+        ends_at: Time.current + 20.minutes,
         broadcast_type: broadcast_type
       )
 
@@ -142,6 +142,24 @@ describe BroadcastMessage do
       create(:broadcast_message, target_path: "/users/*/issues", broadcast_type: broadcast_type)
 
       expect(subject.call('/group/groupname/issues').length).to eq(0)
+    end
+
+    it 'does not return message if target path has no wild card at the end' do
+      create(:broadcast_message, target_path: "*/issues", broadcast_type: broadcast_type)
+
+      expect(subject.call('/group/issues/test').length).to eq(0)
+    end
+
+    it 'does not return message if target path has wild card at the end' do
+      create(:broadcast_message, target_path: "/issues/*", broadcast_type: broadcast_type)
+
+      expect(subject.call('/group/issues/test').length).to eq(0)
+    end
+
+    it 'does return message if target path has wild card at the beginning and the end' do
+      create(:broadcast_message, target_path: "*/issues/*", broadcast_type: broadcast_type)
+
+      expect(subject.call('/group/issues/test').length).to eq(1)
     end
   end
 

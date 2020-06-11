@@ -28,6 +28,21 @@ For more details, see [Protected branches](../../project/protected_branches.md).
 
 To change this setting for a specific group, see [Default branch protection for groups](../../group/index.md#changing-the-default-branch-protection-of-a-group)
 
+### Disable group owners from updating default branch protection **(PREMIUM ONLY)**
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/211944) in GitLab 13.0.
+
+By default, group owners are allowed to override the branch protection set at the global level.
+
+In [GitLab Premium or higher](https://about.gitlab.com/pricing/), GitLab administrators can disable this privilege of group owners.
+
+To do this:
+
+1. Uncheck the **Allow owners to manage default branch protection per group** checkbox.
+
+NOTE: **Note:**
+GitLab administrators can still update the default branch protection of a group.
+
 ## Default project creation protection
 
 Project creation protection specifies which roles can create projects.
@@ -51,7 +66,7 @@ To ensure only admin users can delete projects:
 
 ## Default deletion adjourned period **(PREMIUM ONLY)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/32935) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/32935) in GitLab 12.6.
 
 By default, a project or group marked for removal will be permanently removed after 7 days.
 This period may be changed, and setting this period to 0 will enable immediate removal
@@ -61,6 +76,13 @@ To change this period:
 
 1. Select the desired option.
 1. Click **Save changes**.
+
+### Override default deletion adjourned period
+
+Alternatively, projects that are marked for removal can be deleted immediately. To do so:
+
+1. [Restore the project](../../project/settings/#restore-a-project-premium).
+1. Delete the project as described in the [Administering Projects page](../../admin_area/#administering-projects).
 
 ## Default project visibility
 

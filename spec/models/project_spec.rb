@@ -6,6 +6,7 @@ describe Project do
   include ProjectForksHelper
   include GitHelpers
   include ExternalAuthorizationServiceHelpers
+  using RSpec::Parameterized::TableSyntax
 
   it_behaves_like 'having unique enum values'
 
@@ -20,6 +21,7 @@ describe Project do
     it { is_expected.to have_many(:merge_requests) }
     it { is_expected.to have_many(:issues) }
     it { is_expected.to have_many(:milestones) }
+    it { is_expected.to have_many(:iterations) }
     it { is_expected.to have_many(:project_members).dependent(:delete_all) }
     it { is_expected.to have_many(:users).through(:project_members) }
     it { is_expected.to have_many(:requesters).dependent(:delete_all) }
@@ -34,6 +36,7 @@ describe Project do
     it { is_expected.to have_one(:mattermost_service) }
     it { is_expected.to have_one(:hangouts_chat_service) }
     it { is_expected.to have_one(:unify_circuit_service) }
+    it { is_expected.to have_one(:webex_teams_service) }
     it { is_expected.to have_one(:packagist_service) }
     it { is_expected.to have_one(:pushover_service) }
     it { is_expected.to have_one(:asana_service) }
@@ -76,6 +79,7 @@ describe Project do
     it { is_expected.to have_many(:ci_refs) }
     it { is_expected.to have_many(:builds) }
     it { is_expected.to have_many(:build_trace_section_names)}
+    it { is_expected.to have_many(:build_report_results) }
     it { is_expected.to have_many(:runner_projects) }
     it { is_expected.to have_many(:runners) }
     it { is_expected.to have_many(:variables) }
@@ -110,12 +114,21 @@ describe Project do
     it { is_expected.to have_many(:source_pipelines) }
     it { is_expected.to have_many(:prometheus_alert_events) }
     it { is_expected.to have_many(:self_managed_prometheus_alert_events) }
+    it { is_expected.to have_many(:alert_management_alerts) }
     it { is_expected.to have_many(:jira_imports) }
+    it { is_expected.to have_many(:metrics_users_starred_dashboards).inverse_of(:project) }
+    it { is_expected.to have_many(:repository_storage_moves) }
+    it { is_expected.to have_many(:reviews).inverse_of(:project) }
 
     it_behaves_like 'model with repository' do
       let_it_be(:container) { create(:project, :repository, path: 'somewhere') }
       let(:stubbed_container) { build_stubbed(:project) }
       let(:expected_full_path) { "#{container.namespace.full_path}/somewhere" }
+    end
+
+    it_behaves_like 'model with wiki' do
+      let(:container) { create(:project, :wiki_repo) }
+      let(:container_without_wiki) { create(:project) }
     end
 
     it 'has an inverse relationship with merge requests' do
@@ -170,9 +183,9 @@ describe Project do
         expect(project.pages_metadatum).to be_persisted
       end
 
-      it 'automatically creates a project setting row' do
+      it 'automatically builds a project setting row' do
         expect(project.project_setting).to be_an_instance_of(ProjectSetting)
-        expect(project.project_setting).to be_persisted
+        expect(project.project_setting).to be_new_record
       end
     end
 
@@ -261,27 +274,6 @@ describe Project do
       expect_any_instance_of(described_class).to receive(:visibility_level_allowed_by_group).and_call_original
 
       create(:project)
-    end
-
-    describe 'wiki path conflict' do
-      context "when the new path has been used by the wiki of other Project" do
-        it 'has an error on the name attribute' do
-          new_project = build_stubbed(:project, namespace_id: project.namespace_id, path: "#{project.path}.wiki")
-
-          expect(new_project).not_to be_valid
-          expect(new_project.errors[:name].first).to eq(_('has already been taken'))
-        end
-      end
-
-      context "when the new wiki path has been used by the path of other Project" do
-        it 'has an error on the name attribute' do
-          project_with_wiki_suffix = create(:project, path: 'foo.wiki')
-          new_project = build_stubbed(:project, namespace_id: project_with_wiki_suffix.namespace_id, path: 'foo')
-
-          expect(new_project).not_to be_valid
-          expect(new_project.errors[:name].first).to eq(_('has already been taken'))
-        end
-      end
     end
 
     context 'repository storages inclusion' do
@@ -780,7 +772,7 @@ describe Project do
 
     describe 'last_activity_date' do
       it 'returns the creation date of the project\'s last event if present' do
-        new_event = create(:event, :closed, project: project, created_at: Time.now)
+        new_event = create(:event, :closed, project: project, created_at: Time.current)
 
         project.reload
         expect(project.last_activity_at.to_i).to eq(new_event.created_at.to_i)
@@ -1791,6 +1783,7 @@ describe Project do
     let(:project) { create(:project, :repository) }
     let(:repo)    { double(:repo, exists?: true) }
     let(:wiki)    { double(:wiki, exists?: true) }
+    let(:design)  { double(:design, exists?: true) }
 
     it 'expires the caches of the repository and wiki' do
       # In EE, there are design repositories as well
@@ -1804,8 +1797,13 @@ describe Project do
         .with('foo.wiki', project, shard: project.repository_storage, repo_type: Gitlab::GlRepository::WIKI)
         .and_return(wiki)
 
+      allow(Repository).to receive(:new)
+        .with('foo.design', project, shard: project.repository_storage, repo_type: Gitlab::GlRepository::DESIGN)
+        .and_return(design)
+
       expect(repo).to receive(:before_delete)
       expect(wiki).to receive(:before_delete)
+      expect(design).to receive(:before_delete)
 
       project.expire_caches_before_rename('foo')
     end
@@ -2840,44 +2838,6 @@ describe Project do
     end
   end
 
-  describe '#change_repository_storage' do
-    let(:project) { create(:project, :repository) }
-    let(:read_only_project) { create(:project, :repository, repository_read_only: true) }
-
-    before do
-      stub_storage_settings('test_second_storage' => { 'path' => 'tmp/tests/extra_storage' })
-    end
-
-    it 'schedules the transfer of the repository to the new storage and locks the project' do
-      expect(ProjectUpdateRepositoryStorageWorker).to receive(:perform_async).with(project.id, 'test_second_storage')
-
-      project.change_repository_storage('test_second_storage')
-      project.save!
-
-      expect(project).to be_repository_read_only
-    end
-
-    it "doesn't schedule the transfer if the repository is already read-only" do
-      expect(ProjectUpdateRepositoryStorageWorker).not_to receive(:perform_async)
-
-      read_only_project.change_repository_storage('test_second_storage')
-      read_only_project.save!
-    end
-
-    it "doesn't lock or schedule the transfer if the storage hasn't changed" do
-      expect(ProjectUpdateRepositoryStorageWorker).not_to receive(:perform_async)
-
-      project.change_repository_storage(project.repository_storage)
-      project.save!
-
-      expect(project).not_to be_repository_read_only
-    end
-
-    it 'throws an error if an invalid repository storage is provided' do
-      expect { project.change_repository_storage('unknown') }.to raise_error(ArgumentError)
-    end
-  end
-
   describe '#pushes_since_gc' do
     let(:project) { create(:project) }
 
@@ -3135,6 +3095,45 @@ describe Project do
              partially_matched_variable,
              perfectly_matched_variable])
         end
+      end
+    end
+  end
+
+  describe '#ci_instance_variables_for' do
+    let(:project) { create(:project) }
+
+    let!(:instance_variable) do
+      create(:ci_instance_variable, value: 'secret')
+    end
+
+    let!(:protected_instance_variable) do
+      create(:ci_instance_variable, :protected, value: 'protected')
+    end
+
+    subject { project.ci_instance_variables_for(ref: 'ref') }
+
+    before do
+      stub_application_setting(
+        default_branch_protection: Gitlab::Access::PROTECTION_NONE)
+    end
+
+    context 'when the ref is not protected' do
+      before do
+        allow(project).to receive(:protected_for?).with('ref').and_return(false)
+      end
+
+      it 'contains only the CI variables' do
+        is_expected.to contain_exactly(instance_variable)
+      end
+    end
+
+    context 'when the ref is protected' do
+      before do
+        allow(project).to receive(:protected_for?).with('ref').and_return(true)
+      end
+
+      it 'contains all the variables' do
+        is_expected.to contain_exactly(instance_variable, protected_instance_variable)
       end
     end
   end
@@ -3581,7 +3580,7 @@ describe Project do
       expect(project).not_to receive(:visibility_level_allowed_as_fork).and_call_original
       expect(project).not_to receive(:visibility_level_allowed_by_group).and_call_original
 
-      project.update(updated_at: Time.now)
+      project.update(updated_at: Time.current)
     end
   end
 
@@ -3635,6 +3634,24 @@ describe Project do
         projects = described_class.all.public_or_visible_to_user(user, Gitlab::Access::REPORTER)
 
         expect(projects).to contain_exactly(public_project)
+      end
+    end
+
+    context 'with deploy token users' do
+      let_it_be(:private_project) { create(:project, :private) }
+
+      subject { described_class.all.public_or_visible_to_user(user) }
+
+      context 'deploy token user without project' do
+        let_it_be(:user) { create(:deploy_token) }
+
+        it { is_expected.to eq [] }
+      end
+
+      context 'deploy token user with project' do
+        let_it_be(:user) { create(:deploy_token, projects: [private_project]) }
+
+        it { is_expected.to include(private_project) }
       end
     end
   end
@@ -3709,7 +3726,7 @@ describe Project do
       context 'when feature is private' do
         let(:project) { create(:project, :public, :merge_requests_private) }
 
-        context 'when user does not has access to the feature' do
+        context 'when user does not have access to the feature' do
           it 'does not return projects with the project feature private' do
             is_expected.not_to include(project)
           end
@@ -3760,7 +3777,7 @@ describe Project do
     end
   end
 
-  describe '.filter_by_feature_visibility' do
+  describe '.filter_by_feature_visibility', :enable_admin_mode do
     include_context 'ProjectPolicyTable context'
     include ProjectHelpers
     using RSpec::Parameterized::TableSyntax
@@ -3953,16 +3970,6 @@ describe Project do
       expect(PagesWorker).to receive(:perform_in).with(5.minutes, :remove, namespace.full_path, anything)
 
       expect { project.remove_pages }.to change { pages_metadatum.reload.deployed }.from(true).to(false)
-    end
-
-    it 'is a no-op when there is no namespace' do
-      project.namespace.delete
-      project.reload
-
-      expect_any_instance_of(Projects::UpdatePagesConfigurationService).not_to receive(:execute)
-      expect_any_instance_of(Gitlab::PagesTransfer).not_to receive(:rename_project)
-
-      expect { project.remove_pages }.not_to change { pages_metadatum.reload.deployed }
     end
 
     it 'is run when the project is destroyed' do
@@ -4255,8 +4262,7 @@ describe Project do
 
   describe '#auto_devops_enabled?' do
     before do
-      allow(Feature).to receive(:enabled?).and_call_original
-      Feature.get(:force_autodevops_on_by_default).enable_percentage_of_actors(0)
+      Feature.enable_percentage_of_actors(:force_autodevops_on_by_default, 0)
     end
 
     let_it_be(:project, reload: true) { create(:project) }
@@ -4458,8 +4464,7 @@ describe Project do
     let_it_be(:project, reload: true) { create(:project) }
 
     before do
-      allow(Feature).to receive(:enabled?).and_call_original
-      Feature.get(:force_autodevops_on_by_default).enable_percentage_of_actors(0)
+      Feature.enable_percentage_of_actors(:force_autodevops_on_by_default, 0)
     end
 
     context 'when explicitly disabled' do
@@ -4505,7 +4510,7 @@ describe Project do
         before do
           create(:project_auto_devops, project: project, enabled: false)
 
-          Feature.get(:force_autodevops_on_by_default).enable_percentage_of_actors(100)
+          Feature.enable_percentage_of_actors(:force_autodevops_on_by_default, 100)
         end
 
         it 'does not have auto devops implicitly disabled' do
@@ -4716,20 +4721,6 @@ describe Project do
     end
   end
 
-  describe '#wiki_repository_exists?' do
-    it 'returns true when the wiki repository exists' do
-      project = create(:project, :wiki_repo)
-
-      expect(project.wiki_repository_exists?).to eq(true)
-    end
-
-    it 'returns false when the wiki repository does not exist' do
-      project = create(:project)
-
-      expect(project.wiki_repository_exists?).to eq(false)
-    end
-  end
-
   describe '#write_repository_config' do
     let_it_be(:project) { create(:project, :repository) }
 
@@ -4818,6 +4809,32 @@ describe Project do
           project.execute_hooks(data, :merge_request_hooks)
         end
       end.not_to raise_error # Sidekiq::Worker::EnqueueFromTransactionError
+    end
+  end
+
+  describe '#execute_services' do
+    let(:service) { create(:slack_service, push_events: true, merge_requests_events: false, active: true) }
+
+    it 'executes services with the specified scope' do
+      data = 'any data'
+
+      expect(SlackService).to receive(:allocate).and_wrap_original do |method|
+        method.call.tap do |instance|
+          expect(instance).to receive(:async_execute).with(data).once
+        end
+      end
+
+      service.project.execute_services(data, :push_hooks)
+    end
+
+    it 'does not execute services that don\'t match the specified scope' do
+      expect(SlackService).not_to receive(:allocate).and_wrap_original do |method|
+        method.call.tap do |instance|
+          expect(instance).not_to receive(:async_execute)
+        end
+      end
+
+      service.project.execute_services(anything, :merge_request_hooks)
     end
   end
 
@@ -5208,12 +5225,10 @@ describe Project do
     end
   end
 
-  describe "#find_or_initialize_services" do
-    subject { build(:project) }
-
+  describe '#find_or_initialize_services' do
     it 'returns only enabled services' do
-      allow(Service).to receive(:available_services_names).and_return(%w(prometheus pushover))
-      allow(subject).to receive(:disabled_services).and_return(%w(prometheus))
+      allow(Service).to receive(:available_services_names).and_return(%w[prometheus pushover])
+      allow(subject).to receive(:disabled_services).and_return(%w[prometheus])
 
       services = subject.find_or_initialize_services
 
@@ -5222,11 +5237,9 @@ describe Project do
     end
   end
 
-  describe "#find_or_initialize_service" do
-    subject { build(:project) }
-
+  describe '#find_or_initialize_service' do
     it 'avoids N+1 database queries' do
-      allow(Service).to receive(:available_services_names).and_return(%w(prometheus pushover))
+      allow(Service).to receive(:available_services_names).and_return(%w[prometheus pushover])
 
       control_count = ActiveRecord::QueryRecorder.new { subject.find_or_initialize_service('prometheus') }.count
 
@@ -5235,10 +5248,50 @@ describe Project do
       expect { subject.find_or_initialize_service('prometheus') }.not_to exceed_query_limit(control_count)
     end
 
-    it 'returns nil if service is disabled' do
-      allow(subject).to receive(:disabled_services).and_return(%w(prometheus))
+    it 'returns nil if integration is disabled' do
+      allow(subject).to receive(:disabled_services).and_return(%w[prometheus])
 
       expect(subject.find_or_initialize_service('prometheus')).to be_nil
+    end
+
+    context 'with an existing integration' do
+      subject { create(:project) }
+
+      before do
+        create(:prometheus_service, project: subject, api_url: 'https://prometheus.project.com/')
+      end
+
+      it 'retrieves the integration' do
+        expect(subject.find_or_initialize_service('prometheus').api_url).to eq('https://prometheus.project.com/')
+      end
+    end
+
+    context 'with an instance-level and template integrations' do
+      before do
+        create(:prometheus_service, :instance, api_url: 'https://prometheus.instance.com/')
+        create(:prometheus_service, :template, api_url: 'https://prometheus.template.com/')
+      end
+
+      it 'builds the service from the instance if exists' do
+        expect(subject.find_or_initialize_service('prometheus').api_url).to eq('https://prometheus.instance.com/')
+      end
+    end
+
+    context 'with an instance-level and template integrations' do
+      before do
+        create(:prometheus_service, :template, api_url: 'https://prometheus.template.com/')
+      end
+
+      it 'builds the service from the template if instance does not exists' do
+        expect(subject.find_or_initialize_service('prometheus').api_url).to eq('https://prometheus.template.com/')
+      end
+    end
+
+    context 'without an exisiting integration, nor instance-level or template' do
+      it 'builds the service if instance or template does not exists' do
+        expect(subject.find_or_initialize_service('prometheus')).to be_a(PrometheusService)
+        expect(subject.find_or_initialize_service('prometheus').api_url).to be_nil
+      end
     end
   end
 
@@ -5969,6 +6022,53 @@ describe Project do
         expect(project.jira_imports.pluck(:id)).to eq([jira_import3.id, jira_import2.id, jira_import1.id])
         expect(project.latest_jira_import).to eq(jira_import1)
       end
+    end
+  end
+
+  describe '#design_management_enabled?' do
+    let(:project) { build(:project) }
+
+    where(:lfs_enabled, :hashed_storage_enabled, :expectation) do
+      false | false | false
+      true  | false | false
+      false | true  | false
+      true  | true  | true
+    end
+
+    with_them do
+      before do
+        expect(project).to receive(:lfs_enabled?).and_return(lfs_enabled)
+        allow(project).to receive(:hashed_storage?).with(:repository).and_return(hashed_storage_enabled)
+      end
+
+      it do
+        expect(project.design_management_enabled?).to be(expectation)
+      end
+    end
+  end
+
+  describe '#bots' do
+    subject { project.bots }
+
+    let_it_be(:project) { create(:project) }
+    let_it_be(:project_bot) { create(:user, :project_bot) }
+    let_it_be(:user) { create(:user) }
+
+    before_all do
+      [project_bot, user].each do |member|
+        project.add_maintainer(member)
+      end
+    end
+
+    it { is_expected.to contain_exactly(project_bot) }
+    it { is_expected.not_to include(user) }
+  end
+
+  describe "#metrics_setting" do
+    let(:project) { build(:project) }
+
+    it 'creates setting if it does not exist' do
+      expect(project.metrics_setting).to be_an_instance_of(ProjectMetricsSetting)
     end
   end
 

@@ -1,7 +1,9 @@
+import * as Sentry from '@sentry/browser';
 import * as types from './mutation_types';
 import axios from '~/lib/utils/axios_utils';
 import createFlash from '~/flash';
 import { __ } from '~/locale';
+import { joinPaths } from '~/lib/utils/url_utility';
 
 export default {
   setInitialData({ commit }, data) {
@@ -15,10 +17,8 @@ export default {
   },
   fetchAuthors({ dispatch, state }, author = null) {
     const { projectId } = state;
-    const path = '/autocomplete/users.json';
-
     return axios
-      .get(path, {
+      .get(joinPaths(gon.relative_url_root || '', '/autocomplete/users.json'), {
         params: {
           project_id: projectId,
           active: true,
@@ -26,6 +26,9 @@ export default {
         },
       })
       .then(({ data }) => dispatch('receiveAuthorsSuccess', data))
-      .catch(() => dispatch('receiveAuthorsError'));
+      .catch(error => {
+        Sentry.captureException(error);
+        dispatch('receiveAuthorsError');
+      });
   },
 };

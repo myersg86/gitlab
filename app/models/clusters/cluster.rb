@@ -26,6 +26,8 @@ module Clusters
     KUBE_INGRESS_BASE_DOMAIN = 'KUBE_INGRESS_BASE_DOMAIN'
     APPLICATIONS_ASSOCIATIONS = APPLICATIONS.values.map(&:association_name).freeze
 
+    self.reactive_cache_work_type = :external_dependency
+
     belongs_to :user
     belongs_to :management_project, class_name: '::Project', optional: true
 
@@ -33,6 +35,7 @@ module Clusters
     has_many :projects, through: :cluster_projects, class_name: '::Project'
     has_one :cluster_project, -> { order(id: :desc) }, class_name: 'Clusters::Project'
     has_many :deployment_clusters
+    has_many :deployments, inverse_of: :cluster
 
     has_many :cluster_groups, class_name: 'Clusters::Group'
     has_many :groups, through: :cluster_groups, class_name: '::Group'
@@ -128,6 +131,11 @@ module Clusters
     scope :with_management_project, -> { where.not(management_project: nil) }
 
     scope :for_project_namespace, -> (namespace_id) { joins(:projects).where(projects: { namespace_id: namespace_id }) }
+    scope :with_application_prometheus, -> { includes(:application_prometheus).joins(:application_prometheus) }
+    scope :with_project_alert_service_data, -> (project_ids) do
+      conditions = { projects: { alerts_service: [:data] } }
+      includes(conditions).joins(conditions).where(projects: { id: project_ids })
+    end
 
     def self.ancestor_clusters_for_clusterable(clusterable, hierarchy_order: :asc)
       return [] if clusterable.is_a?(Instance)
@@ -203,10 +211,16 @@ module Clusters
       end
     end
 
+    def nodes
+      with_reactive_cache do |data|
+        data[:nodes]
+      end
+    end
+
     def calculate_reactive_cache
       return unless enabled?
 
-      { connection_status: retrieve_connection_status }
+      { connection_status: retrieve_connection_status, nodes: retrieve_nodes }
     end
 
     def persisted_applications
@@ -214,9 +228,17 @@ module Clusters
     end
 
     def applications
-      APPLICATIONS_ASSOCIATIONS.map do |association_name|
-        public_send(association_name) || public_send("build_#{association_name}") # rubocop:disable GitlabSecurity/PublicSend
+      APPLICATIONS.each_value.map do |application_class|
+        find_or_build_application(application_class)
       end
+    end
+
+    def find_or_build_application(application_class)
+      raise ArgumentError, "#{application_class} is not in APPLICATIONS" unless APPLICATIONS.value?(application_class)
+
+      association_name = application_class.association_name
+
+      public_send(association_name) || public_send("build_#{association_name}") # rubocop:disable GitlabSecurity/PublicSend
     end
 
     def provider
@@ -304,6 +326,10 @@ module Clusters
       end
     end
 
+    def local_tiller_enabled?
+      Feature.enabled?(:managed_apps_local_tiller, clusterable, default_enabled: false)
+    end
+
     private
 
     def unique_management_project_environment_scope
@@ -345,30 +371,56 @@ module Clusters
     end
 
     def retrieve_connection_status
-      kubeclient.core_client.discover
-    rescue *Gitlab::Kubernetes::Errors::CONNECTION
-      :unreachable
-    rescue *Gitlab::Kubernetes::Errors::AUTHENTICATION
-      :authentication_failure
-    rescue Kubeclient::HttpError => e
-      kubeclient_error_status(e.message)
-    rescue => e
-      Gitlab::ErrorTracking.track_exception(e, cluster_id: id)
-
-      :unknown_failure
-    else
-      :connected
+      result = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
+      result[:status]
     end
 
-    # KubeClient uses the same error class
-    # For connection errors (eg. timeout) and
-    # for Kubernetes errors.
-    def kubeclient_error_status(message)
-      if message&.match?(/timed out|timeout/i)
-        :unreachable
-      else
-        :authentication_failure
+    def retrieve_nodes
+      result = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.get_nodes }
+
+      return unless result[:response]
+
+      cluster_nodes = result[:response]
+
+      result = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.metrics_client.get_nodes }
+      nodes_metrics = result[:response].to_a
+
+      cluster_nodes.inject([]) do |memo, node|
+        sliced_node = filter_relevant_node_attributes(node)
+
+        matched_node_metric = nodes_metrics.find { |node_metric| node_metric.metadata.name == node.metadata.name }
+
+        sliced_node_metrics = matched_node_metric ? filter_relevant_node_metrics_attributes(matched_node_metric) : {}
+
+        memo << sliced_node.merge(sliced_node_metrics)
       end
+    end
+
+    def filter_relevant_node_attributes(node)
+      {
+        'metadata' => {
+          'name' => node.metadata.name
+        },
+        'status' => {
+          'capacity' => {
+            'cpu' => node.status.capacity.cpu,
+            'memory' => node.status.capacity.memory
+          },
+          'allocatable' => {
+            'cpu' => node.status.allocatable.cpu,
+            'memory' => node.status.allocatable.memory
+          }
+        }
+      }
+    end
+
+    def filter_relevant_node_metrics_attributes(node_metrics)
+      {
+        'usage' => {
+          'cpu' => node_metrics.usage.cpu,
+          'memory' => node_metrics.usage.memory
+        }
+      }
     end
 
     # To keep backward compatibility with AUTO_DEVOPS_DOMAIN

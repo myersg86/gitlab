@@ -5,7 +5,7 @@ class ReleasePresenter < Gitlab::View::Presenter::Delegated
 
   presents :release
 
-  delegate :project, :tag, to: :release
+  delegate :project, :tag, :assets_count, to: :release
 
   def commit_path
     return unless release.commit && can_download_code?
@@ -41,13 +41,6 @@ class ReleasePresenter < Gitlab::View::Presenter::Delegated
     return unless release_edit_page_available?
 
     edit_project_release_url(project, release)
-  end
-
-  def evidence_file_path
-    evidence = release.evidences.first
-    return unless evidence
-
-    project_evidence_url(project, release, evidence, format: :json)
   end
 
   private

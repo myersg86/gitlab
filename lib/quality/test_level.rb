@@ -14,6 +14,7 @@ module Quality
       ],
       unit: %w[
         bin
+        channels
         config
         db
         dependencies
@@ -43,6 +44,7 @@ module Quality
         views
         workers
         elastic_integration
+        tooling
       ],
       integration: %w[
         controllers

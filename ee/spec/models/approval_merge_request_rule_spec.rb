@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ApprovalMergeRequestRule do
+RSpec.describe ApprovalMergeRequestRule do
   let(:merge_request) { create(:merge_request) }
 
   subject { create(:approval_merge_request_rule, merge_request: merge_request) }
@@ -155,23 +155,32 @@ describe ApprovalMergeRequestRule do
   end
 
   describe '.find_or_create_code_owner_rule' do
-    let!(:existing_code_owner_rule) { create(:code_owner_rule, name: '*.rb', merge_request: merge_request) }
+    subject(:rule) { described_class.find_or_create_code_owner_rule(merge_request, entry) }
 
-    it 'finds an existing rule' do
-      expect(described_class.find_or_create_code_owner_rule(merge_request, '*.rb'))
-        .to eq(existing_code_owner_rule)
+    let(:entry) { Gitlab::CodeOwners::Entry.new("*.js", "@user") }
+
+    context "when there is an existing rule" do
+      let!(:existing_code_owner_rule) do
+        create(:code_owner_rule, name: '*.rb', merge_request: merge_request)
+      end
+
+      let(:entry) { Gitlab::CodeOwners::Entry.new("*.rb", "@user") }
+
+      it 'finds the existing rule' do
+        expect(rule).to eq(existing_code_owner_rule)
+      end
     end
 
     it 'creates a new rule if it does not exist' do
-      expect { described_class.find_or_create_code_owner_rule(merge_request, '*.js') }
+      expect { rule }
         .to change { merge_request.approval_rules.matching_pattern('*.js').count }.by(1)
     end
 
     it 'finds an existing rule using deprecated code_owner column' do
-      deprecated_code_owner_rule = create(:code_owner_rule, name: '*.md', merge_request: merge_request)
+      deprecated_code_owner_rule = create(:code_owner_rule, name: '*.js', merge_request: merge_request)
       deprecated_code_owner_rule.update_column(:rule_type, described_class.rule_types[:regular])
 
-      expect(described_class.find_or_create_code_owner_rule(merge_request, '*.md'))
+      expect(rule)
         .to eq(deprecated_code_owner_rule)
     end
 
@@ -179,7 +188,15 @@ describe ApprovalMergeRequestRule do
       expect(described_class).to receive(:code_owner).and_raise(ActiveRecord::RecordNotUnique)
       allow(described_class).to receive(:code_owner).and_call_original
 
-      expect(described_class.find_or_create_code_owner_rule(merge_request, '*.js')).not_to be_nil
+      expect(rule).not_to be_nil
+    end
+
+    context "when section is present" do
+      let(:entry) { Gitlab::CodeOwners::Entry.new("*.js", "@user", "Test Section") }
+
+      it "creates a new rule and saves section when present" do
+        expect(subject.section).to eq(entry.section)
+      end
     end
   end
 
@@ -401,7 +418,7 @@ describe ApprovalMergeRequestRule do
       let(:open_merge_request) { create(:merge_request, :opened, target_project: project, source_project: project) }
       let!(:project_approval_rule) { create(:approval_project_rule, :requires_approval, :license_scanning, project: project) }
       let(:project) { create(:project) }
-      let!(:open_pipeline) { create(:ee_ci_pipeline, :success, :with_license_management_report, project: project, merge_requests_as_head_pipeline: [open_merge_request]) }
+      let!(:open_pipeline) { create(:ee_ci_pipeline, :success, :with_license_scanning_report, project: project, merge_requests_as_head_pipeline: [open_merge_request]) }
       let!(:denied_policy) { create(:software_license_policy, project: project, software_license: license, classification: :denied) }
 
       before do

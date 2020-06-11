@@ -4,7 +4,7 @@ type: reference
 
 # External authorization control **(CORE ONLY)**
 
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/4216) in [GitLab Premium](https://about.gitlab.com/pricing/) 10.6.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/4216) in [GitLab Premium](https://about.gitlab.com/pricing/) 10.6.
 > - [Moved](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/27056) to [GitLab Core](https://about.gitlab.com/pricing/) in 11.10.
 
 In highly controlled environments, it may be necessary for access policy to be
@@ -33,7 +33,7 @@ authorization service.
 
 Whenever access is granted or denied this is logged in a logfile called
 `external-policy-access-control.log`.
-Read more about logs GitLab keeps in the [omnibus documentation][omnibus-log-docs].
+Read more about logs GitLab keeps in the [omnibus documentation](https://docs.gitlab.com/omnibus/settings/logs.html).
 
 ## Configuration
 
@@ -62,7 +62,7 @@ The available required properties are:
 When using TLS Authentication with a self signed certificate, the CA certificate
 needs to be trusted by the openssl installation. When using GitLab installed using
 Omnibus, learn to install a custom CA in the
-[omnibus documentation][omnibus-ssl-docs]. Alternatively learn where to install
+[omnibus documentation](https://docs.gitlab.com/omnibus/settings/ssl.html). Alternatively learn where to install
 custom certificates using `openssl version -d`.
 
 ## How it works
@@ -127,6 +127,3 @@ questions that you know someone might ask.
 Each scenario can be a third-level heading, e.g. `### Getting error message X`.
 If you have none to add when creating a doc, leave this section in place
 but commented out to help encourage others to add to it in the future. -->
-
-[omnibus-ssl-docs]: https://docs.gitlab.com/omnibus/settings/ssl.html
-[omnibus-log-docs]: https://docs.gitlab.com/omnibus/settings/logs.html

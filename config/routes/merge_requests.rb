@@ -14,7 +14,9 @@ resources :merge_requests, concerns: :awardable, except: [:new, :create, :show],
     post :rebase
     get :test_reports
     get :exposed_artifacts
+    get :accessibility_reports
     get :coverage_reports
+    get :terraform_reports
 
     scope constraints: ->(req) { req.format == :json }, as: :json do
       get :commits
@@ -51,6 +53,15 @@ resources :merge_requests, concerns: :awardable, except: [:new, :create, :show],
     member do
       post :resolve
       delete :resolve, action: :unresolve
+    end
+  end
+
+  scope module: :merge_requests do
+    resources :drafts, only: [:index, :update, :create, :destroy] do
+      collection do
+        post :publish
+        delete :discard
+      end
     end
   end
 end

@@ -16,6 +16,7 @@ import {
   idleCallback,
   allDiscussionWrappersExpanded,
   prepareDiffData,
+  prepareLineForRenamedFile,
 } from './utils';
 import * as types from './mutation_types';
 import {
@@ -117,12 +118,7 @@ export const fetchDiffFilesBatch = ({ commit, state }) => {
 
   const getBatch = (page = 1) =>
     axios
-      .get(state.endpointBatch, {
-        params: {
-          ...urlParams,
-          page,
-        },
-      })
+      .get(mergeUrlParams({ ...urlParams, page }, state.endpointBatch))
       .then(({ data: { pagination, diff_files } }) => {
         commit(types.SET_DIFF_DATA_BATCH, { diff_files });
         commit(types.SET_BATCH_LOADING, false);
@@ -506,9 +502,6 @@ export const cacheTreeListWidth = (_, size) => {
   localStorage.setItem(TREE_LIST_WIDTH_STORAGE_KEY, size);
 };
 
-export const requestFullDiff = ({ commit }, filePath) => commit(types.REQUEST_FULL_DIFF, filePath);
-export const receiveFullDiffSucess = ({ commit }, { filePath }) =>
-  commit(types.RECEIVE_FULL_DIFF_SUCCESS, { filePath });
 export const receiveFullDiffError = ({ commit }, filePath) => {
   commit(types.RECEIVE_FULL_DIFF_ERROR, filePath);
   createFlash(s__('MergeRequest|Error loading full diff. Please try again.'));
@@ -599,7 +592,7 @@ export const setExpandedDiffLines = ({ commit, state }, { file, data }) => {
   }
 };
 
-export const fetchFullDiff = ({ dispatch }, file) =>
+export const fetchFullDiff = ({ commit, dispatch }, file) =>
   axios
     .get(file.context_lines_path, {
       params: {
@@ -608,15 +601,16 @@ export const fetchFullDiff = ({ dispatch }, file) =>
       },
     })
     .then(({ data }) => {
-      dispatch('receiveFullDiffSucess', { filePath: file.file_path });
+      commit(types.RECEIVE_FULL_DIFF_SUCCESS, { filePath: file.file_path });
+
       dispatch('setExpandedDiffLines', { file, data });
     })
     .catch(() => dispatch('receiveFullDiffError', file.file_path));
 
-export const toggleFullDiff = ({ dispatch, getters, state }, filePath) => {
+export const toggleFullDiff = ({ dispatch, commit, getters, state }, filePath) => {
   const file = state.diffFiles.find(f => f.file_path === filePath);
 
-  dispatch('requestFullDiff', filePath);
+  commit(types.REQUEST_FULL_DIFF, filePath);
 
   if (file.isShowingFullFile) {
     dispatch('loadCollapsedDiff', file)
@@ -626,6 +620,37 @@ export const toggleFullDiff = ({ dispatch, getters, state }, filePath) => {
     dispatch('fetchFullDiff', file);
   }
 };
+
+export function switchToFullDiffFromRenamedFile({ commit, dispatch, state }, { diffFile }) {
+  return axios
+    .get(diffFile.context_lines_path, {
+      params: {
+        full: true,
+        from_merge_request: true,
+      },
+    })
+    .then(({ data }) => {
+      const lines = data.map((line, index) =>
+        prepareLineForRenamedFile({
+          diffViewType: state.diffViewType,
+          line,
+          diffFile,
+          index,
+        }),
+      );
+
+      commit(types.SET_DIFF_FILE_VIEWER, {
+        filePath: diffFile.file_path,
+        viewer: {
+          ...diffFile.alternate_viewer,
+          collapsed: false,
+        },
+      });
+      commit(types.SET_CURRENT_VIEW_DIFF_FILE_LINES, { filePath: diffFile.file_path, lines });
+
+      dispatch('startRenderDiffsQueue');
+    });
+}
 
 export const setFileCollapsed = ({ commit }, { filePath, collapsed }) =>
   commit(types.SET_FILE_COLLAPSED, { filePath, collapsed });
@@ -641,6 +666,49 @@ export const setSuggestPopoverDismissed = ({ commit, state }) =>
     .catch(() => {
       createFlash(s__('MergeRequest|Error dismissing suggestion popover. Please try again.'));
     });
+
+export function changeCurrentCommit({ dispatch, commit, state }, { commitId }) {
+  /* eslint-disable @gitlab/require-i18n-strings */
+  if (!commitId) {
+    return Promise.reject(new Error('`commitId` is a required argument'));
+  } else if (!state.commit) {
+    return Promise.reject(new Error('`state` must already contain a valid `commit`'));
+  }
+  /* eslint-enable @gitlab/require-i18n-strings */
+
+  // this is less than ideal, see: https://gitlab.com/gitlab-org/gitlab/-/issues/215421
+  const commitRE = new RegExp(state.commit.id, 'g');
+
+  commit(types.SET_DIFF_FILES, []);
+  commit(types.SET_BASE_CONFIG, {
+    ...state,
+    endpoint: state.endpoint.replace(commitRE, commitId),
+    endpointBatch: state.endpointBatch.replace(commitRE, commitId),
+    endpointMetadata: state.endpointMetadata.replace(commitRE, commitId),
+  });
+
+  return dispatch('fetchDiffFilesMeta');
+}
+
+export function moveToNeighboringCommit({ dispatch, state }, { direction }) {
+  const previousCommitId = state.commit?.prev_commit_id;
+  const nextCommitId = state.commit?.next_commit_id;
+  const canMove = {
+    next: !state.isLoading && nextCommitId,
+    previous: !state.isLoading && previousCommitId,
+  };
+  let commitId;
+
+  if (direction === 'next' && canMove.next) {
+    commitId = nextCommitId;
+  } else if (direction === 'previous' && canMove.previous) {
+    commitId = previousCommitId;
+  }
+
+  if (commitId) {
+    dispatch('changeCurrentCommit', { commitId });
+  }
+}
 
 // prevent babel-plugin-rewire from generating an invalid default during karma tests
 export default () => {};

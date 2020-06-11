@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-describe "Admin views license" do
+RSpec.describe "Admin views license" do
   let_it_be(:admin) { create(:admin) }
 
   before do
@@ -43,15 +43,27 @@ describe "Admin views license" do
       end
     end
 
-    context "when viewing license history" do
-      let_it_be(:license) { create(:license) }
-
+    context "when viewing license history", :aggregate_failures do
       it "shows licensee" do
         license_history = page.find("#license_history")
 
-        License.previous.each do |license|
+        License.history.each do |license|
           expect(license_history).to have_content(license.licensee.each_value.first)
         end
+      end
+
+      it "highlights the current license with a css class", :aggregate_failures do
+        license_history = page.find("#license_history")
+        highlighted_license_row = license_history.find("[data-testid='license-current']")
+
+        expect(highlighted_license_row).to have_content(license.licensee[:name])
+        expect(highlighted_license_row).to have_content(license.licensee[:email])
+        expect(highlighted_license_row).to have_content(license.licensee[:company])
+        expect(highlighted_license_row).to have_content(license.plan.capitalize)
+        expect(highlighted_license_row).to have_content(I18n.l(license.created_at, format: :with_timezone))
+        expect(highlighted_license_row).to have_content(I18n.l(license.starts_at))
+        expect(highlighted_license_row).to have_content(I18n.l(license.expires_at))
+        expect(highlighted_license_row).to have_content(license.restrictions[:active_user_count])
       end
     end
   end
@@ -66,6 +78,46 @@ describe "Admin views license" do
     it "shows panel counts" do
       page.within(".license-panel") do
         expect(page).to have_content("2,000")
+      end
+    end
+  end
+
+  context "when existing licenses only contain a future-dated license" do
+    let_it_be(:license) { create(:license, data: create(:gitlab_license, starts_at: Date.current + 1.month).export) }
+
+    before do
+      License.where.not(id: license.id).delete_all
+
+      visit(admin_license_path)
+    end
+
+    context "when viewing license history" do
+      it "shows licensee" do
+        license_history = page.find("#license_history")
+
+        expect(license_history).to have_content(license.licensee.each_value.first)
+      end
+
+      it "has no highlighted license", :aggregate_failures do
+        license_history = page.find("#license_history")
+
+        expect(license_history).not_to have_selector("[data-testid='license-current']")
+      end
+
+      it "shows only the future-dated license", :aggregate_failures do
+        license_history = page.find("#license_history")
+        license_history_row = license_history.find('tbody tr', match: :first)
+
+        expect(license_history).to have_css('tbody tr', count: 1)
+
+        expect(license_history_row).to have_content(license.licensee[:name])
+        expect(license_history_row).to have_content(license.licensee[:email])
+        expect(license_history_row).to have_content(license.licensee[:company])
+        expect(license_history_row).to have_content(license.plan.capitalize)
+        expect(license_history_row).to have_content(I18n.l(license.created_at, format: :with_timezone))
+        expect(license_history_row).to have_content(I18n.l(license.starts_at))
+        expect(license_history_row).to have_content(I18n.l(license.expires_at))
+        expect(license_history_row).to have_content(license.restrictions[:active_user_count])
       end
     end
   end

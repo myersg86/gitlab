@@ -1,5 +1,6 @@
 <script>
 import {
+  GlBadge,
   GlDeprecatedButton,
   GlIcon,
   GlModal,
@@ -7,9 +8,11 @@ import {
   GlTooltipDirective,
   GlLink,
   GlEmptyState,
+  GlTab,
+  GlTabs,
   GlTable,
+  GlSprintf,
 } from '@gitlab/ui';
-import { escape as esc } from 'lodash';
 import Tracking from '~/tracking';
 import PackageActivity from './activity.vue';
 import PackageInformation from './information.vue';
@@ -18,23 +21,31 @@ import ConanInstallation from './conan_installation.vue';
 import MavenInstallation from './maven_installation.vue';
 import NpmInstallation from './npm_installation.vue';
 import NugetInstallation from './nuget_installation.vue';
+import PypiInstallation from './pypi_installation.vue';
+import PackagesListLoader from '../../shared/components/packages_list_loader.vue';
+import PackageListRow from '../../shared/components/package_list_row.vue';
+import DependencyRow from './dependency_row.vue';
 import { numberToHumanSize } from '~/lib/utils/number_utils';
 import timeagoMixin from '~/vue_shared/mixins/timeago';
 import { generatePackageInfo } from '../utils';
-import { __, s__, sprintf } from '~/locale';
+import { __, s__ } from '~/locale';
 import { PackageType, TrackingActions } from '../../shared/constants';
 import { packageTypeToTrackCategory } from '../../shared/utils';
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'PackagesApp',
   components: {
+    GlBadge,
     GlDeprecatedButton,
     GlEmptyState,
     GlLink,
     GlModal,
+    GlTab,
+    GlTabs,
     GlTable,
     GlIcon,
+    GlSprintf,
     PackageActivity,
     PackageInformation,
     PackageTitle,
@@ -42,6 +53,10 @@ export default {
     MavenInstallation,
     NpmInstallation,
     NugetInstallation,
+    PypiInstallation,
+    PackagesListLoader,
+    PackageListRow,
+    DependencyRow,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -53,43 +68,34 @@ export default {
     ...mapState([
       'packageEntity',
       'packageFiles',
+      'isLoading',
       'canDelete',
       'destroyPath',
       'svgPath',
       'npmPath',
       'npmHelpPath',
     ]),
-    isNpmPackage() {
-      return this.packageEntity.package_type === PackageType.NPM;
-    },
-    isMavenPackage() {
-      return this.packageEntity.package_type === PackageType.MAVEN;
-    },
-    isConanPackage() {
-      return this.packageEntity.package_type === PackageType.CONAN;
-    },
-    isNugetPackage() {
-      return this.packageEntity.package_type === PackageType.NUGET;
+    installationComponent() {
+      switch (this.packageEntity.package_type) {
+        case PackageType.CONAN:
+          return ConanInstallation;
+        case PackageType.MAVEN:
+          return MavenInstallation;
+        case PackageType.NPM:
+          return NpmInstallation;
+        case PackageType.NUGET:
+          return NugetInstallation;
+        case PackageType.PYPI:
+          return PypiInstallation;
+        default:
+          return null;
+      }
     },
     isValidPackage() {
       return Boolean(this.packageEntity.name);
     },
     canDeletePackage() {
       return this.canDelete && this.destroyPath;
-    },
-    deleteModalDescription() {
-      return sprintf(
-        s__(
-          `PackageRegistry|You are about to delete version %{boldStart}%{version}%{boldEnd} of %{boldStart}%{name}%{boldEnd}. Are you sure?`,
-        ),
-        {
-          version: esc(this.packageEntity.version),
-          name: esc(this.packageEntity.name),
-          boldStart: '<b>',
-          boldEnd: '</b>',
-        },
-        false,
-      );
     },
     packageInformation() {
       return generatePackageInfo(this.packageEntity);
@@ -136,17 +142,35 @@ export default {
         category: packageTypeToTrackCategory(this.packageEntity.package_type),
       };
     },
+    hasVersions() {
+      return this.packageEntity.versions?.length > 0;
+    },
+    packageDependencies() {
+      return this.packageEntity.dependency_links || [];
+    },
+    showDependencies() {
+      return this.packageEntity.package_type === PackageType.NUGET;
+    },
   },
   methods: {
+    ...mapActions(['fetchPackageVersions']),
     formatSize(size) {
       return numberToHumanSize(size);
     },
     cancelDelete() {
       this.$refs.deleteModal.hide();
     },
+    getPackageVersions() {
+      if (!this.packageEntity.versions) {
+        this.fetchPackageVersions();
+      }
+    },
   },
   i18n: {
     deleteModalTitle: s__(`PackageRegistry|Delete Package Version`),
+    deleteModalContent: s__(
+      `PackageRegistry|You are about to delete version %{version} of %{name}. Are you sure?`,
+    ),
   },
   filesTableHeaderFields: [
     {
@@ -191,59 +215,114 @@ export default {
       </div>
     </div>
 
-    <div class="row prepend-top-default" data-qa-selector="package_information_content">
-      <div class="col-sm-6">
-        <package-information :information="packageInformation" />
-        <package-information
-          v-if="packageMetadata"
-          :heading="packageMetadataTitle"
-          :information="packageMetadata"
-          :show-copy="true"
-        />
-      </div>
+    <gl-tabs>
+      <gl-tab :title="__('Detail')">
+        <div class="row" data-qa-selector="package_information_content">
+          <div class="col-sm-6">
+            <package-information :information="packageInformation" />
+            <package-information
+              v-if="packageMetadata"
+              :heading="packageMetadataTitle"
+              :information="packageMetadata"
+              :show-copy="true"
+            />
+          </div>
 
-      <div class="col-sm-6">
-        <npm-installation
-          v-if="isNpmPackage"
-          :name="packageEntity.name"
-          :registry-url="npmPath"
-          :help-url="npmHelpPath"
-        />
+          <div class="col-sm-6">
+            <component
+              :is="installationComponent"
+              v-if="installationComponent"
+              :name="packageEntity.name"
+              :registry-url="npmPath"
+              :help-url="npmHelpPath"
+            />
+          </div>
+        </div>
 
-        <maven-installation v-else-if="isMavenPackage" />
-        <conan-installation v-else-if="isConanPackage" />
-        <nuget-installation v-else-if="isNugetPackage" />
-      </div>
-    </div>
+        <package-activity />
 
-    <package-activity />
-
-    <gl-table
-      :fields="$options.filesTableHeaderFields"
-      :items="filesTableRows"
-      tbody-tr-class="js-file-row"
-    >
-      <template #cell(name)="items">
-        <gl-icon name="doc-code" class="space-right" />
-        <gl-link
-          :href="items.item.downloadPath"
-          class="js-file-download"
-          @click="track($options.trackingActions.PULL_PACKAGE)"
+        <gl-table
+          :fields="$options.filesTableHeaderFields"
+          :items="filesTableRows"
+          tbody-tr-class="js-file-row"
         >
-          {{ items.item.name }}
-        </gl-link>
-      </template>
+          <template #cell(name)="items">
+            <gl-icon name="doc-code" class="space-right" />
+            <gl-link
+              :href="items.item.downloadPath"
+              class="js-file-download"
+              @click="track($options.trackingActions.PULL_PACKAGE)"
+            >
+              {{ items.item.name }}
+            </gl-link>
+          </template>
 
-      <template #cell(created)="items">
-        <span v-gl-tooltip :title="tooltipTitle(items.item.created)">{{
-          timeFormatted(items.item.created)
-        }}</span>
-      </template>
-    </gl-table>
+          <template #cell(created)="items">
+            <span v-gl-tooltip :title="tooltipTitle(items.item.created)">{{
+              timeFormatted(items.item.created)
+            }}</span>
+          </template>
+        </gl-table>
+      </gl-tab>
+
+      <gl-tab v-if="showDependencies" title-item-class="js-dependencies-tab">
+        <template #title>
+          <span>{{ __('Dependencies') }}</span>
+          <gl-badge size="sm" data-testid="dependencies-badge">{{
+            packageDependencies.length
+          }}</gl-badge>
+        </template>
+
+        <template v-if="packageDependencies.length > 0">
+          <dependency-row
+            v-for="(dep, index) in packageDependencies"
+            :key="index"
+            :dependency="dep"
+          />
+        </template>
+
+        <p v-else class="gl-mt-3" data-testid="no-dependencies-message">
+          {{ s__('PackageRegistry|This NuGet package has no dependencies.') }}
+        </p>
+      </gl-tab>
+
+      <gl-tab
+        :title="__('Versions')"
+        title-item-class="js-versions-tab"
+        @click="getPackageVersions"
+      >
+        <template v-if="isLoading && !hasVersions">
+          <packages-list-loader />
+        </template>
+
+        <template v-else-if="hasVersions">
+          <package-list-row
+            v-for="v in packageEntity.versions"
+            :key="v.id"
+            :package-entity="{ name: packageEntity.name, ...v }"
+            :package-link="v.id.toString()"
+            :disable-delete="true"
+            :show-package-type="false"
+          />
+        </template>
+
+        <p v-else class="gl-mt-3" data-testid="no-versions-message">
+          {{ s__('PackageRegistry|There are no other versions of this package.') }}
+        </p>
+      </gl-tab>
+    </gl-tabs>
 
     <gl-modal ref="deleteModal" class="js-delete-modal" modal-id="delete-modal">
       <template #modal-title>{{ $options.i18n.deleteModalTitle }}</template>
-      <p v-html="deleteModalDescription"></p>
+      <gl-sprintf :message="$options.i18n.deleteModalContent">
+        <template #version>
+          <strong>{{ packageEntity.version }}</strong>
+        </template>
+
+        <template #name>
+          <strong>{{ packageEntity.name }}</strong>
+        </template>
+      </gl-sprintf>
 
       <div slot="modal-footer" class="w-100">
         <div class="float-right">

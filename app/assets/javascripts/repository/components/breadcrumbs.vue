@@ -108,14 +108,14 @@ export default {
             return acc.concat({
               name,
               path,
-              to: `/-/tree/${joinPaths(escape(this.ref), path)}`,
+              to: `/-/tree/${joinPaths(this.escapedRef, path)}`,
             });
           },
           [
             {
               name: this.projectShortPath,
               path: '/',
-              to: `/-/tree/${escape(this.ref)}/`,
+              to: `/-/tree/${this.escapedRef}/`,
             },
           ],
         );
@@ -242,7 +242,7 @@ export default {
       </li>
       <li v-if="renderAddToTreeDropdown" class="breadcrumb-item">
         <gl-dropdown toggle-class="add-to-tree qa-add-to-tree ml-1">
-          <template slot="button-content">
+          <template #button-content>
             <span class="sr-only">{{ __('Add to tree') }}</span>
             <icon name="plus" :size="16" class="float-left" />
             <icon name="chevron-down" :size="16" class="float-left" />

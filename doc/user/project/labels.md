@@ -1,14 +1,25 @@
+---
+stage: Plan
+group: Project Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Labels
 
 ## Overview
 
-Labels allow you to categorize epics, issues, and merge requests using descriptive titles like
-`bug`, `feature request`, or `docs`, as well as customizable colors. They allow you to quickly
-and dynamically filter and manage epics, issues, and merge requests, and are a key
-part of [issue boards](issue_board.md).
+As your count of issues, merge requests, and epics grows in GitLab, it's more and more challenging
+to keep track of those items. Especially as your organization grows from just a few people to
+hundreds or thousands. This is where labels come in. They help you organize and tag your work
+so you can track and find the work items you're interested in.
 
-You can use labels to help [search](../search/index.md#issues-and-merge-requests) in
-lists of issues, merge requests, and epics, as well as [search in issue boards](../search/index.md#issue-boards).
+Labels are a key part of [issue boards](issue_board.md). With labels you can:
+
+- Categorize epics, issues, and merge requests using colors and descriptive titles like
+`bug`, `feature request`, or `docs`.
+- Dynamically filter and manage epics, issues, and merge requests.
+- [Search lists of issues, merge requests, and epics](../search/index.md#issues-and-merge-requests),
+  as well as [issue boards](../search/index.md#issue-boards).
 
 ## Project labels and group labels
 
@@ -126,7 +137,7 @@ to the project:
 
 ## Scoped labels **(PREMIUM)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/9175) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.10.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9175) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.10.
 
 Scoped labels allow teams to use the label feature to annotate issues, merge requests
 and epics with mutually exclusive labels. This can enable more complicated workflows
@@ -164,7 +175,7 @@ Suppose you have the labels `workflow::development`, `workflow::review`, and
 applied, and a developer wanted to advance the issue to `workflow::review`, they
 would simply apply that label, and the `workflow::development` label would
 automatically be removed. This behavior already exists when you move issues
-across label lists in an [issue board](issue_board.md#creating-workflows), but
+across label lists in an [issue board](issue_board.md#create-workflows), but
 now, team members who may not be working in an issue board directly would still
 be able to advance workflow states consistently in issues themselves.
 
@@ -198,8 +209,8 @@ to label notifications for the project only, or the whole group.
 
 ## Label priority
 
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/14189) in GitLab 8.9.
-> - Priority sorting is based on the highest priority label only. [This discussion](https://gitlab.com/gitlab-org/gitlab/issues/14523) considers changing this.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/14189) in GitLab 8.9.
+> - Priority sorting is based on the highest priority label only. [This discussion](https://gitlab.com/gitlab-org/gitlab/-/issues/14523) considers changing this.
 
 Labels can have relative priorities, which are used in the **Label priority** and
 **Priority** sort orders of the epic, issue, and merge request list pages. Prioritization
@@ -224,7 +235,7 @@ If you sort by `Label priority`, GitLab uses this sort comparison order:
 1. Items without a prioritized label.
 
 Ties are broken arbitrarily. Note that only the highest prioritized label is checked,
-and labels with a lower priority are ignored. See this [related issue](https://gitlab.com/gitlab-org/gitlab/issues/14523)
+and labels with a lower priority are ignored. See this [related issue](https://gitlab.com/gitlab-org/gitlab/-/issues/14523)
 for more information.
 
 ![Labels sort label priority](img/labels_sort_label_priority.png)

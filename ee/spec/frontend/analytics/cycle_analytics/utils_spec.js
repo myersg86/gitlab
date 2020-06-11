@@ -1,4 +1,4 @@
-import { isNumber } from 'underscore';
+import { isNumber } from 'lodash';
 import { getDatesInRange } from '~/lib/utils/datetime_utility';
 import {
   isStartEvent,
@@ -16,6 +16,7 @@ import {
   flattenTaskByTypeSeries,
   orderByDate,
   toggleSelectedLabel,
+  transformStagesForPathNavigation,
 } from 'ee/analytics/cycle_analytics/utils';
 import { toYmd } from 'ee/analytics/shared/utils';
 import {
@@ -32,8 +33,13 @@ import {
   endDate,
   issueStage,
   rawCustomStage,
-  transformedTasksByTypeData,
+  rawTasksByTypeData,
+  allowedStages,
+  stageMediansWithNumericIds,
+  totalStage,
+  pathNavIssueMetric,
 } from './mock_data';
+import { CAPITALIZED_STAGE_NAME, PATH_HOME_ICON } from 'ee/analytics/cycle_analytics/constants';
 
 const labelEventIds = labelEvents.map(ev => ev.identifier);
 
@@ -239,9 +245,9 @@ describe('Cycle analytics utils', () => {
     const groupBy = getDatesInRange(startDate, endDate, toYmd);
     // only return the values, drop the date which is the first paramater
     const extractSeriesValues = ({ series }) => series.map(kv => kv[1]);
-    const data = transformedTasksByTypeData.map(extractSeriesValues);
+    const data = rawTasksByTypeData.map(extractSeriesValues);
 
-    const labels = transformedTasksByTypeData.map(d => {
+    const labels = rawTasksByTypeData.map(d => {
       const { label } = d;
       return label.title;
     });
@@ -257,7 +263,7 @@ describe('Cycle analytics utils', () => {
 
     describe('with data', () => {
       beforeEach(() => {
-        transformed = getTasksByTypeData({ data: transformedTasksByTypeData, startDate, endDate });
+        transformed = getTasksByTypeData({ data: rawTasksByTypeData, startDate, endDate });
       });
 
       it('will return an object with the properties needed for the chart', () => {
@@ -292,12 +298,12 @@ describe('Cycle analytics utils', () => {
         });
 
         it('contains an array of data for each label', () => {
-          expect(transformed.data.length).toEqual(labels.length);
+          expect(transformed.data).toHaveLength(labels.length);
         });
 
         it('contains a value for each day in the groupBy', () => {
           transformed.data.forEach(d => {
-            expect(d.length).toEqual(transformed.groupBy.length);
+            expect(d).toHaveLength(transformed.groupBy.length);
           });
         });
       });
@@ -316,6 +322,50 @@ describe('Cycle analytics utils', () => {
     });
     it('will add an id that does not exist', () => {
       expect(toggleSelectedLabel({ selectedLabelIds, value: 4 })).toEqual([1, 2, 3, 4]);
+    });
+  });
+
+  describe('transformStagesForPathNavigation', () => {
+    const stages = [...allowedStages, totalStage];
+    const response = transformStagesForPathNavigation({
+      stages,
+      medians: stageMediansWithNumericIds,
+      selectedStage: issueStage,
+    });
+
+    describe('transforms the data as expected', () => {
+      it('returns an array of stages', () => {
+        expect(Array.isArray(response)).toBe(true);
+        expect(response.length).toEqual(stages.length);
+      });
+
+      it('selects the correct stage', () => {
+        const selected = response.filter(stage => stage.selected === true)[0];
+
+        expect(selected.title).toEqual(issueStage.title);
+      });
+
+      it('includes the correct metric for the associated stage', () => {
+        const issue = response.filter(stage => stage.name === 'Issue')[0];
+
+        expect(issue.metric).toEqual(pathNavIssueMetric);
+      });
+
+      describe(`${CAPITALIZED_STAGE_NAME.OVERVIEW} stage specific changes`, () => {
+        const overview = response.filter(stage => stage.name === CAPITALIZED_STAGE_NAME.TOTAL)[0];
+
+        it(`renames '${CAPITALIZED_STAGE_NAME.TOTAL}' stage title to '${CAPITALIZED_STAGE_NAME.OVERVIEW}'`, () => {
+          expect(overview.title).toEqual(CAPITALIZED_STAGE_NAME.OVERVIEW);
+        });
+
+        it('includes the correct icon', () => {
+          expect(overview.icon).toEqual(PATH_HOME_ICON);
+        });
+
+        it(`moves the stage to the front`, () => {
+          expect(response[0]).toEqual(overview);
+        });
+      });
     });
   });
 });

@@ -26,6 +26,7 @@ describe Ci::Pipeline, :mailer do
   it { is_expected.to have_many(:trigger_requests) }
   it { is_expected.to have_many(:variables) }
   it { is_expected.to have_many(:builds) }
+  it { is_expected.to have_many(:job_artifacts).through(:builds) }
   it { is_expected.to have_many(:auto_canceled_pipelines) }
   it { is_expected.to have_many(:auto_canceled_jobs) }
   it { is_expected.to have_many(:sourced_pipelines) }
@@ -50,6 +51,50 @@ describe Ci::Pipeline, :mailer do
       expect(described_class.reflect_on_association(:project).has_inverse?).to eq(:all_pipelines)
       expect(Project.reflect_on_association(:all_pipelines).has_inverse?).to eq(:project)
       expect(Project.reflect_on_association(:ci_pipelines).has_inverse?).to eq(:project)
+    end
+
+    describe '#latest_builds' do
+      it 'has a one to many relationship with its latest builds' do
+        _old_build = create(:ci_build, :retried, pipeline: pipeline)
+        latest_build = create(:ci_build, :expired, pipeline: pipeline)
+
+        expect(pipeline.latest_builds).to contain_exactly(latest_build)
+      end
+    end
+
+    describe '#downloadable_artifacts' do
+      let(:build) { create(:ci_build, pipeline: pipeline) }
+
+      it 'returns downloadable artifacts that have not expired' do
+        downloadable_artifact = create(:ci_job_artifact, :codequality, job: build)
+        _expired_artifact = create(:ci_job_artifact, :junit, :expired, job: build)
+        _undownloadable_artifact = create(:ci_job_artifact, :trace, job: build)
+
+        expect(pipeline.downloadable_artifacts).to contain_exactly(downloadable_artifact)
+      end
+    end
+  end
+
+  describe '#set_status' do
+    where(:from_status, :to_status) do
+      from_status_names = described_class.state_machines[:status].states.map(&:name)
+      to_status_names = from_status_names - [:created] # we never want to transition into created
+
+      from_status_names.product(to_status_names)
+    end
+
+    with_them do
+      it do
+        pipeline.status = from_status.to_s
+
+        if from_status != to_status
+          expect(pipeline.set_status(to_status.to_s))
+            .to eq(true)
+        else
+          expect(pipeline.set_status(to_status.to_s))
+            .to eq(false), "loopback transitions are not allowed"
+        end
+      end
     end
   end
 
@@ -361,6 +406,26 @@ describe Ci::Pipeline, :mailer do
 
       it 'selects the pipeline' do
         is_expected.to eq([pipeline_with_report])
+      end
+    end
+
+    context 'when pipeline has an accessibility report' do
+      subject { described_class.with_reports(Ci::JobArtifact.accessibility_reports) }
+
+      let(:pipeline_with_report) { create(:ci_pipeline, :with_accessibility_reports) }
+
+      it 'selects the pipeline' do
+        is_expected.to eq([pipeline_with_report])
+      end
+    end
+
+    context 'when pipeline has a terraform report' do
+      it 'selects the pipeline' do
+        pipeline_with_report = create(:ci_pipeline, :with_terraform_reports)
+
+        expect(described_class.with_reports(Ci::JobArtifact.terraform_reports)).to eq(
+          [pipeline_with_report]
+        )
       end
     end
 
@@ -699,6 +764,28 @@ describe Ci::Pipeline, :mailer do
           )
       end
     end
+
+    describe 'variable CI_KUBERNETES_ACTIVE' do
+      context 'when pipeline.has_kubernetes_active? is true' do
+        before do
+          allow(pipeline).to receive(:has_kubernetes_active?).and_return(true)
+        end
+
+        it "is included with value 'true'" do
+          expect(subject.to_hash).to include('CI_KUBERNETES_ACTIVE' => 'true')
+        end
+      end
+
+      context 'when pipeline.has_kubernetes_active? is false' do
+        before do
+          allow(pipeline).to receive(:has_kubernetes_active?).and_return(false)
+        end
+
+        it 'is not included' do
+          expect(subject.to_hash).not_to have_key('CI_KUBERNETES_ACTIVE')
+        end
+      end
+    end
   end
 
   describe '#protected_ref?' do
@@ -942,19 +1029,39 @@ describe Ci::Pipeline, :mailer do
 
       subject { pipeline.ordered_stages }
 
-      context 'when using legacy stages' do
+      context 'when using atomic processing' do
         before do
-          stub_feature_flags(ci_pipeline_persisted_stages: false)
+          stub_feature_flags(
+            ci_atomic_processing: true
+          )
         end
 
-        it 'returns legacy stages in valid order' do
-          expect(subject.map(&:name)).to eq %w[build test]
+        context 'when pipelines is not complete' do
+          it 'returns stages in valid order' do
+            expect(subject).to all(be_a Ci::Stage)
+            expect(subject.map(&:name))
+              .to eq %w[sanity build test deploy cleanup]
+          end
+        end
+
+        context 'when pipeline is complete' do
+          before do
+            pipeline.succeed!
+          end
+
+          it 'returns stages in valid order' do
+            expect(subject).to all(be_a Ci::Stage)
+            expect(subject.map(&:name))
+              .to eq %w[sanity build test deploy cleanup]
+          end
         end
       end
 
       context 'when using persisted stages' do
         before do
-          stub_feature_flags(ci_pipeline_persisted_stages: true)
+          stub_feature_flags(
+            ci_atomic_processing: false
+          )
         end
 
         context 'when pipelines is not complete' do
@@ -980,7 +1087,7 @@ describe Ci::Pipeline, :mailer do
   end
 
   describe 'state machine' do
-    let(:current) { Time.now.change(usec: 0) }
+    let(:current) { Time.current.change(usec: 0) }
     let(:build) { create_build('build1', queued_at: 0) }
     let(:build_b) { create_build('build2', queued_at: 0) }
     let(:build_c) { create_build('build3', queued_at: 0) }
@@ -1119,8 +1226,8 @@ describe Ci::Pipeline, :mailer do
         context "from #{status}" do
           let(:from_status) { status }
 
-          it 'schedules pipeline success worker' do
-            expect(Ci::DailyReportResultsWorker).to receive(:perform_in).with(10.minutes, pipeline.id)
+          it 'schedules daily build group report results worker' do
+            expect(Ci::DailyBuildGroupReportResultsWorker).to receive(:perform_in).with(10.minutes, pipeline.id)
 
             pipeline.succeed
           end
@@ -2307,7 +2414,7 @@ describe Ci::Pipeline, :mailer do
 
         def have_requested_pipeline_hook(status)
           have_requested(:post, stubbed_hostname(hook.url)).with do |req|
-            json_body = JSON.parse(req.body)
+            json_body = Gitlab::Json.parse(req.body)
             json_body['object_attributes']['status'] == status &&
               json_body['builds'].length == 2
           end
@@ -2534,28 +2641,6 @@ describe Ci::Pipeline, :mailer do
       end
     end
 
-    shared_examples 'enqueues the notification worker' do
-      it 'enqueues PipelineUpdateCiRefStatusWorker' do
-        expect(PipelineUpdateCiRefStatusWorker).to receive(:perform_async).with(pipeline.id)
-        expect(PipelineNotificationWorker).not_to receive(:perform_async).with(pipeline.id)
-
-        pipeline.succeed
-      end
-
-      context 'when ci_pipeline_fixed_notifications is disabled' do
-        before do
-          stub_feature_flags(ci_pipeline_fixed_notifications: false)
-        end
-
-        it 'enqueues PipelineNotificationWorker' do
-          expect(PipelineUpdateCiRefStatusWorker).not_to receive(:perform_async).with(pipeline.id)
-          expect(PipelineNotificationWorker).to receive(:perform_async).with(pipeline.id)
-
-          pipeline.succeed
-        end
-      end
-    end
-
     context 'with success pipeline' do
       it_behaves_like 'sending a notification' do
         before do
@@ -2565,7 +2650,25 @@ describe Ci::Pipeline, :mailer do
         end
       end
 
-      it_behaves_like 'enqueues the notification worker'
+      it 'enqueues PipelineNotificationWorker' do
+        expect(PipelineNotificationWorker)
+          .to receive(:perform_async).with(pipeline.id, ref_status: :success)
+
+        pipeline.succeed
+      end
+
+      context 'when pipeline is not the latest' do
+        before do
+          create(:ci_pipeline, :success, project: project, ci_ref: pipeline.ci_ref)
+        end
+
+        it 'does not pass ref_status' do
+          expect(PipelineNotificationWorker)
+            .to receive(:perform_async).with(pipeline.id, ref_status: nil)
+
+          pipeline.succeed!
+        end
+      end
     end
 
     context 'with failed pipeline' do
@@ -2580,7 +2683,12 @@ describe Ci::Pipeline, :mailer do
         end
       end
 
-      it_behaves_like 'enqueues the notification worker'
+      it 'enqueues PipelineNotificationWorker' do
+        expect(PipelineNotificationWorker)
+          .to receive(:perform_async).with(pipeline.id, ref_status: :failed)
+
+        pipeline.drop
+      end
     end
 
     context 'with skipped pipeline' do
@@ -2601,6 +2709,69 @@ describe Ci::Pipeline, :mailer do
       end
 
       it_behaves_like 'not sending any notification'
+    end
+  end
+
+  describe 'updates ci_ref when pipeline finished' do
+    context 'when ci_ref exists' do
+      let!(:pipeline) { create(:ci_pipeline, :running) }
+
+      it 'updates the ci_ref' do
+        expect(pipeline.ci_ref)
+          .to receive(:update_status_by!).with(pipeline).and_call_original
+
+        pipeline.succeed!
+      end
+    end
+
+    context 'when ci_ref does not exist' do
+      let!(:pipeline) { create(:ci_pipeline, :running, ci_ref_presence: false) }
+
+      it 'does not raise an exception' do
+        expect { pipeline.succeed! }.not_to raise_error
+      end
+    end
+  end
+
+  describe '#ensure_ci_ref!' do
+    subject { pipeline.ensure_ci_ref! }
+
+    shared_examples_for 'protected by feature flag' do
+      context 'when feature flag is disabled' do
+        before do
+          stub_feature_flags(ci_pipeline_fixed_notifications: false)
+        end
+
+        it 'does not do anything' do
+          expect(Ci::Ref).not_to receive(:ensure_for)
+
+          subject
+        end
+      end
+    end
+
+    context 'when ci_ref does not exist yet' do
+      let!(:pipeline) { create(:ci_pipeline, ci_ref_presence: false) }
+
+      it_behaves_like 'protected by feature flag'
+
+      it 'creates a new ci_ref and assigns it' do
+        expect { subject }.to change { Ci::Ref.count }.by(1)
+
+        expect(pipeline.ci_ref).to be_present
+      end
+    end
+
+    context 'when ci_ref already exists' do
+      let!(:pipeline) { create(:ci_pipeline) }
+
+      it_behaves_like 'protected by feature flag'
+
+      it 'fetches a new ci_ref and assigns it' do
+        expect { subject }.not_to change { Ci::Ref.count }
+
+        expect(pipeline.ci_ref).to be_present
+      end
     end
   end
 
@@ -2639,6 +2810,30 @@ describe Ci::Pipeline, :mailer do
         .count
 
       expect(query_count).to eq(1)
+    end
+  end
+
+  describe '#latest_report_builds' do
+    it 'returns build with test artifacts' do
+      test_build = create(:ci_build, :test_reports, pipeline: pipeline, project: project)
+      coverage_build = create(:ci_build, :coverage_reports, pipeline: pipeline, project: project)
+      create(:ci_build, :artifacts, pipeline: pipeline, project: project)
+
+      expect(pipeline.latest_report_builds).to contain_exactly(test_build, coverage_build)
+    end
+
+    it 'filters builds by scope' do
+      test_build = create(:ci_build, :test_reports, pipeline: pipeline, project: project)
+      create(:ci_build, :coverage_reports, pipeline: pipeline, project: project)
+
+      expect(pipeline.latest_report_builds(Ci::JobArtifact.test_reports)).to contain_exactly(test_build)
+    end
+
+    it 'only returns not retried builds' do
+      test_build = create(:ci_build, :test_reports, pipeline: pipeline, project: project)
+      create(:ci_build, :test_reports, :retried, pipeline: pipeline, project: project)
+
+      expect(pipeline.latest_report_builds).to contain_exactly(test_build)
     end
   end
 
@@ -2751,6 +2946,42 @@ describe Ci::Pipeline, :mailer do
       it 'returns empty test report count' do
         expect(subject.total_count).to eq(0)
         expect(subject.total_count).to eq(pipeline.test_reports_count)
+      end
+    end
+  end
+
+  describe '#accessibility_reports' do
+    subject { pipeline.accessibility_reports }
+
+    context 'when pipeline has multiple builds with accessibility reports' do
+      let(:build_rspec) { create(:ci_build, :success, name: 'rspec', pipeline: pipeline, project: project) }
+      let(:build_golang) { create(:ci_build, :success, name: 'golang', pipeline: pipeline, project: project) }
+
+      before do
+        create(:ci_job_artifact, :accessibility, job: build_rspec, project: project)
+        create(:ci_job_artifact, :accessibility_without_errors, job: build_golang, project: project)
+      end
+
+      it 'returns accessibility report with collected data' do
+        expect(subject.urls.keys).to match_array([
+          "https://pa11y.org/",
+          "https://about.gitlab.com/"
+        ])
+      end
+
+      context 'when builds are retried' do
+        let(:build_rspec) { create(:ci_build, :retried, :success, name: 'rspec', pipeline: pipeline, project: project) }
+        let(:build_golang) { create(:ci_build, :retried, :success, name: 'golang', pipeline: pipeline, project: project) }
+
+        it 'returns empty urls for accessibility reports' do
+          expect(subject.urls).to be_empty
+        end
+      end
+    end
+
+    context 'when pipeline does not have any builds with accessibility reports' do
+      it 'returns empty urls for accessibility reports' do
+        expect(subject.urls).to be_empty
       end
     end
   end

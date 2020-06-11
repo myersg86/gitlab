@@ -15,6 +15,7 @@ import boardsStoreEE from '../stores/boards_store_ee';
 import eventHub from '~/sidebar/event_hub';
 import flash from '~/flash';
 import { isScopedLabel } from '~/lib/utils/common_utils';
+import { inactiveListId } from '~/boards/constants';
 
 // NOTE: need to revisit how we handle headerHeight, because we have so many different header and footer options.
 export default {
@@ -60,7 +61,7 @@ export default {
       return boardsStoreEE.store.state.lists.find(({ id }) => id === this.activeListId);
     },
     isSidebarOpen() {
-      return this.activeListId > 0;
+      return this.activeListId !== inactiveListId;
     },
     activeListLabel() {
       return this.activeList.label;
@@ -110,7 +111,7 @@ export default {
     ...mapActions(['setActiveListId', 'updateListWipLimit']),
     closeSidebar() {
       this.edit = false;
-      this.setActiveListId(0);
+      this.setActiveListId(inactiveListId);
     },
     showInput() {
       this.edit = true;
@@ -136,7 +137,7 @@ export default {
           })
           .catch(() => {
             this.resetStateAfterUpdate();
-            this.setActiveListId(0);
+            this.setActiveListId(inactiveListId);
             flash(__('Something went wrong while updating your list settings'));
           });
       } else {
@@ -151,7 +152,7 @@ export default {
         })
         .catch(() => {
           this.resetStateAfterUpdate();
-          this.setActiveListId(0);
+          this.setActiveListId(inactiveListId);
           flash(__('Something went wrong while updating your list settings'));
         });
     },
@@ -167,9 +168,6 @@ export default {
     },
     showScopedLabels(label) {
       return boardsStoreEE.store.scopedLabels.enabled && isScopedLabel(label);
-    },
-    helpLink() {
-      return boardsStoreEE.store.scopedLabels.helpLink;
     },
   },
 };
@@ -213,7 +211,7 @@ export default {
         <div class="d-flex justify-content-between align-items-center mb-2">
           <label class="m-0">{{ $options.wipLimitText }}</label>
           <gl-deprecated-button
-            class="js-edit-button h-100 border-0 gl-line-height-14 text-dark"
+            class="js-edit-button h-100 border-0 gl-line-height-14-deprecated-no-really-do-not-use-me text-dark"
             variant="link"
             @click="showInput"
             >{{ $options.editLinkText }}</gl-deprecated-button
@@ -238,7 +236,7 @@ export default {
           <template v-if="wipLimitIsSet">
             <span class="m-1">-</span>
             <gl-deprecated-button
-              class="js-remove-limit h-100 border-0 gl-line-height-14 text-secondary"
+              class="js-remove-limit h-100 border-0 gl-line-height-14-deprecated-no-really-do-not-use-me text-secondary"
               variant="link"
               @click="clearWipLimit"
               >{{ $options.removeLimitText }}</gl-deprecated-button

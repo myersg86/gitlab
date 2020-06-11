@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe API::Groups do
+RSpec.describe API::Groups do
   include GroupAPIHelpers
 
   let_it_be(:group, reload: true) { create(:group) }
@@ -106,6 +106,41 @@ describe API::Groups do
         end
       end
     end
+
+    context 'file_template_project_id is a private project' do
+      let_it_be(:private_project) { create(:project, :private, group: group) }
+
+      before do
+        stub_licensed_features(custom_file_templates_for_namespace: true)
+        group.update_attribute(:file_template_project_id, private_project.id)
+      end
+
+      context 'user has permission to private project' do
+        it 'returns file_template_project_id' do
+          private_project.add_maintainer(user)
+
+          get api("/groups/#{group.id}", user)
+
+          expect(json_response).to have_key 'file_template_project_id'
+        end
+      end
+
+      context 'user does not have permission to private project' do
+        it 'does not return file_template_project_id' do
+          get api("/groups/#{group.id}", another_user)
+
+          expect(json_response).not_to have_key 'file_template_project_id'
+        end
+      end
+
+      context 'user is not logged in' do
+        it 'does not return file_template_project_id' do
+          get api("/groups/#{group.id}")
+
+          expect(json_response).not_to have_key 'file_template_project_id'
+        end
+      end
+    end
   end
 
   describe 'PUT /groups/:id' do
@@ -158,6 +193,60 @@ describe API::Groups do
         end
       end
     end
+
+    context 'default_branch_protection' do
+      using RSpec::Parameterized::TableSyntax
+
+      let(:params) { { default_branch_protection: Gitlab::Access::PROTECTION_NONE } }
+
+      context 'authenticated as an admin' do
+        let(:user) { admin }
+
+        where(:feature_enabled, :setting_enabled, :default_branch_protection) do
+          false | false | Gitlab::Access::PROTECTION_NONE
+          false | true  | Gitlab::Access::PROTECTION_NONE
+          true  | false | Gitlab::Access::PROTECTION_NONE
+          false | false | Gitlab::Access::PROTECTION_NONE
+        end
+
+        with_them do
+          before do
+            stub_licensed_features(default_branch_protection_restriction_in_groups: feature_enabled)
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: setting_enabled)
+          end
+
+          it 'updates the attribute as expected' do
+            subject
+
+            expect(response).to have_gitlab_http_status(:ok)
+            expect(json_response['default_branch_protection']).to eq(default_branch_protection)
+          end
+        end
+      end
+
+      context 'authenticated a normal user' do
+        where(:feature_enabled, :setting_enabled, :default_branch_protection) do
+          false | false | Gitlab::Access::PROTECTION_NONE
+          false | true  | Gitlab::Access::PROTECTION_NONE
+          true  | false | Gitlab::Access::PROTECTION_FULL
+          false | false | Gitlab::Access::PROTECTION_NONE
+        end
+
+        with_them do
+          before do
+            stub_licensed_features(default_branch_protection_restriction_in_groups: feature_enabled)
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: setting_enabled)
+          end
+
+          it 'updates the attribute as expected' do
+            subject
+
+            expect(response).to have_gitlab_http_status(:ok)
+            expect(json_response['default_branch_protection']).to eq(default_branch_protection)
+          end
+        end
+      end
+    end
   end
 
   describe "POST /groups" do
@@ -193,6 +282,64 @@ describe API::Groups do
             expect(created_group.shared_runners_minutes_limit).to eq(133)
             expect(response).to have_gitlab_http_status(:created)
             expect(json_response['shared_runners_minutes_limit']).to eq(133)
+          end
+        end
+      end
+    end
+
+    context 'when creating a group with `default_branch_protection` attribute' do
+      using RSpec::Parameterized::TableSyntax
+
+      let(:params) { attributes_for_group_api(default_branch_protection: Gitlab::Access::PROTECTION_NONE) }
+
+      subject do
+        post api("/groups", user), params: params
+      end
+
+      context 'authenticated as an admin' do
+        let(:user) { admin }
+
+        where(:feature_enabled, :setting_enabled, :default_branch_protection) do
+          false | false | Gitlab::Access::PROTECTION_NONE
+          false | true  | Gitlab::Access::PROTECTION_NONE
+          true  | false | Gitlab::Access::PROTECTION_NONE
+          false | false | Gitlab::Access::PROTECTION_NONE
+        end
+
+        with_them do
+          before do
+            stub_licensed_features(default_branch_protection_restriction_in_groups: feature_enabled)
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: setting_enabled)
+          end
+
+          it 'creates the group with the expected `default_branch_protection` value' do
+            subject
+
+            expect(response).to have_gitlab_http_status(:created)
+            expect(json_response['default_branch_protection']).to eq(default_branch_protection)
+          end
+        end
+      end
+
+      context 'authenticated a normal user' do
+        where(:feature_enabled, :setting_enabled, :default_branch_protection) do
+          false | false | Gitlab::Access::PROTECTION_NONE
+          false | true  | Gitlab::Access::PROTECTION_NONE
+          true  | false | Gitlab::Access::PROTECTION_FULL
+          false | false | Gitlab::Access::PROTECTION_NONE
+        end
+
+        with_them do
+          before do
+            stub_licensed_features(default_branch_protection_restriction_in_groups: feature_enabled)
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: setting_enabled)
+          end
+
+          it 'creates the group with the expected `default_branch_protection` value' do
+            subject
+
+            expect(response).to have_gitlab_http_status(:created)
+            expect(json_response['default_branch_protection']).to eq(default_branch_protection)
           end
         end
       end
@@ -499,7 +646,7 @@ describe API::Groups do
     subject { delete api("/groups/#{group.id}", user) }
 
     shared_examples_for 'immediately enqueues the job to delete the group' do
-      it do
+      specify do
         Sidekiq::Testing.fake! do
           expect { subject }.to change(GroupDestroyWorker.jobs, :size).by(1)
         end

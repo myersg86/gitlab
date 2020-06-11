@@ -19,7 +19,11 @@ describe('PackageTitle', () => {
   let wrapper;
   let store;
 
-  function createComponent(packageEntity = mavenPackage, packageFiles = mavenFiles) {
+  function createComponent({
+    packageEntity = mavenPackage,
+    packageFiles = mavenFiles,
+    icon = null,
+  } = {}) {
     store = new Vuex.Store({
       state: {
         packageEntity,
@@ -28,6 +32,7 @@ describe('PackageTitle', () => {
       getters: {
         packageTypeDisplay: ({ packageEntity: { package_type: type } }) => type,
         packagePipeline: ({ packageEntity: { pipeline = null } }) => pipeline,
+        packageIcon: () => icon,
       },
     });
 
@@ -37,9 +42,11 @@ describe('PackageTitle', () => {
     });
   }
 
-  const packageType = () => wrapper.find({ ref: 'package-type' });
-  const packageSize = () => wrapper.find({ ref: 'package-size' });
-  const packageRef = () => wrapper.find({ ref: 'package-ref' });
+  const packageIcon = () => wrapper.find('[data-testid="package-icon"]');
+  const packageType = () => wrapper.find('[data-testid="package-type"]');
+  const packageSize = () => wrapper.find('[data-testid="package-size"]');
+  const pipelineProject = () => wrapper.find('[data-testid="pipeline-project"]');
+  const packageRef = () => wrapper.find('[data-testid="package-ref"]');
   const packageTags = () => wrapper.find(PackageTags);
 
   afterEach(() => {
@@ -54,9 +61,31 @@ describe('PackageTitle', () => {
     });
 
     it('with tags', () => {
-      createComponent({ ...mavenPackage, tags: mockTags });
+      createComponent({ packageEntity: { ...mavenPackage, tags: mockTags } });
 
       expect(wrapper.element).toMatchSnapshot();
+    });
+  });
+
+  describe('package icon', () => {
+    const fakeSrc = 'a-fake-src';
+
+    it('shows an icon when provided one from vuex', () => {
+      createComponent({ icon: fakeSrc });
+
+      expect(packageIcon().exists()).toBe(true);
+    });
+
+    it('has the correct src attribute', () => {
+      createComponent({ icon: fakeSrc });
+
+      expect(packageIcon().props('src')).toBe(fakeSrc);
+    });
+
+    it('does not show an icon when not provided one', () => {
+      createComponent();
+
+      expect(packageIcon().exists()).toBe(false);
     });
   });
 
@@ -67,7 +96,7 @@ describe('PackageTitle', () => {
     ${npmPackage}   | ${'npm'}
     ${nugetPackage} | ${'nuget'}
   `(`package type`, ({ packageEntity, expectedResult }) => {
-    beforeEach(() => createComponent(packageEntity));
+    beforeEach(() => createComponent({ packageEntity }));
 
     it(`${packageEntity.package_type} should render from Vuex getters ${expectedResult}`, () => {
       expect(packageType().text()).toBe(expectedResult);
@@ -76,7 +105,7 @@ describe('PackageTitle', () => {
 
   describe('calculates the package size', () => {
     it('correctly calulates when there is only 1 file', () => {
-      createComponent(npmPackage, npmFiles);
+      createComponent({ packageEntity: npmPackage, packageFiles: npmFiles });
 
       expect(packageSize().text()).toBe('200 bytes');
     });
@@ -91,8 +120,10 @@ describe('PackageTitle', () => {
   describe('package tags', () => {
     it('displays the package-tags component when the package has tags', () => {
       createComponent({
-        ...npmPackage,
-        tags: mockTags,
+        packageEntity: {
+          ...npmPackage,
+          tags: mockTags,
+        },
       });
 
       expect(packageTags().exists()).toBe(true);
@@ -113,10 +144,25 @@ describe('PackageTitle', () => {
     });
 
     it('correctly shows the package ref if there is one', () => {
-      createComponent(npmPackage);
+      createComponent({ packageEntity: npmPackage });
 
       expect(packageRef().contains('gl-icon-stub')).toBe(true);
       expect(packageRef().text()).toBe(npmPackage.pipeline.ref);
+    });
+  });
+
+  describe('pipeline project', () => {
+    it('does not display the project if missing', () => {
+      createComponent();
+
+      expect(pipelineProject().exists()).toBe(false);
+    });
+
+    it('correctly shows the pipeline project if there is one', () => {
+      createComponent({ packageEntity: npmPackage });
+
+      expect(pipelineProject().text()).toBe(npmPackage.pipeline.project.name);
+      expect(pipelineProject().attributes('href')).toBe(npmPackage.pipeline.project.web_url);
     });
   });
 });

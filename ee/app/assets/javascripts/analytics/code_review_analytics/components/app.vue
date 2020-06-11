@@ -1,8 +1,9 @@
 <script>
 import { mapState, mapActions } from 'vuex';
-import { GlBadge, GlLoadingIcon, GlEmptyState, GlPagination } from '@gitlab/ui';
 import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
+import { GlBadge, GlLoadingIcon, GlEmptyState, GlPagination } from '@gitlab/ui';
 import MergeRequestTable from './merge_request_table.vue';
+import FilterBar from './filter_bar.vue';
 import FilteredSearchCodeReviewAnalytics from '../filtered_search_code_review_analytics';
 
 export default {
@@ -11,6 +12,7 @@ export default {
     GlLoadingIcon,
     GlPagination,
     GlEmptyState,
+    FilterBar,
     MergeRequestTable,
   },
   mixins: [glFeatureFlagsMixin()],
@@ -27,9 +29,17 @@ export default {
       type: String,
       required: true,
     },
+    milestonePath: {
+      type: String,
+      required: true,
+    },
+    labelsPath: {
+      type: String,
+      required: true,
+    },
   },
   computed: {
-    ...mapState({
+    ...mapState('mergeRequests', {
       isLoading: 'isLoading',
       perPage: state => state.pageInfo.perPage,
       totalItems: state => state.pageInfo.total,
@@ -52,23 +62,24 @@ export default {
     if (!this.codeReviewAnalyticsHasNewSearch) {
       this.filterManager = new FilteredSearchCodeReviewAnalytics();
       this.filterManager.setup();
+    } else {
+      this.setMilestonesEndpoint(this.milestonePath);
+      this.setLabelsEndpoint(this.labelsPath);
     }
 
     this.setProjectId(this.projectId);
     this.fetchMergeRequests();
   },
   methods: {
-    ...mapActions(['setProjectId', 'fetchMergeRequests', 'setPage']),
+    ...mapActions('filters', ['setMilestonesEndpoint', 'setLabelsEndpoint']),
+    ...mapActions('mergeRequests', ['setProjectId', 'fetchMergeRequests', 'setPage']),
   },
 };
 </script>
 
 <template>
   <div>
-    <div
-      v-if="codeReviewAnalyticsHasNewSearch"
-      class="bg-secondary-50 p-3 border-top border-bottom"
-    ></div>
+    <filter-bar v-if="codeReviewAnalyticsHasNewSearch" />
     <div class="mt-2">
       <gl-loading-icon v-show="isLoading" size="md" class="mt-3" />
       <template v-if="!isLoading">
@@ -94,7 +105,7 @@ export default {
         <template v-else>
           <div>
             <span class="font-weight-bold">{{ __('Merge Requests in Review') }}</span>
-            <gl-badge pill>{{ totalItems }}</gl-badge>
+            <gl-badge size="sm">{{ totalItems }}</gl-badge>
           </div>
           <merge-request-table />
           <gl-pagination

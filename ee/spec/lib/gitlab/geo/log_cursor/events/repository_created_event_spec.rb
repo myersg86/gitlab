@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Geo::LogCursor::Events::RepositoryCreatedEvent, :clean_gitlab_redis_shared_state do
+RSpec.describe Gitlab::Geo::LogCursor::Events::RepositoryCreatedEvent, :clean_gitlab_redis_shared_state do
   let(:logger) { Gitlab::Geo::LogCursor::Logger.new(described_class, Logger::INFO) }
   let(:project) { create(:project) }
   let(:repository_created_event) { create(:geo_repository_created_event, project: project) }
@@ -52,6 +52,8 @@ describe Gitlab::Geo::LogCursor::Events::RepositoryCreatedEvent, :clean_gitlab_r
 
         subject.process
       end
+
+      it_behaves_like 'logs event source info'
     end
 
     context 'when the associated shard is not healthy' do

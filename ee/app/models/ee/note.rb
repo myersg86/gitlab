@@ -10,14 +10,9 @@ module EE
       include Elastic::ApplicationVersionedSearch
       include UsageStatistics
 
-      belongs_to :review, inverse_of: :notes
-
       scope :searchable, -> { where(system: false).includes(:noteable) }
       scope :by_humans, -> { user.joins(:author).merge(::User.humans) }
       scope :with_suggestions, -> { joins(:suggestions) }
-
-      after_commit :notify_after_create, on: :create
-      after_commit :notify_after_destroy, on: :destroy
     end
 
     # Original method in Elastic::ApplicationSearch
@@ -57,21 +52,9 @@ module EE
       for_epic? || super
     end
 
-    def for_design?
-      noteable_type == DesignManagement::Design.name
-    end
-
     override :resource_parent
     def resource_parent
       for_epic? ? noteable.group : super
-    end
-
-    def notify_after_create
-      noteable&.after_note_created(self)
-    end
-
-    def notify_after_destroy
-      noteable&.after_note_destroyed(self)
     end
 
     override :system_note_with_references_visible_for?

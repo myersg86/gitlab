@@ -2,7 +2,7 @@
 
 ## List all deploy tokens
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Get a list of all deploy tokens across the GitLab instance. This endpoint requires admin access.
 
@@ -39,7 +39,7 @@ Project deploy token API endpoints require project maintainer access or higher.
 
 ### List project deploy tokens
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Get a list of a project's deploy tokens.
 
@@ -78,7 +78,7 @@ Example response:
 
 ### Create a project deploy token
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Creates a new deploy token for a project.
 
@@ -92,7 +92,7 @@ POST /projects/:id/deploy_tokens
 | `name`            | string    | yes | New deploy token's name |
 | `expires_at`      | datetime  | no  | Expiration date for the deploy token. Does not expire if no value is provided. |
 | `username`        | string    | no  | Username for deploy token. Default is `gitlab+deploy-token-{n}` |
-| `scopes`   | array of strings | yes | Indicates the deploy token scopes. Must be at least one of `read_repository`, `read_registry`, or `write_registry`. |
+| `scopes`   | array of strings | yes | Indicates the deploy token scopes. Must be at least one of `read_repository`, `read_registry`, `write_registry`, `read_package_registry`, or `write_package_registry`. |
 
 ```shell
 curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" --header "Content-Type: application/json" --data '{"name": "My deploy token", "expires_at": "2021-01-01", "username": "custom-user", "scopes": ["read_repository"]}' "https://gitlab.example.com/api/v4/projects/5/deploy_tokens/"
@@ -115,7 +115,7 @@ Example response:
 
 ### Delete a project deploy token
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Removes a deploy token from the project.
 
@@ -140,7 +140,7 @@ These endpoints require group maintainer access or higher.
 
 ### List group deploy tokens
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Get a list of a group's deploy tokens
 
@@ -179,7 +179,7 @@ Example response:
 
 ### Create a group deploy token
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Creates a new deploy token for a group.
 
@@ -193,7 +193,7 @@ POST /groups/:id/deploy_tokens
 | `name`            | string    | yes | New deploy token's name |
 | `expires_at`      | datetime  | no  | Expiration date for the deploy token. Does not expire if no value is provided. |
 | `username`        | string    | no  | Username for deploy token. Default is `gitlab+deploy-token-{n}` |
-| `scopes`   | array of strings | yes | Indicates the deploy token scopes. Must be at least one of `read_repository`, `read_registry`, or `write_registry`. |
+| `scopes`   | array of strings | yes | Indicates the deploy token scopes. Must be at least one of `read_repository`, `read_registry`, `write_registry`, `read_package_registry`, or `write_package_registry`. |
 
 Example request:
 
@@ -218,7 +218,7 @@ Example response:
 
 ### Delete a group deploy token
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/21811) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/21811) in GitLab 12.9.
 
 Removes a deploy token from the group.
 

@@ -43,10 +43,6 @@ module API
 
         packages
       end
-
-      def unauthorized_user_project
-        @unauthorized_user_project ||= find_project(params[:id]) || not_found!
-      end
     end
 
     before do
@@ -59,11 +55,7 @@ module API
 
     resource :projects, requirements: API::NAMESPACE_OR_PROJECT_REQUIREMENTS do
       before do
-        unless ::Feature.enabled?(:pypi_packages, unauthorized_user_project, default_enabled: true)
-          not_found!
-        end
-
-        authorize_packages_feature!(unauthorized_user_project)
+        authorize_packages_feature!(unauthorized_user_project!)
       end
 
       namespace ':id/packages/pypi' do
@@ -76,8 +68,9 @@ module API
           requires :sha256, type: String, desc: 'The PyPi package sha256 check sum'
         end
 
+        route_setting :authentication, deploy_token_allowed: true
         get 'files/:sha256/*file_identifier' do
-          project = unauthorized_user_project
+          project = unauthorized_user_project!
 
           filename = "#{params[:file_identifier]}.#{params[:format]}"
           package = packages_finder(project).by_file_name_and_sha256(filename, params[:sha256])
@@ -96,6 +89,7 @@ module API
 
         # An Api entry point but returns an HTML file instead of JSON.
         # PyPi simple API returns the package descriptor as a simple HTML file.
+        route_setting :authentication, deploy_token_allowed: true
         get 'simple/*package_name', format: :txt do
           authorize_read_package!(authorized_user_project)
 
@@ -123,6 +117,7 @@ module API
           optional :sha256_digest, type: String
         end
 
+        route_setting :authentication, deploy_token_allowed: true
         post do
           authorize_upload!(authorized_user_project)
 
@@ -137,6 +132,7 @@ module API
           forbidden!
         end
 
+        route_setting :authentication, deploy_token_allowed: true
         post 'authorize' do
           authorize_workhorse!(subject: authorized_user_project, has_length: false)
         end

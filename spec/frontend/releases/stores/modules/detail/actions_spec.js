@@ -10,6 +10,7 @@ import createFlash from '~/flash';
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 import { redirectTo } from '~/lib/utils/url_utility';
 import api from '~/api';
+import { ASSET_LINK_TYPE } from '~/releases/constants';
 
 jest.mock('~/flash', () => jest.fn());
 
@@ -130,6 +131,63 @@ describe('Release detail actions', () => {
     });
   });
 
+  describe('updateAssetLinkUrl', () => {
+    it(`commits ${types.UPDATE_ASSET_LINK_URL} with the updated link URL`, () => {
+      const params = {
+        linkIdToUpdate: 2,
+        newUrl: 'https://example.com/updated',
+      };
+
+      return testAction(actions.updateAssetLinkUrl, params, state, [
+        { type: types.UPDATE_ASSET_LINK_URL, payload: params },
+      ]);
+    });
+  });
+
+  describe('updateAssetLinkName', () => {
+    it(`commits ${types.UPDATE_ASSET_LINK_NAME} with the updated link name`, () => {
+      const params = {
+        linkIdToUpdate: 2,
+        newName: 'Updated link name',
+      };
+
+      return testAction(actions.updateAssetLinkName, params, state, [
+        { type: types.UPDATE_ASSET_LINK_NAME, payload: params },
+      ]);
+    });
+  });
+
+  describe('updateAssetLinkType', () => {
+    it(`commits ${types.UPDATE_ASSET_LINK_TYPE} with the updated link type`, () => {
+      const params = {
+        linkIdToUpdate: 2,
+        newType: ASSET_LINK_TYPE.RUNBOOK,
+      };
+
+      return testAction(actions.updateAssetLinkType, params, state, [
+        { type: types.UPDATE_ASSET_LINK_TYPE, payload: params },
+      ]);
+    });
+  });
+
+  describe('removeAssetLink', () => {
+    it(`commits ${types.REMOVE_ASSET_LINK} with the ID of the asset link to remove`, () => {
+      const idToRemove = 2;
+      return testAction(actions.removeAssetLink, idToRemove, state, [
+        { type: types.REMOVE_ASSET_LINK, payload: idToRemove },
+      ]);
+    });
+  });
+
+  describe('updateReleaseMilestones', () => {
+    it(`commits ${types.UPDATE_RELEASE_MILESTONES} with the updated release milestones`, () => {
+      const newReleaseMilestones = ['v0.0', 'v0.1'];
+      return testAction(actions.updateReleaseMilestones, newReleaseMilestones, state, [
+        { type: types.UPDATE_RELEASE_MILESTONES, payload: newReleaseMilestones },
+      ]);
+    });
+  });
+
   describe('requestUpdateRelease', () => {
     it(`commits ${types.REQUEST_UPDATE_RELEASE}`, () =>
       testAction(actions.requestUpdateRelease, undefined, state, [
@@ -143,7 +201,7 @@ describe('Release detail actions', () => {
         { type: types.RECEIVE_UPDATE_RELEASE_SUCCESS },
       ]));
 
-    describe('when the releaseShowPage feature flag is enabled', () => {
+    it('redirects to the releases page if releaseShowPage feature flag is enabled', () => {
       const rootState = { featureFlags: { releaseShowPage: true } };
       const updatedState = merge({}, state, {
         releasesPagePath: 'path/to/releases/page',
@@ -248,6 +306,7 @@ describe('Release detail actions', () => {
             {
               name: state.release.name,
               description: state.release.description,
+              milestones: state.release.milestones.map(milestone => milestone.title),
             },
           ],
         ]);

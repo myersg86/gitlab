@@ -88,8 +88,8 @@ describe Repository do
         subject { repository.tags_sorted_by('updated_desc').map(&:name) }
 
         before do
-          double_first = double(committed_date: Time.now)
-          double_last = double(committed_date: Time.now - 1.second)
+          double_first = double(committed_date: Time.current)
+          double_last = double(committed_date: Time.current - 1.second)
 
           allow(tag_a).to receive(:dereferenced_target).and_return(double_first)
           allow(tag_b).to receive(:dereferenced_target).and_return(double_last)
@@ -103,8 +103,8 @@ describe Repository do
         subject { repository.tags_sorted_by('updated_asc').map(&:name) }
 
         before do
-          double_first = double(committed_date: Time.now - 1.second)
-          double_last = double(committed_date: Time.now)
+          double_first = double(committed_date: Time.current - 1.second)
+          double_last = double(committed_date: Time.current)
 
           allow(tag_a).to receive(:dereferenced_target).and_return(double_last)
           allow(tag_b).to receive(:dereferenced_target).and_return(double_first)
@@ -125,8 +125,8 @@ describe Repository do
 
           rugged_repo(repository).tags.create(annotated_tag_name, 'a48e4fc218069f68ef2e769dd8dfea3991362175', options)
 
-          double_first = double(committed_date: Time.now - 1.second)
-          double_last = double(committed_date: Time.now)
+          double_first = double(committed_date: Time.current - 1.second)
+          double_last = double(committed_date: Time.current)
 
           allow(tag_a).to receive(:dereferenced_target).and_return(double_last)
           allow(tag_b).to receive(:dereferenced_target).and_return(double_first)
@@ -227,7 +227,7 @@ describe Repository do
         tree_builder = Rugged::Tree::Builder.new(rugged)
         tree_builder.insert({ oid: blob_id, name: "hello\x80world", filemode: 0100644 })
         tree_id = tree_builder.write
-        user = { email: "jcai@gitlab.com", time: Time.now, name: "John Cai" }
+        user = { email: "jcai@gitlab.com", time: Time.current.to_time, name: "John Cai" }
 
         Rugged::Commit.create(rugged, message: 'some commit message', parents: [rugged.head.target.oid], tree: tree_id, committer: user, author: user)
       end
@@ -974,7 +974,7 @@ describe Repository do
       end
 
       it 'returns nil' do
-        expect(Rails.logger).to receive(:info).with("Remove remote job failed to create for #{project.id} with remote name joe.")
+        expect(Gitlab::AppLogger).to receive(:info).with("Remove remote job failed to create for #{project.id} with remote name joe.")
 
         expect(repository.async_remove_remote('joe')).to be_nil
       end
@@ -1446,17 +1446,13 @@ describe Repository do
     let(:empty_repository) { create(:project_empty_repo).repository }
 
     it 'returns empty array for an empty repository' do
-      # rubocop:disable Style/WordArray
-      expect(empty_repository.blobs_at(['master', 'foobar'])).to eq([])
-      # rubocop:enable Style/WordArray
+      expect(empty_repository.blobs_at(%w[master foobar])).to eq([])
     end
 
     it 'returns blob array for a non-empty repository' do
       repository.create_file(User.last, 'foobar', 'CONTENT', message: 'message', branch_name: 'master')
 
-      # rubocop:disable Style/WordArray
-      blobs = repository.blobs_at([['master', 'foobar']])
-      # rubocop:enable Style/WordArray
+      blobs = repository.blobs_at([%w[master foobar]])
 
       expect(blobs.first.name).to eq('foobar')
       expect(blobs.size).to eq(1)
@@ -2872,6 +2868,82 @@ describe Repository do
   describe '#submodule_links' do
     it 'returns an instance of Gitlab::SubmoduleLinks' do
       expect(repository.submodule_links).to be_a(Gitlab::SubmoduleLinks)
+    end
+  end
+
+  describe '#lfs_enabled?' do
+    let_it_be(:project) { create(:project, :repository, :design_repo, lfs_enabled: true) }
+
+    subject { repository.lfs_enabled? }
+
+    context 'for a project repository' do
+      let(:repository) { project.repository }
+
+      it 'returns true when LFS is enabled' do
+        stub_lfs_setting(enabled: true)
+
+        is_expected.to be_truthy
+      end
+
+      it 'returns false when LFS is disabled' do
+        stub_lfs_setting(enabled: false)
+
+        is_expected.to be_falsy
+      end
+    end
+
+    context 'for a project wiki repository' do
+      let(:repository) { project.wiki.repository }
+
+      it 'returns true when LFS is enabled' do
+        stub_lfs_setting(enabled: true)
+
+        is_expected.to be_truthy
+      end
+
+      it 'returns false when LFS is disabled' do
+        stub_lfs_setting(enabled: false)
+
+        is_expected.to be_falsy
+      end
+    end
+
+    context 'for a project snippet repository' do
+      let(:snippet) { create(:project_snippet, project: project) }
+      let(:repository) { snippet.repository }
+
+      it 'returns false when LFS is enabled' do
+        stub_lfs_setting(enabled: true)
+
+        is_expected.to be_falsy
+      end
+    end
+
+    context 'for a personal snippet repository' do
+      let(:snippet) { create(:personal_snippet) }
+      let(:repository) { snippet.repository }
+
+      it 'returns false when LFS is enabled' do
+        stub_lfs_setting(enabled: true)
+
+        is_expected.to be_falsy
+      end
+    end
+
+    context 'for a design repository' do
+      let(:repository) { project.design_repository }
+
+      it 'returns true when LFS is enabled' do
+        stub_lfs_setting(enabled: true)
+
+        is_expected.to be_truthy
+      end
+
+      it 'returns false when LFS is disabled' do
+        stub_lfs_setting(enabled: false)
+
+        is_expected.to be_falsy
+      end
     end
   end
 end

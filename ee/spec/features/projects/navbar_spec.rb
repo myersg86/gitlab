@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Project navbar' do
+RSpec.describe 'Project navbar' do
   include NavbarStructureHelper
 
   include_context 'project navbar structure'
@@ -11,6 +11,12 @@ describe 'Project navbar' do
   let_it_be(:project) { create(:project, :repository) }
 
   before do
+    insert_after_sub_nav_item(
+      _('Labels'),
+      within: _('Issues'),
+      new_sub_nav_item_name: _('Service Desk')
+    )
+
     project.add_maintainer(user)
     sign_in(user)
   end
@@ -31,25 +37,9 @@ describe 'Project navbar' do
     it_behaves_like 'verified navigation bar'
   end
 
-  context 'when service desk is available' do
-    before do
-      stub_licensed_features(service_desk: true)
-
-      insert_after_sub_nav_item(
-        _('Labels'),
-        within: _('Issues'),
-        new_sub_nav_item_name: _('Service Desk')
-      )
-
-      visit project_path(project)
-    end
-
-    it_behaves_like 'verified navigation bar'
-  end
-
   context 'when security dashboard is available' do
     before do
-      stub_licensed_features(security_dashboard: true)
+      stub_licensed_features(security_dashboard: true, security_on_demand_scans: true)
 
       insert_after_nav_item(
         _('CI / CD'),
@@ -57,7 +47,7 @@ describe 'Project navbar' do
           nav_item: _('Security & Compliance'),
           nav_sub_items: [
             _('Security Dashboard'),
-            _('Vulnerability List'),
+            s_('OnDemandScans|On-demand Scans'),
             _('Configuration')
           ]
         }
@@ -71,16 +61,14 @@ describe 'Project navbar' do
 
   context 'when packages are available' do
     before do
-      allow(Gitlab.config.packages).to receive(:enabled).and_return(true)
+      stub_config(packages: { enabled: true }, registry: { enabled: false })
       stub_licensed_features(packages: true)
 
       insert_after_nav_item(
         _('Operations'),
         new_nav_item: {
-          nav_item: _('Packages'),
-          nav_sub_items: [
-            _('List')
-          ]
+          nav_item: _('Packages & Registries'),
+          nav_sub_items: [_('Package Registry')]
         }
       )
 
@@ -88,12 +76,28 @@ describe 'Project navbar' do
     end
 
     it_behaves_like 'verified navigation bar'
+
+    context 'when container registry is available' do
+      before do
+        stub_config(registry: { enabled: true })
+
+        insert_after_sub_nav_item(
+          _('Package Registry'),
+          within: _('Packages & Registries'),
+          new_sub_nav_item_name: _('Container Registry')
+        )
+
+        visit project_path(project)
+      end
+
+      it_behaves_like 'verified navigation bar'
+    end
   end
 
   context 'when requirements is available' do
     before do
       stub_licensed_features(requirements: true)
-      stub_feature_flags(requirements_management: { enabled: true, thing: project })
+      stub_feature_flags(requirements_management: true)
 
       insert_after_nav_item(
         _('Merge Requests'),

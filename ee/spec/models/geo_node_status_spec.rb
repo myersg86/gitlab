@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe GeoNodeStatus, :geo, :geo_fdw do
+RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
   include ::EE::GeoHelpers
 
   let!(:primary) { create(:geo_node, :primary) }
@@ -70,7 +70,7 @@ describe GeoNodeStatus, :geo, :geo_fdw do
     context 'takes outdated? into consideration' do
       it 'return false' do
         subject.status_message = GeoNodeStatus::HEALTHY_STATUS
-        subject.updated_at = 10.minutes.ago
+        subject.updated_at = 11.minutes.ago
 
         expect(subject.healthy?).to be false
       end
@@ -86,7 +86,7 @@ describe GeoNodeStatus, :geo, :geo_fdw do
 
   describe '#outdated?' do
     it 'return true' do
-      subject.updated_at = 10.minutes.ago
+      subject.updated_at = 11.minutes.ago
 
       expect(subject.outdated?).to be true
     end
@@ -107,20 +107,11 @@ describe GeoNodeStatus, :geo, :geo_fdw do
   end
 
   describe '#health' do
-    context 'takes outdated? into consideration' do
-      it 'returns expiration error' do
-        subject.status_message = GeoNodeStatus::HEALTHY_STATUS
-        subject.updated_at = 10.minutes.ago
+    it 'returns status message' do
+      subject.status_message = 'something went wrong'
+      subject.updated_at = 11.minutes.ago
 
-        expect(subject.health).to eq "Status has not been updated in the past #{described_class::EXPIRATION_IN_MINUTES} minutes"
-      end
-
-      it 'returns original message' do
-        subject.status_message = 'something went wrong'
-        subject.updated_at = 1.minute.ago
-
-        expect(subject.health).to eq 'something went wrong'
-      end
+      expect(subject.health).to eq 'something went wrong'
     end
   end
 
@@ -253,9 +244,9 @@ describe GeoNodeStatus, :geo, :geo_fdw do
       create(:geo_upload_registry, :failed)
       create(:geo_upload_registry, :avatar)
       create(:geo_upload_registry, file_type: :attachment)
-      create(:geo_lfs_object_registry, :with_lfs_object, :failed)
+      create(:geo_lfs_object_registry, :failed)
 
-      create(:geo_lfs_object_registry, :with_lfs_object)
+      create(:geo_lfs_object_registry)
 
       expect(subject.lfs_objects_synced_count).to eq(1)
     end
@@ -267,9 +258,9 @@ describe GeoNodeStatus, :geo, :geo_fdw do
       create(:geo_upload_registry, :failed)
       create(:geo_upload_registry, :avatar, missing_on_primary: true)
       create(:geo_upload_registry, file_type: :attachment, missing_on_primary: true)
-      create(:geo_lfs_object_registry, :with_lfs_object, :failed)
+      create(:geo_lfs_object_registry, :failed)
 
-      create(:geo_lfs_object_registry, :with_lfs_object, missing_on_primary: true)
+      create(:geo_lfs_object_registry, missing_on_primary: true)
 
       expect(subject.lfs_objects_synced_missing_on_primary_count).to eq(1)
     end
@@ -281,39 +272,26 @@ describe GeoNodeStatus, :geo, :geo_fdw do
       create(:geo_upload_registry, :failed)
       create(:geo_upload_registry, :avatar, :failed)
       create(:geo_upload_registry, :failed, file_type: :attachment)
-      create(:geo_lfs_object_registry, :with_lfs_object)
+      create(:geo_lfs_object_registry)
 
-      create(:geo_lfs_object_registry, :with_lfs_object, :failed)
+      create(:geo_lfs_object_registry, :failed)
 
       expect(subject.lfs_objects_failed_count).to eq(1)
     end
   end
 
   describe '#lfs_objects_synced_in_percentage' do
-    let(:lfs_object_project) { create(:lfs_objects_project, project: project_1) }
-
-    before do
-      allow(ProjectCacheWorker).to receive(:perform_async).and_return(true)
-
-      create(:lfs_objects_project, project: project_1)
-      create_list(:lfs_objects_project, 2, project: project_3)
-    end
-
-    it 'returns 0 when no objects are available' do
+    it 'returns 0 when there are no registries' do
       expect(subject.lfs_objects_synced_in_percentage).to eq(0)
     end
 
-    it 'returns the right percentage with no group restrictions' do
-      create(:geo_lfs_object_registry, lfs_object_id: lfs_object_project.lfs_object_id)
+    it 'returns the right percentage' do
+      create(:geo_lfs_object_registry)
+      create(:geo_lfs_object_registry, :failed)
+      create(:geo_lfs_object_registry, :never_synced)
+      create(:geo_lfs_object_registry, :never_synced)
 
       expect(subject.lfs_objects_synced_in_percentage).to be_within(0.0001).of(25)
-    end
-
-    it 'returns the right percentage with group restrictions' do
-      secondary.update!(selective_sync_type: 'namespaces', namespaces: [group])
-      create(:geo_lfs_object_registry, lfs_object_id: lfs_object_project.lfs_object_id)
-
-      expect(subject.lfs_objects_synced_in_percentage).to be_within(0.0001).of(50)
     end
   end
 
@@ -1086,7 +1064,7 @@ describe GeoNodeStatus, :geo, :geo_fdw do
 
   shared_examples 'timestamp parameters' do |timestamp_column, date_column|
     it 'returns the value it was assigned via UNIX timestamp' do
-      now = Time.now.beginning_of_day.utc
+      now = Time.current.beginning_of_day.utc
       subject.update_attribute(timestamp_column, now.to_i)
 
       expect(subject.public_send(date_column)).to eq(now)
@@ -1123,7 +1101,7 @@ describe GeoNodeStatus, :geo, :geo_fdw do
 
       expect(result.id).to be_nil
       expect(result.attachments_count).to eq(status.attachments_count)
-      expect(result.cursor_last_event_date).to eq(Time.at(status.cursor_last_event_timestamp))
+      expect(result.cursor_last_event_date).to eq(Time.zone.at(status.cursor_last_event_timestamp))
       expect(result.storage_shards.count).to eq(Settings.repositories.storages.count)
     end
   end
@@ -1224,6 +1202,83 @@ describe GeoNodeStatus, :geo, :geo_fdw do
     end
   end
 
+  describe '#package_files_checksummed_count' do
+    before do
+      stub_current_geo_node(primary)
+    end
+
+    it 'returns the right number of checksummed package files' do
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksum_failure)
+
+      expect(subject.package_files_checksummed_count).to eq(2)
+    end
+  end
+
+  describe '#package_files_checksum_failed_count' do
+    before do
+      stub_current_geo_node(primary)
+    end
+
+    it 'returns the right number of failed package files' do
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksum_failure)
+      create(:package_file, :jar, :checksum_failure)
+
+      expect(subject.package_files_checksum_failed_count).to eq(2)
+    end
+  end
+
+  describe '#package_files_checksummed_in_percentage' do
+    before do
+      stub_current_geo_node(primary)
+    end
+
+    it 'returns 0 when no package files available' do
+      expect(subject.package_files_checksummed_in_percentage).to eq(0)
+    end
+
+    it 'returns the right percentage' do
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksummed)
+      create(:package_file, :jar, :checksum_failure)
+
+      expect(subject.package_files_checksummed_in_percentage).to be_within(0.0001).of(75)
+    end
+  end
+
+  describe 'package files secondary counters' do
+    context 'when package registries available' do
+      before do
+        create(:package_file_registry, :failed)
+        create(:package_file_registry, :failed)
+        create(:package_file_registry, :synced)
+      end
+
+      it 'returns the right number of failed and synced repos' do
+        expect(subject.package_files_failed_count).to eq(2)
+        expect(subject.package_files_synced_count).to eq(1)
+      end
+
+      it 'returns the percent of synced package files' do
+        expect(subject.package_files_synced_in_percentage).to be_within(0.01).of(33.33)
+      end
+    end
+
+    context 'when no package registries available' do
+      it 'returns 0' do
+        expect(subject.package_files_failed_count).to eq(0)
+        expect(subject.package_files_synced_count).to eq(0)
+      end
+
+      it 'returns 0' do
+        expect(subject.package_files_synced_in_percentage).to eq(0)
+      end
+    end
+  end
+
   describe '#load_data_from_current_node' do
     context 'on the primary' do
       before do
@@ -1292,6 +1347,14 @@ describe GeoNodeStatus, :geo, :geo_fdw do
 
           expect(subject.design_repositories_synced_in_percentage).to be_within(0.0001).of(50)
         end
+      end
+    end
+
+    context 'status counters are converted into integers' do
+      it 'returns integer value' do
+        subject.status = { "projects_count" => "10" }
+
+        expect(subject.projects_count).to eq 10
       end
     end
   end

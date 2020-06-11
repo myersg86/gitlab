@@ -107,6 +107,9 @@ production: &base
       # S/MIME public certificate key in PEM format, will be attached to signed messages
       # Default is '.gitlab_smime_cert' relative to Rails.root (i.e. root of the GitLab app).
       # cert_file: /home/git/gitlab/.gitlab_smime_cert
+      # S/MIME extra CA public certificates in PEM format, will be attached to signed messages
+      # Optional
+      # ca_certs_file: /home/git/gitlab/.gitlab_smime_ca_certs
 
     # Email server smtp settings are in config/initializers/smtp_settings.rb.sample
 
@@ -198,6 +201,9 @@ production: &base
     # The default is 'log/mail_room_json.log' relative to the root of the Rails app.
     #
     # log_path: log/mail_room_json.log
+
+    # Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+    expunge_deleted: false
 
   ## Build Artifacts
   artifacts:
@@ -463,6 +469,11 @@ production: &base
     geo_file_download_dispatch_worker:
       cron: "*/1 * * * *"
 
+    # GitLab Geo registry sync worker (for backfilling)
+    # NOTE: This will only take effect if Geo is enabled (secondary nodes only)
+    geo_registry_sync_worker:
+      cron: "*/1 * * * *"
+
     # GitLab Geo migrated local files clean up worker
     # NOTE: This will only take effect if Geo is enabled (secondary nodes only)
     geo_migrated_local_files_clean_up_worker:
@@ -475,6 +486,11 @@ production: &base
     # Elasticsearch bulk updater for incremental updates.
     # NOTE: This will only take effect if elasticsearch is enabled.
     elastic_index_bulk_cron_worker:
+      cron: "*/1 * * * *"
+      
+    # Elasticsearch bulk updater for initial updates.
+    # NOTE: This will only take effect if elasticsearch is enabled.
+    elastic_index_initial_bulk_cron_worker:
       cron: "*/1 * * * *"
 
   registry:
@@ -767,7 +783,7 @@ production: &base
     # Allow smartcard authentication
     enabled: false
 
-    # Path to a file containing a CA certificate
+    # Path to a file containing a CA certificate bundle
     ca_file: '/etc/ssl/certs/CA.pem'
 
     # Host and port where the client side certificate is requested by the
@@ -1062,13 +1078,16 @@ production: &base
     #   host: localhost
     #   port: 3808
 
+  ## ActionCable settings
+  action_cable:
+    # Number of threads used to process ActionCable connection callbacks and channel actions
+    # worker_pool_size: 4
+
   ## Monitoring
   # Built in monitoring settings
   monitoring:
     # Time between sampling of unicorn socket metrics, in seconds
     # unicorn_sampler_interval: 10
-    # Time between sampling of Puma metrics, in seconds
-    # puma_sampler_interval: 5
     # IP whitelist to access monitoring endpoints
     ip_whitelist:
       - 127.0.0.0/8

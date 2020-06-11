@@ -8,6 +8,7 @@
 #
 ---
 - accessibility_testing
+- alert_management
 - analysis
 - api
 - attack_emulation
@@ -17,11 +18,10 @@
 - auto_devops
 - backup_restore
 - behavior_analytics
-- chaos_engineering
+- billing
 - chatops
 - cloud_native_installation
 - cluster_cost_optimization
-- cluster_monitoring
 - code_analytics
 - code_quality
 - code_review
@@ -43,6 +43,7 @@
 - digital_experience_management
 - disaster_recovery
 - dynamic_application_security_testing
+- editor_extension
 - epics
 - error_tracking
 - feature_flags
@@ -52,6 +53,7 @@
 - geo_replication
 - git_lfs
 - gitaly
+- gitlab_docs
 - gitlab_handbook
 - gitter
 - global_search
@@ -71,6 +73,7 @@
 - kubernetes_management
 - language_specific
 - license_compliance
+- live_preview
 - load_testing
 - logging
 - malware_scanning
@@ -81,6 +84,7 @@
 - pages
 - pki_management
 - planning_analytics
+- product_analytics
 - quality_management
 - release_evidence
 - release_orchestration
@@ -92,13 +96,13 @@
 - runner
 - secret_detection
 - secrets_management
+- security_benchmarking
 - serverless
 - service_desk
 - snippets
 - source_code_management
 - static_application_security_testing
 - static_site_editor
-- status_page
 - subgroups
 - templates
 - time_tracking

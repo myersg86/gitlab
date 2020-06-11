@@ -13,6 +13,7 @@ describe 'Creating a Snippet' do
   let(:file_name) { 'Initial file_name' }
   let(:visibility_level) { 'public' }
   let(:project_path) { nil }
+  let(:uploaded_files) { nil }
 
   let(:mutation) do
     variables = {
@@ -21,7 +22,8 @@ describe 'Creating a Snippet' do
       visibility_level: visibility_level,
       file_name: file_name,
       title: title,
-      project_path: project_path
+      project_path: project_path,
+      uploaded_files: uploaded_files
     }
 
     graphql_mutation(:create_snippet, variables)
@@ -31,6 +33,8 @@ describe 'Creating a Snippet' do
     graphql_mutation_response(:create_snippet)
   end
 
+  subject { post_graphql_mutation(mutation, current_user: current_user) }
+
   context 'when the user does not have permission' do
     let(:current_user) { nil }
 
@@ -39,7 +43,7 @@ describe 'Creating a Snippet' do
 
     it 'does not create the Snippet' do
       expect do
-        post_graphql_mutation(mutation, current_user: current_user)
+        subject
       end.not_to change { Snippet.count }
     end
 
@@ -48,7 +52,7 @@ describe 'Creating a Snippet' do
 
       it 'does not create the snippet when the user is not authorized' do
         expect do
-          post_graphql_mutation(mutation, current_user: current_user)
+          subject
         end.not_to change { Snippet.count }
       end
     end
@@ -60,12 +64,12 @@ describe 'Creating a Snippet' do
     context 'with PersonalSnippet' do
       it 'creates the Snippet' do
         expect do
-          post_graphql_mutation(mutation, current_user: current_user)
+          subject
         end.to change { Snippet.count }.by(1)
       end
 
       it 'returns the created Snippet' do
-        post_graphql_mutation(mutation, current_user: current_user)
+        subject
 
         expect(mutation_response['snippet']['blob']['richData']).to be_nil
         expect(mutation_response['snippet']['blob']['plainData']).to match(content)
@@ -86,12 +90,12 @@ describe 'Creating a Snippet' do
 
       it 'creates the Snippet' do
         expect do
-          post_graphql_mutation(mutation, current_user: current_user)
+          subject
         end.to change { Snippet.count }.by(1)
       end
 
       it 'returns the created Snippet' do
-        post_graphql_mutation(mutation, current_user: current_user)
+        subject
 
         expect(mutation_response['snippet']['blob']['richData']).to be_nil
         expect(mutation_response['snippet']['blob']['plainData']).to match(content)
@@ -105,23 +109,31 @@ describe 'Creating a Snippet' do
       context 'when the project path is invalid' do
         let(:project_path) { 'foobar' }
 
-        it 'returns an an error' do
-          post_graphql_mutation(mutation, current_user: current_user)
-          errors = json_response['errors']
-
-          expect(errors.first['message']).to eq(Gitlab::Graphql::Authorize::AuthorizeResource::RESOURCE_ACCESS_ERROR)
-        end
+        it_behaves_like 'a mutation that returns top-level errors',
+                        errors: [Gitlab::Graphql::Authorize::AuthorizeResource::RESOURCE_ACCESS_ERROR]
       end
 
       context 'when the feature is disabled' do
-        it 'returns an an error' do
+        before do
           project.project_feature.update_attribute(:snippets_access_level, ProjectFeature::DISABLED)
-
-          post_graphql_mutation(mutation, current_user: current_user)
-          errors = json_response['errors']
-
-          expect(errors.first['message']).to eq(Gitlab::Graphql::Authorize::AuthorizeResource::RESOURCE_ACCESS_ERROR)
         end
+
+        it_behaves_like 'a mutation that returns top-level errors',
+                        errors: [Gitlab::Graphql::Authorize::AuthorizeResource::RESOURCE_ACCESS_ERROR]
+      end
+    end
+
+    shared_examples 'does not create snippet' do
+      it 'does not create the Snippet' do
+        expect do
+          subject
+        end.not_to change { Snippet.count }
+      end
+
+      it 'does not return Snippet' do
+        subject
+
+        expect(mutation_response['snippet']).to be_nil
       end
     end
 
@@ -129,17 +141,39 @@ describe 'Creating a Snippet' do
       let(:title) { '' }
 
       it_behaves_like 'a mutation that returns errors in the response', errors: ["Title can't be blank"]
+      it_behaves_like 'does not create snippet'
+    end
 
-      it 'does not create the Snippet' do
-        expect do
-          post_graphql_mutation(mutation, current_user: current_user)
-        end.not_to change { Snippet.count }
+    context 'when there non ActiveRecord errors' do
+      let(:file_name) { 'invalid://file/path' }
+
+      it_behaves_like 'a mutation that returns errors in the response', errors: ['Repository Error creating the snippet - Invalid file name']
+      it_behaves_like 'does not create snippet'
+    end
+
+    context 'when there are uploaded files' do
+      shared_examples 'expected files argument' do |file_value, expected_value|
+        let(:uploaded_files) { file_value }
+
+        it do
+          expect(::Snippets::CreateService).to receive(:new).with(nil, user, hash_including(files: expected_value))
+
+          subject
+        end
       end
 
-      it 'does not return Snippet' do
-        post_graphql_mutation(mutation, current_user: current_user)
+      it_behaves_like 'expected files argument', nil, nil
+      it_behaves_like 'expected files argument', %w(foo bar), %w(foo bar)
+      it_behaves_like 'expected files argument', 'foo', %w(foo)
 
-        expect(mutation_response['snippet']).to be_nil
+      context 'when files has an invalid value' do
+        let(:uploaded_files) { [1] }
+
+        it 'returns an error' do
+          subject
+
+          expect(json_response['errors']).to be
+        end
       end
     end
   end

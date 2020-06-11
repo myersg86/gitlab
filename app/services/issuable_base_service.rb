@@ -22,7 +22,9 @@ class IssuableBaseService < BaseService
       params.delete(:milestone_id)
       params.delete(:labels)
       params.delete(:add_label_ids)
+      params.delete(:add_labels)
       params.delete(:remove_label_ids)
+      params.delete(:remove_labels)
       params.delete(:label_ids)
       params.delete(:assignee_ids)
       params.delete(:assignee_id)
@@ -91,6 +93,8 @@ class IssuableBaseService < BaseService
     elsif params[label_key]
       params[label_id_key] = labels_service.find_or_create_by_titles(label_key, find_only: find_only).map(&:id)
     end
+
+    params.delete(label_key) if params[label_key].nil?
   end
 
   def filter_labels_in_param(key)
@@ -125,15 +129,11 @@ class IssuableBaseService < BaseService
     add_label_ids = attributes.delete(:add_label_ids)
     remove_label_ids = attributes.delete(:remove_label_ids)
 
-    new_label_ids = existing_label_ids || label_ids || []
+    new_label_ids = label_ids || existing_label_ids || []
     new_label_ids |= extra_label_ids
 
-    if add_label_ids.blank? && remove_label_ids.blank?
-      new_label_ids = label_ids if label_ids
-    else
-      new_label_ids |= add_label_ids if add_label_ids
-      new_label_ids -= remove_label_ids if remove_label_ids
-    end
+    new_label_ids |= add_label_ids if add_label_ids
+    new_label_ids -= remove_label_ids if remove_label_ids
 
     new_label_ids.uniq
   end
@@ -217,7 +217,7 @@ class IssuableBaseService < BaseService
       issuable.assign_attributes(params)
 
       if has_title_or_description_changed?(issuable)
-        issuable.assign_attributes(last_edited_at: Time.now, last_edited_by: current_user)
+        issuable.assign_attributes(last_edited_at: Time.current, last_edited_by: current_user)
       end
 
       before_update(issuable)
@@ -237,7 +237,8 @@ class IssuableBaseService < BaseService
       end
 
       if issuable_saved
-        Issuable::CommonSystemNotesService.new(project, current_user).execute(issuable, old_labels: old_associations[:labels])
+        Issuable::CommonSystemNotesService.new(project, current_user).execute(
+          issuable, old_labels: old_associations[:labels], old_milestone: old_associations[:milestone])
 
         handle_changes(issuable, old_associations: old_associations)
 
@@ -265,7 +266,7 @@ class IssuableBaseService < BaseService
 
     if issuable.changed? || params.present?
       issuable.assign_attributes(params.merge(updated_by: current_user,
-                                              last_edited_at: Time.now,
+                                              last_edited_at: Time.current,
                                               last_edited_by: current_user))
 
       before_update(issuable, skip_spam_check: true)
@@ -345,7 +346,7 @@ class IssuableBaseService < BaseService
       todo_service.mark_todo(issuable, current_user)
     when 'done'
       todo = TodosFinder.new(current_user).find_by(target: issuable)
-      todo_service.mark_todos_as_done_by_ids(todo, current_user) if todo
+      todo_service.resolve_todo(todo, current_user) if todo
     end
   end
   # rubocop: enable CodeReuse/ActiveRecord
@@ -360,7 +361,8 @@ class IssuableBaseService < BaseService
       {
         labels: issuable.labels.to_a,
         mentioned_users: issuable.mentioned_users(current_user).to_a,
-        assignees: issuable.assignees.to_a
+        assignees: issuable.assignees.to_a,
+        milestone: issuable.try(:milestone)
       }
     associations[:total_time_spent] = issuable.total_time_spent if issuable.respond_to?(:total_time_spent)
     associations[:description] = issuable.description

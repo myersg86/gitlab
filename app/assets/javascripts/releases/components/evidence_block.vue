@@ -71,16 +71,18 @@ export default {
           :download="evidenceTitle(index)"
           :href="evidenceUrl(index)"
         >
-          <gl-icon name="review-list" class="align-middle append-right-8" />
+          <gl-icon name="review-list" class="align-middle gl-mr-3" />
           <span>{{ evidenceTitle(index) }}</span>
         </gl-link>
 
         <expand-button>
-          <template slot="short">
+          <template #short>
             <span class="js-short monospace">{{ shortSha(index) }}</span>
           </template>
-          <template slot="expanded">
-            <span class="js-expanded monospace gl-pl-1">{{ sha(index) }}</span>
+          <template #expanded>
+            <span class="js-expanded monospace gl-pl-1-deprecated-no-really-do-not-use-me">{{
+              sha(index)
+            }}</span>
           </template>
         </expand-button>
         <clipboard-button
@@ -94,7 +96,7 @@ export default {
         <gl-icon
           v-gl-tooltip
           name="clock"
-          class="align-middle append-right-8"
+          class="align-middle gl-mr-3"
           :title="collectedAt(index)"
         />
         <span>{{ timeSummary(index) }}</span>

@@ -1,5 +1,13 @@
 import * as getters from 'ee/analytics/cycle_analytics/store/getters';
-import { startDate, endDate, allowedStages, selectedProjects } from '../mock_data';
+import {
+  startDate,
+  endDate,
+  allowedStages,
+  selectedProjects,
+  transformedStagePathData,
+  issueStage,
+  stageMedians,
+} from '../mock_data';
 
 let state = null;
 
@@ -140,6 +148,34 @@ describe('Cycle analytics getters', () => {
         state.stages = [{ id: 'one' }, { id: 'two' }];
         expect(getters.enableCustomOrdering(state)).toEqual(false);
       });
+    });
+  });
+
+  describe.each`
+    isEditingCustomStage | isCreatingCustomStage | result
+    ${true}              | ${true}               | ${true}
+    ${true}              | ${false}              | ${true}
+    ${false}             | ${true}               | ${true}
+    ${null}              | ${true}               | ${true}
+    ${true}              | ${null}               | ${true}
+    ${null}              | ${null}               | ${false}
+    ${false}             | ${false}              | ${false}
+  `('customStageFormActive', ({ isEditingCustomStage, isCreatingCustomStage, result }) => {
+    it(`returns ${result} when isEditingCustomStage=${isEditingCustomStage} and isCreatingCustomStage=${isCreatingCustomStage}`, () => {
+      const resp = getters.customStageFormActive({ isCreatingCustomStage, isEditingCustomStage });
+      expect(resp).toEqual(result);
+    });
+  });
+
+  describe('pathNavigationData', () => {
+    it('returns the transformed data', () => {
+      state = {
+        stages: allowedStages,
+        medians: stageMedians,
+        selectedStage: issueStage,
+      };
+
+      expect(getters.pathNavigationData(state)).toEqual(transformedStagePathData);
     });
   });
 });

@@ -1,4 +1,9 @@
-/* eslint-disable class-methods-use-this */
+/* eslint-disable class-methods-use-this, no-param-reassign */
+/*
+  no-param-reassign is disabled because one method of BoardsStoreEE 
+  modify the passed parameter in conformity with non-ee BoardsStore.
+*/
+
 import { sortBy } from 'lodash';
 import Cookies from 'js-cookie';
 import { __, sprintf } from '~/locale';
@@ -39,7 +44,6 @@ class BoardsStoreEE {
             boardWeight,
             weightFeatureAvailable,
             scopedLabels,
-            scopedLabelsDocumentationLink,
           },
         } = this.$boardApp;
         this.store.boardConfig = {
@@ -53,7 +57,6 @@ class BoardsStoreEE {
         this.store.weightFeatureAvailable = parseBoolean(weightFeatureAvailable);
         this.store.scopedLabels = {
           enabled: parseBoolean(scopedLabels),
-          helpLink: scopedLabelsDocumentationLink,
         };
         this.initBoardFilters();
       }
@@ -69,6 +72,8 @@ class BoardsStoreEE {
         window.history.pushState(null, null, `?${this.store.filter.path}`);
       }
     };
+
+    this.store.updateIssueEpic = this.updateIssueEpic;
 
     sidebarEventHub.$on('updateWeight', this.updateWeight.bind(this));
 
@@ -109,11 +114,16 @@ class BoardsStoreEE {
     let { weight } = this.store.boardConfig;
     if (weight !== -1) {
       if (weight === 0) {
-        /* eslint-disable-next-line @gitlab/require-i18n-strings */
-        weight = 'No+Weight';
+        weight = '0';
       }
+      if (weight === -2) {
+        /* eslint-disable-next-line @gitlab/require-i18n-strings */
+        weight = 'None';
+      }
+
       updateFilterPath('weight', weight);
     }
+
     updateFilterPath('assignee_username', this.store.boardConfig.assigneeUsername);
     if (this.store.boardConfig.assigneeUsername) {
       this.store.cantEdit.push('assignee');
@@ -174,6 +184,10 @@ class BoardsStoreEE {
 
   setMaxIssueCountOnList(id, maxIssueCount) {
     this.store.findList('id', id).maxIssueCount = maxIssueCount;
+  }
+
+  updateIssueEpic(issue, newEpic) {
+    issue.epic = newEpic;
   }
 
   updateWeight(newWeight, id) {

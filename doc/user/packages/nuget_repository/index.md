@@ -1,6 +1,12 @@
+---
+stage: Package
+group: Package
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # GitLab NuGet Repository **(PREMIUM)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/20050) in [GitLab Premium](https://about.gitlab.com/pricing/) 12.8.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/20050) in [GitLab Premium](https://about.gitlab.com/pricing/) 12.8.
 
 With the GitLab NuGet Repository, every project can have its own space to store NuGet packages.
 
@@ -61,14 +67,16 @@ by default. To enable it for existing projects, or if you want to disable it:
 1. Find the Packages feature and enable or disable it.
 1. Click on **Save changes** for the changes to take effect.
 
-You should then be able to see the **Packages** section on the left sidebar.
+You should then be able to see the **Packages & Registries** section on the left sidebar.
 
 ## Adding the GitLab NuGet Repository as a source to NuGet
 
 You will need the following:
 
 - Your GitLab username.
-- A personal access token. You can generate a [personal access token](../../../user/profile/personal_access_tokens.md) with the scope set to `api` for repository authentication.
+- A personal access token or deploy token. For repository authentication:
+  - You can generate a [personal access token](../../../user/profile/personal_access_tokens.md) with the scope set to `api`.
+  - You can generate a [deploy token](./../../project/deploy_tokens/index.md) with the scope set to `read_package_registry`, `write_package_registry`, or both.
 - A suitable name for your source.
 - Your project ID which can be found on the home page of your project.
 
@@ -83,7 +91,7 @@ You can now add a new source to NuGet with:
 To add the GitLab NuGet Repository as a source with `nuget`:
 
 ```shell
-nuget source Add -Name <source_name> -Source "https://gitlab-instance.example.com/api/v4/projects/<your_project_id>/packages/nuget/index.json" -UserName <gitlab_username> -Password <gitlab_personal_access_token>
+nuget source Add -Name <source_name> -Source "https://gitlab-instance.example.com/api/v4/projects/<your_project_id>/packages/nuget/index.json" -UserName <gitlab_username or deploy_token_username> -Password <gitlab_personal_access_token or deploy_token>
 ```
 
 Where:
@@ -93,7 +101,7 @@ Where:
 For example:
 
 ```shell
-nuget source Add -Name "GitLab" -Source "https//gitlab.example/api/v4/projects/10/packages/nuget/index.json" -UserName carol -Password 12345678asdf
+nuget source Add -Name "GitLab" -Source "https://gitlab.example/api/v4/projects/10/packages/nuget/index.json" -UserName carol -Password 12345678asdf
 ```
 
 ### Add NuGet Repository source with Visual Studio
@@ -107,8 +115,8 @@ nuget source Add -Name "GitLab" -Source "https//gitlab.example/api/v4/projects/1
    - **Location**: `https://gitlab.com/api/v4/projects/<your_project_id>/packages/nuget/index.json`
      - Replace `<your_project_id>` with your project ID.
      - If you have a self-managed GitLab installation, replace `gitlab.com` with your domain name.
-   - **Username**: Your GitLab username
-   - **Password**: Your personal access token
+   - **Username**: Your GitLab username or deploy token username
+   - **Password**: Your personal access token or deploy token
 
    ![Visual Studio Adding a NuGet source](img/visual_studio_adding_nuget_source.png)
 
@@ -131,8 +139,8 @@ To add the GitLab NuGet Repository as a source for .NET, create a file named `nu
     </packageSources>
     <packageSourceCredentials>
         <gitlab>
-            <add key="Username" value="<gitlab_username>" />
-            <add key="ClearTextPassword" value="<gitlab_personal_access_token>" />
+            <add key="Username" value="<gitlab_username or deploy_token_username>" />
+            <add key="ClearTextPassword" value="<gitlab_personal_access_token or deploy_token>" />
         </gitlab>
     </packageSourceCredentials>
 </configuration>
@@ -201,7 +209,7 @@ nuget install <package_id> -OutputDirectory <output_directory> \
 
 Where:
 
-- `<package_id>` is the package id.
+- `<package_id>` is the package ID.
 - `<output_directory>` is the output directory, where the package will be installed.
 - `<package_version>` (Optional) is the package version.
 - `<source_name>` (Optional) is the source name.
@@ -222,5 +230,5 @@ dotnet add package <package_id> \
 
 Where:
 
-- `<package_id>` is the package id.
+- `<package_id>` is the package ID.
 - `<package_version>` (Optional) is the package version.

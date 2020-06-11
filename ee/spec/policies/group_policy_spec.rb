@@ -2,13 +2,13 @@
 
 require 'spec_helper'
 
-describe GroupPolicy do
+RSpec.describe GroupPolicy do
   include_context 'GroupPolicy context'
 
   context 'when epics feature is disabled' do
     let(:current_user) { owner }
 
-    it { is_expected.to be_disallowed(:read_epic, :create_epic, :admin_epic, :destroy_epic) }
+    it { is_expected.to be_disallowed(:read_epic, :create_epic, :admin_epic, :destroy_epic, :read_confidential_epic) }
   end
 
   context 'when epics feature is enabled' do
@@ -16,9 +16,97 @@ describe GroupPolicy do
       stub_licensed_features(epics: true)
     end
 
+    context 'when user is owner' do
+      let(:current_user) { owner }
+
+      it { is_expected.to be_allowed(:read_epic, :create_epic, :admin_epic, :destroy_epic, :read_confidential_epic) }
+    end
+
+    context 'when user is maintainer' do
+      let(:current_user) { maintainer }
+
+      it { is_expected.to be_allowed(:read_epic, :create_epic, :admin_epic, :read_confidential_epic) }
+      it { is_expected.to be_disallowed(:destroy_epic) }
+    end
+
+    context 'when user is developer' do
+      let(:current_user) { developer }
+
+      it { is_expected.to be_allowed(:read_epic, :create_epic, :admin_epic, :read_confidential_epic) }
+      it { is_expected.to be_disallowed(:destroy_epic) }
+    end
+
+    context 'when user is reporter' do
+      let(:current_user) { reporter }
+
+      it { is_expected.to be_allowed(:read_epic, :create_epic, :admin_epic, :read_confidential_epic) }
+      it { is_expected.to be_disallowed(:destroy_epic) }
+    end
+
+    context 'when user is guest' do
+      let(:current_user) { guest }
+
+      it { is_expected.to be_allowed(:read_epic) }
+      it { is_expected.to be_disallowed(:create_epic, :admin_epic, :destroy_epic, :read_confidential_epic) }
+    end
+
+    context 'when user is not member' do
+      let(:current_user) { create(:user) }
+
+      it { is_expected.to be_disallowed(:read_epic, :create_epic, :admin_epic, :destroy_epic, :read_confidential_epic) }
+    end
+
+    context 'when user is anonymous' do
+      let(:current_user) { nil }
+
+      it { is_expected.to be_disallowed(:read_epic, :create_epic, :admin_epic, :destroy_epic, :read_confidential_epic) }
+    end
+  end
+
+  context 'when iterations feature is disabled' do
     let(:current_user) { owner }
 
-    it { is_expected.to be_allowed(:read_epic, :create_epic, :admin_epic, :destroy_epic) }
+    before do
+      stub_licensed_features(iterations: false)
+    end
+
+    it { is_expected.to be_disallowed(:read_iteration, :create_iteration, :admin_iteration) }
+  end
+
+  context 'when iterations feature is enabled' do
+    before do
+      stub_licensed_features(iterations: true)
+    end
+
+    context 'when user is a developer' do
+      let(:current_user) { developer }
+
+      it { is_expected.to be_allowed(:read_iteration, :create_iteration, :admin_iteration) }
+    end
+
+    context 'when user is a guest' do
+      let(:current_user) { guest }
+
+      it { is_expected.to be_allowed(:read_iteration) }
+      it { is_expected.to be_disallowed(:create_iteration, :admin_iteration) }
+    end
+
+    context 'when user is logged out' do
+      let(:current_user) { nil }
+
+      it { is_expected.to be_disallowed(:read_iteration, :create_iteration, :admin_iteration) }
+    end
+
+    context 'when project is private' do
+      let(:group) { create(:group, :public, :owner_subgroup_creation_only) }
+
+      context 'when user is logged out' do
+        let(:current_user) { nil }
+
+        it { is_expected.to be_allowed(:read_iteration) }
+        it { is_expected.to be_disallowed(:create_iteration, :admin_iteration) }
+      end
+    end
   end
 
   context 'when cluster deployments is available' do
@@ -59,9 +147,7 @@ describe GroupPolicy do
       subject { described_class.new(non_group_member, private_group) }
 
       context 'when user is not invited to any of the group projects' do
-        it do
-          is_expected.not_to be_allowed(:read_group_contribution_analytics)
-        end
+        it { is_expected.not_to be_allowed(:read_group_contribution_analytics) }
       end
 
       context 'when user is invited to a group project, but not to the group' do
@@ -71,9 +157,7 @@ describe GroupPolicy do
           private_project.add_guest(non_group_member)
         end
 
-        it do
-          is_expected.not_to be_allowed(:read_group_contribution_analytics)
-        end
+        it { is_expected.not_to be_allowed(:read_group_contribution_analytics) }
       end
     end
   end
@@ -92,8 +176,7 @@ describe GroupPolicy do
     let(:current_user) { developer }
 
     before do
-      allow(Feature).to receive(:enabled?).with(:group_activity_analytics, group).and_return(false)
-
+      stub_feature_flags(group_activity_analytics: true)
       stub_licensed_features(group_activity_analytics: true)
     end
 
@@ -104,9 +187,7 @@ describe GroupPolicy do
     let(:current_user) { developer }
 
     before do
-      allow(Feature).to receive(:enabled?).with(:group_activity_analytics, group).and_return(false)
-      allow(Feature).to receive(:enabled?).with(:group_activity_analytics).and_return(true)
-
+      stub_feature_flags(group_activity_analytics: false)
       stub_licensed_features(group_activity_analytics: false)
     end
 
@@ -379,8 +460,15 @@ describe GroupPolicy do
       context 'admin' do
         let(:current_user) { admin }
 
-        it { is_expected.to be_allowed(:override_group_member) }
-        it { is_expected.to be_allowed(:update_group_member) }
+        context 'when admin mode enabled', :enable_admin_mode do
+          it { is_expected.to be_allowed(:override_group_member) }
+          it { is_expected.to be_allowed(:update_group_member) }
+        end
+
+        context 'when admin mode disabled' do
+          it { is_expected.to be_disallowed(:override_group_member) }
+          it { is_expected.to be_disallowed(:update_group_member) }
+        end
       end
 
       context 'owner' do
@@ -542,7 +630,9 @@ describe GroupPolicy do
     end
   end
 
-  describe 'read_group_security_dashboard' do
+  describe 'read_group_security_dashboard & create_vulnerability_export' do
+    let(:abilities) { %i(read_group_security_dashboard create_vulnerability_export) }
+
     before do
       stub_licensed_features(security_dashboard: true)
     end
@@ -550,57 +640,57 @@ describe GroupPolicy do
     context 'with admin' do
       let(:current_user) { admin }
 
-      it { is_expected.to be_allowed(:read_group_security_dashboard) }
+      it { is_expected.to be_allowed(*abilities) }
     end
 
     context 'with owner' do
       let(:current_user) { owner }
 
-      it { is_expected.to be_allowed(:read_group_security_dashboard) }
+      it { is_expected.to be_allowed(*abilities) }
     end
 
     context 'with maintainer' do
       let(:current_user) { maintainer }
 
-      it { is_expected.to be_allowed(:read_group_security_dashboard) }
+      it { is_expected.to be_allowed(*abilities) }
     end
 
     context 'with developer' do
       let(:current_user) { developer }
 
-      it { is_expected.to be_allowed(:read_group_security_dashboard) }
+      it { is_expected.to be_allowed(*abilities) }
 
       context 'when security dashboard features is not available' do
         before do
           stub_licensed_features(security_dashboard: false)
         end
 
-        it { is_expected.to be_disallowed(:read_group_security_dashboard) }
+        it { is_expected.to be_disallowed(*abilities) }
       end
     end
 
     context 'with reporter' do
       let(:current_user) { reporter }
 
-      it { is_expected.to be_disallowed(:read_group_security_dashboard) }
+      it { is_expected.to be_disallowed(*abilities) }
     end
 
     context 'with guest' do
       let(:current_user) { guest }
 
-      it { is_expected.to be_disallowed(:read_group_security_dashboard) }
+      it { is_expected.to be_disallowed(*abilities) }
     end
 
     context 'with non member' do
       let(:current_user) { create(:user) }
 
-      it { is_expected.to be_disallowed(:read_group_security_dashboard) }
+      it { is_expected.to be_disallowed(*abilities) }
     end
 
     context 'with anonymous' do
       let(:current_user) { nil }
 
-      it { is_expected.to be_disallowed(:read_group_security_dashboard) }
+      it { is_expected.to be_disallowed(*abilities) }
     end
   end
 
@@ -613,7 +703,7 @@ describe GroupPolicy do
       nested_group.add_guest(developer)
       nested_group.add_guest(maintainer)
 
-      group.owners.destroy_all # rubocop: disable DestroyAll
+      group.owners.destroy_all # rubocop: disable Cop/DestroyAll
 
       group.add_guest(owner)
       nested_group.add_owner(owner)
@@ -628,7 +718,7 @@ describe GroupPolicy do
         stub_licensed_features(security_dashboard: true)
       end
 
-      it do
+      specify do
         expect_allowed(:read_group)
         expect_allowed(:read_group_security_dashboard)
         expect_disallowed(:upload_file)
@@ -636,6 +726,115 @@ describe GroupPolicy do
         expect_disallowed(*developer_permissions)
         expect_disallowed(*maintainer_permissions)
         expect_disallowed(*owner_permissions)
+      end
+    end
+  end
+
+  context 'commit_committer_check is not enabled by the current license' do
+    before do
+      stub_licensed_features(commit_committer_check: false)
+    end
+
+    let(:current_user) { maintainer }
+
+    it { is_expected.not_to be_allowed(:change_commit_committer_check) }
+    it { is_expected.not_to be_allowed(:read_commit_committer_check) }
+  end
+
+  context 'commit_committer_check is enabled by the current license' do
+    before do
+      stub_licensed_features(commit_committer_check: true)
+    end
+
+    context 'the user is a maintainer' do
+      let(:current_user) { maintainer }
+
+      it { is_expected.to be_allowed(:change_commit_committer_check) }
+      it { is_expected.to be_allowed(:read_commit_committer_check) }
+    end
+
+    context 'the user is a developer' do
+      let(:current_user) { developer }
+
+      it { is_expected.not_to be_allowed(:change_commit_committer_check) }
+      it { is_expected.to be_allowed(:read_commit_committer_check) }
+    end
+
+    context 'it is enabled on global level' do
+      before do
+        create(:push_rule_sample, commit_committer_check: true)
+      end
+
+      context 'the user is a maintainer' do
+        let(:current_user) { maintainer }
+
+        it { is_expected.not_to be_allowed(:change_commit_committer_check) }
+        it { is_expected.to be_allowed(:read_commit_committer_check) }
+      end
+
+      context 'the user is a developer' do
+        let(:current_user) { developer }
+
+        it { is_expected.not_to be_allowed(:change_commit_committer_check) }
+        it { is_expected.to be_allowed(:read_commit_committer_check) }
+      end
+    end
+  end
+
+  context 'reject_unsigned_commits is not enabled by the current license' do
+    before do
+      stub_licensed_features(reject_unsigned_commits: false)
+    end
+
+    let(:current_user) { maintainer }
+
+    it { is_expected.not_to be_allowed(:change_reject_unsigned_commits) }
+    it { is_expected.not_to be_allowed(:read_reject_unsigned_commits) }
+  end
+
+  context 'reject_unsigned_commits is enabled by the current license' do
+    before do
+      stub_licensed_features(reject_unsigned_commits: true)
+    end
+
+    context 'the user is a maintainer' do
+      let(:current_user) { maintainer }
+
+      it { is_expected.to be_allowed(:change_reject_unsigned_commits) }
+      it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
+    end
+
+    context 'the user is a developer' do
+      let(:current_user) { developer }
+
+      it { is_expected.not_to be_allowed(:change_reject_unsigned_commits) }
+      it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
+    end
+
+    context 'it is enabled on global level' do
+      before do
+        create(:push_rule_sample, reject_unsigned_commits: true)
+      end
+
+      context 'the user is a maintainer' do
+        let(:current_user) { maintainer }
+
+        it { is_expected.not_to be_allowed(:change_reject_unsigned_commits) }
+        it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
+      end
+
+      context 'the user is a developer' do
+        let(:current_user) { developer }
+
+        it { is_expected.not_to be_allowed(:change_reject_unsigned_commits) }
+        it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
+      end
+
+      context 'the user is an admin', :enable_admin_mode do
+        let(:current_user) { admin }
+
+        it { is_expected.to be_allowed(:change_reject_unsigned_commits) }
+        it { is_expected.to be_allowed(:read_reject_unsigned_commits) }
       end
     end
   end
@@ -736,6 +935,154 @@ describe GroupPolicy do
         end
 
         it { is_expected.to be_disallowed(:read_cluster_health) }
+      end
+    end
+  end
+
+  describe 'update_default_branch_protection' do
+    context 'for an admin' do
+      let(:current_user) { admin }
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: true)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          context 'when admin mode is enabled', :enable_admin_mode do
+            it { is_expected.to be_allowed(:update_default_branch_protection) }
+          end
+
+          context 'when admin mode is disabled' do
+            it { is_expected.to be_disallowed(:update_default_branch_protection) }
+          end
+        end
+      end
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is not available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: false)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+      end
+    end
+
+    context 'for an owner' do
+      let(:current_user) { owner }
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: true)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_disallowed(:update_default_branch_protection) }
+        end
+      end
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is not available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: false)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_allowed(:update_default_branch_protection) }
+        end
+      end
+    end
+  end
+
+  describe ':read_ci_minutes_quota' do
+    using RSpec::Parameterized::TableSyntax
+
+    let(:policy) { :read_ci_minutes_quota }
+
+    where(:role, :allowed) do
+      :guest      | false
+      :reporter   | false
+      :developer  | true
+      :maintainer | true
+      :owner      | true
+      :admin      | true
+    end
+
+    with_them do
+      let(:current_user) { public_send(role) }
+
+      it { is_expected.to(allowed ? be_allowed(policy) : be_disallowed(policy)) }
+    end
+  end
+
+  it_behaves_like 'model with wiki policies' do
+    let_it_be(:container) { create(:group) }
+    let_it_be(:user) { owner }
+
+    def set_access_level(access_level)
+      allow(container).to receive(:wiki_access_level).and_return(access_level)
+    end
+
+    before do
+      stub_feature_flags(group_wiki: true)
+    end
+
+    context 'when the feature flag is disabled' do
+      before do
+        stub_feature_flags(group_wiki: false)
+      end
+
+      it 'does not include the wiki permissions' do
+        expect_disallowed(*wiki_permissions[:all])
       end
     end
   end

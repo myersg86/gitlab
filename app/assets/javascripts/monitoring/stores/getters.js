@@ -1,7 +1,23 @@
 import { NOT_IN_DB_PREFIX } from '../constants';
+import { addPrefixToCustomVariableParams, addDashboardMetaDataToLink } from './utils';
 
 const metricsIdsInPanel = panel =>
   panel.metrics.filter(metric => metric.metricId && metric.result).map(metric => metric.metricId);
+
+/**
+ * Returns a reference to the currently selected dashboard
+ * from the list of dashboards.
+ *
+ * @param {Object} state
+ */
+export const selectedDashboard = state => {
+  const { allDashboards } = state;
+  return (
+    allDashboards.find(d => d.path === state.currentDashboard) ||
+    allDashboards.find(d => d.default) ||
+    null
+  );
+};
 
 /**
  * Get all state for metric in the dashboard or a group. The
@@ -95,6 +111,48 @@ export const filteredEnvironments = state =>
   state.environments.filter(env =>
     env.name.toLowerCase().includes((state.environmentsSearchTerm || '').trim().toLowerCase()),
   );
+
+/**
+ * User-defined links from the yml file can have other
+ * dashboard-related metadata baked into it. This method
+ * returns modified links which will get rendered in the
+ * metrics dashboard
+ *
+ * @param {Object} state
+ * @returns {Array} modified array of links
+ */
+export const linksWithMetadata = state => {
+  const metadata = {
+    timeRange: state.timeRange,
+  };
+  return state.links?.map(addDashboardMetaDataToLink(metadata));
+};
+
+/**
+ * Maps an variables object to an array along with stripping
+ * the variable prefix.
+ *
+ * This method outputs an object in the below format
+ *
+ * {
+ *   variables[key1]=value1,
+ *   variables[key2]=value2,
+ * }
+ *
+ * This is done so that the backend can identify the custom
+ * user-defined variables coming through the URL and differentiate
+ * from other variables used for Prometheus API endpoint.
+ *
+ * @param {Object} variables - Custom variables provided by the user
+ * @returns {Array} The custom variables array to be send to the API
+ * in the format of {variables[key1]=value1, variables[key2]=value2}
+ */
+
+export const getCustomVariablesParams = state =>
+  Object.keys(state.variables).reduce((acc, variable) => {
+    acc[addPrefixToCustomVariableParams(variable)] = state.variables[variable]?.value;
+    return acc;
+  }, {});
 
 // prevent babel-plugin-rewire from generating an invalid default during karma tests
 export default () => {};

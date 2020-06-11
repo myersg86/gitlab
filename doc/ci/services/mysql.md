@@ -1,4 +1,7 @@
 ---
+stage: Verify
+group: Runner
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
@@ -27,7 +30,7 @@ variables:
 
 NOTE: **Note:**
 The `MYSQL_DATABASE` and `MYSQL_ROOT_PASSWORD` variables can't be set in the GitLab UI.
-To set them, assign them to a variable [in the UI](../variables/README.md#via-the-ui),
+To set them, assign them to a variable [in the UI](../variables/README.md#create-a-custom-variable-in-the-ui),
 and then assign that variable to the
 `MYSQL_DATABASE` and `MYSQL_ROOT_PASSWORD` variables in your `.gitlab-ci.yml`.
 
@@ -43,7 +46,7 @@ Database: <your_mysql_database>
 If you are wondering why we used `mysql` for the `Host`, read more at
 [How services are linked to the job](../docker/using_docker_images.md#how-services-are-linked-to-the-job).
 
-You can also use any other docker image available on [Docker Hub](https://hub.docker.com/_/mysql/).
+You can also use any other Docker image available on [Docker Hub](https://hub.docker.com/_/mysql/).
 For example, to use MySQL 5.5 the service becomes `mysql:5.5`.
 
 The `mysql` image can accept some environment variables. For more details

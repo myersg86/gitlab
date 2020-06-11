@@ -17,6 +17,8 @@ module Audit
         "Signed in with #{@details[:with].upcase} authentication"
       elsif event_created_by_system?
         "#{action_text} via system job. Reason: #{@details[:reason]}"
+      elsif impersonated_event?
+        "#{action_text} (by #{@details[:impersonated_by]})"
       else
         action_text
       end
@@ -28,10 +30,14 @@ module Audit
       @details[:system_event]
     end
 
-    def action_text
-      action = @details.slice(*ACTIONS)
+    def impersonated_event?
+      @details[:impersonated_by].present?
+    end
 
-      case action.each_key.first
+    def action_text
+      action_name, action_info = @details.slice(*ACTIONS).first
+
+      case action_name
       when :add
         "Added #{target_name}#{@details[:as] ? " as #{@details[:as]}" : ''}"
       when :remove
@@ -45,7 +51,7 @@ module Audit
 
         "Updated ref #{target_ref} from #{from_sha} to #{to_sha}"
       when :custom_message
-        detail_value
+        action_info
       else
         text_for_change(target_name)
       end

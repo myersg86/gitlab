@@ -63,18 +63,17 @@ export default {
 <template>
   <div class="ci-table js-security-dashboard-table" data-qa-selector="security_report_content">
     <selection-summary v-if="isSelectingVulnerabilities" />
-    <div
-      class="gl-responsive-table-row table-row-header vulnerabilities-row-header px-2"
-      role="row"
-    >
-      <div class="table-section">
+    <div class="gl-responsive-table-row table-row-header gl-bg-gray-50 text-2 px-2" role="row">
+      <div class="table-section section-5">
         <gl-form-checkbox
           :checked="hasSelectedAllVulnerabilities"
           class="my-0 ml-1 mr-3"
           @change="handleSelectAll"
         />
       </div>
-      <div class="table-section section-10" role="rowheader">{{ s__('Reports|Severity') }}</div>
+      <div class="table-section section-15" role="rowheader">
+        {{ s__('Reports|Severity') }}
+      </div>
       <div class="table-section flex-grow-1" role="rowheader">
         {{ s__('Reports|Vulnerability') }}
       </div>
@@ -86,7 +85,7 @@ export default {
         <div class="flash-text container-fluid container-limited limit-container-width">
           {{
             s__(
-              'Security Dashboard|Error fetching the vulnerability list. Please check your network connection and try again.',
+              'SecurityReports|Error fetching the vulnerability list. Please check your network connection and try again.',
             )
           }}
         </div>
@@ -125,15 +124,3 @@ export default {
     </template>
   </div>
 </template>
-
-<style>
-.vulnerabilities-row-header {
-  background-color: #fafafa;
-  font-size: 14px;
-}
-
-.vulnerabilities-row .section-10,
-.vulnerabilities-row-header .section-10 {
-  min-width: 120px;
-}
-</style>

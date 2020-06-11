@@ -33,7 +33,7 @@ describe('Api', () => {
   beforeEach(() => {
     mock = new MockAdapter(axios);
     originalGon = window.gon;
-    window.gon = Object.assign({}, dummyGon);
+    window.gon = { ...dummyGon };
   });
 
   afterEach(() => {
@@ -367,6 +367,32 @@ describe('Api', () => {
         mock.onGet(expectedUrl).reply(200, response);
 
         Api.cycleAnalyticsSummaryData(groupId, params)
+          .then(responseObj =>
+            expectRequestWithCorrectParameters(responseObj, {
+              response,
+              params,
+              expectedUrl,
+            }),
+          )
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('cycleAnalyticsTimeSummaryData', () => {
+      it('fetches value stream analytics summary data', done => {
+        const response = [
+          { value: '10.0', title: 'Lead time', unit: 'per day' },
+          { value: '2.0', title: 'Cycle Time', unit: 'per day' },
+        ];
+        const params = {
+          ...defaultParams,
+        };
+
+        const expectedUrl = `${dummyCycleAnalyticsUrlRoot}/-/analytics/value_stream_analytics/time_summary`;
+        mock.onGet(expectedUrl).reply(200, response);
+
+        Api.cycleAnalyticsTimeSummaryData(groupId, params)
           .then(responseObj =>
             expectRequestWithCorrectParameters(responseObj, {
               response,
@@ -736,6 +762,81 @@ describe('Api', () => {
         return Api.updateGeoNode(mockNode).then(({ data }) => {
           expect(data).toEqual(mockNode);
           expect(axios.put).toHaveBeenCalledWith(`${expectedUrl}/${mockNode.id}`, mockNode);
+        });
+      });
+    });
+  });
+
+  describe('Feature Flag User List', () => {
+    let expectedUrl;
+    let projectId;
+    let mockUserList;
+
+    beforeEach(() => {
+      projectId = 1000;
+      expectedUrl = `${dummyUrlRoot}/api/${dummyApiVersion}/projects/${projectId}/feature_flags_user_lists`;
+      mockUserList = {
+        name: 'mock_user_list',
+        user_xids: '1,2,3,4',
+        project_id: 1,
+        id: 1,
+        iid: 1,
+      };
+    });
+
+    describe('fetchFeatureFlagUserLists', () => {
+      it('GETs the right url', () => {
+        mock.onGet(expectedUrl).replyOnce(200, []);
+
+        return Api.fetchFeatureFlagUserLists(projectId).then(({ data }) => {
+          expect(data).toEqual([]);
+        });
+      });
+    });
+
+    describe('createFeatureFlagUserList', () => {
+      it('POSTs data to the right url', () => {
+        const mockUserListData = {
+          name: 'mock_user_list',
+          user_xids: '1,2,3,4',
+        };
+        mock.onPost(expectedUrl, mockUserListData).replyOnce(200, mockUserList);
+
+        return Api.createFeatureFlagUserList(projectId, mockUserListData).then(({ data }) => {
+          expect(data).toEqual(mockUserList);
+        });
+      });
+    });
+
+    describe('fetchFeatureFlagUserList', () => {
+      it('GETs the right url', () => {
+        mock.onGet(`${expectedUrl}/1`).replyOnce(200, mockUserList);
+
+        return Api.fetchFeatureFlagUserList(projectId, 1).then(({ data }) => {
+          expect(data).toEqual(mockUserList);
+        });
+      });
+    });
+
+    describe('updateFeatureFlagUserList', () => {
+      it('PUTs the right url', () => {
+        mock.onPut(`${expectedUrl}/1`).replyOnce(200, { ...mockUserList, user_xids: '5' });
+
+        return Api.updateFeatureFlagUserList(projectId, {
+          ...mockUserList,
+          user_xids: '5',
+        }).then(({ data }) => {
+          expect(data).toEqual({ ...mockUserList, user_xids: '5' });
+        });
+      });
+    });
+
+    describe('deleteFeatureFlagUserList', () => {
+      it('DELETEs the right url', () => {
+        mock.onDelete(`${expectedUrl}/1`).replyOnce(200, 'deleted');
+
+        return Api.deleteFeatureFlagUserList(projectId, 1).then(({ data }) => {
+          expect(data).toBe('deleted');
         });
       });
     });

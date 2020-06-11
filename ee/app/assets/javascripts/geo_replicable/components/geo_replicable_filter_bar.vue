@@ -1,23 +1,21 @@
 <script>
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapState, mapGetters } from 'vuex';
 import { debounce } from 'lodash';
-import { GlTabs, GlTab, GlFormInput, GlDropdown, GlDropdownItem } from '@gitlab/ui';
+import { GlSearchBoxByType, GlDropdown, GlDropdownItem, GlButton } from '@gitlab/ui';
 import { __, sprintf } from '~/locale';
-import Icon from '~/vue_shared/components/icon.vue';
-import { DEFAULT_SEARCH_DELAY, ACTION_TYPES } from '../store/constants';
+import { DEFAULT_SEARCH_DELAY, ACTION_TYPES, FILTER_STATES } from '../constants';
 
 export default {
   name: 'GeoReplicableFilterBar',
   components: {
-    GlTabs,
-    GlTab,
-    GlFormInput,
+    GlSearchBoxByType,
     GlDropdown,
     GlDropdownItem,
-    Icon,
+    GlButton,
   },
   computed: {
-    ...mapState(['currentFilterIndex', 'filterOptions', 'searchFilter', 'replicableType']),
+    ...mapState(['currentFilterIndex', 'filterOptions', 'searchFilter']),
+    ...mapGetters(['replicableTypeName']),
     search: {
       get() {
         return this.searchFilter;
@@ -28,7 +26,9 @@ export default {
       }, DEFAULT_SEARCH_DELAY),
     },
     resyncText() {
-      return sprintf(__('Resync all %{replicableType}'), { replicableType: this.replicableType });
+      return sprintf(__('Resync all %{replicableType}'), {
+        replicableType: this.replicableTypeName,
+      });
     },
   },
   methods: {
@@ -39,33 +39,41 @@ export default {
     },
   },
   actionTypes: ACTION_TYPES,
+  filterStates: FILTER_STATES,
 };
 </script>
 
 <template>
-  <gl-tabs :value="currentFilterIndex" @input="filterChange">
-    <gl-tab
-      v-for="(filter, index) in filterOptions"
-      :key="index"
-      :title="filter"
-      title-item-class="text-capitalize"
-    />
-    <template #tabs-end>
-      <div class="d-flex align-items-center ml-auto">
-        <gl-form-input v-model="search" type="text" :placeholder="__(`Filter by name...`)" />
-        <gl-dropdown class="ml-2">
-          <template #button-content>
-            <span>
-              <icon name="cloud-gear" />
-              {{ __('Batch operations') }}
-              <icon name="chevron-down" />
-            </span>
-          </template>
-          <gl-dropdown-item @click="initiateAllReplicableSyncs($options.actionTypes.RESYNC)">
-            {{ resyncText }}
-          </gl-dropdown-item>
-        </gl-dropdown>
+  <nav class="bg-secondary border-bottom border-secondary-100 p-3">
+    <div class="row d-flex flex-column flex-sm-row">
+      <div class="col">
+        <div class="d-sm-flex mx-n1">
+          <gl-dropdown :text="__('Filter by status')" class="px-1 my-1 my-sm-0 w-100">
+            <gl-dropdown-item
+              v-for="(filter, index) in filterOptions"
+              :key="index"
+              :class="{ 'bg-secondary-100': index === currentFilterIndex }"
+              @click="filterChange(index)"
+            >
+              <span v-if="filter === $options.filterStates.ALL"
+                >{{ filter.label }} {{ replicableTypeName }}</span
+              >
+              <span v-else>{{ filter.label }}</span>
+            </gl-dropdown-item>
+          </gl-dropdown>
+          <gl-search-box-by-type
+            v-model="search"
+            class="px-1 my-1 my-sm-0 bg-white w-100"
+            type="text"
+            :placeholder="__('Filter by name')"
+          />
+        </div>
       </div>
-    </template>
-  </gl-tabs>
+      <div class="col col-sm-5 d-flex justify-content-end my-1 my-sm-0 w-100">
+        <gl-button @click="initiateAllReplicableSyncs($options.actionTypes.RESYNC)">{{
+          __('Resync all')
+        }}</gl-button>
+      </div>
+    </div>
+  </nav>
 </template>

@@ -4,10 +4,18 @@ module Types
   class QueryType < ::Types::BaseObject
     graphql_name 'Query'
 
+    # The design management context object needs to implement #issue
+    DesignManagementObject = Struct.new(:issue)
+
     field :project, Types::ProjectType,
           null: true,
           resolver: Resolvers::ProjectResolver,
           description: "Find a project"
+
+    field :projects, Types::ProjectType.connection_type,
+          null: true,
+          resolver: Resolvers::ProjectsResolver,
+          description: "Find projects visible to the current user"
 
     field :group, Types::GroupType,
           null: true,
@@ -35,9 +43,31 @@ module Types
           resolver: Resolvers::SnippetsResolver,
           description: 'Find Snippets visible to the current user'
 
+    field :design_management, Types::DesignManagementType,
+          null: false,
+          description: 'Fields related to design management'
+
+    field :user, Types::UserType,
+          null: true,
+          description: 'Find a user',
+          resolver: Resolvers::UserResolver
+
+    field :users, Types::UserType.connection_type,
+          null: true,
+          description: 'Find users',
+          resolver: Resolvers::UsersResolver
+
     field :echo, GraphQL::STRING_TYPE, null: false,
           description: 'Text to echo back',
           resolver: Resolvers::EchoResolver
+
+    field :user, Types::UserType, null: true,
+          description: 'Find a user on this instance',
+          resolver: Resolvers::UserResolver
+
+    def design_management
+      DesignManagementObject.new(nil)
+    end
   end
 end
 

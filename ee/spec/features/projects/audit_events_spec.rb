@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Projects > Audit Events', :js do
+RSpec.describe 'Projects > Audit Events', :js do
   let(:user) { create(:user) }
   let(:pete) { create(:user, name: 'Pete') }
   let(:project) { create(:project, :repository, namespace: user.namespace) }
@@ -108,7 +108,7 @@ describe 'Projects > Audit Events', :js do
     end
 
     it "appears in the project's audit events" do
-      visit project_settings_members_path(project)
+      visit project_project_members_path(project)
 
       project_member = project.project_member(pete)
 

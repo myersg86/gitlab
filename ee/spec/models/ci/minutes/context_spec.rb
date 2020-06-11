@@ -2,49 +2,17 @@
 
 require 'spec_helper'
 
-describe Ci::Minutes::Context do
+RSpec.describe Ci::Minutes::Context do
   let_it_be(:group) { create(:group) }
-  let(:project) { build(:project, namespace: group) }
+  let_it_be(:project) { create(:project, namespace: group) }
 
-  shared_examples 'full path' do
-    describe '#full_path' do
-      it 'shows full path' do
-        expect(subject.full_path).to eq context.full_path
-      end
-    end
+  describe 'delegation' do
+    subject { described_class.new(project, group) }
 
-    describe '#level' do
-      it 'assigns correct level of namespace or project' do
-        expect(subject.level).to eq context
-      end
-    end
-  end
-
-  shared_examples 'captures root namespace' do
-    describe '#namespace' do
-      it 'assigns the namespace' do
-        expect(subject.namespace).to eq group
-      end
-    end
-  end
-
-  context 'when at project level' do
-    subject { described_class.new(project, nil) }
-
-    it_behaves_like 'captures root namespace'
-
-    it_behaves_like 'full path' do
-      let(:context) { project }
-    end
-  end
-
-  context 'when at namespace level' do
-    subject { described_class.new(nil, group) }
-
-    it_behaves_like 'captures root namespace'
-
-    it_behaves_like 'full path' do
-      let(:context) { group }
-    end
+    it { is_expected.to delegate_method(:shared_runners_remaining_minutes_below_threshold?).to(:level) }
+    it { is_expected.to delegate_method(:shared_runners_minutes_used?).to(:level) }
+    it { is_expected.to delegate_method(:shared_runners_minutes_limit_enabled?).to(:level) }
+    it { is_expected.to delegate_method(:name).to(:namespace).with_prefix }
+    it { is_expected.to delegate_method(:last_ci_minutes_usage_notification_level).to(:namespace) }
   end
 end

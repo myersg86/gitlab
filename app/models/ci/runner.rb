@@ -23,10 +23,17 @@ module Ci
       project_type: 3
     }
 
-    ONLINE_CONTACT_TIMEOUT = 1.hour
+    # This `ONLINE_CONTACT_TIMEOUT` needs to be larger than
+    #   `RUNNER_QUEUE_EXPIRY_TIME+UPDATE_CONTACT_COLUMN_EVERY`
+    #
+    ONLINE_CONTACT_TIMEOUT = 2.hours
+
+    # The `RUNNER_QUEUE_EXPIRY_TIME` indicates the longest interval that
+    #   Runner request needs to be refreshed by Rails instead of being handled
+    #   by Workhorse
     RUNNER_QUEUE_EXPIRY_TIME = 1.hour
 
-    # This needs to be less than `ONLINE_CONTACT_TIMEOUT`
+    # The `UPDATE_CONTACT_COLUMN_EVERY` defines how often the Runner DB entry can be updated
     UPDATE_CONTACT_COLUMN_EVERY = (40.minutes..55.minutes).freeze
 
     AVAILABLE_TYPES_LEGACY = %w[specific shared].freeze
@@ -79,6 +86,17 @@ module Ci
       end
 
       joins(:runner_namespaces).where(ci_runner_namespaces: { namespace_id: groups })
+    }
+
+    scope :belonging_to_group_or_project, -> (group_id, project_id) {
+      groups = ::Group.where(id: group_id)
+
+      group_runners = joins(:runner_namespaces).where(ci_runner_namespaces: { namespace_id: groups })
+      project_runners = joins(:runner_projects).where(ci_runner_projects: { project_id: project_id })
+
+      union_sql = ::Gitlab::SQL::Union.new([group_runners, project_runners]).to_sql
+
+      from("(#{union_sql}) #{table_name}")
     }
 
     scope :belonging_to_parent_group_of_project, -> (project_id) {
@@ -271,9 +289,9 @@ module Ci
       ensure_runner_queue_value == value if value.present?
     end
 
-    def update_cached_info(values)
+    def heartbeat(values)
       values = values&.slice(:version, :revision, :platform, :architecture, :ip_address) || {}
-      values[:contacted_at] = Time.now
+      values[:contacted_at] = Time.current
 
       cache_attributes(values)
 
@@ -309,7 +327,7 @@ module Ci
 
       real_contacted_at = read_attribute(:contacted_at)
       real_contacted_at.nil? ||
-        (Time.now - real_contacted_at) >= contacted_at_max_age
+        (Time.current - real_contacted_at) >= contacted_at_max_age
     end
 
     def tag_constraints

@@ -1,3 +1,10 @@
+---
+stage: Enablement
+group: Geo
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+type: howto
+---
+
 # Disaster Recovery (Geo) **(PREMIUM ONLY)**
 
 Geo replicates your database, your Git repositories, and few other assets.
@@ -51,7 +58,7 @@ must disable the **primary** node.
 
    NOTE: **Note:**
    (**CentOS only**) In CentOS 6 or older, there is no easy way to prevent GitLab from being
-   started if the machine reboots isn't available (see [Omnibus GitLab issue #3058](https://gitlab.com/gitlab-org/omnibus-gitlab/issues/3058)).
+   started if the machine reboots isn't available (see [Omnibus GitLab issue #3058](https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/3058)).
    It may be safest to uninstall the GitLab package completely:
 
    ```shell
@@ -60,7 +67,7 @@ must disable the **primary** node.
 
    NOTE: **Note:**
    (**Ubuntu 14.04 LTS**) If you are using an older version of Ubuntu
-   or any other distro based on the Upstart init system, you can prevent GitLab
+   or any other distribution based on the Upstart init system, you can prevent GitLab
    from starting if the machine reboots by doing the following:
 
    ```shell
@@ -121,14 +128,20 @@ Note the following when promoting a secondary:
    gitlab-ctl promote-to-primary-node
    ```
 
+   If you have already run the [preflight checks](planned_failover.md#preflight-checks), you can skip them with:
+
+   ```shell
+   gitlab-ctl promote-to-primary-node --skip-preflight-check
+   ```
+
 1. Verify you can connect to the newly promoted **primary** node using the URL used
    previously for the **secondary** node.
 1. If successful, the **secondary** node has now been promoted to the **primary** node.
 
-#### Promoting a **secondary** node with HA
+#### Promoting a **secondary** node with multiple servers
 
 The `gitlab-ctl promote-to-primary-node` command cannot be used yet in
-conjunction with High Availability or with multiple machines, as it can only
+conjunction with multiple servers, as it can only
 perform changes on a **secondary** with only a single machine. Instead, you must
 do this manually.
 
@@ -166,6 +179,66 @@ do this manually.
 1. Verify you can connect to the newly promoted **primary** using the URL used
    previously for the **secondary**.
 1. Success! The **secondary** has now been promoted to **primary**.
+
+#### Promoting a **secondary** node with an external PostgreSQL database
+
+The `gitlab-ctl promote-to-primary-node` command cannot be used in conjunction with
+an external PostgreSQL database, as it can only perform changes on a **secondary**
+node with GitLab and the database on the same machine. As a result, a manual process is
+required:
+
+1. Promote the replica database associated with the **secondary** site. This will
+   set the database to read-write:
+   - Amazon RDS - [Promoting a Read Replica to Be a Standalone DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html#USER_ReadRepl.Promote)
+   - Azure Database for PostgreSQL - [Stop replication](https://docs.microsoft.com/en-us/azure/postgresql/howto-read-replicas-portal#stop-replication)
+   - Other external PostgreSQL databases - save the script below in you secondary node, for example
+     `/tmp/geo_promote.sh`, and modify the connection parameters to match your
+     environment. Then, execute it to promote the replica:
+
+     ```shell
+     #!/bin/bash
+
+     PG_SUPERUSER=postgres
+
+     # The path to your pg_ctl binary. You may need to adjust this path to match
+     # your PostgreSQL installation
+     PG_CTL_BINARY=/usr/lib/postgresql/10/bin/pg_ctl
+
+     # The path to your PostgreSQL data directory. You may need to adjust this
+     # path to match your PostgreSQL installation. You can also run
+     # `SHOW data_directory;` from PostgreSQL to find your data directory
+     PG_DATA_DIRECTORY=/etc/postgresql/10/main
+
+     # Promote the PostgreSQL database and allow read/write operations
+     sudo -u $PG_SUPERUSER $PG_CTL_BINARY -D $PG_DATA_DIRECTORY promote
+     ```
+
+1. Edit `/etc/gitlab/gitlab.rb` on every node in the **secondary** site to
+   reflect its new status as **primary** by removing any lines that enabled the
+   `geo_secondary_role`:
+
+   ```ruby
+   ## In GitLab 11.4 and earlier, remove this line.
+   geo_secondary_role['enable'] = true
+
+   ## In GitLab 11.5 and later, remove this line.
+   roles ['geo_secondary_role']
+   ```
+
+   After making these changes [Reconfigure GitLab](../../restart_gitlab.md#omnibus-gitlab-reconfigure)
+   on each node so the changes take effect.
+
+1. Promote the **secondary** to **primary**. SSH into a single secondary application
+   node and execute:
+
+   ```shell
+   sudo gitlab-rake geo:set_secondary_as_primary
+   ```
+
+1. Verify you can connect to the newly promoted **primary** site using the URL used
+   previously for the **secondary** site.
+
+Success! The **secondary** site has now been promoted to **primary**.
 
 ### Step 4. (Optional) Updating the primary domain DNS record
 

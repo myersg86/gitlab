@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::ServiceDeskController do
+RSpec.describe Projects::ServiceDeskController do
   let_it_be(:project) do
     create(:project, :private, :custom_repo, service_desk_enabled: true,
            files: { '.gitlab/issue_templates/service_desk.md' => 'template' })
@@ -48,7 +48,7 @@ describe Projects::ServiceDeskController do
 
         get :show, params: { namespace_id: project.namespace.to_param, project_id: project }, format: :json
 
-        response_hash = JSON.parse(response.body)
+        response_hash = Gitlab::Json.parse(response.body)
         expect(response_hash['template_file_missing']).to eq(false)
       end
     end

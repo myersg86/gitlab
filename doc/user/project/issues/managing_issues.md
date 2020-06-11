@@ -1,21 +1,28 @@
-# Managing Issues
+---
+stage: Plan
+group: Project Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
+# Managing issues
 
 [GitLab Issues](index.md) are the fundamental medium for collaborating on ideas and
 planning work in GitLab. [Creating](#create-a-new-issue), [moving](#moving-issues),
 [closing](#closing-issues), and [deleting](#deleting-issues) are key actions that
 you can do with issues.
 
-## Create a new Issue
+## Create a new issue
 
-When you create a new issue, you'll be prompted to fill in the [data and fields of the issue](issue_data_and_actions.md), as illustrated below. If you know
-the values you want to assign to an issue, you can use the [Quick actions](../quick_actions.md)
-feature to input values, instead of selecting them from lists.
+When you create a new issue, you'll be prompted to fill in the [data and fields of the issue](issue_data_and_actions.md),
+as illustrated below. If you know the values you want to assign to an issue, you can use the
+[Quick actions](../quick_actions.md) feature to input values, instead of selecting them from lists.
 
-![New issue from the issues list](img/new_issue.png)
+While creating an issue, you can associate it to an existing epic from current group by
+selecting it using **Epic** dropdown.
 
-### Accessing the new Issue form
+### Accessing the New Issue form
 
-There are many ways to get to the new Issue form from within a project:
+There are many ways to get to the New Issue form from within a project:
 
 - Navigate to your **Project's Dashboard** > **Issues** > **New Issue**:
 
@@ -36,9 +43,28 @@ There are many ways to get to the new Issue form from within a project:
 
   ![From the issue board](img/new_issue_from_issue_board.png)
 
+### Elements of the New Issue form
+
+> Ability to add the new issue to an epic [was introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/13847)
+> in [GitLab Premium](https://about.gitlab.com/pricing/) 13.1.
+
+![New issue from the issues list](img/new_issue_v13_1.png)
+
+When you're creating a new issue, these are the fields you can fill in:
+
+- Title
+- Description
+- Checkbox to make the issue confidential
+- Assignee
+- Weight
+- Epic **(PREMIUM)**
+- Due date
+- Milestone
+- Labels
+
 ### New issue from the group-level Issue Tracker
 
-Go to the Group dashboard and click "Issues" in the sidebar to visit the Issue Tracker
+Go to the Group dashboard and click **Issues** in the sidebar to visit the Issue Tracker
 for all projects in your Group. Select the project you'd like to add an issue for
 using the dropdown button at the top-right of the page.
 
@@ -50,7 +76,7 @@ create issues for the same project.
 
 ![Create issue from group-level issue tracker](img/create_issue_from_group_level_issue_tracker.png)
 
-### New issue via Service Desk **(PREMIUM)**
+### New issue via Service Desk **(STARTER)**
 
 Enable [Service Desk](../service_desk.md) for your project and offer email support.
 By doing so, when your customer sends a new email, a new issue can be created in
@@ -92,16 +118,26 @@ field values using query string parameters in a URL. This is useful for embeddin
 a URL in an external HTML page, and also certain scenarios where you want the user to
 create an issue with certain fields prefilled.
 
-The title, description, and description template fields can be prefilled using
-this method. You cannot pre-fill both the description and description template fields
-in the same URL (since a description template also populates the description field).
+The title, description, description template, and confidential fields can be prefilled
+using this method. You cannot pre-fill both the description and description template
+fields in the same URL (since a description template also populates the description
+field).
+
+| Field                | URL Parameter Name    | Notes                                                 |
+|----------------------|-----------------------|-------------------------------------------------------|
+| title                | `issue[title]`        |                                                       |
+| description          | `issue[description]`  |                                                       |
+| description template | `issuable_template`   |                                                       |
+| confidential         | `issue[confidential]` | Parameter value must be `true` to set to confidential |
 
 Follow these examples to form your new issue URL with prefilled fields.
 
 - For a new issue in the GitLab Community Edition project with a pre-filled title
-  and a pre-filled description, the URL would be `https://gitlab.com/gitlab-org/gitlab-foss/issues/new?issue[title]=Validate%20new%20concept&issue[description]=Research%20idea`
+  and a pre-filled description, the URL would be `https://gitlab.com/gitlab-org/gitlab-foss/-/issues/new?issue[title]=Validate%20new%20concept&issue[description]=Research%20idea`
 - For a new issue in the GitLab Community Edition project with a pre-filled title
-  and a pre-filled description template, the URL would be `https://gitlab.com/gitlab-org/gitlab-foss/issues/new?issue[title]=Validate%20new%20concept&issuable_template=Research%20proposal`
+  and a pre-filled description template, the URL would be `https://gitlab.com/gitlab-org/gitlab-foss/-/issues/new?issue[title]=Validate%20new%20concept&issuable_template=Research%20proposal`
+- For a new issue in the GitLab Community Edition project with a pre-filled title,
+  a pre-filled description, and the confidential flag set, the URL would be `https://gitlab.com/gitlab-org/gitlab-foss/-/issues/new?issue[title]=Validate%20new%20concept&issue[description]=Research%20idea&issue[confidential]=true`
 
 ## Moving Issues
 
@@ -117,7 +153,10 @@ The "Move issue" button is at the bottom of the right-sidebar when viewing the i
 
 If you have advanced technical skills you can also bulk move all the issues from one project to another in the rails console. The below script will move all the issues from one project to another that are not in status **closed**.
 
-To access rails console run `sudo gitlab-rails console` on the GitLab server and run the below script. Please be sure to change **project**, **admin_user** and **target_project** to your values. We do also recommend [creating a backup](../../../raketasks/backup_restore.md#creating-a-backup-of-the-gitlab-system) before attempting any changes in the console.
+To access rails console run `sudo gitlab-rails console` on the GitLab server and run the below
+script. Please be sure to change **project**, **admin_user** and **target_project** to your values.
+We do also recommend [creating a backup](../../../raketasks/backup_restore.md#back-up-gitlab) before
+attempting any changes in the console.
 
 ```ruby
 project = Project.find_by_full_path('full path of the project where issues are moved from')
@@ -134,7 +173,7 @@ issues.each do |issue|
 end; nil
 ```
 
-## Closing Issues
+## Closing issues
 
 When you decide that an issue is resolved, or no longer needed, you can close the issue
 using the close button:
@@ -170,7 +209,7 @@ but it will not close automatically.
 
 If the issue is in a different repository than the MR, add the full URL for the issue(s):
 
-```md
+```markdown
 Closes #4, #6, and https://gitlab.com/<username>/<projectname>/issues/<xxx>
 ```
 
@@ -179,7 +218,7 @@ Closes #4, #6, and https://gitlab.com/<username>/<projectname>/issues/<xxx>
 When not specified, the default issue closing pattern as shown below will be used:
 
 ```shell
-((?:[Cc]los(?:e[sd]?|ing)|[Ff]ix(?:e[sd]|ing)?|[Rr]esolv(?:e[sd]?|ing)|[Ii]mplement(?:s|ed|ing)?)(:?) +(?:(?:issues? +)?%{issue_ref}(?:(?:, *| +and +)?)|([A-Z][A-Z0-9_]+-\d+))+)
+\b((?:[Cc]los(?:e[sd]?|ing)|\b[Ff]ix(?:e[sd]|ing)?|\b[Rr]esolv(?:e[sd]?|ing)|\b[Ii]mplement(?:s|ed|ing)?)(:?) +(?:(?:issues? +)?%{issue_ref}(?:(?: *,? +and +| *,? *)?)|([A-Z][A-Z0-9_]+-\d+))+)
 ```
 
 This translates to the following keywords:
@@ -213,6 +252,8 @@ when used from the command line with `git commit -m`.
 
 #### Disabling automatic issue closing
 
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/19754) in GitLab 12.7.
+
 The automatic issue closing feature can be disabled on a per-project basis
 within the [project's repository settings](../settings/index.md). Referenced
 issues will still be displayed as such but won't be closed automatically.
@@ -230,7 +271,7 @@ In order to change the default issue closing pattern, GitLab administrators must
 [`gitlab.rb` or `gitlab.yml` file](../../../administration/issue_closing_pattern.md)
 of your installation.
 
-## Deleting Issues
+## Deleting issues
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/2982) in GitLab 8.6
 

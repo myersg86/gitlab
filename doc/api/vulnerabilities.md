@@ -1,6 +1,6 @@
 # Vulnerabilities API **(ULTIMATE)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/10242) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/10242) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.6.
 
 NOTE: **Note:**
 The former Vulnerabilities API was renamed to Vulnerability Findings API
@@ -40,7 +40,7 @@ GET /vulnerabilities/:id
 | `id` | integer or string | yes | The ID of a Vulnerability to get |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/vulnerabilities/1
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/vulnerabilities/1"
 ```
 
 Example response:

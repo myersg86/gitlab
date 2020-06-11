@@ -2,15 +2,12 @@
 
 require 'spec_helper'
 
-describe Gitlab::ImportExport::Project::TreeSaver do
+RSpec.describe Gitlab::ImportExport::Project::TreeSaver do
   let_it_be(:user) { create(:user) }
   let_it_be(:group) { create(:group) }
   let_it_be(:project) { create(:project, group: group) }
   let_it_be(:issue) { create(:issue, project: project) }
   let_it_be(:shared) { project.import_export_shared }
-
-  let_it_be(:design) { create(:design, :with_file, versions_count: 2, issue: issue) }
-  let_it_be(:note) { create(:diff_note_on_design, noteable: design, project: project, author: user) }
   let_it_be(:note2) { create(:note, noteable: issue, project: project, author: user) }
 
   let_it_be(:epic) { create(:epic, group: group) }
@@ -38,31 +35,16 @@ describe Gitlab::ImportExport::Project::TreeSaver do
     let_it_be(:exportable_path) { 'project' }
 
     before_all do
-      Feature.enable(:project_export_as_ndjson) if ndjson_enabled
-      project.add_maintainer(user)
-      expect(project_tree_saver.save).to be true
+      RSpec::Mocks.with_temporary_scope do
+        stub_all_feature_flags
+        stub_feature_flags(project_export_as_ndjson: ndjson_enabled)
+        project.add_maintainer(user)
+
+        expect(project_tree_saver.save).to be true
+      end
     end
 
     let_it_be(:issue_json) { get_json(full_path, exportable_path, :issues, ndjson_enabled).first }
-
-    describe 'the designs json' do
-      it 'saves issue.designs correctly' do
-        expect(issue_json['designs'].size).to eq(1)
-      end
-
-      it 'saves issue.design_versions correctly' do
-        actions = issue_json['design_versions'].flat_map { |v| v['actions'] }
-
-        expect(issue_json['design_versions'].size).to eq(2)
-        issue_json['design_versions'].each do |version|
-          expect(version['author_id']).to eq(issue.author_id)
-        end
-        expect(actions.size).to eq(2)
-        actions.each do |action|
-          expect(action['design']).to be_present
-        end
-      end
-    end
 
     context 'epics' do
       it 'has epic_issue' do

@@ -51,7 +51,8 @@ export default {
     },
     project: {
       type: Object,
-      required: true,
+      required: false,
+      default: undefined,
       validator: project => !isUndefined(project.id) && !isUndefined(project.name),
     },
     dashboardDocumentation: {
@@ -90,7 +91,7 @@ export default {
           <span class="js-security-dashboard-left">
             <gl-sprintf
               :message="
-                s__('SecurityDashboard|Pipeline %{pipelineLink} triggered %{timeago} by %{user}')
+                s__('SecurityReports|Pipeline %{pipelineLink} triggered %{timeago} by %{user}')
               "
             >
               <template #pipelineLink>
@@ -129,17 +130,15 @@ export default {
       >
         <template #emptyState>
           <gl-empty-state
-            :title="s__(`No vulnerabilities found for this project`)"
+            :title="s__(`SecurityReports|No vulnerabilities found for this project`)"
             :svg-path="emptyStateSvgPath"
             :description="
               s__(
-                `While it's rare to have no vulnerabilities for your project, it can happen. In any event, we ask that you double check your settings to make sure you've set up your dashboard correctly.`,
+                `SecurityReports|While it's rare to have no vulnerabilities for your project, it can happen. In any event, we ask that you double check your settings to make sure you've set up your dashboard correctly.`,
               )
             "
             :primary-button-link="dashboardDocumentation"
-            :primary-button-text="
-              s__('Security Reports|Learn more about setting up your dashboard')
-            "
+            :primary-button-text="s__('SecurityReports|Learn more about setting up your dashboard')"
           />
         </template>
       </security-dashboard>

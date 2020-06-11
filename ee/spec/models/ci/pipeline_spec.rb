@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Ci::Pipeline do
+RSpec.describe Ci::Pipeline do
   using RSpec::Parameterized::TableSyntax
 
   let(:user) { create(:user) }
@@ -14,7 +14,6 @@ describe Ci::Pipeline do
 
   it { is_expected.to have_many(:security_scans).through(:builds).class_name('Security::Scan') }
   it { is_expected.to have_many(:downstream_bridges) }
-  it { is_expected.to have_many(:job_artifacts).through(:builds) }
   it { is_expected.to have_many(:vulnerability_findings).through(:vulnerabilities_occurrence_pipelines).class_name('Vulnerabilities::Occurrence') }
   it { is_expected.to have_many(:vulnerabilities_occurrence_pipelines).class_name('Vulnerabilities::OccurrencePipeline') }
 
@@ -121,6 +120,7 @@ describe Ci::Pipeline do
 
     before do
       stub_licensed_features(license_scanning: true)
+      stub_feature_flags(drop_license_management_artifact: false)
     end
 
     [:license_scanning, :license_management].each do |artifact_type|
@@ -287,17 +287,21 @@ describe Ci::Pipeline do
 
     context 'when pipeline has a build with dependency list reports' do
       let!(:build) { create(:ee_ci_build, :success, :dependency_list, pipeline: pipeline, project: project) }
+      let!(:build1) { create(:ee_ci_build, :success, :dependency_scanning, pipeline: pipeline, project: project) }
       let!(:build2) { create(:ee_ci_build, :success, :license_scanning, pipeline: pipeline, project: project) }
 
       it 'returns a dependency list report with collected data' do
-        expect(subject.dependencies.count).to eq(21)
-        expect(subject.dependencies[0][:name]).to eq('mini_portile2')
-        expect(subject.dependencies[0][:licenses]).not_to be_empty
+        mini_portile2 = subject.dependencies.find { |x| x[:name] == 'mini_portile2' }
+
+        expect(subject.dependencies.count).to eq(24)
+        expect(mini_portile2[:name]).not_to be_empty
+        expect(mini_portile2[:licenses]).not_to be_empty
       end
 
       context 'when builds are retried' do
         before do
           build.update(retried: true)
+          build1.update(retried: true)
         end
 
         it 'does not take retried builds into account' do

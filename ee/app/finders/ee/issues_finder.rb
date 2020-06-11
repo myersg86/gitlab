@@ -11,7 +11,7 @@ module EE
 
       override :scalar_params
       def scalar_params
-        @scalar_params ||= super + [:weight, :epic_id]
+        @scalar_params ||= super + [:weight, :epic_id, :include_subepics]
       end
     end
 
@@ -39,7 +39,7 @@ module EE
 
     override :by_assignee
     def by_assignee(items)
-      if params.assignees.any? && !not_query?
+      if params.assignees.any?
         params.assignees.each do |assignee|
           items = items.assigned_to(assignee)
         end
@@ -55,6 +55,8 @@ module EE
 
       if params.filter_by_no_epic?
         items.no_epic
+      elsif params.filter_by_any_epic?
+        items.any_epic
       else
         items.in_epics(params.epics)
       end

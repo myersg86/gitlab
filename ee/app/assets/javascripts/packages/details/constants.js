@@ -1,9 +1,12 @@
+import { s__ } from '~/locale';
+
 export const TrackingLabels = {
   CODE_INSTRUCTION: 'code_instruction',
   CONAN_INSTALLATION: 'conan_installation',
   MAVEN_INSTALLATION: 'maven_installation',
   NPM_INSTALLATION: 'npm_installation',
   NUGET_INSTALLATION: 'nuget_installation',
+  PYPI_INSTALLATION: 'pypi_installation',
 };
 
 export const TrackingActions = {
@@ -25,9 +28,16 @@ export const TrackingActions = {
 
   COPY_NUGET_INSTALL_COMMAND: 'copy_nuget_install_command',
   COPY_NUGET_SETUP_COMMAND: 'copy_nuget_setup_command',
+
+  COPY_PIP_INSTALL_COMMAND: 'copy_pip_install_command',
+  COPY_PYPI_SETUP_COMMAND: 'copy_pypi_setup_command',
 };
 
 export const NpmManager = {
   NPM: 'npm',
   YARN: 'yarn',
 };
+
+export const FETCH_PACKAGE_VERSIONS_ERROR = s__(
+  'PackageRegistry|Unable to fetch package version information.',
+);

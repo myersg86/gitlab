@@ -18,23 +18,9 @@ class ElasticsearchIndexedNamespace < ApplicationRecord
     :namespace_id
   end
 
-  def self.limited(ignore_descendants: false)
-    namespaces = Namespace.with_route.where(id: target_ids)
-
-    return namespaces if ignore_descendants
-
-    Gitlab::ObjectHierarchy.new(namespaces).base_and_descendants
-  end
-
-  def self.drop_limited_ids_cache!
-    # To prevent stale cache we also drop ElasticsearchIndexedProject cache since it uses ElasticsearchIndexedNamespace
-    ElasticsearchIndexedProject.drop_limited_ids_cache!
-    super
-  end
-
   def self.index_first_n_namespaces_of_plan(plan, number_of_namespaces)
     indexed_namespaces = self.select(:namespace_id)
-    now = Time.now
+    now = Time.current
 
     ids = GitlabSubscription
       .with_hosted_plan(plan)
@@ -51,14 +37,13 @@ class ElasticsearchIndexedNamespace < ApplicationRecord
         { created_at: now, updated_at: now, namespace_id: id }
       end
 
-      Gitlab::Database.bulk_insert(table_name, insert_rows)
+      Gitlab::Database.bulk_insert(table_name, insert_rows) # rubocop:disable Gitlab/BulkInsert
+      invalidate_elasticsearch_indexes_project_cache!
 
       jobs = batch_ids.map { |id| [id, :index] }
 
       ElasticNamespaceIndexerWorker.bulk_perform_async(jobs) # rubocop:disable Scalability/BulkPerformWithContext, CodeReuse/Worker
     end
-
-    drop_limited_ids_cache!
   end
 
   def self.unindex_last_n_namespaces_of_plan(plan, number_of_namespaces)
@@ -71,13 +56,12 @@ class ElasticsearchIndexedNamespace < ApplicationRecord
 
     ids.in_groups_of(BATCH_OPERATION_SIZE, false) do |batch_ids|
       where(namespace_id: batch_ids).delete_all
+      invalidate_elasticsearch_indexes_project_cache!
 
       jobs = batch_ids.map { |id| [id, :delete] }
 
       ElasticNamespaceIndexerWorker.bulk_perform_async(jobs) # rubocop:disable Scalability/BulkPerformWithContext, CodeReuse/Worker
     end
-
-    drop_limited_ids_cache!
   end
 
   private

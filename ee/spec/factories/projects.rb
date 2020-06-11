@@ -30,12 +30,6 @@ FactoryBot.modify do
       end
     end
 
-    trait :design_repo do
-      after(:create) do |project|
-        raise 'Failed to create design repository!' unless project.design_repository.create_if_not_exists
-      end
-    end
-
     trait :import_none do
       import_status { :none }
     end
@@ -86,10 +80,20 @@ FactoryBot.modify do
       import_type { 'github' }
     end
 
+    trait :with_vulnerability do
+      after(:create) do |project|
+        create(:vulnerability, :detected, project: project)
+      end
+    end
+
     trait :with_vulnerabilities do
       after(:create) do |project|
         create_list(:vulnerability, 2, :detected, project: project)
       end
+    end
+
+    trait :with_compliance_framework do
+      association :compliance_framework_setting, factory: :compliance_framework_project_setting
     end
   end
 end

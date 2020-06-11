@@ -7,6 +7,7 @@ module Projects
       GENERIC_ALERT_SUMMARY_ANNOTATIONS = %w(monitoring_tool service hosts).freeze
       MARKDOWN_LINE_BREAK = "  \n".freeze
       INCIDENT_LABEL_NAME = IncidentManagement::CreateIssueService::INCIDENT_LABEL[:title].freeze
+      METRIC_TIME_WINDOW = 30.minutes
 
       def full_title
         [environment_name, alert_title].compact.join(': ')
@@ -44,8 +45,8 @@ module Projects
         project_issues_url(project, label_name: INCIDENT_LABEL_NAME)
       end
 
-      def starts_at
-        super&.rfc3339
+      def start_time
+        starts_at&.strftime('%d %B %Y, %-l:%M%p (%Z)')
       end
 
       def issue_summary_markdown
@@ -72,7 +73,7 @@ module Projects
       def metadata_list
         metadata = []
 
-        metadata << list_item('Start time', starts_at) if starts_at
+        metadata << list_item('Start time', start_time) if start_time
         metadata << list_item('full_query', backtick(full_query)) if full_query
         metadata << list_item(service.label.humanize, service.value) if service
         metadata << list_item(monitoring_tool.label.humanize, monitoring_tool.value) if monitoring_tool
@@ -119,9 +120,63 @@ module Projects
         Array(hosts.value).join(' ')
       end
 
-      def metric_embed_for_alert; end
+      def metric_embed_for_alert
+        url = embed_url_for_gitlab_alert || embed_url_for_self_managed_alert
+
+        "\n[](#{url})" if url
+      end
+
+      def embed_url_for_gitlab_alert
+        return unless gitlab_alert
+
+        metrics_dashboard_project_prometheus_alert_url(
+          project,
+          gitlab_alert.prometheus_metric_id,
+          environment_id: environment.id,
+          **alert_embed_window_params(embed_time)
+        )
+      end
+
+      def embed_url_for_self_managed_alert
+        return unless environment && full_query && title
+
+        metrics_dashboard_project_environment_url(
+          project,
+          environment,
+          embed_json: dashboard_for_self_managed_alert.to_json,
+          **alert_embed_window_params(embed_time)
+        )
+      end
+
+      def embed_time
+        starts_at || Time.current
+      end
+
+      def alert_embed_window_params(time)
+        {
+          start: format_embed_timestamp(time - METRIC_TIME_WINDOW),
+          end: format_embed_timestamp(time + METRIC_TIME_WINDOW)
+        }
+      end
+
+      def format_embed_timestamp(time)
+        time.utc.strftime('%FT%TZ')
+      end
+
+      def dashboard_for_self_managed_alert
+        {
+          panel_groups: [{
+            panels: [{
+              type: 'line-graph',
+              title: title,
+              y_label: y_label,
+              metrics: [{
+                query_range: full_query
+              }]
+            }]
+          }]
+        }
+      end
     end
   end
 end
-
-Projects::Prometheus::AlertPresenter.prepend_if_ee('EE::Projects::Prometheus::AlertPresenter')

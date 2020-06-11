@@ -17,6 +17,7 @@ describe('EE Approvals MRRules', () => {
   let wrapper;
   let store;
   let approvalRules;
+  let OriginalMutationObserver;
 
   const factory = () => {
     if (approvalRules) {
@@ -51,6 +52,11 @@ describe('EE Approvals MRRules', () => {
   };
 
   beforeEach(() => {
+    OriginalMutationObserver = global.MutationObserver;
+    global.MutationObserver = jest
+      .fn()
+      .mockImplementation(args => new OriginalMutationObserver(args));
+
     store = createStoreOptions(MREditModule());
     store.modules.approvals.state = {
       hasLoaded: true,
@@ -64,16 +70,14 @@ describe('EE Approvals MRRules', () => {
     wrapper = null;
     store = null;
     approvalRules = null;
+    global.MutationObserver = OriginalMutationObserver;
   });
 
   describe('when editing a MR', () => {
     const initialTargetBranch = 'master';
     let targetBranchInputElement;
-    let MutationObserverSpy;
 
     beforeEach(() => {
-      MutationObserverSpy = jest.spyOn(global, 'MutationObserver');
-
       targetBranchInputElement = document.createElement('input');
       targetBranchInputElement.id = 'merge_request_target_branch';
       targetBranchInputElement.value = initialTargetBranch;
@@ -91,7 +95,6 @@ describe('EE Approvals MRRules', () => {
 
     afterEach(() => {
       targetBranchInputElement.parentNode.removeChild(targetBranchInputElement);
-      MutationObserverSpy.mockClear();
     });
 
     it('sets the target branch data to be the same value as the target branch dropdown', () => {
@@ -103,20 +106,20 @@ describe('EE Approvals MRRules', () => {
     it('updates the target branch data when the target branch dropdown is changed', () => {
       factory();
       const newValue = setTargetBranchInputValue();
-      callTargetBranchHandler(MutationObserverSpy);
+      callTargetBranchHandler(global.MutationObserver);
       expect(wrapper.vm.targetBranch).toBe(newValue);
     });
 
     it('re-fetches rules when target branch has changed', () => {
       factory();
       setTargetBranchInputValue();
-      callTargetBranchHandler(MutationObserverSpy);
+      callTargetBranchHandler(global.MutationObserver);
       expect(store.modules.approvals.actions.fetchRules).toHaveBeenCalled();
     });
 
     it('disconnects MutationObserver when component gets destroyed', () => {
       const mockDisconnect = jest.fn();
-      MutationObserverSpy.mockImplementation(() => ({
+      global.MutationObserver.mockImplementation(() => ({
         disconnect: mockDisconnect,
         observe: jest.fn(),
       }));
@@ -152,7 +155,7 @@ describe('EE Approvals MRRules', () => {
       store.modules.approvals.state.rules = [createMRRule()];
       factory();
 
-      expect(store.modules.approvals.state.rules.length).toBe(2);
+      expect(store.modules.approvals.state.rules).toHaveLength(2);
     });
 
     it('should always display any_approver first', () => {
@@ -170,7 +173,7 @@ describe('EE Approvals MRRules', () => {
         rule => rule.ruleType === 'any_approver',
       );
 
-      expect(anyApproverCount.length).toBe(1);
+      expect(anyApproverCount).toHaveLength(1);
     });
 
     it('renders headers when there are multiple rules', () => {
@@ -254,7 +257,7 @@ describe('EE Approvals MRRules', () => {
       factory();
 
       expect(store.modules.approvals.state.rules[0].ruleType).toBe('regular');
-      expect(store.modules.approvals.state.rules.length).toBe(1);
+      expect(store.modules.approvals.state.rules).toHaveLength(1);
     });
 
     it('should only show single any_approver rule', () => {
@@ -262,7 +265,7 @@ describe('EE Approvals MRRules', () => {
       factory();
 
       expect(store.modules.approvals.state.rules[0].ruleType).toBe('any_approver');
-      expect(store.modules.approvals.state.rules.length).toBe(1);
+      expect(store.modules.approvals.state.rules).toHaveLength(1);
     });
 
     it('does not show name header for any rule', () => {

@@ -18,7 +18,7 @@ describe Gitlab::Graphql::Pagination::Keyset::Connection do
   end
 
   def decoded_cursor(cursor)
-    JSON.parse(Base64Bp.urlsafe_decode64(cursor))
+    Gitlab::Json.parse(Base64Bp.urlsafe_decode64(cursor))
   end
 
   describe '#cursor_for' do
@@ -295,6 +295,14 @@ describe Gitlab::Graphql::Pagination::Keyset::Connection do
     end
 
     context 'when there is no primary key' do
+      before do
+        stub_const('NoPrimaryKey', Class.new(ActiveRecord::Base))
+        NoPrimaryKey.class_eval do
+          self.table_name  = 'no_primary_key'
+          self.primary_key = nil
+        end
+      end
+
       let(:nodes) { NoPrimaryKey.all }
 
       it 'raises an error' do
@@ -304,8 +312,95 @@ describe Gitlab::Graphql::Pagination::Keyset::Connection do
     end
   end
 
-  class NoPrimaryKey < ActiveRecord::Base
-    self.table_name  = 'no_primary_key'
-    self.primary_key = nil
+  describe '#has_previous_page and #has_next_page' do
+    # using a list of 5 items with a max_page of 3
+    let_it_be(:project_list) { create_list(:project, 5) }
+    let_it_be(:nodes) { Project.order(:id) }
+
+    context 'when default query' do
+      let(:arguments) { {} }
+
+      it 'has no previous, but a next' do
+        expect(subject.has_previous_page).to be_falsey
+        expect(subject.has_next_page).to be_truthy
+      end
+    end
+
+    context 'when before is first item' do
+      let(:arguments) { { before: encoded_cursor(project_list.first) } }
+
+      it 'has no previous, but a next' do
+        expect(subject.has_previous_page).to be_falsey
+        expect(subject.has_next_page).to be_truthy
+      end
+    end
+
+    describe 'using `before`' do
+      context 'when before is the last item' do
+        let(:arguments) { { before: encoded_cursor(project_list.last) } }
+
+        it 'has no previous, but a next' do
+          expect(subject.has_previous_page).to be_falsey
+          expect(subject.has_next_page).to be_truthy
+        end
+      end
+
+      context 'when before and last specified' do
+        let(:arguments) { { before: encoded_cursor(project_list.last), last: 2 } }
+
+        it 'has a previous and a next' do
+          expect(subject.has_previous_page).to be_truthy
+          expect(subject.has_next_page).to be_truthy
+        end
+      end
+
+      context 'when before and last does not request all remaining nodes' do
+        let(:arguments) { { before: encoded_cursor(project_list.last), last: 2 } }
+
+        it 'has a previous and a next' do
+          expect(subject.has_previous_page).to be_truthy
+          expect(subject.has_next_page).to be_truthy
+        end
+      end
+
+      context 'when before and last does request all remaining nodes' do
+        let(:arguments) { { before: encoded_cursor(project_list[1]), last: 3 } }
+
+        it 'has a previous and a next' do
+          expect(subject.has_previous_page).to be_falsey
+          expect(subject.has_next_page).to be_truthy
+          expect(subject.nodes).to eq [project_list[0]]
+        end
+      end
+    end
+
+    describe 'using `after`' do
+      context 'when after is the first item' do
+        let(:arguments) { { after: encoded_cursor(project_list.first) } }
+
+        it 'has a previous, and a next' do
+          expect(subject.has_previous_page).to be_truthy
+          expect(subject.has_next_page).to be_truthy
+        end
+      end
+
+      context 'when after and first specified' do
+        let(:arguments) { { after: encoded_cursor(project_list.first), first: 2 } }
+
+        it 'has a previous and a next' do
+          expect(subject.has_previous_page).to be_truthy
+          expect(subject.has_next_page).to be_truthy
+        end
+      end
+
+      context 'when before and last does request all remaining nodes' do
+        let(:arguments) { { after: encoded_cursor(project_list[2]), last: 3 } }
+
+        it 'has a previous but no next' do
+          expect(subject.has_previous_page).to be_truthy
+          expect(subject.has_next_page).to be_falsey
+        end
+      end
+    end
   end
 end

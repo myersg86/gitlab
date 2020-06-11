@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ApplicationSetting do
+RSpec.describe ApplicationSetting do
   using RSpec::Parameterized::TableSyntax
 
   subject(:setting) { described_class.create_from_defaults }
@@ -95,7 +95,7 @@ describe ApplicationSetting do
       end
 
       with_them do
-        it do
+        specify do
           setting.update_column(:geo_node_allowed_ips, allowed_ips)
 
           expect(setting.reload.valid?).to eq(is_valid)
@@ -122,7 +122,7 @@ describe ApplicationSetting do
       end
 
       with_them do
-        it do
+        specify do
           setting.elasticsearch_url = elasticsearch_url
 
           expect(setting.valid?).to eq(is_valid)
@@ -142,6 +142,7 @@ describe ApplicationSetting do
       # and we want to make sure we're still testing
       # should_check_namespace_plan? method through the test-suite (see
       # https://gitlab.com/gitlab-org/gitlab-foss/merge_requests/18461#note_69322821).
+      allow(Rails).to receive_message_chain(:env, :development?).and_return(false)
       allow(Rails).to receive_message_chain(:env, :test?).and_return(false)
     end
 
@@ -211,6 +212,20 @@ describe ApplicationSetting do
       expect(setting.elasticsearch_indexing).to be_truthy
       expect(setting.elasticsearch_search?).to be_truthy
       expect(setting.elasticsearch_search).to be_truthy
+    end
+  end
+
+  describe '#elasticsearch_pause_indexing' do
+    before do
+      setting.elasticsearch_pause_indexing = true
+    end
+
+    it 'resumes indexing' do
+      expect(ElasticIndexingControlWorker).to receive(:perform_async)
+
+      setting.save!
+      setting.elasticsearch_pause_indexing = false
+      setting.save!
     end
   end
 
@@ -286,8 +301,37 @@ describe ApplicationSetting do
 
           expect(setting.elasticsearch_limited_namespaces).to match_array(
             [namespaces.last, child_namespace, child_namespace_indexed_through_parent])
-          expect(setting.elasticsearch_limited_namespaces(ignore_descendants: true)).to match_array(
+          expect(setting.elasticsearch_limited_namespaces(true)).to match_array(
             [namespaces.last, child_namespace])
+        end
+
+        describe '#elasticsearch_indexes_project?' do
+          context 'when project is in a subgroup' do
+            let(:root_group) { create(:group) }
+            let(:subgroup) { create(:group, parent: root_group) }
+            let(:project) { create(:project, group: subgroup) }
+
+            before do
+              create(:elasticsearch_indexed_namespace, namespace: root_group)
+            end
+
+            it 'allows project to be indexed' do
+              expect(setting.elasticsearch_indexes_project?(project)).to be(true)
+            end
+          end
+
+          context 'when project is in a namespace' do
+            let(:namespace) { create(:namespace) }
+            let(:project) { create(:project, namespace: namespace) }
+
+            before do
+              create(:elasticsearch_indexed_namespace, namespace: namespace)
+            end
+
+            it 'allows project to be indexed' do
+              expect(setting.elasticsearch_indexes_project?(project)).to be(true)
+            end
+          end
         end
       end
 
@@ -307,7 +351,33 @@ describe ApplicationSetting do
           expect(setting.elasticsearch_limited_projects).to match_array(
             [projects.last, project_indexed_through_namespace])
         end
+
+        it 'uses the ElasticsearchEnabledCache cache' do
+          expect(::Gitlab::Elastic::ElasticsearchEnabledCache).to receive(:fetch).and_return(true)
+
+          expect(setting.elasticsearch_indexes_project?(projects.first)).to be(true)
+        end
+
+        context 'when elasticsearch_indexes_project_cache feature flag is disabled' do
+          before do
+            stub_feature_flags(elasticsearch_indexes_project_cache: false)
+          end
+
+          it 'does not use the cache' do
+            expect(::Gitlab::Elastic::ElasticsearchEnabledCache).not_to receive(:fetch)
+
+            expect(setting.elasticsearch_indexes_project?(projects.first)).to be(false)
+          end
+        end
       end
+    end
+  end
+
+  describe '#invalidate_elasticsearch_indexes_project_cache!' do
+    it 'deletes the ElasticsearchEnabledCache for projects' do
+      expect(::Gitlab::Elastic::ElasticsearchEnabledCache).to receive(:delete).with(:project)
+
+      setting.invalidate_elasticsearch_indexes_project_cache!
     end
   end
 

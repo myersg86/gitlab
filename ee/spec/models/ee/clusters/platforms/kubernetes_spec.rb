@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Clusters::Platforms::Kubernetes do
+RSpec.describe Clusters::Platforms::Kubernetes do
   include KubernetesHelpers
   include ReactiveCachingHelpers
 
@@ -64,6 +64,17 @@ describe Clusters::Platforms::Kubernetes do
 
         it 'has the has_legacy_app_label flag' do
           expect(rollout_status).to be_has_legacy_app_label
+        end
+      end
+
+      context 'deployment with no pods' do
+        let(:deployment) { kube_deployment(name: 'some-deployment', environment_slug: environment.slug, project_slug: project.full_path_slug) }
+        let(:deployments) { [deployment] }
+        let(:pods) { [] }
+
+        it 'returns a valid status with matching deployments' do
+          expect(rollout_status).to be_kind_of(::Gitlab::Kubernetes::RolloutStatus)
+          expect(rollout_status.deployments.map(&:name)).to contain_exactly('some-deployment')
         end
       end
 

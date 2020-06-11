@@ -213,6 +213,7 @@ describe Gitlab::Danger::Helper do
       'generator_templates/foo' | :backend
       'vendor/languages.yml'    | :backend
       'vendor/licenses.csv'     | :backend
+      'file_hooks/examples/'    | :backend
 
       'Gemfile'        | :backend
       'Gemfile.lock'   | :backend
@@ -233,6 +234,7 @@ describe Gitlab::Danger::Helper do
       '.overcommit.yml.example'                               | :engineering_productivity
       '.editorconfig'                                         | :engineering_productivity
       'tooling/overcommit/foo'                                | :engineering_productivity
+      '.codeclimate.yml'                                      | :engineering_productivity
 
       'lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml'   | :backend
 
@@ -361,6 +363,71 @@ describe Gitlab::Danger::Helper do
         .and_return('web_url' => 'https://gitlab.com/gitlab-org/security/gitlab/-/merge_requests/1')
 
       expect(helper).to be_security_mr
+    end
+  end
+
+  describe '#mr_has_label?' do
+    it 'returns false when `gitlab_helper` is unavailable' do
+      expect(helper).to receive(:gitlab_helper).and_return(nil)
+
+      expect(helper.mr_has_labels?('telemetry')).to be_falsey
+    end
+
+    context 'when mr has labels' do
+      before do
+        mr_labels = ['telemetry', 'telemetry::reviewed']
+        expect(fake_gitlab).to receive(:mr_labels).and_return(mr_labels)
+      end
+
+      it 'returns true with a matched label' do
+        expect(helper.mr_has_labels?('telemetry')).to be_truthy
+      end
+
+      it 'returns false with unmatched label' do
+        expect(helper.mr_has_labels?('database')).to be_falsey
+      end
+
+      it 'returns true with an array of labels' do
+        expect(helper.mr_has_labels?(['telemetry', 'telemetry::reviewed'])).to be_truthy
+      end
+
+      it 'returns true with multi arguments with matched labels' do
+        expect(helper.mr_has_labels?('telemetry', 'telemetry::reviewed')).to be_truthy
+      end
+
+      it 'returns false with multi arguments with unmatched labels' do
+        expect(helper.mr_has_labels?('telemetry', 'telemetry::non existing')).to be_falsey
+      end
+    end
+  end
+
+  describe '#labels_list' do
+    let(:labels) { ['telemetry', 'telemetry::reviewed'] }
+
+    it 'composes the labels string' do
+      expect(helper.labels_list(labels)).to eq('~"telemetry", ~"telemetry::reviewed"')
+    end
+
+    context 'when passing a separator' do
+      it 'composes the labels string with the given separator' do
+        expect(helper.labels_list(labels, sep: ' ')).to eq('~"telemetry" ~"telemetry::reviewed"')
+      end
+    end
+
+    it 'returns empty string for empty array' do
+      expect(helper.labels_list([])).to eq('')
+    end
+  end
+
+  describe '#prepare_labels_for_mr' do
+    it 'composes the labels string' do
+      mr_labels = ['telemetry', 'telemetry::reviewed']
+
+      expect(helper.prepare_labels_for_mr(mr_labels)).to eq('/label ~"telemetry" ~"telemetry::reviewed"')
+    end
+
+    it 'returns empty string for empty array' do
+      expect(helper.prepare_labels_for_mr([])).to eq('')
     end
   end
 end

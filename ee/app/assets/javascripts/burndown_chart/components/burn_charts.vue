@@ -3,12 +3,14 @@ import { GlButton, GlButtonGroup } from '@gitlab/ui';
 import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import { __ } from '~/locale';
 import BurndownChart from './burndown_chart.vue';
+import BurnupChart from './burnup_chart.vue';
 
 export default {
   components: {
     GlButton,
     GlButtonGroup,
     BurndownChart,
+    BurnupChart,
   },
   mixins: [glFeatureFlagsMixin()],
   props: {
@@ -26,6 +28,11 @@ export default {
       default: () => [],
     },
     openIssuesWeight: {
+      type: Array,
+      required: false,
+      default: () => [],
+    },
+    burnupScope: {
       type: Array,
       required: false,
       default: () => [],
@@ -56,7 +63,7 @@ export default {
 </script>
 
 <template>
-  <div data-qa-selector="burndown_chart">
+  <div>
     <div class="burndown-header d-flex align-items-center">
       <h3 ref="chartsTitle">{{ title }}</h3>
       <gl-button-group class="ml-3 js-burndown-data-selector">
@@ -88,6 +95,12 @@ export default {
         :open-issues-count="openIssuesCount"
         :open-issues-weight="openIssuesWeight"
         :issues-selected="issuesSelected"
+        class="col-md-6"
+      />
+      <burnup-chart
+        :start-date="startDate"
+        :due-date="dueDate"
+        :scope="burnupScope"
         class="col-md-6"
       />
     </div>

@@ -1,5 +1,5 @@
 <script>
-import { escape as esc } from 'lodash';
+import { escape } from 'lodash';
 import { __, n__, sprintf } from '~/locale';
 import Icon from '~/vue_shared/components/icon.vue';
 
@@ -40,8 +40,8 @@ export default {
       return sprintf(
         __('%{title} %{operator} %{threshold}'),
         {
-          title: esc(this.lastAlert.title),
-          threshold: `${esc(this.lastAlert.threshold)}%`,
+          title: escape(this.lastAlert.title),
+          threshold: `${escape(this.lastAlert.threshold)}%`,
           operator: this.lastAlert.operator,
         },
         false,
@@ -59,7 +59,7 @@ export default {
         class="align-text-bottom js-dashboard-alerts-icon"
         name="warning"
       />
-      <span class="js-alert-count text-secondary prepend-left-4"> {{ alertCount }} </span>
+      <span class="js-alert-count text-secondary gl-ml-2"> {{ alertCount }} </span>
       <span v-if="lastAlert" class="text-secondary">{{ alertText }}</span>
     </div>
   </div>

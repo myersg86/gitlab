@@ -1,4 +1,7 @@
 ---
+stage: Verify
+group: Continuous Integration
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: tutorial
 ---
 
@@ -76,14 +79,21 @@ To build this project you also need to have [GitLab Runner](https://docs.gitlab.
 You can use public runners available on `gitlab.com` or you can register your own:
 
 ```shell
+cat > /tmp/test-config.template.toml << EOF
+[[runners]]
+[runners.docker]
+[[runners.docker.services]]
+name = "postgres:latest"
+EOF
+
 gitlab-runner register \
   --non-interactive \
   --url "https://gitlab.com/" \
   --registration-token "PROJECT_REGISTRATION_TOKEN" \
   --description "python-3.5" \
   --executor "docker" \
-  --docker-image python:3.5 \
-  --docker-services postgres:latest
+  --template-config /tmp/test-config.template.toml \
+  --docker-image python:3.5
 ```
 
 With the command above, you create a runner that uses the [`python:3.5`](https://hub.docker.com/_/python) image and uses a [PostgreSQL](https://hub.docker.com/_/postgres) database.

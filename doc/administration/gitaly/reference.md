@@ -1,4 +1,7 @@
 ---
+stage: Create
+group: Gitaly
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
@@ -12,7 +15,7 @@ The configuration file is passed as an argument to the `gitaly`
 executable. This is usually done by either Omnibus GitLab or your
 [init](https://en.wikipedia.org/wiki/Init) script.
 
-An [example config file](https://gitlab.com/gitlab-org/gitaly/blob/master/config.toml.example)
+An [example configuration file](https://gitlab.com/gitlab-org/gitaly/blob/master/config.toml.example)
 can be found in the Gitaly project.
 
 ## Format
@@ -149,7 +152,7 @@ before and after. If the hit ratio does not improve, the higher limit is
 probably not making a meaningful difference. Here is an example
 Prometheus query to see the hit rate:
 
-```text
+```plaintext
 sum(rate(gitaly_catfile_cache_total{type="hit"}[5m])) / sum(rate(gitaly_catfile_cache_total{type=~"(hit)|(miss)"}[5m]))
 ```
 
@@ -157,7 +160,7 @@ sum(rate(gitaly_catfile_cache_total{type="hit"}[5m])) / sum(rate(gitaly_catfile_
 
 A Gitaly process uses one or more `gitaly-ruby` helper processes to
 execute RPC's implemented in Ruby instead of Go. The `[gitaly-ruby]`
-section of the config file contains settings for these helper processes.
+section of the configuration file contains settings for these helper processes.
 
 These processes are known to occasionally suffer from memory leaks.
 Gitaly restarts its `gitaly-ruby` helpers when their memory exceeds the
@@ -190,7 +193,7 @@ For historical reasons
 the Git hooks that allow GitLab to validate and react to Git pushes.
 Because Gitaly "owns" Git pushes, GitLab Shell must therefore be
 installed alongside Gitaly. This will be [simplified in the
-future](https://gitlab.com/gitlab-org/gitaly/issues/1226).
+future](https://gitlab.com/gitlab-org/gitaly/-/issues/1226).
 
 | Name | Type | Required | Description |
 | ---- | ---- | -------- | ----------- |
@@ -258,7 +261,7 @@ You can adjust the `concurrency` of each RPC endpoint.
 | ---- | ---- | -------- | ----------- |
 | `concurrency` | array | yes | An array of RPC endpoints. |
 | `rpc` | string | no | The name of the RPC endpoint (`/gitaly.RepositoryService/GarbageCollect`). |
-| `max_per_repo` | integer | no | Concurrency per RPC per repo. |
+| `max_per_repo` | integer | no | Concurrency per RPC per repository. |
 
 Example:
 

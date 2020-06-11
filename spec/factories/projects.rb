@@ -215,6 +215,12 @@ FactoryBot.define do
       end
     end
 
+    trait :design_repo do
+      after(:create) do |project|
+        raise 'Failed to create design repository!' unless project.design_repository.create_if_not_exists
+      end
+    end
+
     trait :remote_mirror do
       transient do
         remote_name { "remote_mirror_#{SecureRandom.hex}" }
@@ -290,6 +296,12 @@ FactoryBot.define do
 
     trait :auto_devops_disabled do
       association :auto_devops, factory: [:project_auto_devops, :disabled]
+    end
+
+    trait :without_container_expiration_policy do
+      after :create do |project|
+        project.container_expiration_policy.destroy!
+      end
     end
   end
 

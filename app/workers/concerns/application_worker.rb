@@ -11,6 +11,8 @@ module ApplicationWorker
   include WorkerAttributes
   include WorkerContext
 
+  LOGGING_EXTRA_KEY = 'extra'
+
   included do
     set_queue
 
@@ -23,6 +25,21 @@ module ApplicationWorker
       )
 
       payload.stringify_keys.merge(context)
+    end
+
+    def log_extra_metadata_on_done(key, value)
+      @done_log_extra_metadata ||= {}
+      @done_log_extra_metadata[key] = value
+    end
+
+    def logging_extras
+      return {} unless @done_log_extra_metadata
+
+      # Prefix keys with class name to avoid conflicts in Elasticsearch types.
+      # Also prefix with "extra." so that we know to log these new fields.
+      @done_log_extra_metadata.transform_keys do |k|
+        "#{LOGGING_EXTRA_KEY}.#{self.class.name.gsub("::", "_").underscore}.#{k}"
+      end
     end
   end
 
@@ -67,7 +84,7 @@ module ApplicationWorker
       Sidekiq::Client.push_bulk('class' => self, 'args' => args_list)
     end
 
-    def bulk_perform_in(delay, args_list)
+    def bulk_perform_in(delay, args_list, batch_size: nil, batch_delay: nil)
       now = Time.now.to_i
       schedule = now + delay.to_i
 
@@ -75,7 +92,14 @@ module ApplicationWorker
         raise ArgumentError, _('The schedule time must be in the future!')
       end
 
-      Sidekiq::Client.push_bulk('class' => self, 'args' => args_list, 'at' => schedule)
+      if batch_size && batch_delay
+        args_list.each_slice(batch_size.to_i).with_index do |args_batch, idx|
+          batch_schedule = schedule + idx * batch_delay.to_i
+          Sidekiq::Client.push_bulk('class' => self, 'args' => args_batch, 'at' => batch_schedule)
+        end
+      else
+        Sidekiq::Client.push_bulk('class' => self, 'args' => args_list, 'at' => schedule)
+      end
     end
   end
 end

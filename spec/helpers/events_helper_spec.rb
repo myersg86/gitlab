@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 describe EventsHelper do
+  include Gitlab::Routing
+
   describe '#event_commit_title' do
     let(:message) { 'foo & bar ' + 'A' * 70 + '\n' + 'B' * 80 }
 
@@ -148,6 +150,21 @@ describe EventsHelper do
 
       expect(helper.event_wiki_page_target_url(event)).to eq(url)
     end
+
+    context 'there is no canonical slug' do
+      let(:event) { create(:wiki_page_event, project: project) }
+
+      before do
+        event.target.slugs.update_all(canonical: false)
+        event.target.clear_memoization(:canonical_slug)
+      end
+
+      it 'links to the home page' do
+        url = helper.project_wiki_url(project, Wiki::HOMEPAGE)
+
+        expect(helper.event_wiki_page_target_url(event)).to eq(url)
+      end
+    end
   end
 
   describe '#event_wiki_title_html' do
@@ -196,6 +213,18 @@ describe EventsHelper do
       event.target = create(:note_on_merge_request, note: 'LGTM!')
 
       expect(subject).to eq("#{project_base_url}/-/merge_requests/#{event.note_target.iid}#note_#{event.target.id}")
+    end
+
+    context 'for design note events' do
+      let(:event) { create(:event, :for_design, project: project) }
+
+      it 'returns an appropriate URL' do
+        iid = event.note_target.issue.iid
+        filename = event.note_target.filename
+        note_id  = event.target.id
+
+        expect(subject).to eq("#{project_base_url}/-/issues/#{iid}/designs/#{filename}#note_#{note_id}")
+      end
     end
   end
 end

@@ -30,7 +30,7 @@ class SamlProvider < ApplicationRecord
   end
 
   def enforced_sso?
-    enabled? && super && group.feature_available?(:group_saml) && ::Feature.enabled?(:enforced_sso, group)
+    enabled? && super && group.feature_available?(:group_saml)
   end
 
   def enforced_group_managed_accounts?
@@ -39,6 +39,13 @@ class SamlProvider < ApplicationRecord
 
   def prohibited_outer_forks?
     enforced_group_managed_accounts? && super
+  end
+
+  def last_linked_owner?(user)
+    return false unless group.owned_by?(user)
+    return false unless identities.for_user(user).exists?
+
+    identities.for_user(group.owners).count == 1
   end
 
   class DefaultOptions

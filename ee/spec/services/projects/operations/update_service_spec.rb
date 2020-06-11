@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::Operations::UpdateService do
+RSpec.describe Projects::Operations::UpdateService do
   let_it_be(:user) { create(:user) }
 
   let(:project) { create(:project) }
@@ -138,7 +138,8 @@ describe Projects::Operations::UpdateService do
                   aws_access_key: '',
                   aws_secret_key: '',
                   aws_s3_bucket_name: '',
-                  aws_region: ''
+                  aws_region: '',
+                  status_page_url: ''
                 }
               }
             end
@@ -157,7 +158,8 @@ describe Projects::Operations::UpdateService do
                   aws_s3_bucket_name: 'test',
                   aws_region: 'ap-southeast-2',
                   aws_access_key: '',
-                  aws_secret_key: project.reload.status_page_setting.masked_aws_secret_key
+                  aws_secret_key: project.reload.status_page_setting.masked_aws_secret_key,
+                  status_page_url: 'https://status.gitlab.com'
                 }
               }
             end

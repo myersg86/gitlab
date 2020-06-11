@@ -10,6 +10,10 @@ export const mockPipelineInfo = {
   user: {
     name: 'foo',
   },
+  project: {
+    name: 'foo-project',
+    web_url: 'foo-project-link',
+  },
 };
 
 export const mavenPackage = {
@@ -55,6 +59,7 @@ export const npmPackage = {
   project_id: 1,
   updated_at: '2015-12-10',
   version: '',
+  versions: [],
   _links,
   pipeline: mockPipelineInfo,
 };
@@ -87,12 +92,43 @@ export const conanPackage = {
   _links,
 };
 
+export const dependencyLinks = {
+  withoutFramework: { name: 'Moqi', version_pattern: '2.5.6' },
+  withoutVersion: { name: 'Castle.Core', version_pattern: '' },
+  fullLink: {
+    name: 'Test.Dependency',
+    version_pattern: '2.3.7',
+    target_framework: '.NETStandard2.0',
+  },
+  anotherFullLink: {
+    name: 'Newtonsoft.Json',
+    version_pattern: '12.0.3',
+    target_framework: '.NETStandard2.0',
+  },
+};
+
 export const nugetPackage = {
   created_at: '2015-12-10',
   id: 4,
   name: 'NugetPackage1',
   package_files: [],
   package_type: 'nuget',
+  project_id: 1,
+  tags: [],
+  updated_at: '2015-12-10',
+  version: '1.0.0',
+  dependency_links: Object.values(dependencyLinks),
+  nuget_metadatum: {
+    icon_url: 'fake-icon',
+  },
+};
+
+export const pypiPackage = {
+  created_at: '2015-12-10',
+  id: 5,
+  name: 'PyPiPackage',
+  package_files: [],
+  package_type: 'pypi',
   project_id: 1,
   tags: [],
   updated_at: '2015-12-10',

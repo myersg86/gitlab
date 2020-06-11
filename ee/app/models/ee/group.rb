@@ -13,6 +13,7 @@ module EE
       include TokenAuthenticatable
       include InsightsFeature
       include HasTimelogsReport
+      include HasWiki
 
       add_authentication_token_field :saml_discovery_token, unique: false, token_generator: -> { Devise.friendly_token(8) }
 
@@ -31,8 +32,7 @@ module EE
       has_one :dependency_proxy_setting, class_name: 'DependencyProxy::GroupSetting'
       has_many :dependency_proxy_blobs, class_name: 'DependencyProxy::Blob'
 
-      has_one :allowed_email_domain
-      accepts_nested_attributes_for :allowed_email_domain, allow_destroy: true, reject_if: :all_blank
+      has_many :allowed_email_domains, -> { order(id: :asc) }, autosave: true
 
       # We cannot simply set `has_many :audit_events, as: :entity, dependent: :destroy`
       # here since Group inherits from Namespace, the entity_type would be set to `Namespace`.
@@ -46,6 +46,8 @@ module EE
       has_one :deletion_schedule, class_name: 'GroupDeletionSchedule'
       delegate :deleting_user, :marked_for_deletion_on, to: :deletion_schedule, allow_nil: true
       delegate :enforced_group_managed_accounts?, :enforced_sso?, to: :saml_provider, allow_nil: true
+
+      has_one :group_wiki_repository
 
       belongs_to :file_template_project, class_name: "Project"
 
@@ -120,12 +122,12 @@ module EE
         end
 
         after_transition ready: :started do |group, _|
-          group.ldap_sync_last_sync_at = DateTime.now
+          group.ldap_sync_last_sync_at = DateTime.current
           group.save
         end
 
         after_transition started: :ready do |group, _|
-          current_time = DateTime.now
+          current_time = DateTime.current
           group.ldap_sync_last_update_at = current_time
           group.ldap_sync_last_successful_update_at = current_time
           group.ldap_sync_error = nil
@@ -133,7 +135,7 @@ module EE
         end
 
         after_transition started: :failed do |group, _|
-          group.ldap_sync_last_update_at = DateTime.now
+          group.ldap_sync_last_update_at = DateTime.current
           group.save
         end
       end
@@ -166,6 +168,12 @@ module EE
       return unless ip_restrictions.present?
 
       ip_restrictions.map(&:range).join(",")
+    end
+
+    def allowed_email_domains_list
+      return if allowed_email_domains.empty?
+
+      allowed_email_domains.domain_names.join(",")
     end
 
     def human_ldap_access
@@ -214,8 +222,7 @@ module EE
     end
 
     def group_project_template_available?
-      feature_available?(:group_project_templates) ||
-        (custom_project_templates_group_id? && Time.zone.now <= GroupsWithTemplatesFinder::CUT_OFF_DATE)
+      feature_available?(:group_project_templates)
     end
 
     def actual_size_limit
@@ -238,10 +245,10 @@ module EE
       root_ancestor.ip_restrictions
     end
 
-    def root_ancestor_allowed_email_domain
-      return allowed_email_domain if parent_id.nil?
+    def root_ancestor_allowed_email_domains
+      return allowed_email_domains if parent_id.nil?
 
-      root_ancestor.allowed_email_domain
+      root_ancestor.allowed_email_domains
     end
 
     # Overrides a method defined in `::EE::Namespace`
@@ -274,7 +281,7 @@ module EE
     # We are plucking the user_ids from the "Members" table in an array and
     # converting the array of user_ids to a Set which will have unique user_ids.
     def billed_user_ids(requested_hosted_plan = nil)
-      if [actual_plan_name, requested_hosted_plan].include?(Plan::GOLD)
+      if [actual_plan_name, requested_hosted_plan].include?(::Plan::GOLD)
         strong_memoize(:gold_billed_user_ids) do
           (billed_group_members.non_guests.distinct.pluck(:user_id) +
           billed_project_members.non_guests.distinct.pluck(:user_id) +
@@ -348,14 +355,28 @@ module EE
 
     def predefined_push_rule
       strong_memoize(:predefined_push_rule) do
-        if push_rule.present?
-          push_rule
-        elsif has_parent?
+        next push_rule if push_rule
+
+        if has_parent?
           parent.predefined_push_rule
         else
           PushRule.global
         end
       end
+    end
+
+    def wiki_access_level
+      # TODO: Remove this method once we implement group-level features.
+      # https://gitlab.com/gitlab-org/gitlab/-/issues/208412
+      if ::Feature.enabled?(:group_wiki, self)
+        ::ProjectFeature::ENABLED
+      else
+        ::ProjectFeature::DISABLED
+      end
+    end
+
+    def owners_emails
+      owners.pluck(:email)
     end
 
     private
@@ -376,7 +397,7 @@ module EE
 
     # Members belonging directly to Projects within Group or Projects within subgroups
     def billed_project_members
-      ::ProjectMember.active_without_invites_and_requests.where(
+      ::ProjectMember.active_without_invites_and_requests.without_project_bots.where(
         source_id: ::Project.joins(:group).where(namespace: self_and_descendants)
       )
     end
@@ -401,14 +422,10 @@ module EE
 
     # Members belonging to Groups invited to collaborate with Groups and Subgroups
     def billed_shared_group_members
-      return ::GroupMember.none unless ::Feature.enabled?(:share_group_with_group)
-
       invited_or_shared_group_members(invited_group_in_groups)
     end
 
     def billed_shared_non_guests_group_members
-      return ::GroupMember.none unless ::Feature.enabled?(:share_group_with_group)
-
       invited_or_shared_group_members(invited_non_guest_group_in_groups)
     end
 

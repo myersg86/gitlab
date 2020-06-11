@@ -2,7 +2,7 @@
 require 'securerandom'
 
 module QA
-  context 'Manage', quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/207741', type: :flaky } do
+  context 'Manage' do
     shared_examples 'audit event' do |expected_events|
       it 'logs audit events for UI operations' do
         sign_in
@@ -11,7 +11,7 @@ module QA
         QA::Page::Admin::Menu.perform(&:go_to_monitoring_audit_logs)
         EE::Page::Admin::Monitoring::AuditLog.perform do |audit_log_page|
           expected_events.each do |expected_event|
-            expect(audit_log_page).to have_audit_log_row(expected_event)
+            expect(audit_log_page).to have_audit_log_table_with_text(expected_event)
           end
         end
       end
@@ -54,15 +54,18 @@ module QA
         it_behaves_like 'audit event', ["Added SSH key"]
       end
 
-      context 'Add and delete email' do
+      context 'Add and delete email', quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/217831', type: :bug } do
         before do
           sign_in
           new_email_address = 'new_email@example.com'
           Page::Main::Menu.perform(&:click_settings_link)
           Page::Profile::Menu.perform(&:click_emails)
-          Page::Profile::Emails.perform do |emails|
-            emails.add_email_address(new_email_address)
-            emails.delete_email_address(new_email_address)
+          Support::Retrier.retry_until(sleep_interval: 3) do
+            Page::Profile::Emails.perform do |emails|
+              emails.add_email_address(new_email_address)
+              expect(emails).to have_text(new_email_address)
+              emails.delete_email_address(new_email_address)
+            end
           end
         end
 

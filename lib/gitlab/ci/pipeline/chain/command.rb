@@ -76,6 +76,20 @@ module Gitlab
           def parent_pipeline
             bridge&.parent_pipeline
           end
+
+          def metrics
+            @metrics ||= Chain::Metrics.new
+          end
+
+          def observe_creation_duration(duration)
+            metrics.pipeline_creation_duration_histogram
+              .observe({}, duration.seconds)
+          end
+
+          def observe_pipeline_size(pipeline)
+            metrics.pipeline_size_histogram
+              .observe({ source: pipeline.source.to_s }, pipeline.total_size)
+          end
         end
       end
     end

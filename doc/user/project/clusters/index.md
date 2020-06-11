@@ -1,9 +1,15 @@
+---
+stage: Monitor
+group: APM
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Kubernetes clusters
 
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/35954) in GitLab 10.1 for projects.
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/34758) in
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/35954) in GitLab 10.1 for projects.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/34758) in
 >   GitLab 11.6 for [groups](../../group/clusters/index.md).
-> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/39840) in
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/39840) in
 >   GitLab 11.11 for [instances](../../instance/clusters/index.md).
 
 GitLab provides many features with a Kubernetes integration. Kubernetes can be
@@ -30,10 +36,29 @@ Using the GitLab project Kubernetes integration, you can:
 - View [Logs](#logs).
 - Run serverless workloads on [Kubernetes with Knative](serverless/index.md).
 
+### Supported cluster versions
+
+GitLab is committed to support at least two production-ready Kubernetes minor versions at any given time. We regularly review the versions we support, and provide a four-month deprecation period before we remove support of a specific version. The range of supported versions is based on the evaluation of:
+
+- Our own needs.
+- The versions supported by major managed Kubernetes providers.
+- The versions [supported by the Kubernetes community](https://kubernetes.io/docs/setup/release/version-skew-policy/#supported-versions).
+
+Currently, GitLab supports the following Kubernetes versions:
+
+- 1.16
+- 1.15
+- 1.14
+- 1.13 (deprecated, support ends on November 22, 2020)
+- 1.12 (deprecated, support ends on September 22, 2020)
+
+NOTE: **Note:**
+Some GitLab features may support versions outside the range provided here.
+
 ### Deploy Boards **(PREMIUM)**
 
 GitLab's Deploy Boards offer a consolidated view of the current health and
-status of each CI [environment](../../../ci/environments.md) running on Kubernetes,
+status of each CI [environment](../../../ci/environments/index.md) running on Kubernetes,
 displaying the status of the pods in the deployment. Developers and other
 teammates can view the progress and status of a rollout, pod by pod, in the
 workflow they already use without any need to access Kubernetes.
@@ -78,8 +103,8 @@ Kubernetes clusters can be used without Auto DevOps.
 
 > Introduced in GitLab 8.15.
 
-When enabled, the Kubernetes integration adds [web terminal](../../../ci/environments.md#web-terminals)
-support to your [environments](../../../ci/environments.md). This is based on the `exec` functionality found in
+When enabled, the Kubernetes integration adds [web terminal](../../../ci/environments/index.md#web-terminals)
+support to your [environments](../../../ci/environments/index.md). This is based on the `exec` functionality found in
 Docker and Kubernetes, so you get a new shell session within your existing
 containers. To use this integration, you should deploy to Kubernetes using
 the deployment variables above, ensuring any deployments, replica sets, and
@@ -147,7 +172,7 @@ Note the following with GitLab and clusters:
 
 #### Clearing the cluster cache
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/31759) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/31759) in GitLab 12.6.
 
 If you choose to allow GitLab to manage your cluster for you, GitLab stores a cached
 version of the namespaces and service accounts it creates for your projects. If you
@@ -181,8 +206,8 @@ you can either:
 ### Setting the environment scope **(PREMIUM)**
 
 When adding more than one Kubernetes cluster to your project, you need to differentiate
-them with an environment scope. The environment scope associates clusters with [environments](../../../ci/environments.md) similar to how the
-[environment-specific variables](../../../ci/variables/README.md#limiting-environment-scopes-of-environment-variables) work.
+them with an environment scope. The environment scope associates clusters with [environments](../../../ci/environments/index.md) similar to how the
+[environment-specific variables](../../../ci/variables/README.md#limit-the-environment-scopes-of-environment-variables) work.
 
 The default environment scope is `*`, which means all jobs, regardless of their
 environment, will use that cluster. Each scope can only be used by a single
@@ -262,7 +287,7 @@ A Kubernetes cluster can be the destination for a deployment job. If
   the cluster from your jobs using tools such as `kubectl` or `helm`.
 - You don't use GitLab's cluster integration you can still deploy to your
   cluster. However, you will need configure Kubernetes tools yourself
-  using [environment variables](../../../ci/variables/README.md#creating-a-custom-environment-variable)
+  using [environment variables](../../../ci/variables/README.md#custom-environment-variables)
   before you can interact with the cluster from your jobs.
 
 ### Deployment variables
@@ -290,19 +315,19 @@ If your cluster was created before GitLab 12.2, default `KUBE_NAMESPACE` will be
 
 ### Custom namespace
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/27630) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/27630) in GitLab 12.6.
 
 The Kubernetes integration defaults to project-environment-specific namespaces
 of the form `<project_name>-<project_id>-<environment>` (see [Deployment
 variables](#deployment-variables)).
 
 For **non**-GitLab-managed clusters, the namespace can be customized using
-[`environment:kubernetes:namespace`](../../../ci/environments.md#configuring-kubernetes-deployments)
+[`environment:kubernetes:namespace`](../../../ci/environments/index.md#configuring-kubernetes-deployments)
 in `.gitlab-ci.yml`.
 
 NOTE: **Note:** When using a [GitLab-managed cluster](#gitlab-managed-clusters), the
 namespaces are created automatically prior to deployment and [can not be
-customized](https://gitlab.com/gitlab-org/gitlab/issues/38054).
+customized](https://gitlab.com/gitlab-org/gitlab/-/issues/38054).
 
 ### Troubleshooting
 
@@ -314,7 +339,7 @@ the deployment job:
 
 However, sometimes GitLab can not create them. In such instances, your job will fail with the message:
 
-```text
+```plaintext
 This job failed because the necessary resources were not successfully created.
 ```
 
@@ -325,7 +350,7 @@ Reasons for failure include:
 - The token you gave GitLab does not have [`cluster-admin`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
   privileges required by GitLab.
 - Missing `KUBECONFIG` or `KUBE_TOKEN` variables. To be passed to your job, they must have a matching
-  [`environment:name`](../../../ci/environments.md#defining-environments). If your job has no
+  [`environment:name`](../../../ci/environments/index.md#defining-environments). If your job has no
   `environment:name` set, it will not be passed the Kubernetes credentials.
 
 NOTE: **NOTE:**

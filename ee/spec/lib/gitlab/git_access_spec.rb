@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::GitAccess do
+RSpec.describe Gitlab::GitAccess do
   include GitHelpers
   include EE::GeoHelpers
 
@@ -331,19 +331,41 @@ describe Gitlab::GitAccess do
           end
         end
 
-        context 'that has no DB replication lag' do
-          let(:current_replication_lag) { 0 }
+        context 'for a repository that has been replicated' do
+          context 'that has no DB replication lag' do
+            let(:current_replication_lag) { 0 }
 
-          it 'does not return a replication lag message in the console messages' do
-            expect(pull_changes.console_messages).to be_empty
+            it 'does not return a replication lag message in the console messages' do
+              expect(pull_changes.console_messages).to be_empty
+            end
+          end
+
+          context 'that has DB replication lag > 0' do
+            let(:current_replication_lag) { 7 }
+
+            it 'returns a replication lag message in the console messages' do
+              expect(pull_changes.console_messages).to eq(['Current replication lag: 7 seconds'])
+            end
           end
         end
 
-        context 'that has DB replication lag > 0' do
-          let(:current_replication_lag) { 7 }
+        context 'for a repository that has yet to be replicated' do
+          let(:project) { create(:project) }
+          let(:current_replication_lag) { 0 }
 
-          it 'returns a replication lag message in the console messages' do
-            expect(pull_changes.console_messages).to eq(['Current replication lag: 7 seconds'])
+          before do
+            create(:geo_node, :primary)
+          end
+
+          it 'returns a custom action' do
+            expected_payload = { "action" => "geo_proxy_to_primary", "data" => { "api_endpoints" => ["/api/v4/geo/proxy_git_ssh/info_refs_upload_pack", "/api/v4/geo/proxy_git_ssh/upload_pack"], "primary_repo" => geo_primary_http_url_to_repo(project) } }
+            expected_console_messages = ["This request to a Geo secondary node will be forwarded to the", "Geo primary node:", "", "  #{geo_primary_ssh_url_to_repo(project)}"]
+
+            response = pull_changes
+
+            expect(response).to be_instance_of(Gitlab::GitAccessResult::CustomAction)
+            expect(response.payload).to eq(expected_payload)
+            expect(response.console_messages).to eq(expected_console_messages)
           end
         end
       end
@@ -351,6 +373,25 @@ describe Gitlab::GitAccess do
 
     context 'git push' do
       it { expect { push_changes }.to raise_forbidden(Gitlab::GitAccess::ERROR_MESSAGES[:upload]) }
+
+      context 'for a secondary' do
+        before do
+          stub_licensed_features(geo: true)
+          create(:geo_node, :primary)
+          stub_current_geo_node(create(:geo_node))
+        end
+
+        it 'returns a custom action' do
+          expected_payload = { "action" => "geo_proxy_to_primary", "data" => { "api_endpoints" => ["/api/v4/geo/proxy_git_ssh/info_refs_receive_pack", "/api/v4/geo/proxy_git_ssh/receive_pack"], "primary_repo" => geo_primary_http_url_to_repo(project) } }
+          expected_console_messages = ["This request to a Geo secondary node will be forwarded to the", "Geo primary node:", "", "  #{geo_primary_ssh_url_to_repo(project)}"]
+
+          response = push_changes
+
+          expect(response).to be_instance_of(Gitlab::GitAccessResult::CustomAction)
+          expect(response.payload).to eq(expected_payload)
+          expect(response.console_messages).to eq(expected_console_messages)
+        end
+      end
     end
   end
 
@@ -436,9 +477,8 @@ describe Gitlab::GitAccess do
     def self.run_group_permission_checks(permissions_matrix)
       permissions_matrix.each_pair do |role, matrix|
         it "has the correct permissions for group #{role}s" do
-          project
-            .project_group_links
-            .create(group: group, group_access: Gitlab::Access.sym_options[role])
+          create(:project_group_link, role, group: group,
+                                            project: project)
 
           protected_branch.save
 

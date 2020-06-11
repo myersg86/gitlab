@@ -55,13 +55,11 @@ export default {
   },
   mounted() {
     if (this.canReorder) {
-      this.sortable = Sortable.create(
-        this.$refs.list,
-        Object.assign({}, sortableConfig, {
-          onStart: this.addDraggingCursor,
-          onEnd: this.reordered,
-        }),
-      );
+      this.sortable = Sortable.create(this.$refs.list, {
+        ...sortableConfig,
+        onStart: this.addDraggingCursor,
+        onEnd: this.reordered,
+      });
     }
   },
   methods: {
@@ -102,7 +100,7 @@ export default {
 
 <template>
   <div>
-    <h4 v-if="heading" class="gl-font-size-14 mt-0">{{ heading }}</h4>
+    <h4 v-if="heading" class="gl-font-base mt-0">{{ heading }}</h4>
     <div
       class="related-issues-token-body bordered-box bg-white"
       :class="{ 'sortable-container': canReorder }"

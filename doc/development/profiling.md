@@ -87,7 +87,7 @@ printer.print(File.open('/tmp/profile.html', 'w'))
 
 [GitLab-Profiler](https://gitlab.com/gitlab-com/gitlab-profiler) is a project
 that builds on this to add some additional niceties, such as allowing
-configuration with a single Yaml file for multiple URLs, and uploading of the
+configuration with a single YAML file for multiple URLs, and uploading of the
 profile and log output to S3.
 
 For GitLab.com, you can find the latest results here (restricted to GitLab Team members only):
@@ -107,9 +107,13 @@ Recorded transactions can be found by navigating to `/sherlock/transactions`.
 
 ## Bullet
 
-Bullet is a Gem that can be used to track down N+1 query problems. Because
-Bullet adds quite a bit of logging noise it's disabled by default. To enable
-Bullet, set the environment variable `ENABLE_BULLET` to a non-empty value before
+Bullet is a Gem that can be used to track down N+1 query problems. Bullet section is
+displayed on the [performance-bar](../administration/monitoring/performance/performance_bar.md).
+
+![Bullet](img/bullet_v13_0.png)
+
+Because Bullet adds quite a bit of logging noise the logging is disabled by default.
+To enable the logging, set the environment variable `ENABLE_BULLET` to a non-empty value before
 starting GitLab. For example:
 
 ```shell

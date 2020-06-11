@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe SamlProvider do
+RSpec.describe SamlProvider do
   let(:group) { create(:group) }
 
   subject(:saml_provider) { create(:saml_provider, group: group) }
@@ -110,18 +110,6 @@ describe SamlProvider do
         expect(subject).not_to be_enforced_sso
       end
 
-      context 'and feature flag is disabled' do
-        before do
-          stub_feature_flags(enforced_sso: false)
-        end
-
-        it 'is false' do
-          subject.enforced_sso = true
-
-          expect(subject).not_to be_enforced_sso
-        end
-      end
-
       it 'does not enforce SSO when the feature is unavailable' do
         stub_licensed_features(group_saml: false)
         subject.enforced_sso = true
@@ -222,6 +210,48 @@ describe SamlProvider do
         subject.prohibited_outer_forks = false
 
         expect(subject.prohibited_outer_forks?).to be_falsey
+      end
+    end
+  end
+
+  describe '#last_linked_owner?' do
+    let_it_be(:user) { create(:user) }
+
+    context 'for a non-owner' do
+      it { is_expected.not_to be_last_linked_owner(user) }
+    end
+
+    context 'for a group owner' do
+      before do
+        group.add_owner(user)
+      end
+
+      context 'with saml linked' do
+        before do
+          create(:group_saml_identity, user: user, saml_provider: subject)
+        end
+
+        it { is_expected.to be_last_linked_owner(user) }
+
+        context 'another owner has SSO linked' do
+          before do
+            create(:group_saml_identity, :group_owner, saml_provider: subject)
+          end
+
+          it { is_expected.not_to be_last_linked_owner(user) }
+        end
+      end
+
+      context 'without saml linked' do
+        it { is_expected.not_to be_last_linked_owner(user) }
+
+        context 'another owner has SSO linked' do
+          before do
+            create(:group_saml_identity, :group_owner, saml_provider: subject)
+          end
+
+          it { is_expected.not_to be_last_linked_owner(user) }
+        end
       end
     end
   end

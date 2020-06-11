@@ -1,5 +1,5 @@
 <script>
-import { escape as esc, isEmpty } from 'lodash';
+import { escape, isEmpty } from 'lodash';
 import CiIcon from '~/vue_shared/components/ci_icon.vue';
 import { sprintf, __ } from '../../locale';
 
@@ -43,7 +43,7 @@ export default {
           '%{startLink}%{name}%{endLink}',
           {
             startLink: `<a href="${this.deploymentStatus.environment.environment_path}" class="js-environment-link">`,
-            name: esc(this.deploymentStatus.environment.name),
+            name: escape(this.deploymentStatus.environment.name),
             endLink: '</a>',
           },
           false,
@@ -74,8 +74,8 @@ export default {
       }
 
       const { name, path } = this.deploymentCluster;
-      const escapedName = esc(name);
-      const escapedPath = esc(path);
+      const escapedName = escape(name);
+      const escapedPath = escape(path);
 
       if (!escapedPath) {
         return escapedName;
@@ -277,7 +277,7 @@ export default {
   <div class="prepend-top-default append-bottom-default js-environment-container">
     <div class="environment-information">
       <ci-icon :status="iconStatus" />
-      <p class="inline append-bottom-0" v-html="environment"></p>
+      <p class="inline gl-mb-0" v-html="environment"></p>
     </div>
   </div>
 </template>

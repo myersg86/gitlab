@@ -1,9 +1,14 @@
-import { shallowMount } from '@vue/test-utils';
+import Vuex from 'vuex';
+import { createLocalVue, shallowMount } from '@vue/test-utils';
 import { visitUrl } from '~/lib/utils/url_utility';
 import GeoNodeForm from 'ee/geo_node_form/components/geo_node_form.vue';
 import GeoNodeFormCore from 'ee/geo_node_form/components/geo_node_form_core.vue';
 import GeoNodeFormCapacities from 'ee/geo_node_form/components/geo_node_form_capacities.vue';
+import store from 'ee/geo_node_form/store';
 import { MOCK_NODE, MOCK_SELECTIVE_SYNC_TYPES, MOCK_SYNC_SHARDS } from '../mock_data';
+
+const localVue = createLocalVue();
+localVue.use(Vuex);
 
 jest.mock('~/lib/utils/url_utility', () => ({
   visitUrl: jest.fn().mockName('visitUrlMock'),
@@ -20,6 +25,7 @@ describe('GeoNodeForm', () => {
 
   const createComponent = () => {
     wrapper = shallowMount(GeoNodeForm, {
+      store,
       propsData,
     });
   };
@@ -29,7 +35,6 @@ describe('GeoNodeForm', () => {
   });
 
   const findGeoNodeFormCoreField = () => wrapper.find(GeoNodeFormCore);
-  const findGeoNodePrimaryField = () => wrapper.find('#node-primary-field');
   const findGeoNodeInternalUrlField = () => wrapper.find('#node-internal-url-field');
   const findGeoNodeFormCapacitiesField = () => wrapper.find(GeoNodeFormCapacities);
   const findGeoNodeObjectStorageField = () => wrapper.find('#node-object-storage-field');
@@ -42,19 +47,12 @@ describe('GeoNodeForm', () => {
     });
 
     describe.each`
-      primaryNode | showCore | showPrimary | showInternalUrl | showCapacities | showObjectStorage
-      ${true}     | ${true}  | ${true}     | ${true}         | ${true}        | ${false}
-      ${false}    | ${true}  | ${true}     | ${false}        | ${true}        | ${true}
+      primaryNode | showCore | showInternalUrl | showCapacities | showObjectStorage
+      ${true}     | ${true}  | ${true}         | ${true}        | ${false}
+      ${false}    | ${true}  | ${false}        | ${true}        | ${true}
     `(
       `conditional fields`,
-      ({
-        primaryNode,
-        showCore,
-        showPrimary,
-        showInternalUrl,
-        showCapacities,
-        showObjectStorage,
-      }) => {
+      ({ primaryNode, showCore, showInternalUrl, showCapacities, showObjectStorage }) => {
         beforeEach(() => {
           wrapper.setData({
             nodeData: { ...wrapper.vm.nodeData, primary: primaryNode },
@@ -63,10 +61,6 @@ describe('GeoNodeForm', () => {
 
         it(`it ${showCore ? 'shows' : 'hides'} the Core Field`, () => {
           expect(findGeoNodeFormCoreField().exists()).toBe(showCore);
-        });
-
-        it(`it ${showPrimary ? 'shows' : 'hides'} the Primary Field`, () => {
-          expect(findGeoNodePrimaryField().exists()).toBe(showPrimary);
         });
 
         it(`it ${showInternalUrl ? 'shows' : 'hides'} the Internal URL Field`, () => {
@@ -82,6 +76,24 @@ describe('GeoNodeForm', () => {
         });
       },
     );
+
+    describe('Save Button', () => {
+      describe('with errors on form', () => {
+        beforeEach(() => {
+          wrapper.vm.$store.state.formErrors.name = 'Test Error';
+        });
+
+        it('disables button', () => {
+          expect(findGeoNodeSaveButton().attributes('disabled')).toBeTruthy();
+        });
+      });
+
+      describe('with mo errors on form', () => {
+        it('does not disable button', () => {
+          expect(findGeoNodeSaveButton().attributes('disabled')).toBeFalsy();
+        });
+      });
+    });
   });
 
   describe('methods', () => {

@@ -65,9 +65,7 @@ describe Gitlab::Danger::Changelog do
     context 'added files contain a changelog' do
       [
         'changelogs/unreleased/entry.yml',
-        'ee/changelogs/unreleased/entry.yml',
-        'changelogs/unreleased-ee/entry.yml',
-        'ee/changelogs/unreleased-ee/entry.yml'
+        'ee/changelogs/unreleased/entry.yml'
       ].each do |file_path|
         let(:added_files) { [file_path] }
 
@@ -83,14 +81,6 @@ describe Gitlab::Danger::Changelog do
         let(:added_files) { [file_path] }
         it { is_expected.to eq(nil) }
       end
-    end
-  end
-
-  describe '#presented_no_changelog_labels' do
-    subject { changelog.presented_no_changelog_labels }
-
-    it 'returns the labels formatted' do
-      is_expected.to eq('~backstage, ~ci-build, ~meta')
     end
   end
 

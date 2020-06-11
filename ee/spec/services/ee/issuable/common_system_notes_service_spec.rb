@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Issuable::CommonSystemNotesService do
+RSpec.describe Issuable::CommonSystemNotesService do
   let(:user) { create(:user) }
   let(:project) { create(:project) }
   let(:issuable) { create(:issue) }
@@ -52,7 +52,7 @@ describe Issuable::CommonSystemNotesService do
     end
 
     context 'when issuable is an epic' do
-      let(:timestamp) { Time.now }
+      let(:timestamp) { Time.current }
       let(:issuable) { create(:epic, end_date: timestamp) }
 
       subject { described_class.new(nil, user).execute(issuable, old_labels: []) }

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ApplicationHelper do
+RSpec.describe ApplicationHelper do
   include EE::GeoHelpers
 
   describe '#read_only_message', :geo do
@@ -185,6 +185,28 @@ describe ApplicationHelper do
         ee_view = helper.lookup_context.find(view, [], false)
         expect(ee_view.short_identifier).to eq("ee/#{expected_view_path}")
       end
+    end
+  end
+
+  describe '#show_whats_new_dropdown_item?' do
+    using RSpec::Parameterized::TableSyntax
+
+    subject { helper.show_whats_new_dropdown_item? }
+
+    where(:feature_flag, :gitlab_com, :result) do
+      true  | true  | true
+      true  | false | false
+      false | true  | false
+      false | false | false
+    end
+
+    with_them do
+      before do
+        stub_feature_flags(whats_new_dropdown: feature_flag)
+        allow(::Gitlab).to receive(:com?).and_return(gitlab_com)
+      end
+
+      it { is_expected.to be(result) }
     end
   end
 end

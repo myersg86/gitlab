@@ -9,7 +9,7 @@ class DiffNote < Note
   include Gitlab::Utils::StrongMemoize
 
   def self.noteable_types
-    %w(MergeRequest Commit)
+    %w(MergeRequest Commit DesignManagement::Design)
   end
 
   validates :original_position, presence: true
@@ -60,6 +60,8 @@ class DiffNote < Note
   # Returns the diff file from `position`
   def latest_diff_file
     strong_memoize(:latest_diff_file) do
+      next if for_design?
+
       position.diff_file(repository)
     end
   end
@@ -67,6 +69,8 @@ class DiffNote < Note
   # Returns the diff file from `original_position`
   def diff_file
     strong_memoize(:diff_file) do
+      next if for_design?
+
       enqueue_diff_file_creation_job if should_create_diff_file?
 
       fetch_diff_file
@@ -132,7 +136,7 @@ class DiffNote < Note
       # As an extra benefit, the returned `diff_file` already
       # has `highlighted_diff_lines` data set from Redis on
       # `Diff::FileCollection::MergeRequestDiff`.
-      file = noteable.diffs(original_position.diff_options).diff_files.first
+      file = original_position.find_diff_file_from(noteable)
       # if line is not found in persisted diffs, fallback and retrieve file from repository using gitaly
       # This is required because of https://gitlab.com/gitlab-org/gitlab/issues/42676
       file = nil if file&.line_for_position(original_position).nil? && importing?
@@ -145,7 +149,7 @@ class DiffNote < Note
   end
 
   def supported?
-    for_commit? || self.noteable.has_complete_diff_refs?
+    for_commit? || for_design? || self.noteable.has_complete_diff_refs?
   end
 
   def set_line_code
@@ -184,5 +188,3 @@ class DiffNote < Note
     noteable.respond_to?(:repository) ? noteable.repository : project.repository
   end
 end
-
-DiffNote.prepend_if_ee('::EE::DiffNote')

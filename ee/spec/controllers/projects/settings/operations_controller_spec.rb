@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::Settings::OperationsController do
+RSpec.describe Projects::Settings::OperationsController do
   let_it_be(:user) { create(:user) }
 
   before do
@@ -296,14 +296,6 @@ describe Projects::Settings::OperationsController do
         end
 
         it { is_expected.to be_a(StatusPage::ProjectSetting) }
-
-        context 'when feature flag is disabled' do
-          before do
-            stub_feature_flags(status_page: false)
-          end
-
-          it { is_expected.to be_nil }
-        end
       end
 
       context 'with existing status page setting' do
@@ -334,7 +326,8 @@ describe Projects::Settings::OperationsController do
             status_page_params: status_page_attributes.merge(aws_access_key: '',
                                                               aws_secret_key: '',
                                                               aws_s3_bucket_name: '',
-                                                              aws_region: '')
+                                                              aws_region: '',
+                                                              status_page_url: '')
           )
           expect(project.status_page_setting).to be_nil
         end

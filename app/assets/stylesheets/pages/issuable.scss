@@ -167,10 +167,6 @@
     }
   }
 
-  a.gl-label-icon {
-    color: $gray-500;
-  }
-
   .gl-label .gl-label-link:hover {
     text-decoration: none;
     color: inherit;
@@ -178,11 +174,6 @@
     .gl-label-text:last-of-type {
       text-decoration: underline;
     }
-  }
-
-  .gl-label .gl-label-icon:hover {
-    text-decoration: none;
-    color: $gray-500;
   }
 
   .btn-link {
@@ -405,7 +396,7 @@
       overflow: hidden;
 
       &:hover {
-        background-color: $sidebar-block-hover-color;
+        background-color: $gray-200;
       }
 
       &.issuable-sidebar-header {
@@ -763,7 +754,8 @@
         margin-right: 10px;
         min-width: 0;
 
-        .issue-weight-icon {
+        .issue-weight-icon,
+        .issue-estimate-icon {
           vertical-align: sub;
         }
       }
@@ -825,10 +817,6 @@
             text-decoration: underline;
           }
         }
-      }
-
-      .gl-label-icon {
-        color: $gray-500;
       }
     }
 

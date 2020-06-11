@@ -20,6 +20,7 @@ module EE
 
             given elasticsearch_indexing: ->(val) { val } do
               optional :elasticsearch_search, type: Grape::API::Boolean, desc: 'Enable Elasticsearch search'
+              optional :elasticsearch_pause_indexing, type: Grape::API::Boolean, desc: 'Pause Elasticsearch indexing'
               requires :elasticsearch_url, type: String, desc: 'The url to use for connecting to Elasticsearch. Use a comma-separated list to support clustering (e.g., "http://localhost:9200, http://localhost:9201")'
               optional :elasticsearch_limit_indexing, type: Grape::API::Boolean, desc: 'Limit Elasticsearch to index certain namespaces and projects'
             end
@@ -42,6 +43,7 @@ module EE
             optional :prevent_merge_requests_author_approval, type: Grape::API::Boolean, desc: 'Disable Merge request author ability to approve request.'
             optional :prevent_merge_requests_committers_approval, type: Grape::API::Boolean, desc: 'Disable Merge request committer ability to approve request.'
             optional :npm_package_requests_forwarding, type: Grape::API::Boolean, desc: 'NPM package requests are forwarded to npmjs.org if not found on GitLab.'
+            optional :group_owners_can_manage_default_branch_protection, type: Grape::API::Boolean, desc: 'Allow owners to manage default branch protection in groups'
           end
         end
 

@@ -59,6 +59,48 @@ describe ClustersHelper do
     end
   end
 
+  describe '#js_clusters_list_data' do
+    it 'displays endpoint path and images' do
+      js_data = helper.js_clusters_list_data('/path')
+
+      expect(js_data[:endpoint]).to eq('/path')
+
+      expect(js_data.dig(:img_tags, :aws, :path)).to match(%r(/illustrations/logos/amazon_eks|svg))
+      expect(js_data.dig(:img_tags, :default, :path)).to match(%r(/illustrations/logos/kubernetes|svg))
+      expect(js_data.dig(:img_tags, :gcp, :path)).to match(%r(/illustrations/logos/google_gke|svg))
+
+      expect(js_data.dig(:img_tags, :aws, :text)).to eq('Amazon EKS')
+      expect(js_data.dig(:img_tags, :default, :text)).to eq('Kubernetes Cluster')
+      expect(js_data.dig(:img_tags, :gcp, :text)).to eq('Google GKE')
+    end
+  end
+
+  describe '#provider_icon' do
+    it 'will return GCP logo with gcp argument' do
+      logo = helper.provider_icon('gcp')
+
+      expect(logo).to match(%r(img alt="Google GKE" data-src="|/illustrations/logos/google_gke|svg))
+    end
+
+    it 'will return AWS logo with aws argument' do
+      logo = helper.provider_icon('aws')
+
+      expect(logo).to match(%r(img alt="Amazon EKS" data-src="|/illustrations/logos/amazon_eks|svg))
+    end
+
+    it 'will return default logo with unknown provider' do
+      logo = helper.provider_icon('unknown')
+
+      expect(logo).to match(%r(img alt="Kubernetes Cluster" data-src="|/illustrations/logos/kubernetes|svg))
+    end
+
+    it 'will return default logo when provider is empty' do
+      logo = helper.provider_icon
+
+      expect(logo).to match(%r(img alt="Kubernetes Cluster" data-src="|/illustrations/logos/kubernetes|svg))
+    end
+  end
+
   describe '#cluster_type_label' do
     subject { helper.cluster_type_label(cluster_type) }
 

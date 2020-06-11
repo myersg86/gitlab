@@ -69,7 +69,6 @@ module EE
       scope :in_issues, -> (issues) { joins(:epic_issues).where(epic_issues: { issue_id: issues }).distinct }
       scope :has_parent, -> { where.not(parent_id: nil) }
       scope :iid_starts_with, -> (query) { where("CAST(iid AS VARCHAR) LIKE ?", "#{sanitize_sql_like(query)}%") }
-      scope :public_only, -> { where(confidential: false) }
 
       scope :within_timeframe, -> (start_date, end_date) do
         where('start_date is not NULL or end_date is not NULL')
@@ -106,6 +105,12 @@ module EE
       scope :due_date_inherited, -> { where(due_date_is_fixed: [nil, false]) }
 
       scope :counts_by_state, -> { group(:state_id).count }
+
+      scope :public_only, -> { where(confidential: false) }
+      scope :confidential, -> { where(confidential: true) }
+      scope :not_confidential_or_in_groups, -> (groups) do
+        public_only.or(where(confidential: true, group_id: groups))
+      end
 
       MAX_HIERARCHY_DEPTH = 5
 
@@ -233,10 +238,6 @@ module EE
 
     def project
       nil
-    end
-
-    def supports_weight?
-      false
     end
 
     def upcoming?

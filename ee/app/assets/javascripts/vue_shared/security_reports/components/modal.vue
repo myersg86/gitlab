@@ -84,9 +84,6 @@ export default {
     isResolved() {
       return Boolean(this.modal.isResolved);
     },
-    hasRemediation() {
-      return Boolean(this.remediation);
-    },
     project() {
       return this.modal.project;
     },
@@ -207,7 +204,6 @@ export default {
         :solution="solution"
         :remediation="remediation"
         :has-mr="vulnerability.hasMergeRequest"
-        :has-remediation="hasRemediation"
         :has-download="canDownloadPatchForThisVulnerability"
         :vulnerability-feedback-help-path="vulnerabilityFeedbackHelpPath"
       />
@@ -253,7 +249,7 @@ export default {
 
       <div v-if="modal.error" class="alert alert-danger">{{ modal.error }}</div>
     </slot>
-    <div slot="footer">
+    <template #footer>
       <dismissal-comment-modal-footer
         v-if="modal.isCommentingOnDismissal"
         :is-dismissed="vulnerability.isDismissed"
@@ -284,6 +280,6 @@ export default {
         @revertDismissVulnerability="$emit('revertDismissVulnerability')"
         @downloadPatch="$emit('downloadPatch')"
       />
-    </div>
+    </template>
   </modal>
 </template>

@@ -2,6 +2,7 @@ import Vue from 'vue';
 import IssuesAnalytics from './components/issues_analytics.vue';
 import store from './stores';
 import FilteredSearchIssueAnalytics from './filtered_search_issues_analytics';
+import { urlParamsToObject } from '~/lib/utils/common_utils';
 
 export default () => {
   const el = document.querySelector('#js-issues-analytics');
@@ -9,10 +10,17 @@ export default () => {
 
   if (!el) return null;
 
-  const { endpoint, noDataEmptyStateSvgPath, filtersEmptyStateSvgPath } = el.dataset;
+  const {
+    endpoint,
+    noDataEmptyStateSvgPath,
+    filtersEmptyStateSvgPath,
+    issuesApiEndpoint,
+    issuesPageEndpoint,
+  } = el.dataset;
 
   // Set default filters from URL
-  store.dispatch('issueAnalytics/setFilters', window.location.search);
+  const filters = urlParamsToObject(window.location.search);
+  store.dispatch('issueAnalytics/setFilters', filters);
 
   return new Vue({
     el,
@@ -31,6 +39,8 @@ export default () => {
           filterBlockEl,
           noDataEmptyStateSvgPath,
           filtersEmptyStateSvgPath,
+          issuesApiEndpoint,
+          issuesPageEndpoint,
         },
       });
     },

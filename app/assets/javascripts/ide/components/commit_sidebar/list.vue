@@ -1,9 +1,8 @@
 <script>
-import $ from 'jquery';
 import { mapActions } from 'vuex';
 import { __, sprintf } from '~/locale';
+import { GlModal } from '@gitlab/ui';
 import Icon from '~/vue_shared/components/icon.vue';
-import DeprecatedModal2 from '~/vue_shared/components/deprecated_modal_2.vue';
 import tooltip from '~/vue_shared/directives/tooltip';
 import ListItem from './list_item.vue';
 
@@ -11,7 +10,7 @@ export default {
   components: {
     Icon,
     ListItem,
-    GlModal: DeprecatedModal2,
+    GlModal,
   },
   directives: {
     tooltip,
@@ -56,9 +55,9 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['stageAllChanges', 'unstageAllChanges', 'discardAllChanges']),
+    ...mapActions(['unstageAllChanges', 'discardAllChanges']),
     openDiscardModal() {
-      $('#discard-all-changes').modal('show');
+      this.$refs.discardAllModal.show();
     },
     unstageAndDiscardAllChanges() {
       this.unstageAllChanges();
@@ -75,7 +74,7 @@ export default {
   <div class="ide-commit-list-container">
     <header class="multi-file-commit-panel-header d-flex mb-0">
       <div class="d-flex align-items-center flex-fill">
-        <icon v-once :name="iconName" :size="18" class="append-right-8" />
+        <icon v-once :name="iconName" :size="18" class="gl-mr-3" />
         <strong> {{ titleText }} </strong>
         <div class="d-flex ml-auto">
           <button
@@ -99,7 +98,7 @@ export default {
         </div>
       </div>
     </header>
-    <ul v-if="filesLength" class="multi-file-commit-list list-unstyled append-bottom-0">
+    <ul v-if="filesLength" class="multi-file-commit-list list-unstyled gl-mb-0">
       <li v-for="file in fileList" :key="file.key">
         <list-item
           :file="file"
@@ -114,11 +113,12 @@ export default {
     </p>
     <gl-modal
       v-if="!stagedList"
-      id="discard-all-changes"
-      :footer-primary-button-text="__('Discard all changes')"
-      :header-title-text="__('Discard all changes?')"
-      footer-primary-button-variant="danger"
-      @submit="unstageAndDiscardAllChanges"
+      ref="discardAllModal"
+      ok-variant="danger"
+      modal-id="discard-all-changes"
+      :ok-title="__('Discard all changes')"
+      :title="__('Discard all changes?')"
+      @ok="unstageAndDiscardAllChanges"
     >
       {{ $options.discardModalText }}
     </gl-modal>

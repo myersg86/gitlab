@@ -2,13 +2,19 @@ import Vue from 'vue';
 import { mount } from '@vue/test-utils';
 import { formatDate } from '~/lib/utils/datetime_utility';
 import RelatedIssuableItem from '~/vue_shared/components/issue/related_issuable_item.vue';
-import {
-  defaultAssignees,
-  defaultMilestone,
-} from '../../../../javascripts/vue_shared/components/issue/related_issuable_mock_data';
+import { defaultAssignees, defaultMilestone } from './related_issuable_mock_data';
 
 describe('RelatedIssuableItem', () => {
   let wrapper;
+
+  function mountComponent({ mountMethod = mount, stubs = {}, props = {}, slots = {} } = {}) {
+    wrapper = mountMethod(RelatedIssuableItem, {
+      propsData: props,
+      slots,
+      stubs,
+    });
+  }
+
   const props = {
     idKey: 1,
     displayReference: 'gitlab-org/gitlab-test#1',
@@ -29,10 +35,7 @@ describe('RelatedIssuableItem', () => {
   };
 
   beforeEach(() => {
-    wrapper = mount(RelatedIssuableItem, {
-      slots,
-      propsData: props,
-    });
+    mountComponent({ props, slots });
   });
 
   afterEach(() => {

@@ -2,8 +2,10 @@
 
 require 'spec_helper'
 
-describe GlobalPolicy do
+RSpec.describe GlobalPolicy do
   include ExternalAuthorizationServiceHelpers
+
+  let_it_be(:admin) { create(:admin) }
 
   let(:current_user) { create(:user) }
   let(:user) { create(:user) }
@@ -38,9 +40,17 @@ describe GlobalPolicy do
   it { is_expected.to be_disallowed(:destroy_licenses) }
   it { is_expected.to be_disallowed(:read_all_geo) }
 
-  it { expect(described_class.new(create(:admin), [user])).to be_allowed(:read_licenses) }
-  it { expect(described_class.new(create(:admin), [user])).to be_allowed(:destroy_licenses) }
-  it { expect(described_class.new(create(:admin), [user])).to be_allowed(:read_all_geo) }
+  context 'when admin mode enabled', :enable_admin_mode do
+    it { expect(described_class.new(admin, [user])).to be_allowed(:read_licenses) }
+    it { expect(described_class.new(admin, [user])).to be_allowed(:destroy_licenses) }
+    it { expect(described_class.new(admin, [user])).to be_allowed(:read_all_geo) }
+  end
+
+  context 'when admin mode disabled' do
+    it { expect(described_class.new(admin, [user])).to be_disallowed(:read_licenses) }
+    it { expect(described_class.new(admin, [user])).to be_disallowed(:destroy_licenses) }
+    it { expect(described_class.new(admin, [user])).to be_disallowed(:read_all_geo) }
+  end
 
   shared_examples 'analytics policy' do |action|
     context 'anonymous user' do
@@ -69,9 +79,120 @@ describe GlobalPolicy do
       end
 
       it { is_expected.to be_disallowed(:update_max_pages_size) }
-      it { expect(described_class.new(create(:admin), [user])).to be_allowed(:update_max_pages_size) }
+
+      context 'when admin mode enabled', :enable_admin_mode do
+        it { expect(described_class.new(admin, [user])).to be_allowed(:update_max_pages_size) }
+      end
+
+      context 'when admin mode disabled' do
+        it { expect(described_class.new(admin, [user])).to be_disallowed(:update_max_pages_size) }
+      end
     end
 
-    it { expect(described_class.new(create(:admin), [user])).to be_disallowed(:update_max_pages_size) }
+    it { expect(described_class.new(admin, [user])).to be_disallowed(:update_max_pages_size) }
+  end
+
+  describe 'create_group_with_default_branch_protection' do
+    context 'for an admin' do
+      let(:current_user) { admin }
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: true)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          context 'when admin mode is enabled', :enable_admin_mode do
+            it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+          end
+
+          context 'when admin mode is disabled' do
+            it { is_expected.to be_disallowed(:create_group_with_default_branch_protection) }
+          end
+        end
+      end
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is not available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: false)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+      end
+    end
+
+    context 'for a normal user' do
+      let(:current_user) { create(:user) }
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: true)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_disallowed(:create_group_with_default_branch_protection) }
+        end
+      end
+
+      context 'when the `default_branch_protection_restriction_in_groups` feature is not available' do
+        before do
+          stub_licensed_features(default_branch_protection_restriction_in_groups: false)
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is enabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: true)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+
+        context 'when the setting `group_owners_can_manage_default_branch_protection` is disabled' do
+          before do
+            stub_ee_application_setting(group_owners_can_manage_default_branch_protection: false)
+          end
+
+          it { is_expected.to be_allowed(:create_group_with_default_branch_protection) }
+        end
+      end
+    end
   end
 end

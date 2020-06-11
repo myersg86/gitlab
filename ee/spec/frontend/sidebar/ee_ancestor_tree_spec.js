@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { escape as esc } from 'lodash';
+import { escape } from 'lodash';
 import ancestorsTree from 'ee/sidebar/components/ancestors_tree/ancestors_tree.vue';
 import mountComponent from 'helpers/vue_mount_component_helper';
 
@@ -20,7 +20,7 @@ describe('AncestorsTreeContainer', () => {
   });
 
   it('renders all ancestors rows', () => {
-    expect(vm.$el.querySelectorAll('.vertical-timeline-row').length).toBe(ancestors.length);
+    expect(vm.$el.querySelectorAll('.vertical-timeline-row')).toHaveLength(ancestors.length);
   });
 
   it('renders tooltip with the immediate parent', () => {
@@ -57,7 +57,7 @@ describe('AncestorsTreeContainer', () => {
 
   it('escapes html in the tooltip', () => {
     const title = '<script>alert(1);</script>';
-    const escapedTitle = esc(title);
+    const escapedTitle = escape(title);
 
     vm.$props.ancestors = [{ id: 1, url: '', title, state: 'open' }];
 

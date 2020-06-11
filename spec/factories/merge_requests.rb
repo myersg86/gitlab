@@ -109,6 +109,17 @@ FactoryBot.define do
       end
     end
 
+    trait :with_head_pipeline do
+      after(:build) do |merge_request|
+        merge_request.head_pipeline = build(
+          :ci_pipeline,
+          :running,
+          project: merge_request.source_project,
+          ref: merge_request.source_branch,
+          sha: merge_request.diff_head_sha)
+      end
+    end
+
     trait :with_test_reports do
       after(:build) do |merge_request|
         merge_request.head_pipeline = build(
@@ -121,12 +132,41 @@ FactoryBot.define do
       end
     end
 
+    trait :with_accessibility_reports do
+      after(:build) do |merge_request|
+        merge_request.head_pipeline = build(
+          :ci_pipeline,
+          :success,
+          :with_accessibility_reports,
+          project: merge_request.source_project,
+          ref: merge_request.source_branch,
+          sha: merge_request.diff_head_sha)
+      end
+    end
+
+    trait :unique_branches do
+      source_branch { generate(:branch) }
+      target_branch { generate(:branch) }
+    end
+
     trait :with_coverage_reports do
       after(:build) do |merge_request|
         merge_request.head_pipeline = build(
           :ci_pipeline,
           :success,
           :with_coverage_reports,
+          project: merge_request.source_project,
+          ref: merge_request.source_branch,
+          sha: merge_request.diff_head_sha)
+      end
+    end
+
+    trait :with_terraform_reports do
+      after(:build) do |merge_request|
+        merge_request.head_pipeline = build(
+          :ci_pipeline,
+          :success,
+          :with_terraform_reports,
           project: merge_request.source_project,
           ref: merge_request.source_branch,
           sha: merge_request.diff_head_sha)

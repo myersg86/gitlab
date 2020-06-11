@@ -1,4 +1,7 @@
 ---
+stage: Verify
+group: Runner
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
@@ -29,7 +32,7 @@ variables:
 NOTE: **Note:**
 The `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_HOST_AUTH_METHOD`
 variables can't be set in the GitLab UI. To set them, assign them to a variable
-[in the UI](../variables/README.md#via-the-ui), and then assign that
+[in the UI](../variables/README.md#create-a-custom-variable-in-the-ui), and then assign that
 variable to the `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_HOST_AUTH_METHOD`
 variables in your `.gitlab-ci.yml`.
 
@@ -45,7 +48,7 @@ Database: nice_marmot
 If you are wondering why we used `postgres` for the `Host`, read more at
 [How services are linked to the job](../docker/using_docker_images.md#how-services-are-linked-to-the-job).
 
-You can also use any other docker image available on [Docker Hub](https://hub.docker.com/_/postgres).
+You can also use any other Docker image available on [Docker Hub](https://hub.docker.com/_/postgres).
 For example, to use PostgreSQL 9.3 the service becomes `postgres:9.3`.
 
 The `postgres` image can accept some environment variables. For more details

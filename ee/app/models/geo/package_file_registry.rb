@@ -2,6 +2,13 @@
 
 class Geo::PackageFileRegistry < Geo::BaseRegistry
   include ::Delay
+  include ShaAttribute
+
+  MODEL_FOREIGN_KEY = :package_file_id
+
+  def self.declarative_policy_class
+    'Geo::RegistryPolicy'
+  end
 
   STATE_VALUES = {
     pending: 0,
@@ -15,7 +22,9 @@ class Geo::PackageFileRegistry < Geo::BaseRegistry
   scope :never, -> { where(last_synced_at: nil) }
   scope :failed, -> { with_state(:failed) }
   scope :synced, -> { with_state(:synced) }
-  scope :retry_due, -> { where(arel_table[:retry_at].eq(nil).or(arel_table[:retry_at].lt(Time.now))) }
+  scope :pending, -> { with_state(:pending) }
+  scope :retry_due, -> { where(arel_table[:retry_at].eq(nil).or(arel_table[:retry_at].lt(Time.current))) }
+  scope :ordered, -> { order(:id) }
 
   state_machine :state, initial: :pending do
     state :pending, value: STATE_VALUES[:pending]
@@ -24,7 +33,7 @@ class Geo::PackageFileRegistry < Geo::BaseRegistry
     state :failed, value: STATE_VALUES[:failed]
 
     before_transition any => :started do |registry, _|
-      registry.last_synced_at = Time.now
+      registry.last_synced_at = Time.current
     end
 
     before_transition any => :pending do |registry, _|
@@ -59,6 +68,9 @@ class Geo::PackageFileRegistry < Geo::BaseRegistry
       transition [:synced, :failed] => :pending
     end
   end
+
+  sha_attribute :verification_checksum
+  sha_attribute :verification_checksum_mismatched
 
   # @return [Geo::PackageFileRegistry] an instance of this class
   def self.for_model_record_id(id)

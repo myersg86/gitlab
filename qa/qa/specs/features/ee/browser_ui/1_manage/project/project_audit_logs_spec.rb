@@ -39,8 +39,8 @@ module QA
         before do
           project.visit!
 
-          Page::Project::Menu.perform(&:go_to_members_settings)
-          Page::Project::Settings::Members.perform do |members|
+          Page::Project::Menu.perform(&:click_members)
+          Page::Project::Members.perform do |members|
             members.add_member(user.username)
           end
         end
@@ -72,24 +72,35 @@ module QA
           Page::Project::Settings::Main.perform do |settings|
             # Change visibility from public to internal
             settings.expand_visibility_project_features_permissions do |page|
-              page.set_project_visibility "Internal"
+              page.set_project_visibility "Private"
             end
           end
         end
 
-        it_behaves_like 'audit event', ["Change visibility from public to internal"]
+        it_behaves_like 'audit event', ["Change visibility from public to private"]
       end
 
-      context "Export file download", quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/issues/202249', type: :bug } do
+      context "Export file download", quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/217949', type: :investigating } do
         before do
-          project.visit!
+          QA::Support::Retrier.retry_until do
+            project = Resource::Project.fabricate_via_api! do |project|
+              project.name = 'project_for_export'
+              project.initialize_with_readme = true
+            end
 
-          Page::Project::Menu.perform(&:go_to_general_settings)
-          Page::Project::Settings::Main.perform do |settings|
-            settings.expand_advanced_settings(&:click_export_project_link)
-            expect(page).to have_text("Project export started")
+            project.visit!
 
             Page::Project::Menu.perform(&:go_to_general_settings)
+            Page::Project::Settings::Main.perform do |settings|
+              settings.expand_advanced_settings(&:click_export_project_link)
+              expect(page).to have_text("Project export started")
+
+              Page::Project::Menu.perform(&:go_to_general_settings)
+              settings.expand_advanced_settings(&:has_download_export_link?)
+            end
+          end
+
+          Page::Project::Settings::Main.perform do |settings|
             settings.expand_advanced_settings(&:click_download_export_link)
           end
         end

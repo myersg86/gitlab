@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe IssuesFinder do
+RSpec.describe IssuesFinder do
   describe '#execute' do
     include_context 'IssuesFinder context'
     include_context 'IssuesFinder#execute context'
@@ -111,6 +111,14 @@ describe IssuesFinder do
             it 'returns all issues in the epic including subepic issues' do
               expect(issues).to contain_exactly(issue_1, issue_subepic)
             end
+          end
+        end
+
+        context 'filter issues with any epic' do
+          let(:params) { { epic_id: ::IssuableFinder::Params::FILTER_ANY } }
+
+          it 'returns filtered issues' do
+            expect(issues).to contain_exactly(issue_1, issue_2, issue_subepic)
           end
         end
       end

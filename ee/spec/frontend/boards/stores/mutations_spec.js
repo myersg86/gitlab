@@ -1,4 +1,5 @@
 import mutations from 'ee/boards/stores/mutations';
+import { inactiveListId } from '~/boards/constants';
 
 const expectNotImplemented = action => {
   it('is not implemented', () => {
@@ -32,7 +33,7 @@ describe('SET_ACTIVE_LIST_ID', () => {
   it('updates aciveListId to be the value that is passed', () => {
     const expectedId = 1;
     const state = {
-      activeListId: 0,
+      activeListId: inactiveListId,
     };
 
     mutations.SET_ACTIVE_LIST_ID(state, expectedId);
@@ -91,4 +92,26 @@ describe('RECEIVE_REMOVE_BOARD_ERROR', () => {
 
 describe('TOGGLE_PROMOTION_STATE', () => {
   expectNotImplemented(mutations.TOGGLE_PROMOTION_STATE);
+});
+
+describe('TOGGLE_EPICS_SWIMLANES', () => {
+  it('toggles isShowingEpicsSwimlanes from true to false', () => {
+    const state = {
+      isShowingEpicsSwimlanes: true,
+    };
+
+    mutations.TOGGLE_EPICS_SWIMLANES(state);
+
+    expect(state.isShowingEpicsSwimlanes).toBe(false);
+  });
+
+  it('toggles isShowingEpicsSwimlanes from false to true', () => {
+    const state = {
+      isShowingEpicsSwimlanes: false,
+    };
+
+    mutations.TOGGLE_EPICS_SWIMLANES(state);
+
+    expect(state.isShowingEpicsSwimlanes).toBe(true);
+  });
 });

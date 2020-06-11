@@ -105,7 +105,7 @@ RSpec.shared_examples 'cluster metrics' do
         let(:prometheus_body) { '{"status":"success"}' }
 
         it 'returns prometheus response' do
-          prometheus_json_body = JSON.parse(prometheus_body)
+          prometheus_json_body = Gitlab::Json.parse(prometheus_body)
 
           get :prometheus_proxy, params: prometheus_proxy_params
 
@@ -191,7 +191,7 @@ RSpec.shared_examples 'cluster metrics' do
       get :metrics_dashboard, params: metrics_params, format: :json
 
       expect(response).to have_gitlab_http_status(:ok)
-      expect(json_response.keys).to contain_exactly('dashboard', 'status')
+      expect(json_response.keys).to contain_exactly('dashboard', 'status', 'metrics_data')
     end
 
     it 'is the default dashboard' do

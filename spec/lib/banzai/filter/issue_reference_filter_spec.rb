@@ -4,13 +4,16 @@ require 'spec_helper'
 
 describe Banzai::Filter::IssueReferenceFilter do
   include FilterSpecHelper
+  include DesignManagementTestHelpers
 
   def helper
     IssuesHelper
   end
 
   let(:project) { create(:project, :public) }
-  let(:issue)  { create(:issue, project: project) }
+  let(:issue) { create(:issue, project: project) }
+  let(:issue_path) { "/#{issue.project.namespace.path}/#{issue.project.path}/-/issues/#{issue.iid}" }
+  let(:issue_url) { "http://#{Gitlab.config.gitlab.host}#{issue_path}" }
 
   it 'requires project context' do
     expect { described_class.call('') }.to raise_error(ArgumentError, /:project/)
@@ -45,7 +48,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("Fixed #{reference}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project)
+        .to eq issue_url
     end
 
     it 'links with adjacent text' do
@@ -112,7 +115,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       link = doc.css('a').first.attr('href')
 
       expect(link).not_to match %r(https?://)
-      expect(link).to eq helper.url_for_issue(issue.iid, project, only_path: true)
+      expect(link).to eq issue_path
     end
 
     it 'does not process links containing issue numbers followed by text' do
@@ -144,7 +147,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project2)
+        .to eq issue_url
     end
 
     it 'link has valid text' do
@@ -194,7 +197,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project2)
+        .to eq issue_url
     end
 
     it 'link has valid text' do
@@ -244,7 +247,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project2)
+        .to eq issue_url
     end
 
     it 'link has valid text' do
@@ -278,7 +281,7 @@ describe Banzai::Filter::IssueReferenceFilter do
     let(:namespace) { create(:namespace, name: 'cross-reference') }
     let(:project2)  { create(:project, :public, namespace: namespace) }
     let(:issue)     { create(:issue, project: project2) }
-    let(:reference) { helper.url_for_issue(issue.iid, project2) + "#note_123" }
+    let(:reference) { issue_url + "#note_123" }
 
     it 'links to a valid reference' do
       doc = reference_filter("See #{reference}")
@@ -313,7 +316,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference_link}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project2)
+        .to eq issue_url
     end
 
     it 'links with adjacent text' do
@@ -335,14 +338,14 @@ describe Banzai::Filter::IssueReferenceFilter do
     let(:namespace) { create(:namespace, name: 'cross-reference') }
     let(:project2)  { create(:project, :public, namespace: namespace) }
     let(:issue)     { create(:issue, project: project2) }
-    let(:reference) { "#{helper.url_for_issue(issue.iid, project2) + "#note_123"}" }
+    let(:reference) { "#{issue_url + "#note_123"}" }
     let(:reference_link) { %{<a href="#{reference}">Reference</a>} }
 
     it 'links to a valid reference' do
       doc = reference_filter("See #{reference_link}")
 
       expect(doc.css('a').first.attr('href'))
-        .to eq helper.url_for_issue(issue.iid, project2) + "#note_123"
+        .to eq issue_url + "#note_123"
     end
 
     it 'links with adjacent text' do
@@ -355,6 +358,33 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("Fixed (#{reference_link}.)")
 
       expect(doc.css('a').first.attr('class')).to eq 'gfm gfm-issue has-tooltip'
+    end
+  end
+
+  context 'when processing a link to the designs tab' do
+    let(:designs_tab_url) { url_for_designs(issue) }
+    let(:input_text) { "See #{designs_tab_url}" }
+
+    subject(:link) { reference_filter(input_text).css('a').first }
+
+    before do
+      enable_design_management
+    end
+
+    it 'includes the word "designs" after the reference in the text content', :aggregate_failures do
+      expect(link.attr('title')).to eq(issue.title)
+      expect(link.attr('href')).to eq(designs_tab_url)
+      expect(link.text).to eq("#{issue.to_reference} (designs)")
+    end
+
+    context 'design management is not available' do
+      before do
+        enable_design_management(false)
+      end
+
+      it 'links to the issue, but not to the designs tab' do
+        expect(link.text).to eq(issue.to_reference)
+      end
     end
   end
 
@@ -385,7 +415,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference}", context)
 
       link = doc.css('a').first
-      expect(link.attr('href')).to eq(helper.url_for_issue(issue.iid, project))
+      expect(link.attr('href')).to eq(issue_url)
       expect(link.text).to include("#{project.full_path}##{issue.iid}")
     end
 
@@ -397,23 +427,23 @@ describe Banzai::Filter::IssueReferenceFilter do
     end
 
     it 'links to a valid reference for url cross-reference' do
-      reference = helper.url_for_issue(issue.iid, project) + "#note_123"
+      reference = issue_url + "#note_123"
 
       doc = reference_filter("See #{reference}", context)
 
       link = doc.css('a').first
-      expect(link.attr('href')).to eq(helper.url_for_issue(issue.iid, project) + "#note_123")
+      expect(link.attr('href')).to eq(issue_url + "#note_123")
       expect(link.text).to include("#{project.full_path}##{issue.iid}")
     end
 
     it 'links to a valid reference for cross-reference in link href' do
-      reference = "#{helper.url_for_issue(issue.iid, project) + "#note_123"}"
+      reference = "#{issue_url + "#note_123"}"
       reference_link = %{<a href="#{reference}">Reference</a>}
 
       doc = reference_filter("See #{reference_link}", context)
 
       link = doc.css('a').first
-      expect(link.attr('href')).to eq(helper.url_for_issue(issue.iid, project) + "#note_123")
+      expect(link.attr('href')).to eq(issue_url + "#note_123")
       expect(link.text).to include('Reference')
     end
 
@@ -423,7 +453,7 @@ describe Banzai::Filter::IssueReferenceFilter do
       doc = reference_filter("See #{reference_link}", context)
 
       link = doc.css('a').first
-      expect(link.attr('href')).to eq(helper.url_for_issue(issue.iid, project))
+      expect(link.attr('href')).to eq(issue_url)
       expect(link.text).to include('Reference')
     end
   end
@@ -465,6 +495,43 @@ describe Banzai::Filter::IssueReferenceFilter do
       expect do |b|
         described_class.references_in(merge_request.to_reference, &b)
       end.not_to yield_control
+    end
+  end
+
+  describe '#object_link_text_extras' do
+    before do
+      enable_design_management(enabled)
+    end
+
+    let(:current_user) { project.owner }
+    let(:enabled) { true }
+    let(:matches) { Issue.link_reference_pattern.match(input_text) }
+    let(:extras) { subject.object_link_text_extras(issue, matches) }
+
+    subject { filter_instance }
+
+    context 'the link does not go to the designs tab' do
+      let(:input_text) { Gitlab::Routing.url_helpers.project_issue_url(issue.project, issue) }
+
+      it 'does not include designs' do
+        expect(extras).not_to include('designs')
+      end
+    end
+
+    context 'the link goes to the designs tab' do
+      let(:input_text) { url_for_designs(issue) }
+
+      it 'includes designs' do
+        expect(extras).to include('designs')
+      end
+
+      context 'design management is disabled' do
+        let(:enabled) { false }
+
+        it 'does not include designs in the extras' do
+          expect(extras).not_to include('designs')
+        end
+      end
     end
   end
 end

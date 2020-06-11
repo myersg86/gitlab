@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Pipeline', :js do
+RSpec.describe 'Pipeline', :js do
   let(:user) { create(:user) }
   let(:project) { create(:project, :repository) }
 
@@ -136,7 +136,7 @@ describe 'Pipeline', :js do
 
     context 'with a License Compliance artifact' do
       before do
-        create(:ee_ci_build, :license_management, pipeline: pipeline)
+        create(:ee_ci_build, :license_scanning, pipeline: pipeline)
 
         visit licenses_project_pipeline_path(project, pipeline)
       end

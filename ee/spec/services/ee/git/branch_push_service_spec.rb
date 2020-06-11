@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Git::BranchPushService do
+RSpec.describe Git::BranchPushService do
   include RepoHelpers
 
   let_it_be(:user) { create(:user) }
@@ -55,7 +55,7 @@ describe Git::BranchPushService do
       end
 
       it 'runs ElasticCommitIndexerWorker' do
-        expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id, oldrev, newrev)
+        expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id)
 
         subject.execute
       end
@@ -95,7 +95,7 @@ describe Git::BranchPushService do
           end
 
           it 'runs ElasticCommitIndexerWorker' do
-            expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id, oldrev, newrev)
+            expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id)
 
             subject.execute
           end
@@ -110,7 +110,7 @@ describe Git::BranchPushService do
           end
 
           it 'runs ElasticCommitIndexerWorker' do
-            expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id, oldrev, newrev)
+            expect(ElasticCommitIndexerWorker).to receive(:perform_async).with(project.id)
 
             subject.execute
           end
@@ -157,7 +157,7 @@ describe Git::BranchPushService do
     let(:commits_to_sync) { [] }
 
     shared_examples 'enqueues Jira sync worker' do
-      it do
+      specify do
         Sidekiq::Testing.fake! do
           expect(JiraConnect::SyncBranchWorker).to receive(:perform_async)
             .with(project.id, branch_to_sync, commits_to_sync)
@@ -169,7 +169,7 @@ describe Git::BranchPushService do
     end
 
     shared_examples 'does not enqueue Jira sync worker' do
-      it do
+      specify do
         Sidekiq::Testing.fake! do
           expect { subject.execute }.not_to change(JiraConnect::SyncBranchWorker.jobs, :size)
         end

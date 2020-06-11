@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::LicensesController do
+RSpec.describe Projects::LicensesController do
   describe "GET #index" do
     let_it_be(:project) { create(:project, :repository, :private) }
     let_it_be(:user) { create(:user) }
@@ -71,6 +71,10 @@ describe Projects::LicensesController do
 
             it 'returns status ok' do
               expect(json_response['report']['status']).to eq('ok')
+            end
+
+            it 'includes the pagination headers' do
+              expect(response).to include_pagination_headers
             end
 
             context 'with pagination params' do

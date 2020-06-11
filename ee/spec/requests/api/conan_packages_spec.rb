@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe API::ConanPackages do
+RSpec.describe API::ConanPackages do
   include WorkhorseHelpers
   include EE::PackagesManagerApiSpecHelpers
 
@@ -14,6 +14,8 @@ describe API::ConanPackages do
   let(:auth_token) { personal_access_token.token }
   let(:job) { create(:ci_build, user: user) }
   let(:job_token) { job.token }
+  let(:deploy_token) { create(:deploy_token, read_package_registry: true, write_package_registry: true) }
+  let(:project_deploy_token) { create(:project_deploy_token, deploy_token: deploy_token, project: project) }
 
   let(:headers) do
     { 'HTTP_AUTHORIZATION' => ActionController::HttpAuthentication::Basic.encode_credentials('foo', auth_token) }
@@ -50,6 +52,14 @@ describe API::ConanPackages do
 
     it 'responds with 200 OK when valid job token is provided' do
       jwt = build_jwt_from_job(job)
+      get api('/packages/conan/v1/ping'), headers: build_token_auth_header(jwt.encoded)
+
+      expect(response).to have_gitlab_http_status(:ok)
+      expect(response.headers['X-Conan-Server-Capabilities']).to eq("")
+    end
+
+    it 'responds with 200 OK when valid deploy token is provided' do
+      jwt = build_jwt_from_deploy_token(deploy_token)
       get api('/packages/conan/v1/ping'), headers: build_token_auth_header(jwt.encoded)
 
       expect(response).to have_gitlab_http_status(:ok)
@@ -165,6 +175,16 @@ describe API::ConanPackages do
         expect(response).to have_gitlab_http_status(:ok)
       end
     end
+
+    context 'with valid deploy token' do
+      let(:auth_token) { deploy_token.token }
+
+      it 'responds with 200' do
+        subject
+
+        expect(response).to have_gitlab_http_status(:ok)
+      end
+    end
   end
 
   describe 'GET /api/v4/packages/conan/v1/users/check_credentials' do
@@ -176,6 +196,16 @@ describe API::ConanPackages do
 
     context 'with job token' do
       let(:auth_token) { job_token }
+
+      it 'responds with a 200 OK with job token' do
+        get api('/packages/conan/v1/users/check_credentials'), headers: headers
+
+        expect(response).to have_gitlab_http_status(:ok)
+      end
+    end
+
+    context 'with deploy token' do
+      let(:auth_token) { deploy_token.token }
 
       it 'responds with a 200 OK with job token' do
         get api('/packages/conan/v1/users/check_credentials'), headers: headers
@@ -218,7 +248,7 @@ describe API::ConanPackages do
   shared_examples 'rejects recipe for not found package' do
     context 'with invalid recipe path' do
       let(:recipe_path) do
-        'aa/bb/%{project}/ccc' % { project: ::Packages::ConanMetadatum.package_username_from(full_path: project.full_path) }
+        'aa/bb/%{project}/ccc' % { project: ::Packages::Conan::Metadatum.package_username_from(full_path: project.full_path) }
       end
 
       it 'returns not found' do
@@ -232,13 +262,13 @@ describe API::ConanPackages do
   shared_examples 'empty recipe for not found package' do
     context 'with invalid recipe url' do
       let(:recipe_path) do
-        'aa/bb/%{project}/ccc' % { project: ::Packages::ConanMetadatum.package_username_from(full_path: project.full_path) }
+        'aa/bb/%{project}/ccc' % { project: ::Packages::Conan::Metadatum.package_username_from(full_path: project.full_path) }
       end
 
       it 'returns not found' do
         allow(::Packages::Conan::PackagePresenter).to receive(:new)
           .with(
-            'aa/bb@%{project}/ccc' % { project: ::Packages::ConanMetadatum.package_username_from(full_path: project.full_path) },
+            'aa/bb@%{project}/ccc' % { project: ::Packages::Conan::Metadatum.package_username_from(full_path: project.full_path) },
             user,
             project,
             any_args
@@ -568,7 +598,7 @@ describe API::ConanPackages do
       it_behaves_like 'a project is not found'
 
       context 'tracking the conan_package.tgz download' do
-        let(:package_file) { package.package_files.find_by(file_name: ::Packages::ConanFileMetadatum::PACKAGE_BINARY) }
+        let(:package_file) { package.package_files.find_by(file_name: ::Packages::Conan::FileMetadatum::PACKAGE_BINARY) }
 
         it_behaves_like 'a gitlab tracking event', described_class.name, 'pull_package'
       end
@@ -802,7 +832,7 @@ describe API::ConanPackages do
       it_behaves_like 'rejects invalid recipe'
       it_behaves_like 'uploads a package file'
       context 'tracking the conan_package.tgz upload' do
-        let(:file_name) { ::Packages::ConanFileMetadatum::PACKAGE_BINARY }
+        let(:file_name) { ::Packages::Conan::FileMetadatum::PACKAGE_BINARY }
 
         it_behaves_like 'a gitlab tracking event', described_class.name, 'push_package'
       end

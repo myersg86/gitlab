@@ -6,8 +6,12 @@ module QA
       module Project
         module Issue
           module Index
-            def self.prepended(page)
-              page.module_eval do
+            extend QA::Page::PageConcern
+
+            def self.prepended(base)
+              super
+
+              base.class_eval do
                 view 'app/views/shared/issuable/_search_bar.html.haml' do
                   element :issue_filter_form, /form_tag.+class: 'filter-form / # rubocop:disable QA/ElementWithPattern
                   element :issue_filter_input, /%input.form-control.filtered-search/ # rubocop:disable QA/ElementWithPattern
@@ -16,28 +20,7 @@ module QA
                 view 'ee/app/views/projects/issues/_issue_weight.html.haml' do
                   element :issuable_weight
                 end
-
-                view 'app/views/projects/issues/export_csv/_button.html.haml' do
-                  element :export_as_csv_button
-                end
-
-                view 'app/views/projects/issues/export_csv/_modal.html.haml' do
-                  element :export_issues_button
-                  element :export_issues_modal
-                end
               end
-            end
-
-            def click_export_as_csv_button
-              click_element(:export_as_csv_button)
-            end
-
-            def click_export_issues_button
-              click_element(:export_issues_button)
-            end
-
-            def export_issues_modal
-              find_element(:export_issues_modal)
             end
 
             def issuable_weight

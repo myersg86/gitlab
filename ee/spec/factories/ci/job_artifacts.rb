@@ -12,6 +12,16 @@ FactoryBot.define do
       end
     end
 
+    trait :secret_detection do
+      file_type { :secret_detection }
+      file_format { :raw }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/security_reports/master/gl-secret-detection-report.json'), 'application/json')
+      end
+    end
+
     trait :dast do
       file_format { :raw }
       file_type { :dast }
@@ -119,6 +129,16 @@ FactoryBot.define do
       end
     end
 
+    trait :secret_detection_feature_branch do
+      file_format { :raw }
+      file_type { :secret_detection }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/security_reports/feature-branch/gl-secret-detection-report.json'), 'application/json')
+      end
+    end
+
     trait :sast_deprecated do
       file_type { :sast }
       file_format { :raw }
@@ -140,6 +160,8 @@ FactoryBot.define do
     end
 
     trait :license_management do
+      to_create { |instance| instance.save(validate: false) }
+
       file_type { :license_management }
       file_format { :raw }
 
@@ -259,16 +281,6 @@ FactoryBot.define do
       end
     end
 
-    trait :deprecated_container_scanning_report do
-      file_format { :raw }
-      file_type { :container_scanning }
-
-      after(:build) do |artifact, _|
-        artifact.file = fixture_file_upload(
-          Rails.root.join('ee/spec/fixtures/security_reports/deprecated/gl-container-scanning-report.json'), 'text/plain')
-      end
-    end
-
     trait :metrics do
       file_format { :gzip }
       file_type { :metrics }
@@ -318,6 +330,16 @@ FactoryBot.define do
       after :build do |artifact, _|
         path = Rails.root.join('spec/fixtures/trace/sample_trace')
         artifact.file = fixture_file_upload(path, 'application/json')
+      end
+    end
+
+    trait :requirements do
+      file_format { :raw }
+      file_type { :requirements }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/requirements_management/report.json'), 'application/json')
       end
     end
   end

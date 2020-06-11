@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::SamlProvidersController do
+RSpec.describe Groups::SamlProvidersController do
   let(:saml_provider) { create(:saml_provider, group: group) }
   let(:group) { create(:group, :private, parent_id: nil) }
   let(:user) { create(:user) }
@@ -122,30 +122,11 @@ describe Groups::SamlProvidersController do
         group.add_owner(user)
       end
 
-      context 'enforced_sso feature flag enabled' do
-        before do
-          stub_feature_flags(enforced_sso: true)
-        end
-
-        it 'updates the flags' do
-          expect do
-            subject
-            saml_provider.reload
-          end.to change { saml_provider.enforced_sso? }.to(true)
-        end
-      end
-
-      context 'enforced_sso feature flag disabled' do
-        before do
-          stub_feature_flags(enforced_sso: false)
-        end
-
-        it 'does not update the setting' do
-          expect do
-            subject
-            saml_provider.reload
-          end.not_to change { saml_provider.enforced_sso? }.from(false)
-        end
+      it 'updates the setting' do
+        expect do
+          subject
+          saml_provider.reload
+        end.to change { saml_provider.enforced_sso? }.to(true)
       end
 
       context 'enabling group managed when owner has linked identity' do

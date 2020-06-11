@@ -160,13 +160,16 @@ export default {
       </div>
       <div
         class="linked-issues-card-body bg-gray-light"
-        :class="{ 'gl-p-3': isFormVisible || shouldShowTokenBody }"
+        :class="{
+          'gl-p-3-deprecated-no-really-do-not-use-me': isFormVisible || shouldShowTokenBody,
+        }"
       >
         <div
           v-if="isFormVisible"
           class="js-add-related-issues-form-area card-body bordered-box bg-white"
         >
           <add-issuable-form
+            :is-linked-issue-block="true"
             :is-submitting="isSubmitting"
             :issuable-type="issuableType"
             :input-value="inputValue"

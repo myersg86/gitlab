@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::SsoController do
+RSpec.describe Groups::SsoController do
   let(:user) { create(:user) }
   let(:group) { create(:group, :private, name: 'our-group', saml_discovery_token: 'test-token') }
 
@@ -59,6 +59,25 @@ describe Groups::SsoController do
         expect do
           delete :unlink, params: { group_id: group }
         end.to change(Identity, :count).by(-1)
+      end
+    end
+
+    context 'when SAML trial has expired' do
+      before do
+        create(:group_saml_identity, saml_provider: saml_provider, user: user)
+        stub_licensed_features(group_saml: false)
+      end
+
+      it 'DELETE /unlink still allows account unlinking' do
+        expect do
+          delete :unlink, params: { group_id: group }
+        end.to change(Identity, :count).by(-1)
+      end
+
+      it 'GET /saml renders 404' do
+        get :saml, params: { group_id: group }
+
+        expect(response).to have_gitlab_http_status(:not_found)
       end
     end
 

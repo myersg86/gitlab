@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'getting group information' do
+RSpec.describe 'getting group information' do
   include GraphqlHelpers
 
   let(:user) { create(:user) }
@@ -16,7 +16,7 @@ describe 'getting group information' do
       let(:group) { create(:group, :private) }
 
       before do
-        stub_feature_flags(enforced_sso_requires_session: true)
+        stub_licensed_features(group_saml: true)
         saml_provider = create(:saml_provider, enforced_sso: true, group: group)
         create(:group_saml_identity, saml_provider: saml_provider, user: user)
         group.add_guest(user)

@@ -1,4 +1,4 @@
-import { uniq } from 'underscore';
+import { uniq } from 'lodash';
 import { TEST_HOST } from 'helpers/test_constants';
 import { getJSONFixture } from 'helpers/fixtures';
 import mutations from 'ee/analytics/cycle_analytics/store/mutations';
@@ -10,19 +10,25 @@ import {
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 import { getDateInPast, getDatesInRange } from '~/lib/utils/datetime_utility';
 import { toYmd } from 'ee/analytics/shared/utils';
-import { transformRawTasksByTypeData } from 'ee/analytics/cycle_analytics/utils';
+import {
+  getTasksByTypeData,
+  transformRawTasksByTypeData,
+  transformStagesForPathNavigation,
+} from 'ee/analytics/cycle_analytics/utils';
 
 const fixtureEndpoints = {
   customizableCycleAnalyticsStagesAndEvents: 'analytics/value_stream_analytics/stages.json', // customizable stages and events endpoint
   stageEvents: stage => `analytics/value_stream_analytics/stages/${stage}/records.json`,
   stageMedian: stage => `analytics/value_stream_analytics/stages/${stage}/median.json`,
   recentActivityData: 'analytics/value_stream_analytics/summary.json',
+  timeMetricsData: 'analytics/value_stream_analytics/time_summary.json',
   groupLabels: 'api/group_labels.json',
 };
 
 export const endpoints = {
   groupLabels: /groups\/[A-Z|a-z|\d|\-|_]+\/-\/labels.json/,
   recentActivityData: /analytics\/value_stream_analytics\/summary/,
+  timeMetricsData: /analytics\/value_stream_analytics\/time_summary/,
   durationData: /analytics\/value_stream_analytics\/stages\/\d+\/duration_chart/,
   stageData: /analytics\/value_stream_analytics\/stages\/\d+\/records/,
   stageMedian: /analytics\/value_stream_analytics\/stages\/\d+\/median/,
@@ -49,6 +55,7 @@ const getStageByTitle = (stages, title) =>
   stages.find(stage => stage.title && stage.title.toLowerCase().trim() === title) || {};
 
 export const recentActivityData = getJSONFixture(fixtureEndpoints.recentActivityData);
+export const timeMetricsData = getJSONFixture(fixtureEndpoints.timeMetricsData);
 
 export const customizableStagesAndEvents = getJSONFixture(
   fixtureEndpoints.customizableCycleAnalyticsStagesAndEvents,
@@ -57,7 +64,7 @@ export const customizableStagesAndEvents = getJSONFixture(
 const dummyState = {};
 
 // prepare the raw stage data for our components
-mutations[types.RECEIVE_GROUP_STAGES_AND_EVENTS_SUCCESS](dummyState, customizableStagesAndEvents);
+mutations[types.RECEIVE_GROUP_STAGES_SUCCESS](dummyState, customizableStagesAndEvents.stages);
 
 export const issueStage = getStageByTitle(dummyState.stages, 'issue');
 export const planStage = getStageByTitle(dummyState.stages, 'plan');
@@ -89,6 +96,15 @@ export const stageMedians = defaultStages.reduce((acc, stage) => {
   };
 }, {});
 
+export const stageMediansWithNumericIds = defaultStages.reduce((acc, stage) => {
+  const { value } = getJSONFixture(fixtureEndpoints.stageMedian(stage));
+  const { id } = getStageByTitle(dummyState.stages, stage);
+  return {
+    ...acc,
+    [id]: value,
+  };
+}, {});
+
 export const endDate = new Date(2019, 0, 14);
 export const startDate = getDateInPast(endDate, DEFAULT_DAYS_IN_PAST);
 
@@ -113,8 +129,8 @@ export const rawCustomStage = {
 
 export const medians = stageMedians;
 
-const { events: rawCustomStageEvents } = customizableStagesAndEvents;
-const camelCasedStageEvents = rawCustomStageEvents.map(deepCamelCase);
+export const rawCustomStageEvents = customizableStagesAndEvents.events;
+export const camelCasedStageEvents = rawCustomStageEvents.map(deepCamelCase);
 
 export const customStageLabelEvents = camelCasedStageEvents.filter(ev => ev.type === 'label');
 export const customStageStartEvents = camelCasedStageEvents.filter(ev => ev.canBeStartEvent);
@@ -145,7 +161,7 @@ export const customStageFormErrors = convertObjectPropsToCamelCase(rawCustomStag
 
 const dateRange = getDatesInRange(startDate, endDate, toYmd);
 
-export const rawTasksByTypeData = getJSONFixture('analytics/type_of_work/tasks_by_type.json').map(
+export const apiTasksByTypeData = getJSONFixture('analytics/type_of_work/tasks_by_type.json').map(
   labelData => {
     // add data points for our mock date range
     const maxValue = 10;
@@ -157,7 +173,14 @@ export const rawTasksByTypeData = getJSONFixture('analytics/type_of_work/tasks_b
   },
 );
 
-export const transformedTasksByTypeData = transformRawTasksByTypeData(rawTasksByTypeData);
+export const rawTasksByTypeData = transformRawTasksByTypeData(apiTasksByTypeData);
+export const transformedTasksByTypeData = getTasksByTypeData(apiTasksByTypeData);
+
+export const transformedStagePathData = transformStagesForPathNavigation({
+  stages: allowedStages,
+  medians,
+  selectedStage: issueStage,
+});
 
 export const tasksByTypeData = {
   seriesNames: ['Cool label', 'Normal label'],
@@ -255,3 +278,6 @@ export const selectedProjects = [
     avatarUrl: null,
   },
 ];
+
+// Value returned from JSON fixture is 345600 for issue stage which equals 4d
+export const pathNavIssueMetric = '4d';

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::Analytics::CycleAnalytics::StagesController do
+RSpec.describe Groups::Analytics::CycleAnalytics::StagesController do
   let_it_be(:user) { create(:user) }
   let_it_be(:group, refind: true) { create(:group) }
   let(:params) { { group_id: group } }
@@ -220,7 +220,7 @@ describe Groups::Analytics::CycleAnalytics::StagesController do
       subject { get :duration_chart, params: params }
 
       it 'matches the response schema' do
-        fake_result = [double(MergeRequest, duration_in_seconds: 10, finished_at: Time.now)]
+        fake_result = [double(MergeRequest, duration_in_seconds: 10, finished_at: Time.current)]
         expect_any_instance_of(Gitlab::Analytics::CycleAnalytics::DataForDurationChart).to receive(:load).and_return(fake_result)
 
         subject

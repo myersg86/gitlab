@@ -11,6 +11,7 @@ RSpec.describe Packages::Package, type: :model do
     it { is_expected.to have_many(:tags).inverse_of(:package) }
     it { is_expected.to have_one(:conan_metadatum).inverse_of(:package) }
     it { is_expected.to have_one(:maven_metadatum).inverse_of(:package) }
+    it { is_expected.to have_one(:nuget_metadatum).inverse_of(:package) }
   end
 
   describe '.sort_by_attribute' do
@@ -78,21 +79,56 @@ RSpec.describe Packages::Package, type: :model do
       it { is_expected.to allow_value("my/domain/com/my-app").for(:name) }
       it { is_expected.to allow_value("my.app-11.07.2018").for(:name) }
       it { is_expected.not_to allow_value("my(dom$$$ain)com.my-app").for(:name) }
+
+      context 'conan package' do
+        subject { create(:conan_package) }
+
+        let(:fifty_one_characters) {'f_b' * 17}
+
+        it { is_expected.to allow_value('foo+bar').for(:name) }
+        it { is_expected.to allow_value('foo_bar').for(:name) }
+        it { is_expected.to allow_value('foo.bar').for(:name) }
+        it { is_expected.not_to allow_value(fifty_one_characters).for(:name) }
+        it { is_expected.not_to allow_value('+foobar').for(:name) }
+        it { is_expected.not_to allow_value('.foobar').for(:name) }
+        it { is_expected.not_to allow_value('%foo%bar').for(:name) }
+      end
     end
 
     describe '#version' do
-      context 'npm package' do
-        subject { create(:npm_package) }
+      RSpec.shared_examples 'validating version to be SemVer compliant for' do |factory_name|
+        context "for #{factory_name}" do
+          subject { create(factory_name) }
 
-        it { is_expected.to allow_value('1.2.3').for(:version) }
+          it { is_expected.to allow_value('1.2.3').for(:version) }
+          it { is_expected.to allow_value('1.2.3-beta').for(:version) }
+          it { is_expected.to allow_value('1.2.3-alpha.3').for(:version) }
+          it { is_expected.not_to allow_value('1').for(:version) }
+          it { is_expected.not_to allow_value('1.2').for(:version) }
+          it { is_expected.not_to allow_value('1./2.3').for(:version) }
+          it { is_expected.not_to allow_value('../../../../../1.2.3').for(:version) }
+          it { is_expected.not_to allow_value('%2e%2e%2f1.2.3').for(:version) }
+        end
+      end
+
+      context 'conan package' do
+        subject { create(:conan_package) }
+
+        let(:fifty_one_characters) {'1.2' * 17}
+
+        it { is_expected.to allow_value('1.2').for(:version) }
         it { is_expected.to allow_value('1.2.3-beta').for(:version) }
-        it { is_expected.to allow_value('1.2.3-alpha.3').for(:version) }
+        it { is_expected.to allow_value('1.2.3-pre1+build2').for(:version) }
         it { is_expected.not_to allow_value('1').for(:version) }
-        it { is_expected.not_to allow_value('1.2').for(:version) }
+        it { is_expected.not_to allow_value(fifty_one_characters).for(:version) }
         it { is_expected.not_to allow_value('1./2.3').for(:version) }
-        it { is_expected.not_to allow_value('../../../../../1.2.3').for(:version) }
+        it { is_expected.not_to allow_value('.1.2.3').for(:version) }
+        it { is_expected.not_to allow_value('+1.2.3').for(:version) }
         it { is_expected.not_to allow_value('%2e%2e%2f1.2.3').for(:version) }
       end
+
+      it_behaves_like 'validating version to be SemVer compliant for', :npm_package
+      it_behaves_like 'validating version to be SemVer compliant for', :nuget_package
     end
 
     describe '#package_already_taken' do
@@ -188,9 +224,11 @@ RSpec.describe Packages::Package, type: :model do
     end
 
     describe '.has_version' do
-      let!(:package4) { create(:nuget_package, version: nil) }
-
       subject { described_class.has_version }
+
+      before do
+        create(:maven_metadatum).package.update!(version: nil)
+      end
 
       it 'includes only packages with version attribute' do
         is_expected.to match_array([package1, package2, package3])
@@ -230,7 +268,7 @@ RSpec.describe Packages::Package, type: :model do
     describe '.with_conan_username' do
       subject do
         described_class.with_conan_username(
-          Packages::ConanMetadatum.package_username_from(full_path: package.project.full_path)
+          Packages::Conan::Metadatum.package_username_from(full_path: package.project.full_path)
         )
       end
 
@@ -345,6 +383,61 @@ RSpec.describe Packages::Package, type: :model do
 
       expect(packages.size).to eq(2)
       expect(packages.pluck(:name)).to match_array([nuget_package.name, maven_package.name])
+    end
+  end
+
+  describe '#versions' do
+    let_it_be(:project) { create(:project) }
+    let_it_be(:package) { create(:maven_package, project: project) }
+    let_it_be(:package2) { create(:maven_package, project: project) }
+    let_it_be(:package3) { create(:maven_package, project: project, name: 'foo') }
+
+    it 'returns other package versions of the same package name belonging to the project' do
+      expect(package.versions).to contain_exactly(package2)
+    end
+
+    it 'does not return different packages' do
+      expect(package.versions).not_to include(package3)
+    end
+  end
+
+  describe '#pipeline' do
+    let_it_be(:package) { create(:maven_package) }
+
+    context 'package without pipeline' do
+      it 'returns nil if there is no pipeline' do
+        expect(package.pipeline).to be_nil
+      end
+    end
+
+    context 'package with pipeline' do
+      let_it_be(:pipeline) { create(:ci_pipeline) }
+
+      before do
+        package.create_build_info!(pipeline: pipeline)
+      end
+
+      it 'returns the pipeline' do
+        expect(package.pipeline).to eq(pipeline)
+      end
+    end
+  end
+
+  describe '#tag_names' do
+    let_it_be(:package) { create(:nuget_package) }
+
+    subject { package.tag_names }
+
+    it { is_expected.to eq([]) }
+
+    context 'with tags' do
+      let(:tags) { %w(tag1 tag2 tag3) }
+
+      before do
+        tags.each { |t| create(:packages_tag, name: t, package: package) }
+      end
+
+      it { is_expected.to contain_exactly(*tags) }
     end
   end
 end

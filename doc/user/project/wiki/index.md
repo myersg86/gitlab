@@ -52,7 +52,7 @@ When you're ready, click the **Create page** and the new page will be created.
 
 ### Attachment storage
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/33475) in GitLab 11.3.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/33475) in GitLab 11.3.
 
 Starting with GitLab 11.3, any file that is uploaded to the wiki via GitLab's
 interface will be stored in the wiki Git repository, and it will be available
@@ -126,7 +126,7 @@ found. The list is ordered alphabetically.
 ![Wiki sidebar](img/wiki_sidebar.png)
 
 If you have many pages, not all will be listed in the sidebar. Click on
-**More pages** to see all of them.
+**View All Pages** to see all of them.
 
 ## Viewing the history of a wiki page
 
@@ -185,11 +185,36 @@ them like you would do with every other Git repository.
 On the right sidebar, click on **Clone repository** and follow the on-screen
 instructions.
 
+Files that you add to your wiki locally must have one of the following
+supported extensions, depending on the markup language you wish to use,
+otherwise they will not display when pushed to GitLab:
+
+- Markdown extensions: `.mdown`, `.mkd`, `.mkdn`, `.md`, `.markdown`.
+- AsciiDoc extensions: `.adoc`, `.ad`, `.asciidoc`.
+- Other markup extensions: `.textile`, `.rdoc`, `.org`, `.creole`, `.wiki`, `.mediawiki`, `.rst`.
+
 ## Customizing sidebar
 
 On the project's Wiki page, there is a right side navigation that renders the full Wiki pages list by default, with hierarchy.
 
-If the Wiki repository contains a `_sidebar` page, the file of this page replaces the default side navigation.
-This custom file serves to render it's custom content, fully replacing the standard sidebar.
+To customize the sidebar, you can create a file named `_sidebar` to fully replace the default navigation.
+
+CAUTION: **Warning:**
+Unless you link the `_sidebar` file from your custom nav, to edit it you'll have to access it directly
+from the browser's address bar by typing: `https://gitlab.com/<namespace>/<project_name>/-/wikis/_sidebar` (for self-managed GitLab instances, replace `gitlab.com` with your instance's URL).
+
+Example for `_sidebar` (using Markdown format):
+
+```markdown
+### [Home](home)
+
+- [Hello World](hello)
+- [Foo](foo)
+- [Bar](bar)
+
+---
+
+- [Sidebar](_sidebar)
+```
 
 Support for displaying a generated TOC with a custom side navigation is planned.

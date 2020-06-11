@@ -3,9 +3,21 @@
 query($fullPath: ID!) {
   project(fullPath: $fullPath) {
     jiraImportStatus
-    jiraImports(last: 1) {
+    jiraImports {
       nodes {
         ...JiraImport
+      }
+    }
+    services(active: true, type: JIRA_SERVICE) {
+      nodes {
+        ... on JiraService {
+          projects {
+            nodes {
+              key
+              name
+            }
+          }
+        }
       }
     }
   }

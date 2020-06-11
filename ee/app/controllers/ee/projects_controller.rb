@@ -106,7 +106,6 @@ module EE
       %i[
         mirror
         mirror_trigger_builds
-        mirror_user_id
       ]
     end
 
@@ -165,12 +164,6 @@ module EE
 
     def log_unarchive_audit_event
       log_audit_event(message: 'Project unarchived')
-    end
-
-    override :render_edit
-    def render_edit
-      push_frontend_feature_flag(:scoped_approval_rules, project, default_enabled: true)
-      super
     end
   end
 end

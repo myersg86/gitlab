@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-describe "Admin uploads license" do
+RSpec.describe "Admin uploads license" do
   let_it_be(:admin) { create(:admin) }
 
   before do
@@ -11,28 +11,39 @@ describe "Admin uploads license" do
   end
 
   context "when license key is provided in the query string" do
-    let_it_be(:license) { build(:license, data: build(:gitlab_license, restrictions: { active_user_count: 2000 }).export) }
-
     before do
-      License.destroy_all # rubocop: disable DestroyAll
+      License.destroy_all # rubocop: disable Cop/DestroyAll
 
       visit(admin_license_path(trial_key: license.data))
-    end
 
-    it "installs license" do
       page.within("#modal-upload-trial-license") do
         expect(page).to have_content("Your trial license was issued").and have_button("Install license")
       end
 
       click_button("Install license")
+    end
 
-      expect(page).to have_content("The license was successfully uploaded and is now active")
+    context "when license is active immediately" do
+      let_it_be(:license) { build(:license, data: build(:gitlab_license, restrictions: { active_user_count: 2000 }).export) }
+
+      it "installs license" do
+        expect(page).to have_content("The license was successfully uploaded and is now active")
+      end
+    end
+
+    context "when license starts in the future" do
+      let_it_be(:license) { build(:license, data: build(:gitlab_license, restrictions: { active_user_count: 2000 }, starts_at: Date.current + 1.month).export) }
+
+      it "installs license" do
+        expect(page).to have_content("The license was successfully uploaded and will be active from #{license.starts_at}. You can see the details below.")
+        .and have_content("You have a license that activates at a future date. Please see the License History table below.")
+      end
     end
   end
 
   context "when license key is not provided in the query string, as it is a repeat trial" do
     before do
-      License.destroy_all # rubocop: disable DestroyAll
+      License.destroy_all # rubocop: disable Cop/DestroyAll
 
       visit(admin_license_path(trial_key: ""))
     end
@@ -51,14 +62,44 @@ describe "Admin uploads license" do
     end
 
     context "when license is valid" do
-      let_it_be(:license) { build(:gitlab_license) }
       let_it_be(:path) { Rails.root.join("tmp/valid_license.gitlab-license") }
 
-      it "uploads license" do
-        attach_and_upload(path)
+      context "when license is active immediately" do
+        let_it_be(:license) { build(:gitlab_license) }
 
-        expect(page).to have_content("The license was successfully uploaded and is now active.")
-                   .and have_content(license.licensee.each_value.first)
+        it "uploads license" do
+          attach_and_upload(path)
+
+          expect(page).to have_content("The license was successfully uploaded and is now active.")
+                    .and have_content(license.licensee.each_value.first)
+        end
+      end
+
+      context "when license starts in the future" do
+        let_it_be(:license) { build(:gitlab_license, starts_at: Date.current + 1.month) }
+
+        context "when a current license exists" do
+          it "uploads license" do
+            attach_and_upload(path)
+
+            expect(page).to have_content("The license was successfully uploaded and will be active from #{license.starts_at}. You can see the details below.")
+                      .and have_content(license.licensee.each_value.first)
+          end
+        end
+
+        context "when no current license exists" do
+          before do
+            allow(License).to receive(:current).and_return(nil)
+          end
+
+          it "uploads license" do
+            attach_and_upload(path)
+
+            expect(page).to have_content("The license was successfully uploaded and will be active from #{license.starts_at}. You can see the details below.")
+                      .and have_content(license.licensee.each_value.first)
+                      .and have_content("You have a license that activates at a future date. Please see the License History table below.")
+          end
+        end
       end
     end
 

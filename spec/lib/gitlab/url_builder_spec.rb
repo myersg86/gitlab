@@ -23,8 +23,9 @@ describe Gitlab::UrlBuilder do
       :merge_request     | ->(merge_request) { "/#{merge_request.project.full_path}/-/merge_requests/#{merge_request.iid}" }
       :project_milestone | ->(milestone)     { "/#{milestone.project.full_path}/-/milestones/#{milestone.iid}" }
       :project_snippet   | ->(snippet)       { "/#{snippet.project.full_path}/snippets/#{snippet.id}" }
-      :project_wiki      | ->(wiki)          { "/#{wiki.project.full_path}/-/wikis/home" }
+      :project_wiki      | ->(wiki)          { "/#{wiki.container.full_path}/-/wikis/home" }
       :ci_build          | ->(build)         { "/#{build.project.full_path}/-/jobs/#{build.id}" }
+      :design            | ->(design)        { "/#{design.project.full_path}/-/design_management/designs/#{design.id}/raw_image" }
 
       :group             | ->(group)         { "/groups/#{group.full_path}" }
       :group_milestone   | ->(milestone)     { "/groups/#{milestone.group.full_path}/-/milestones/#{milestone.iid}" }
@@ -92,6 +93,48 @@ describe Gitlab::UrlBuilder do
         url = subject.build(snippet, raw: true)
 
         expect(url).to eq "#{Gitlab.config.gitlab.url}/snippets/#{snippet.id}/raw"
+      end
+    end
+
+    context 'when passing a Wiki' do
+      let(:wiki) { build_stubbed(:project_wiki) }
+
+      describe '#wiki_url' do
+        it 'uses the default collection action' do
+          url = subject.wiki_url(wiki)
+
+          expect(url).to eq "#{Gitlab.config.gitlab.url}/#{wiki.project.full_path}/-/wikis/home"
+        end
+
+        it 'supports a custom collection action' do
+          url = subject.wiki_url(wiki, action: :pages)
+
+          expect(url).to eq "#{Gitlab.config.gitlab.url}/#{wiki.project.full_path}/-/wikis/pages"
+        end
+      end
+
+      describe '#wiki_page_url' do
+        it 'uses the default member action' do
+          url = subject.wiki_page_url(wiki, 'foo')
+
+          expect(url).to eq "#{Gitlab.config.gitlab.url}/#{wiki.project.full_path}/-/wikis/foo"
+        end
+
+        it 'supports a custom member action' do
+          url = subject.wiki_page_url(wiki, 'foo', action: :edit)
+
+          expect(url).to eq "#{Gitlab.config.gitlab.url}/#{wiki.project.full_path}/-/wikis/foo/edit"
+        end
+      end
+    end
+
+    context 'when passing a DesignManagement::Design' do
+      let(:design) { build_stubbed(:design) }
+
+      it 'uses the given ref and size in the URL' do
+        url = subject.build(design, ref: 'feature', size: 'small')
+
+        expect(url).to eq "#{Settings.gitlab['url']}/#{design.project.full_path}/-/design_management/designs/#{design.id}/feature/resized_image/small"
       end
     end
 

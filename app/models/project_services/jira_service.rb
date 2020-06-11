@@ -6,6 +6,8 @@ class JiraService < IssueTrackerService
   include ApplicationHelper
   include ActionView::Helpers::AssetUrlHelper
 
+  PROJECTS_PER_PAGE = 50
+
   validates :url, public_url: true, presence: true, if: :activated?
   validates :api_url, public_url: true, allow_blank: true
   validates :username, presence: true, if: :activated?
@@ -24,6 +26,11 @@ class JiraService < IssueTrackerService
   data_field :username, :password, :url, :api_url, :jira_issue_transition_id
 
   before_update :reset_password
+
+  enum comment_detail: {
+    standard: 1,
+    all_details: 2
+  }
 
   alias_method :project_url, :url
 
@@ -172,6 +179,7 @@ class JiraService < IssueTrackerService
     noteable_id   = noteable.respond_to?(:iid) ? noteable.iid : noteable.id
     noteable_type = noteable_name(noteable)
     entity_url    = build_entity_url(noteable_type, noteable_id)
+    entity_meta   = build_entity_meta(noteable)
 
     data = {
       user: {
@@ -180,16 +188,23 @@ class JiraService < IssueTrackerService
       },
       project: {
         name: project.full_path,
-        url: resource_url(namespace_project_path(project.namespace, project)) # rubocop:disable Cop/ProjectPathHelper
+        url: resource_url(project_path(project))
       },
       entity: {
+        id: entity_meta[:id],
         name: noteable_type.humanize.downcase,
         url: entity_url,
-        title: noteable.title
+        title: noteable.title,
+        description: entity_meta[:description],
+        branch: entity_meta[:branch]
       }
     }
 
     add_comment(data, jira_issue)
+  end
+
+  def valid_connection?
+    test(nil)[:success]
   end
 
   def test(_)
@@ -198,11 +213,6 @@ class JiraService < IssueTrackerService
     result = @error&.message unless success
 
     { success: success, result: result }
-  end
-
-  # Jira does not need test data.
-  def test_data(_, _)
-    nil
   end
 
   override :support_close_issue?
@@ -259,20 +269,48 @@ class JiraService < IssueTrackerService
   end
 
   def add_comment(data, issue)
-    user_name    = data[:user][:name]
-    user_url     = data[:user][:url]
     entity_name  = data[:entity][:name]
     entity_url   = data[:entity][:url]
     entity_title = data[:entity][:title]
-    project_name = data[:project][:name]
 
-    message      = "[#{user_name}|#{user_url}] mentioned this issue in [a #{entity_name} of #{project_name}|#{entity_url}]:\n'#{entity_title.chomp}'"
+    message      = comment_message(data)
     link_title   = "#{entity_name.capitalize} - #{entity_title}"
     link_props   = build_remote_link_props(url: entity_url, title: link_title)
 
     unless comment_exists?(issue, message)
       send_message(issue, message, link_props)
     end
+  end
+
+  def comment_message(data)
+    user_link = build_jira_link(data[:user][:name], data[:user][:url])
+
+    entity = data[:entity]
+    entity_ref = all_details? ? "#{entity[:name]} #{entity[:id]}" : "a #{entity[:name]}"
+    entity_link = build_jira_link(entity_ref, entity[:url])
+
+    project_link = build_jira_link(project.full_name, Gitlab::Routing.url_helpers.project_url(project))
+    branch =
+      if entity[:branch].present?
+        s_('JiraService| on branch %{branch_link}') % {
+          branch_link: build_jira_link(entity[:branch], project_tree_url(project, entity[:branch]))
+        }
+      end
+
+    entity_message = entity[:description].presence if all_details?
+    entity_message ||= entity[:title].chomp
+
+    s_('JiraService|%{user_link} mentioned this issue in %{entity_link} of %{project_link}%{branch}:{quote}%{entity_message}{quote}') % {
+      user_link: user_link,
+      entity_link: entity_link,
+      project_link: project_link,
+      branch: branch,
+      entity_message: entity_message
+    }
+  end
+
+  def build_jira_link(title, url)
+    "[#{title}|#{url}]"
   end
 
   def has_resolution?(issue)
@@ -348,6 +386,23 @@ class JiraService < IssueTrackerService
     )
   end
 
+  def build_entity_meta(noteable)
+    if noteable.is_a?(Commit)
+      {
+        id: noteable.short_id,
+        description: noteable.safe_message,
+        branch: noteable.ref_names(project.repository).first
+      }
+    elsif noteable.is_a?(MergeRequest)
+      {
+        id: noteable.to_reference,
+        branch: noteable.source_branch
+      }
+    else
+      {}
+    end
+  end
+
   def noteable_name(noteable)
     name = noteable.model_name.singular
 
@@ -361,15 +416,7 @@ class JiraService < IssueTrackerService
     yield
   rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::ECONNREFUSED, URI::InvalidURIError, JIRA::HTTPError, OpenSSL::SSL::SSLError => error
     @error = error
-    log_error(
-      "Error sending message",
-      client_url: client_url,
-      error: {
-        exception_class: error.class.name,
-        exception_message: error.message,
-        exception_backtrace: Gitlab::BacktraceCleaner.clean_backtrace(error.backtrace)
-      }
-    )
+    log_error("Error sending message", client_url: client_url, error: @error.message)
     nil
   end
 

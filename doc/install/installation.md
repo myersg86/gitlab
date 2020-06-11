@@ -134,7 +134,7 @@ Make sure you have the right version of Git installed:
 # Install Git
 sudo apt-get install -y git-core
 
-# Make sure Git is version 2.26.1 or higher (minimal supported version is 2.22.0)
+# Make sure Git is version 2.26.2 or higher (minimal supported version is 2.24.0)
 git --version
 ```
 
@@ -142,21 +142,31 @@ Starting with GitLab 12.0, Git is required to be compiled with `libpcre2`.
 Find out if that's the case:
 
 ```shell
-ldd /usr/local/bin/git | grep pcre2
+ldd $(command -v git) | grep pcre2
 ```
 
-The output should be similar to:
+The output should contain `libpcre2-8.so.0`.
 
-```plaintext
-libpcre2-8.so.0 => /usr/lib/libpcre2-8.so.0 (0x00007f08461c3000)
-```
-
-Is the system packaged Git too old, or not compiled with pcre2? Remove it and compile from source:
+Is the system packaged Git too old, or not compiled with pcre2?
+Remove it:
 
 ```shell
-# Remove packaged Git
 sudo apt-get remove git-core
+```
 
+On Ubuntu, install Git from [its official PPA](https://git-scm.com/download/linux):
+
+```shell
+# run as root!
+add-apt-repository ppa:git-core/ppa
+apt update
+apt install git
+# repeat libpcre2 check as above
+```
+
+On Debian, use the following compilation instructions:
+
+```shell
 # Install dependencies
 sudo apt-get install -y libcurl4-openssl-dev libexpat1-dev gettext libz-dev libssl-dev build-essential
 
@@ -171,16 +181,16 @@ sudo make install
 
 # Download and compile from source
 cd /tmp
-curl --remote-name --location --progress https://www.kernel.org/pub/software/scm/git/git-2.26.1.tar.gz
-echo 'aa168c2318e7187cd295a645f7370cc6d71a324aafc932f80f00c780b6a26bed  git-2.26.1.tar.gz' | shasum -a256 -c - && tar -xzf git-2.26.1.tar.gz
-cd git-2.26.1/
+curl --remote-name --location --progress https://www.kernel.org/pub/software/scm/git/git-2.26.2.tar.gz
+echo 'e1c17777528f55696815ef33587b1d20f5eec246669f3b839d15dbfffad9c121  git-2.26.2.tar.gz' | shasum -a256 -c - && tar -xzf git-2.26.2.tar.gz
+cd git-2.26.2/
 ./configure --with-libpcre
 make prefix=/usr/local all
 
 # Install into /usr/local/bin
 sudo make prefix=/usr/local install
 
-# When editing config/gitlab.yml (Step 5), change the git -> bin_path to /usr/local/bin/git
+# When editing config/gitlab.yml later, change the git -> bin_path to /usr/local/bin/git
 ```
 
 For the [Custom Favicon](../user/admin_area/appearance.md#favicon) to work, GraphicsMagick
@@ -190,13 +200,20 @@ needs to be installed.
 sudo apt-get install -y graphicsmagick
 ```
 
-**Note:** In order to receive mail notifications, make sure to install a mail server. By default, Debian is shipped with exim4 but this [has problems](https://gitlab.com/gitlab-org/gitlab-foss/issues/12754) while Ubuntu does not ship with one. The recommended mail server is postfix and you can install it with:
+**Note:** In order to receive mail notifications, make sure to install a mail server. By default, Debian is shipped with exim4 but this [has problems](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/12754) while Ubuntu does not ship with one. The recommended mail server is postfix and you can install it with:
 
 ```shell
 sudo apt-get install -y postfix
 ```
 
 Then select 'Internet Site' and press enter to confirm the hostname.
+
+[GitLab Workhorse](https://gitlab.com/gitlab-org/gitlab-workhorse#dependencies)
+requires `exiftool` to remove EXIF data from uploaded images.
+
+```shell
+sudo apt-get install -y libimage-exiftool-perl
+```
 
 ## 2. Ruby
 
@@ -205,11 +222,10 @@ The Ruby interpreter is required to run GitLab.
 **Note:** The current supported Ruby (MRI) version is 2.6.x. GitLab 12.2
   dropped support for Ruby 2.5.x.
 
-The use of Ruby version managers such as [RVM], [rbenv](https://github.com/rbenv/rbenv) or [chruby] with GitLab
-in production, frequently leads to hard to diagnose problems. For example,
-GitLab Shell is called from OpenSSH, and having a version manager can prevent
-pushing and pulling over SSH. Version managers are not supported and we strongly
-advise everyone to follow the instructions below to use a system Ruby.
+The use of Ruby version managers such as [RVM](https://rvm.io/), [rbenv](https://github.com/rbenv/rbenv) or [chruby](https://github.com/postmodern/chruby) with GitLab
+in production, frequently leads to hard to diagnose problems. Version managers
+are not supported and we strongly advise everyone to follow the instructions
+below to use a system Ruby.
 
 Linux distributions generally have older versions of Ruby available, so these
 instructions are designed to install Ruby from the official source code.
@@ -224,9 +240,9 @@ Download Ruby and compile it:
 
 ```shell
 mkdir /tmp/ruby && cd /tmp/ruby
-curl --remote-name --progress https://cache.ruby-lang.org/pub/ruby/2.6/ruby-2.6.5.tar.gz
-echo '1416ce288fb8bfeae07a12b608540318c9cace71  ruby-2.6.5.tar.gz' | shasum -c - && tar xzf ruby-2.6.5.tar.gz
-cd ruby-2.6.5
+curl --remote-name --progress https://cache.ruby-lang.org/pub/ruby/2.6/ruby-2.6.6.tar.gz
+echo '2d78048e293817f38d4ede4ebc7873013e97bb0b  ruby-2.6.6.tar.gz' | shasum -c - && tar xzf ruby-2.6.6.tar.gz
+cd ruby-2.6.6
 
 ./configure --disable-install-rdoc
 make
@@ -360,10 +376,10 @@ use of extensions and concurrent index removal, you need at least PostgreSQL 9.2
 
 ## 7. Redis
 
-GitLab requires at least Redis 2.8.
+GitLab requires at least Redis 5.0.
 
-If you are using Debian 8 or Ubuntu 14.04 and up, you can simply install
-Redis 2.8 with:
+If you are using Debian 10 or Ubuntu 20.04 and up, you can install
+Redis 5.0 with:
 
 ```shell
 sudo apt-get install redis-server
@@ -555,8 +571,8 @@ If you want to use Kerberos for user authentication, omit `kerberos` in the `--w
 GitLab Shell is an SSH access and repository management software developed specially for GitLab.
 
 ```shell
-# Run the installation task for gitlab-shell (replace `REDIS_URL` if needed):
-sudo -u git -H bundle exec rake gitlab:shell:install REDIS_URL=unix:/var/run/redis/redis.sock RAILS_ENV=production SKIP_STORAGE_VALIDATION=true
+# Run the installation task for gitlab-shell:
+sudo -u git -H bundle exec rake gitlab:shell:install RAILS_ENV=production
 
 # By default, the gitlab-shell config is generated from your main GitLab config.
 # You can review (and modify) the gitlab-shell config as follows:
@@ -568,13 +584,6 @@ If you want to use HTTPS, see [Using HTTPS](#using-https) for the additional ste
 
 NOTE: **Note:**
 Make sure your hostname can be resolved on the machine itself by either a proper DNS record or an additional line in `/etc/hosts` ("127.0.0.1 hostname"). This might be necessary, for example, if you set up GitLab behind a reverse proxy. If the hostname cannot be resolved, the final installation check will fail with `Check GitLab API access: FAILED. code: 401` and pushing commits will be rejected with `[remote rejected] master -> master (hook declined)`.
-
-NOTE: **Note:**
-GitLab Shell application startup time can be greatly reduced by disabling RubyGems. This can be done in several ways:
-
-- Export `RUBYOPT=--disable-gems` environment variable for the processes.
-- Compile Ruby with `configure --disable-rubygems` to disable RubyGems by default. Not recommended for system-wide Ruby.
-- Omnibus GitLab [replaces the *shebang* line of the `gitlab-shell/bin/*` scripts](https://gitlab.com/gitlab-org/omnibus-gitlab/-/merge_requests/1707).
 
 ### Install GitLab Workhorse
 
@@ -966,7 +975,7 @@ If you want to switch back to Unicorn, follow these steps:
    sudo -u git -H cp config/unicorn.rb.example config/unicorn.rb
    ```
 
-1. Edit the system `init.d` script to set the `USE_UNICORN=1` flag. If you have `/etc/default/gitlab`, then you should edit it instead.
+1. Edit the system `init.d` script and set `USE_WEB_SERVER="unicorn"`. If you have `/etc/default/gitlab`, then you should edit it instead.
 1. Restart GitLab.
 
 ### Using Sidekiq instead of Sidekiq Cluster
@@ -976,7 +985,7 @@ Using Sidekiq directly will still be supported until 14.0. So if you're experien
 
 1. Edit the system `init.d` script to remove the `SIDEKIQ_WORKERS` flag. If you have `/etc/default/gitlab`, then you should edit it instead.
 1. Restart GitLab.
-1. [Create an issue](https://gitlab.com/gitlab-org/gitlab/issues/-/new) describing the problem.
+1. [Create an issue](https://gitlab.com/gitlab-org/gitlab/-/issues/-/new) describing the problem.
 
 ## Troubleshooting
 
@@ -1035,6 +1044,3 @@ On RedHat/CentOS:
 ```shell
 sudo yum groupinstall 'Development Tools'
 ```
-
-[RVM]: https://rvm.io/ "RVM Homepage"
-[chruby]: https://github.com/postmodern/chruby "chruby on GitHub"

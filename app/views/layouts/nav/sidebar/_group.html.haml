@@ -55,7 +55,7 @@
             %span.badge.badge-pill.count= number_with_delimiter(issues_count)
 
           %ul.sidebar-sub-level-items{ data: { qa_selector: 'group_issues_sidebar_submenu'} }
-            = nav_link(path: ['groups#issues', 'labels#index', 'milestones#index'], html_options: { class: "fly-out-top-item" } ) do
+            = nav_link(path: ['groups#issues', 'labels#index', 'milestones#index', 'iterations#index'], html_options: { class: "fly-out-top-item" } ) do
               = link_to issues_group_path(@group) do
                 %strong.fly-out-top-item-name
                   = _('Issues')
@@ -85,6 +85,8 @@
                   %span
                     = _('Milestones')
 
+            = render_if_exists 'layouts/nav/sidebar/iterations_link'
+
       - if group_sidebar_link?(:merge_requests)
         = nav_link(path: 'groups#merge_requests') do
           = link_to merge_requests_group_path(@group) do
@@ -101,6 +103,8 @@
                 %span.badge.badge-pill.count.merge_counter.js-merge-counter.fly-out-badge= number_with_delimiter(merge_requests_count)
 
       = render_if_exists "layouts/nav/ee/security_link" # EE-specific
+
+      = render_if_exists "layouts/nav/ee/push_rules_link" # EE-specific
 
       - if group_sidebar_link?(:kubernetes)
         = nav_link(controller: [:clusters]) do
@@ -154,6 +158,11 @@
               = link_to projects_group_path(@group), title: _('Projects') do
                 %span
                   = _('Projects')
+
+            = nav_link(controller: :repository) do
+              = link_to group_settings_repository_path(@group), title: _('Repository') do
+                %span
+                  = _('Repository')
 
             = nav_link(controller: :ci_cd) do
               = link_to group_settings_ci_cd_path(@group), title: _('CI / CD') do

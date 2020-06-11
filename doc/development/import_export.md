@@ -44,19 +44,34 @@ WARN: Work still in progress <struct with JID>
 
 ### Timeouts
 
-Timeout errors occur due to the `StuckImportJobsWorker` marking the process as failed:
+Timeout errors occur due to the `Gitlab::Import::StuckProjectImportJobsWorker` marking the process as failed:
 
 ```ruby
-class StuckImportJobsWorker
-  include ApplicationWorker
-  include CronjobQueue
+module Gitlab
+  module Import
+    class StuckProjectImportJobsWorker
+      include Gitlab::Import::StuckImportJob
+      # ...
+    end
+  end
+end
 
-  IMPORT_JOBS_EXPIRATION = 15.hours.to_i
+module Gitlab
+  module Import
+    module StuckImportJob
+      # ...
+      IMPORT_JOBS_EXPIRATION = 15.hours.to_i
+      # ...
+      def perform
+        stuck_imports_without_jid_count = mark_imports_without_jid_as_failed!
+        stuck_imports_with_jid_count = mark_imports_with_jid_as_failed!
 
-  def perform
-    import_state_without_jid_count = mark_import_states_without_jid_as_failed!
-    import_state_with_jid_count = mark_import_states_with_jid_as_failed!
-    ...
+        track_metrics(stuck_imports_with_jid_count, stuck_imports_without_jid_count)
+      end
+      # ...
+    end
+  end
+end
 ```
 
 ```shell
@@ -92,14 +107,14 @@ Marked stuck import jobs as failed. JIDs: xyz
 While the performance problems are not tackled, there is a process to workaround
 importing big projects, using a foreground import:
 
-[Foreground import](https://gitlab.com/gitlab-com/gl-infra/infrastructure/issues/5384) of big projects for customers.
+[Foreground import](https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/5384) of big projects for customers.
 (Using the import template in the [infrastructure tracker](https://gitlab.com/gitlab-com/gl-infra/infrastructure/))
 
 ## Security
 
 The Import/Export feature is constantly updated (adding new things to export), however
 the code hasn't been refactored in a long time. We should perform a code audit (see
-[confidential issue](../user/project/issues/confidential_issues.md) `https://gitlab.com/gitlab-org/gitlab/issues/20720`).
+[confidential issue](../user/project/issues/confidential_issues.md) `https://gitlab.com/gitlab-org/gitlab/-/issues/20720`).
 to make sure its dynamic nature does not increase the number of security concerns.
 
 ### Security in the code
@@ -192,20 +207,8 @@ module Gitlab
 
 ## Version history
 
-The [current version history](../user/project/settings/import_export.md) also displays the equivalent GitLab version
-and it is useful for knowing which versions won't be compatible between them.
-
-| Exporting GitLab version   | Importing GitLab version   |
-| -------------------------- | -------------------------- |
-| 11.7 to current            | 11.7 to current            |
-| 11.1 to 11.6               | 11.1 to 11.6               |
-| 10.8 to 11.0               | 10.8 to 11.0               |
-| 10.4 to 10.7               | 10.4 to 10.7               |
-| ...                        | ...                        |
-| 8.10.3 to 8.11             | 8.10.3 to 8.11             |
-| 8.10.0 to 8.10.2           | 8.10.0 to 8.10.2           |
-| 8.9.5 to 8.9.11            | 8.9.5 to 8.9.11            |
-| 8.9.0 to 8.9.4             | 8.9.0 to 8.9.4             |
+Check the [version history](../user/project/settings/import_export.md#version-history)
+for compatibility when importing and exporting projects.
 
 ### When to bump the version up
 
@@ -331,3 +334,78 @@ module Projects
            wiki_repo_saver, lfs_saver].all?(&:save)
       end
 ```
+
+## Test fixtures
+
+Fixtures used in Import/Export specs live in `spec/fixtures/lib/gitlab/import_export`. There are both Project and Group fixtures.
+
+There are two versions of each of these fixtures:
+
+- A human readable single JSON file with all objects, called either `project.json` or `group.json`.
+- A folder named `tree`, containing a tree of files in `ndjson` format. **Please do not edit files under this folder manually unless strictly necessary.**
+
+The tools to generate the NDJSON tree from the human-readable JSON files live in the [`gitlab-org/memory-team/team-tools`](https://gitlab.com/gitlab-org/memory-team/team-tools/-/blob/master/import-export/) project.
+
+### Project
+
+**Please use `legacy-project-json-to-ndjson.sh` to generate the NDJSON tree.**
+
+The NDJSON tree will look like this:
+
+```shell
+tree
+├── project
+│   ├── auto_devops.ndjson
+│   ├── boards.ndjson
+│   ├── ci_cd_settings.ndjson
+│   ├── ci_pipelines.ndjson
+│   ├── container_expiration_policy.ndjson
+│   ├── custom_attributes.ndjson
+│   ├── error_tracking_setting.ndjson
+│   ├── external_pull_requests.ndjson
+│   ├── issues.ndjson
+│   ├── labels.ndjson
+│   ├── merge_requests.ndjson
+│   ├── milestones.ndjson
+│   ├── pipeline_schedules.ndjson
+│   ├── project_badges.ndjson
+│   ├── project_feature.ndjson
+│   ├── project_members.ndjson
+│   ├── protected_branches.ndjson
+│   ├── protected_tags.ndjson
+│   ├── releases.ndjson
+│   ├── services.ndjson
+│   ├── snippets.ndjson
+│   └── triggers.ndjson
+└── project.json
+```
+
+### Group
+
+**Please use `legacy-group-json-to-ndjson.rb` to generate the NDJSON tree.**
+
+The NDJSON tree will look like this:
+
+```shell
+tree
+└── groups
+    ├── 4351
+    │   ├── badges.ndjson
+    │   ├── boards.ndjson
+    │   ├── epics.ndjson
+    │   ├── labels.ndjson
+    │   ├── members.ndjson
+    │   └── milestones.ndjson
+    ├── 4352
+    │   ├── badges.ndjson
+    │   ├── boards.ndjson
+    │   ├── epics.ndjson
+    │   ├── labels.ndjson
+    │   ├── members.ndjson
+    │   └── milestones.ndjson
+    ├── _all.ndjson
+    ├── 4351.json
+    └── 4352.json
+```
+
+CAUTION: **Caution:** When updating these fixtures, please ensure you update both `json` files and `tree` folder, as the tests apply to both.

@@ -1,6 +1,6 @@
 # Repository storage paths
 
-> [Introduced][ce-4578] in GitLab 8.10.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/4578) in GitLab 8.10.
 
 GitLab allows you to define multiple repository storage paths (sometimes called
 storage shards) to distribute the storage load between several mount points.
@@ -10,7 +10,7 @@ storage shards) to distribute the storage load between several mount points.
 > - You must have at least one storage path called `default`.
 > - The paths are defined in key-value pairs. The key is an arbitrary name you
 >   can pick to name the file path.
-> - The target directories and any of its subpaths must not be a symlink.
+> - The target directories and any of its sub-paths must not be a symlink.
 > - No target directory may be a sub-directory of another; no nesting.
 
 Example: this is OK:
@@ -34,7 +34,7 @@ storage2:
 ## Configure GitLab
 
 > **Warning:**
-> In order for [backups] to work correctly, the storage path must **not** be a
+> In order for [backups](../raketasks/backup_restore.md) to work correctly, the storage path must **not** be a
 > mount point and the GitLab user should have correct permissions for the parent
 > directory of the path. In Omnibus GitLab this is taken care of automatically,
 > but for source installations you should be extra careful.
@@ -47,7 +47,7 @@ storage2:
 > `gitlab.yml`.
 >
 > This little detail matters because while restoring a backup, the current
-> contents of  `/home/git/repositories` [are moved to][raketask] `/home/git/repositories.old`,
+> contents of  `/home/git/repositories` [are moved to](https://gitlab.com/gitlab-org/gitlab/blob/033e5423a2594e08a7ebcd2379bd2331f4c39032/lib/backup/repository.rb#L54-56) `/home/git/repositories.old`,
 > so if `/home/git/repositories` is the mount point, then `mv` would be moving
 > things between mount points, and bad things could happen. Ideally,
 > `/home/git` would be the mount point, so then things would be moving within the
@@ -57,7 +57,7 @@ storage2:
 
 Now that you've read that big fat warning above, let's edit the configuration
 files and add the full paths of the alternative repository storage paths. In
-the example below, we add two more mountpoints that are named `nfs_1` and `nfs_2`
+the example below, we add two more mount points that are named `nfs_1` and `nfs_2`
 respectively.
 
 NOTE: **Note:** This example uses NFS. We do not recommend using EFS for storage as it may impact GitLab's performance. See the [relevant documentation](high_availability/nfs.md#avoid-using-awss-elastic-file-system-efs) for more details.
@@ -79,10 +79,10 @@ NOTE: **Note:** This example uses NFS. We do not recommend using EFS for storage
          path: /mnt/nfs2/repositories
    ```
 
-1. [Restart GitLab][restart-gitlab] for the changes to take effect.
+1. [Restart GitLab](restart_gitlab.md#installations-from-source) for the changes to take effect.
 
 >**Note:**
-The [`gitlab_shell: repos_path` entry][repospath] in `gitlab.yml` will be
+The [`gitlab_shell: repos_path` entry](https://gitlab.com/gitlab-org/gitlab-foss/-/blob/8-9-stable/config/gitlab.yml.example#L457) in `gitlab.yml` will be
 deprecated and replaced by `repositories: storages` in the future, so if you
 are upgrading from a version prior to 8.10, make sure to add the configuration
 as described in the step above. After you make the changes and confirm they are
@@ -114,9 +114,3 @@ Repository storage > Storage nodes for new repositories**.
 
 Beginning with GitLab 8.13.4, multiple paths can be chosen. New repositories
 will be randomly placed on one of the selected paths.
-
-[ce-4578]: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/4578
-[restart-gitlab]: restart_gitlab.md#installations-from-source
-[backups]: ../raketasks/backup_restore.md
-[raketask]: https://gitlab.com/gitlab-org/gitlab/blob/033e5423a2594e08a7ebcd2379bd2331f4c39032/lib/backup/repository.rb#L54-56
-[repospath]: https://gitlab.com/gitlab-org/gitlab-foss/-/blob/8-9-stable/config/gitlab.yml.example#L457

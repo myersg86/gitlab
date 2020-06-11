@@ -225,6 +225,10 @@ module Gitlab
         new_path.presence || old_path
       end
 
+      def file_hash
+        Digest::SHA1.hexdigest(file_path)
+      end
+
       def added_lines
         @stats&.additions || diff_lines.count(&:added?)
       end
@@ -235,6 +239,10 @@ module Gitlab
 
       def file_identifier
         "#{file_path}-#{new_file?}-#{deleted_file?}-#{renamed_file?}"
+      end
+
+      def file_identifier_hash
+        Digest::SHA1.hexdigest(file_identifier)
       end
 
       def diffable?
@@ -314,6 +322,10 @@ module Gitlab
         @rich_viewer = rich_viewer_class&.new(self)
       end
 
+      def alternate_viewer
+        alternate_viewer_class&.new(self)
+      end
+
       def rendered_as_text?(ignore_errors: true)
         simple_viewer.is_a?(DiffViewer::Text) && (ignore_errors || simple_viewer.render_error.nil?)
       end
@@ -353,7 +365,7 @@ module Gitlab
       def fetch_blob(sha, path)
         return unless sha
 
-        Blob.lazy(repository.project, sha, path)
+        Blob.lazy(repository, sha, path)
       end
 
       def total_blob_lines(blob)
@@ -419,6 +431,17 @@ module Gitlab
         return if collapsed?
         return unless diffable?
         return unless modified_file?
+
+        find_renderable_viewer_class(classes)
+      end
+
+      def alternate_viewer_class
+        return unless viewer.class == DiffViewer::Renamed
+
+        find_renderable_viewer_class(RICH_VIEWERS) || (DiffViewer::Text if text?)
+      end
+
+      def find_renderable_viewer_class(classes)
         return if different_type? || external_storage_error?
 
         verify_binary = !stored_externally?

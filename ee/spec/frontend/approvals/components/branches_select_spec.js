@@ -38,18 +38,15 @@ describe('Branches Select', () => {
 
   const search = (term = '') => {
     $input.select2('search', term);
-    jest.runAllTimers();
   };
 
   beforeEach(() => {
-    jest.useFakeTimers();
     jest
       .spyOn(Api, 'projectProtectedBranches')
       .mockReturnValue(Promise.resolve(TEST_PROTECTED_BRANCHES));
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
     wrapper.destroy();
   });
 

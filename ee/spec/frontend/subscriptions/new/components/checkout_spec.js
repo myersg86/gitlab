@@ -1,9 +1,8 @@
 import Vuex from 'vuex';
 import { shallowMount, createLocalVue } from '@vue/test-utils';
-import { mockTracking } from 'helpers/tracking_helper';
 import createStore from 'ee/subscriptions/new/store';
 import Component from 'ee/subscriptions/new/components/checkout.vue';
-import ProgressBar from 'ee/subscriptions/new/components/checkout/progress_bar.vue';
+import ProgressBar from 'ee/registrations/components/progress_bar.vue';
 
 describe('Checkout', () => {
   const localVue = createLocalVue();
@@ -11,7 +10,6 @@ describe('Checkout', () => {
 
   let store;
   let wrapper;
-  let spy;
 
   const createComponent = () => {
     wrapper = shallowMount(Component, {
@@ -22,23 +20,12 @@ describe('Checkout', () => {
   const findProgressBar = () => wrapper.find(ProgressBar);
 
   beforeEach(() => {
-    spy = mockTracking('Growth::Acquisition::Experiment::PaidSignUpFlow', null, jest.spyOn);
     store = createStore();
     createComponent();
   });
 
   afterEach(() => {
     wrapper.destroy();
-  });
-
-  it('sends tracking event when snowplow got initialized', () => {
-    document.dispatchEvent(new Event('SnowplowInitialized'));
-
-    expect(spy).toHaveBeenCalledWith('Growth::Acquisition::Experiment::PaidSignUpFlow', 'start', {
-      label: null,
-      property: null,
-      value: null,
-    });
   });
 
   describe.each([[true, true], [false, false]])('when isNewUser=%s', (isNewUser, visible) => {
@@ -48,6 +35,39 @@ describe('Checkout', () => {
 
     it(`progress bar visibility is ${visible}`, () => {
       expect(findProgressBar().exists()).toBe(visible);
+    });
+  });
+
+  describe('passing the correct options to the progress bar component', () => {
+    beforeEach(() => {
+      store.state.isNewUser = true;
+    });
+
+    it('passes the steps', () => {
+      expect(findProgressBar().props('steps')).toEqual([
+        'Your profile',
+        'Checkout',
+        'Your GitLab group',
+      ]);
+    });
+
+    describe('when part of the onboarding issues experiment', () => {
+      beforeEach(() => {
+        store.state.isOnboardingIssuesExperimentEnabled = true;
+      });
+
+      it('passes the steps', () => {
+        expect(findProgressBar().props('steps')).toEqual([
+          'Your profile',
+          'Checkout',
+          'Your GitLab group',
+          'Your first project',
+        ]);
+      });
+    });
+
+    it('passes the current step', () => {
+      expect(findProgressBar().props('currentStep')).toEqual('Checkout');
     });
   });
 });

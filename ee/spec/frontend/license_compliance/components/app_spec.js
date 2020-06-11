@@ -1,9 +1,17 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, mount } from '@vue/test-utils';
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { GlEmptyState, GlLoadingIcon, GlTab, GlTabs, GlAlert } from '@gitlab/ui';
+import {
+  GlEmptyState,
+  GlLoadingIcon,
+  GlTab,
+  GlTabs,
+  GlAlert,
+  GlDeprecatedBadge as GlBadge,
+} from '@gitlab/ui';
 import { TEST_HOST } from 'helpers/test_constants';
+import setWindowLocation from 'helpers/set_window_location_helper';
 
 import { REPORT_STATUS } from 'ee/license_compliance/store/modules/list/constants';
 
@@ -41,6 +49,15 @@ const createComponent = ({ state, props, options }) => {
         state: {
           managedLicenses,
         },
+        getters: {
+          isAddingNewLicense: () => false,
+          hasPendingLicenses: () => false,
+          isLicenseBeingUpdated: () => () => false,
+        },
+        actions: {
+          fetchManagedLicenses: noop,
+          setLicenseApproval: noop,
+        },
       },
       licenseList: {
         namespaced: true,
@@ -60,7 +77,9 @@ const createComponent = ({ state, props, options }) => {
     },
   });
 
-  wrapper = shallowMount(LicenseComplianceApp, {
+  const mountFunc = options && options.mount ? mount : shallowMount;
+
+  wrapper = mountFunc(LicenseComplianceApp, {
     propsData: {
       emptyStateSvgPath,
       documentationPath,
@@ -71,6 +90,8 @@ const createComponent = ({ state, props, options }) => {
     store: fakeStore,
   });
 };
+
+const findByTestId = testId => wrapper.find(`[data-testid="${testId}"]`);
 
 describe('Project Licenses', () => {
   afterEach(() => {
@@ -169,7 +190,7 @@ describe('Project Licenses', () => {
     it('renders a "Detected in project" tab and a "Policies" tab', () => {
       expect(wrapper.find(GlTabs).exists()).toBe(true);
       expect(wrapper.find(GlTab).exists()).toBe(true);
-      expect(wrapper.findAll(GlTab).length).toBe(2);
+      expect(wrapper.findAll(GlTab)).toHaveLength(2);
     });
 
     it('it renders the "Detected in project" table', () => {
@@ -182,6 +203,117 @@ describe('Project Licenses', () => {
 
     it('renders the pipeline info', () => {
       expect(wrapper.find(PipelineInfo).exists()).toBe(true);
+    });
+
+    describe.each`
+      givenLocationHash | expectedActiveTab
+      ${'#licenses'}    | ${'licenses'}
+      ${'#policies'}    | ${'policies'}
+    `(
+      'when window.location contains the hash "$givenLocationHash"',
+      ({ givenLocationHash, expectedActiveTab }) => {
+        const originalLocation = window.location;
+
+        beforeEach(() => {
+          setWindowLocation(`http://foo.com/index${givenLocationHash}`);
+
+          createComponent({
+            state: {
+              initialized: true,
+              isLoading: false,
+              licenses: [
+                {
+                  name: 'MIT',
+                  classification: LICENSE_APPROVAL_CLASSIFICATION.DENIED,
+                  components: [],
+                },
+              ],
+              pageInfo: 1,
+            },
+            options: {
+              provide: {
+                glFeatures: { licensePolicyList: true },
+              },
+              mount: true,
+            },
+          });
+        });
+
+        afterEach(() => {
+          window.location = originalLocation;
+        });
+
+        it(`sets the active tab to be "${expectedActiveTab}"`, () => {
+          expect(findByTestId(`${expectedActiveTab}Tab`).classes()).toContain('active');
+        });
+      },
+    );
+
+    describe('when the tabs are rendered', () => {
+      const pageInfo = {
+        total: 1,
+      };
+
+      beforeEach(() => {
+        createComponent({
+          state: {
+            initialized: true,
+            isLoading: false,
+            licenses: [
+              {
+                name: 'MIT',
+                classification: LICENSE_APPROVAL_CLASSIFICATION.DENIED,
+                components: [],
+              },
+            ],
+            reportInfo: {
+              jobPath: '/',
+              generatedAt: '',
+              status: REPORT_STATUS.ok,
+            },
+            pageInfo,
+          },
+          options: {
+            provide: {
+              glFeatures: { licensePolicyList: true },
+            },
+            mount: true,
+          },
+        });
+      });
+
+      it.each`
+        givenActiveTab | expectedLocationHash
+        ${'policies'}  | ${'#policies'}
+        ${'licenses'}  | ${'#licenses'}
+      `(
+        'sets the location hash to "$expectedLocationHash" when the "$givenTab" tab is activate',
+        ({ givenActiveTab, expectedLocationHash }) => {
+          findByTestId(`${givenActiveTab}TabTitle`).trigger('click');
+
+          return wrapper.vm.$nextTick().then(() => {
+            expect(window.location.hash).toBe(expectedLocationHash);
+          });
+        },
+      );
+
+      it('it renders the correct count in "Detected in project" tab', () => {
+        expect(
+          wrapper
+            .findAll(GlBadge)
+            .at(0)
+            .text(),
+        ).toBe(pageInfo.total.toString());
+      });
+
+      it('it renders the correct count in "Policies" tab', () => {
+        expect(
+          wrapper
+            .findAll(GlBadge)
+            .at(1)
+            .text(),
+        ).toBe(managedLicenses.length.toString());
+      });
     });
 
     describe('when there are policy violations', () => {

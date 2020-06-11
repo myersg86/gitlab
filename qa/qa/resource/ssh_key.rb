@@ -5,11 +5,16 @@ module QA
     class SSHKey < Base
       extend Forwardable
 
-      attr_accessor :title
+      attr_reader :title
+      attr_accessor :expires_at
 
       attribute :id
 
       def_delegators :key, :private_key, :public_key, :md5_fingerprint
+
+      def initialize
+        self.title = Time.now.to_f
+      end
 
       def key
         @key ||= Runtime::Key::RSA.new
@@ -26,6 +31,10 @@ module QA
 
       def fabricate_via_api!
         api_post
+      end
+
+      def title=(title)
+        @title = "E2E test key: #{title}"
       end
 
       def api_delete
@@ -45,12 +54,26 @@ module QA
       def api_post_body
         {
           title: title,
-          key: public_key
+          key: public_key,
+          expires_at: expires_at
         }
       end
 
       def api_delete_path
         "/user/keys/#{id}"
+      end
+
+      def replicated?
+        api_client = Runtime::API::Client.new(:geo_secondary)
+
+        QA::Runtime::Logger.debug('Checking for SSH key replication')
+
+        Support::Retrier.retry_until(max_duration: QA::EE::Runtime::Geo.max_db_replication_time, sleep_interval: 3) do
+          response = get Runtime::API::Request.new(api_client, api_get_path).url
+
+          response.code == QA::Support::Api::HTTP_STATUS_OK &&
+            parse_body(response)[:title].include?(title)
+        end
       end
     end
   end

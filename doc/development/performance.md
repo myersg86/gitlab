@@ -8,7 +8,7 @@ consistent performance of GitLab.
 The process of solving performance problems is roughly as follows:
 
 1. Make sure there's an issue open somewhere (for example, on the GitLab CE issue
-   tracker), and create one if there is not. See [#15607](https://gitlab.com/gitlab-org/gitlab-foss/issues/15607) for an example.
+   tracker), and create one if there is not. See [#15607](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/15607) for an example.
 1. Measure the performance of the code in a production environment such as
    GitLab.com (see the [Tooling](#tooling) section below). Performance should be
    measured over a period of _at least_ 24 hours.
@@ -42,11 +42,12 @@ GitLab provides built-in tools to help improve performance and availability:
 - [Request Profiling](../administration/monitoring/performance/request_profiling.md).
 - [QueryRecoder](query_recorder.md) for preventing `N+1` regressions.
 - [Chaos endpoints](chaos_endpoints.md) for testing failure scenarios. Intended mainly for testing availability.
+- [Service measurement](service_measurement.md) for measuring and logging service execution.
 
 GitLab team members can use [GitLab.com's performance monitoring systems](https://about.gitlab.com/handbook/engineering/monitoring/) located at
 <https://dashboards.gitlab.net>, this requires you to log in using your
 `@gitlab.com` email address. Non-GitLab team-members are advised to set up their
-own InfluxDB and Grafana stack.
+own Prometheus and Grafana stack.
 
 ## Benchmarks
 
@@ -109,7 +110,7 @@ In short:
 By collecting snapshots of process state at regular intervals, profiling allows
 you to see where time is spent in a process. The [StackProf](https://github.com/tmm1/stackprof)
 gem is included in GitLab's development environment, allowing you to investigate
-the behaviour of suspect code in detail.
+the behavior of suspect code in detail.
 
 It's important to note that profiling an application *alters its performance*,
 and will generally be done *in an unrepresentative environment*. In particular,

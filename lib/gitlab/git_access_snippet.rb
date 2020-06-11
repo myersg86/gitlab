@@ -39,13 +39,18 @@ module Gitlab
 
     private
 
-    override :check_project!
-    def check_project!(cmd, changes)
+    override :check_namespace!
+    def check_namespace!
       return unless snippet.is_a?(ProjectSnippet)
 
-      check_namespace!
-      check_project_accessibility!
-      add_project_moved_message!
+      super
+    end
+
+    override :check_project!
+    def check_project!(cmd)
+      return unless snippet.is_a?(ProjectSnippet)
+
+      super
     end
 
     override :check_push_access!
@@ -59,6 +64,13 @@ module Gitlab
       if snippet.blank?
         raise NotFoundError, ERROR_MESSAGES[:snippet_not_found]
       end
+    end
+
+    override :can_read_project?
+    def can_read_project?
+      return true if user&.migration_bot?
+
+      super
     end
 
     override :check_download_access!
@@ -99,7 +111,7 @@ module Gitlab
 
     def check_single_change_access(change)
       Checks::SnippetCheck.new(change, logger: logger).validate!
-      Checks::PushFileCountCheck.new(change, repository: repository, limit: Snippet::MAX_FILE_COUNT, logger: logger).validate!
+      Checks::PushFileCountCheck.new(change, repository: repository, limit: Snippet.max_file_limit(user), logger: logger).validate!
     rescue Checks::TimedLogger::TimeoutError
       raise TimeoutError, logger.full_message
     end
@@ -120,6 +132,13 @@ module Gitlab
     override :check_custom_action
     def check_custom_action(cmd)
       nil
+    end
+
+    override :check_size_limit?
+    def check_size_limit?
+      return false if user&.migration_bot?
+
+      super
     end
   end
 end

@@ -1,6 +1,6 @@
 # Wikis API
 
-> [Introduced][ce-13372] in GitLab 10.0.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/13372) in GitLab 10.0.
 
 Available only in APIv4.
 
@@ -18,7 +18,7 @@ GET /projects/:id/wikis
 | `with_content`      | boolean    | no      | Include pages' content  |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/1/wikis?with_content=1
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/wikis?with_content=1"
 ```
 
 Example response:
@@ -59,7 +59,7 @@ GET /projects/:id/wikis/:slug
 | `slug` | string  | yes       | The slug (a unique string) of the wiki page |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/1/wikis/home
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/wikis/home"
 ```
 
 Example response:
@@ -153,8 +153,6 @@ curl --request DELETE --header "PRIVATE-TOKEN: <your_access_token>" "https://git
 
 On success the HTTP status code is `204` and no JSON response is expected.
 
-[ce-13372]: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/13372
-
 ## Upload an attachment to the wiki repository
 
 Uploads a file to the attachment folder inside the wiki's repository. The
@@ -176,7 +174,7 @@ The `file=` parameter must point to a file on your filesystem and be preceded
 by `@`. For example:
 
 ```shell
-curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" --form "file=@dk.png" https://gitlab.example.com/api/v4/projects/1/wikis/attachments
+curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" --form "file=@dk.png" "https://gitlab.example.com/api/v4/projects/1/wikis/attachments"
 ```
 
 Example response:

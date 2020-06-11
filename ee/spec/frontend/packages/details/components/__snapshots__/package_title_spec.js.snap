@@ -2,49 +2,62 @@
 
 exports[`PackageTitle renders with tags 1`] = `
 <div
-  class="flex-column"
+  class="gl-flex-direction-column"
 >
-  <h1
-    class="gl-font-size-20 prepend-top-8 append-bottom-4"
-  >
-    Test package
-  </h1>
-   
   <div
-    class="d-flex align-items-center text-secondary"
+    class="gl-display-flex"
   >
-    <gl-icon-stub
-      class="append-right-8"
-      name="eye"
-      size="16"
-    />
+    <!---->
      
-    <gl-sprintf-stub
-      message="v%{version} published %{timeAgo}"
-    />
+    <div
+      class="gl-display-flex gl-flex-direction-column"
+    >
+      <h1
+        class="gl-font-size-h1 gl-mt-3 gl-mb-2"
+      >
+        
+        Test package
+      
+      </h1>
+       
+      <div
+        class="gl-display-flex gl-align-items-center gl-text-gray-700"
+      >
+        <gl-icon-stub
+          class="gl-mr-3"
+          name="eye"
+          size="16"
+        />
+         
+        <gl-sprintf-stub
+          message="v%{version} published %{timeAgo}"
+        />
+      </div>
+    </div>
   </div>
    
   <div
-    class="d-flex flex-wrap align-items-center append-bottom-8"
+    class="gl-display-flex gl-flex-wrap gl-align-items-center gl-mb-3"
   >
     <div
-      class="d-flex align-items-center append-right-default"
+      class="gl-display-flex gl-align-items-center gl-mr-5"
     >
       <gl-icon-stub
-        class="text-secondary append-right-8"
+        class="gl-text-gray-700 gl-mr-3"
         name="package"
         size="16"
       />
        
       <span
-        class="font-weight-bold"
+        class="gl-font-weight-bold"
+        data-testid="package-type"
       >
         maven
       </span>
     </div>
      
     <div
-      class="d-flex align-items-center append-right-default"
+      class="gl-display-flex gl-align-items-center gl-mr-5"
     >
       <package-tags-stub
         tagdisplaylimit="1"
@@ -54,17 +67,20 @@ exports[`PackageTitle renders with tags 1`] = `
      
     <!---->
      
+    <!---->
+     
     <div
-      class="d-flex align-items-center append-right-default"
+      class="gl-display-flex gl-align-items-center gl-mr-5"
     >
       <gl-icon-stub
-        class="text-secondary append-right-8"
+        class="gl-text-gray-700 gl-mr-3"
         name="disk"
         size="16"
       />
        
       <span
-        class="font-weight-bold"
+        class="gl-font-weight-bold"
+        data-testid="package-size"
       >
         300 bytes
       </span>
@@ -75,42 +91,55 @@ exports[`PackageTitle renders with tags 1`] = `
 
 exports[`PackageTitle renders without tags 1`] = `
 <div
-  class="flex-column"
+  class="gl-flex-direction-column"
 >
-  <h1
-    class="gl-font-size-20 prepend-top-8 append-bottom-4"
-  >
-    Test package
-  </h1>
-   
   <div
-    class="d-flex align-items-center text-secondary"
+    class="gl-display-flex"
   >
-    <gl-icon-stub
-      class="append-right-8"
-      name="eye"
-      size="16"
-    />
+    <!---->
      
-    <gl-sprintf-stub
-      message="v%{version} published %{timeAgo}"
-    />
+    <div
+      class="gl-display-flex gl-flex-direction-column"
+    >
+      <h1
+        class="gl-font-size-h1 gl-mt-3 gl-mb-2"
+      >
+        
+        Test package
+      
+      </h1>
+       
+      <div
+        class="gl-display-flex gl-align-items-center gl-text-gray-700"
+      >
+        <gl-icon-stub
+          class="gl-mr-3"
+          name="eye"
+          size="16"
+        />
+         
+        <gl-sprintf-stub
+          message="v%{version} published %{timeAgo}"
+        />
+      </div>
+    </div>
   </div>
    
   <div
-    class="d-flex flex-wrap align-items-center append-bottom-8"
+    class="gl-display-flex gl-flex-wrap gl-align-items-center gl-mb-3"
   >
     <div
-      class="d-flex align-items-center append-right-default"
+      class="gl-display-flex gl-align-items-center gl-mr-5"
     >
       <gl-icon-stub
-        class="text-secondary append-right-8"
+        class="gl-text-gray-700 gl-mr-3"
         name="package"
         size="16"
       />
        
       <span
-        class="font-weight-bold"
+        class="gl-font-weight-bold"
+        data-testid="package-type"
       >
         maven
       </span>
@@ -120,17 +149,20 @@ exports[`PackageTitle renders without tags 1`] = `
      
     <!---->
      
+    <!---->
+     
     <div
-      class="d-flex align-items-center append-right-default"
+      class="gl-display-flex gl-align-items-center gl-mr-5"
     >
       <gl-icon-stub
-        class="text-secondary append-right-8"
+        class="gl-text-gray-700 gl-mr-3"
         name="disk"
         size="16"
       />
        
       <span
-        class="font-weight-bold"
+        class="gl-font-weight-bold"
+        data-testid="package-size"
       >
         300 bytes
       </span>

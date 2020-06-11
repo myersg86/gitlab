@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Ci::Parsers::Security::Sast do
+RSpec.describe Gitlab::Ci::Parsers::Security::Sast do
   describe '#parse!' do
     subject(:parser) { described_class.new }
 
@@ -49,7 +49,7 @@ describe Gitlab::Ci::Parsers::Security::Sast do
 
     context "when parsing an empty report" do
       let(:report) { Gitlab::Ci::Reports::Security::Report.new('sast', commit_sha, created_at) }
-      let(:blob) { JSON.generate({}) }
+      let(:blob) { Gitlab::Json.generate({}) }
 
       it { expect(parser.parse!(blob, report)).to be_empty }
     end

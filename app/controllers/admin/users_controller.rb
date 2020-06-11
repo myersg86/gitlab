@@ -145,7 +145,7 @@ class Admin::UsersController < Admin::ApplicationController
         password_confirmation: params[:user][:password_confirmation]
       }
 
-      password_params[:password_expires_at] = Time.now unless changing_own_password?
+      password_params[:password_expires_at] = Time.current unless changing_own_password?
 
       user_params_with_pass.merge!(password_params)
     end
@@ -241,7 +241,8 @@ class Admin::UsersController < Admin::ApplicationController
       :theme_id,
       :twitter,
       :username,
-      :website_url
+      :website_url,
+      :note
     ]
   end
 

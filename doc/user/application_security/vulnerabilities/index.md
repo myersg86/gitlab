@@ -1,14 +1,13 @@
 ---
 type: reference, howto
+stage: Secure
+group: Vulnerability Research
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 ---
 
 # Standalone Vulnerability pages
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/13561) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.10.
-
-CAUTION: **Warning:**
-This feature is currently [Alpha](https://about.gitlab.com/handbook/product/#alpha-beta-ga).
-You can begin using it, but it may receive important changes in the future.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/13561) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 13.0.
 
 Each security vulnerability in the [Vulnerability List](../dependency_list/index.md) has its own standalone
 page.

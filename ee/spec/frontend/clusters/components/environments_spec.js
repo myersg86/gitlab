@@ -28,11 +28,13 @@ describe('Environments', () => {
 
   it('renders an empty state if no deployments are found', () => {
     const emptyState = wrapper.find(GlEmptyState);
-    const emptyStateText =
-      'No deployments found Ensure your environment is part of the deploy stage of your CI pipeline to track deployments to your cluster.  Learn more about deploying to a cluster';
+    const emptyStateText = emptyState.text();
 
     expect(emptyState.exists()).toBe(true);
-    expect(emptyState.text()).toEqual(emptyStateText);
+    expect(emptyStateText).toContain(
+      'No deployments found Ensure your environment is part of the deploy stage of your CI pipeline to track deployments to your cluster.',
+    );
+    expect(emptyStateText).toContain('Learn more about deploying to a cluster');
   });
 
   describe('environments table', () => {
@@ -55,7 +57,7 @@ describe('Environments', () => {
       const tableHeaders = ['Project', 'Environment', 'Job', `Pods in use 2`, 'Last updated'];
       const headers = table.findAll('th');
 
-      expect(headers.length).toBe(tableHeaders.length);
+      expect(headers).toHaveLength(tableHeaders.length);
 
       tableHeaders.forEach((headerText, i) => expect(headers.at(i).text()).toEqual(headerText));
     });
@@ -87,7 +89,7 @@ describe('Environments', () => {
         environments.forEach((environment, i) => {
           const { instances } = environment.rolloutStatus;
 
-          expect(tableRows.at(i).findAll('.js-deployment-instance').length).toBe(instances.length);
+          expect(tableRows.at(i).findAll('.js-deployment-instance')).toHaveLength(instances.length);
         });
       });
 

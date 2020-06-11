@@ -7,7 +7,7 @@
 
   .row
     .col-lg-4.profile-settings-sidebar
-      %h4.prepend-top-0
+      %h4.gl-mt-0
         = s_("Profiles|Public Avatar")
       %p
         - if @user.avatar?
@@ -20,11 +20,14 @@
             = s_("Profiles|You can upload your avatar here or change it at %{gravatar_link}").html_safe % { gravatar_link: gravatar_link }
           - else
             = s_("Profiles|You can upload your avatar here")
+        - if current_appearance&.profile_image_guidelines?
+          .md
+            = brand_profile_image_guidelines
     .col-lg-8
       .clearfix.avatar-image.append-bottom-default
         = link_to avatar_icon_for_user(@user, 400), target: '_blank', rel: 'noopener noreferrer' do
           = image_tag avatar_icon_for_user(@user, 160), alt: '', class: 'avatar s160'
-      %h5.prepend-top-0= s_("Profiles|Upload new avatar")
+      %h5.gl-mt-0= s_("Profiles|Upload new avatar")
       .prepend-top-5.append-bottom-10
         %button.btn.js-choose-user-avatar-button{ type: 'button' }= s_("Profiles|Choose file...")
         %span.avatar-file-name.prepend-left-default.js-avatar-filename= s_("Profiles|No file chosen")
@@ -37,7 +40,7 @@
   %hr
   .row
     .col-lg-4.profile-settings-sidebar
-      %h4.prepend-top-0= s_("Profiles|Current status")
+      %h4.gl-mt-0= s_("Profiles|Current status")
       %p= s_("Profiles|This emoji and message will appear on your profile and throughout the interface.")
     .col-lg-8
       = f.fields_for :status, @user.status do |status_form|
@@ -68,7 +71,7 @@
     %hr
     .row.user-time-preferences
       .col-lg-4.profile-settings-sidebar
-        %h4.prepend-top-0= s_("Profiles|Time settings")
+        %h4.gl-mt-0= s_("Profiles|Time settings")
         %p= s_("Profiles|You can set your current timezone here")
       .col-lg-8
         -# TODO: might need an entry in user/profile.md to describe some of these settings
@@ -80,7 +83,7 @@
   %hr
   .row
     .col-lg-4.profile-settings-sidebar
-      %h4.prepend-top-0
+      %h4.gl-mt-0
         = s_("Profiles|Main settings")
       %p
         = s_("Profiles|This information will appear on your profile")
@@ -101,7 +104,7 @@
       - else
         = f.text_field :location, label: s_('Profiles|Location'), class: 'input-lg', placeholder: s_("Profiles|City, country")
       = f.text_field :job_title, class: 'input-md'
-      = f.text_field :organization, readonly: @user.gitlab_employee?, label: s_('Profiles|Organization'), class: 'input-md', help: s_("Profiles|Who you represent or work for")
+      = f.text_field :organization, label: s_('Profiles|Organization'), class: 'input-md', help: s_("Profiles|Who you represent or work for")
       = f.text_area :bio, label: s_('Profiles|Bio'), rows: 4, maxlength: 250, help: s_("Profiles|Tell us about yourself in fewer than 250 characters")
       %hr
       %h5= s_("Private profile")

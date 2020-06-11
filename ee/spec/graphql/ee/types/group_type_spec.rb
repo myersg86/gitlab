@@ -2,22 +2,24 @@
 
 require 'spec_helper'
 
-describe GitlabSchema.types['Group'] do
+RSpec.describe GitlabSchema.types['Group'] do
   describe 'nested epic request' do
     it { expect(described_class).to have_graphql_field(:epicsEnabled) }
     it { expect(described_class).to have_graphql_field(:epics) }
     it { expect(described_class).to have_graphql_field(:epic) }
   end
 
+  it { expect(described_class).to have_graphql_field(:iterations) }
   it { expect(described_class).to have_graphql_field(:groupTimelogsEnabled) }
   it { expect(described_class).to have_graphql_field(:timelogs, complexity: 5) }
   it { expect(described_class).to have_graphql_field(:vulnerabilities) }
+  it { expect(described_class).to have_graphql_field(:vulnerabilities_count_by_day_and_severity) }
 
   describe 'timelogs field' do
     subject { described_class.fields['timelogs'] }
 
-    it 'finds timelogs between start date and end date' do
-      is_expected.to have_graphql_arguments(:start_date, :end_date, :after, :before, :first, :last)
+    it 'finds timelogs between start time and end time' do
+      is_expected.to have_graphql_arguments(:start_time, :end_time, :start_date, :end_date, :after, :before, :first, :last)
       is_expected.to have_graphql_resolver(Resolvers::TimelogResolver)
       is_expected.to have_non_null_graphql_type(Types::TimelogType.connection_type)
     end
@@ -49,37 +51,20 @@ describe GitlabSchema.types['Group'] do
     end
 
     before do
+      stub_licensed_features(security_dashboard: true)
+
       group.add_developer(user)
     end
 
     subject { GitlabSchema.execute(query, context: { current_user: user }).as_json }
 
-    context 'when first_class_vulnerabilities is disabled' do
-      before do
-        stub_feature_flags(first_class_vulnerabilities: false)
-      end
+    it "returns the vulnerabilities for all projects in the group and its subgroups" do
+      vulnerabilities = subject.dig('data', 'group', 'vulnerabilities', 'nodes')
 
-      it 'is null' do
-        vulnerabilities = subject.dig('data', 'group', 'vulnerabilities')
-
-        expect(vulnerabilities).to be_nil
-      end
-    end
-
-    context 'when first_class_vulnerabilities is enabled' do
-      before do
-        stub_feature_flags(first_class_vulnerabilities: true)
-        stub_licensed_features(security_dashboard: true)
-      end
-
-      it "returns the vulnerabilities for all projects in the group and its subgroups" do
-        vulnerabilities = subject.dig('data', 'group', 'vulnerabilities', 'nodes')
-
-        expect(vulnerabilities.count).to be(1)
-        expect(vulnerabilities.first['title']).to eq('A terrible one!')
-        expect(vulnerabilities.first['state']).to eq('DETECTED')
-        expect(vulnerabilities.first['severity']).to eq('CRITICAL')
-      end
+      expect(vulnerabilities.count).to be(1)
+      expect(vulnerabilities.first['title']).to eq('A terrible one!')
+      expect(vulnerabilities.first['state']).to eq('DETECTED')
+      expect(vulnerabilities.first['severity']).to eq('CRITICAL')
     end
   end
 end

@@ -58,7 +58,12 @@ export default {
 <template>
   <div class="dashboard-filter">
     <strong class="js-name">{{ filter.name }}</strong>
-    <gl-dropdown ref="dropdown" class="d-block mt-1" menu-class="dropdown-extended-height">
+    <gl-dropdown
+      ref="dropdown"
+      class="d-block mt-1"
+      menu-class="dropdown-extended-height"
+      toggle-class="d-flex w-100 justify-content-between align-items-center"
+    >
       <template slot="button-content">
         <span class="text-truncate" :data-qa-selector="qaSelector">
           {{ firstSelectedOption }}
@@ -108,9 +113,10 @@ export default {
               class="flex-shrink-0 js-check"
               name="mobile-issue-close"
             />
-            <span :class="isSelected(option) ? 'prepend-left-4' : 'prepend-left-20'">{{
-              option.name
-            }}</span>
+            <span class="gl-white-space-nowrap gl-ml-2" :class="{ 'gl-pl-5': !isSelected(option) }">
+              {{ option.name }}
+            </span>
+            <slot v-bind="{ filter, option }"></slot>
           </span>
         </button>
       </div>
@@ -125,12 +131,3 @@ export default {
     </gl-dropdown>
   </div>
 </template>
-
-<style>
-.dashboard-filter .dropdown-toggle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-</style>

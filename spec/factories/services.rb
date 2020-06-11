@@ -45,9 +45,13 @@ FactoryBot.define do
   end
 
   factory :alerts_service do
+    active
     project
     type { 'AlertsService' }
-    active { true }
+
+    trait :active do
+      active { true }
+    end
 
     trait :inactive do
       active { false }
@@ -156,6 +160,20 @@ FactoryBot.define do
     project
     type { 'HipchatService' }
     token { 'test_token' }
+  end
+
+  factory :slack_service do
+    project
+    active { true }
+    webhook { 'https://slack.service.url' }
+    type { 'SlackService' }
+  end
+
+  factory :pipelines_email_service do
+    project
+    active { true }
+    type { 'PipelinesEmailService' }
+    recipients { 'test@example.com' }
   end
 
   # this is for testing storing values inside properties, which is deprecated and will be removed in

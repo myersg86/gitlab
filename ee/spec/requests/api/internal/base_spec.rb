@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe API::Internal::Base do
+RSpec.describe API::Internal::Base do
   include EE::GeoHelpers
 
   let_it_be(:primary_url) { 'http://primary.example.com' }
@@ -52,53 +52,6 @@ describe API::Internal::Base do
         expect(git_push_http).to receive(:fetch_referrer_node).and_return(secondary_node)
       end
 
-      context 'when the secondary has a GeoNodeStatus' do
-        context 'when the GeoNodeStatus db_replication_lag_seconds is greater than 0' do
-          let!(:status) { create(:geo_node_status, geo_node: secondary_node, db_replication_lag_seconds: 17) }
-
-          it 'includes current Geo secondary lag in the output' do
-            post api('/internal/post_receive'), params: valid_params
-
-            expect(response).to have_gitlab_http_status(:ok)
-            expect(json_response['messages']).to include({
-              'type' => 'basic',
-              'message' => "Current replication lag: 17 seconds"
-            })
-          end
-        end
-
-        context 'when the GeoNodeStatus db_replication_lag_seconds is 0' do
-          let!(:status) { create(:geo_node_status, geo_node: secondary_node, db_replication_lag_seconds: 0) }
-
-          it 'does not include current Geo secondary lag in the output' do
-            post api('/internal/post_receive'), params: valid_params
-
-            expect(response).to have_gitlab_http_status(:ok)
-            expect(json_response['messages']).not_to include({ 'message' => a_string_matching('replication lag'), 'type' => anything })
-          end
-        end
-
-        context 'when the GeoNodeStatus db_replication_lag_seconds is nil' do
-          let!(:status) { create(:geo_node_status, geo_node: secondary_node, db_replication_lag_seconds: nil) }
-
-          it 'does not include current Geo secondary lag in the output' do
-            post api('/internal/post_receive'), params: valid_params
-
-            expect(response).to have_gitlab_http_status(:ok)
-            expect(json_response['messages']).not_to include({ 'message' => a_string_matching('replication lag'), 'type' => anything })
-          end
-        end
-      end
-
-      context 'when the secondary does not have a GeoNodeStatus' do
-        it 'does not include current Geo secondary lag in the output' do
-          post api('/internal/post_receive'), params: valid_params
-
-          expect(response).to have_gitlab_http_status(:ok)
-          expect(json_response['messages']).not_to include({ 'message' => a_string_matching('replication lag'), 'type' => anything })
-        end
-      end
-
       it 'includes a message advising a redirection occurred' do
         redirect_message = <<~STR
         This request to a Geo secondary node will be forwarded to the
@@ -116,44 +69,12 @@ describe API::Internal::Base do
         })
       end
     end
-
-    context 'when the push was not redirected from a Geo secondary to the primary' do
-      before do
-        expect(Gitlab::Geo::GitPushHttp).to receive(:new).with(identifier, gl_repository).and_return(git_push_http)
-        expect(git_push_http).to receive(:fetch_referrer_node).and_return(nil)
-      end
-
-      it 'does not include current Geo secondary lag in the output' do
-        post api('/internal/post_receive'), params: valid_params
-
-        expect(response).to have_gitlab_http_status(:ok)
-        expect(json_response['messages']).not_to include({ 'message' => a_string_matching('replication lag'), 'type' => anything })
-      end
-    end
   end
 
   describe "POST /internal/allowed" do
     let_it_be(:user) { create(:user) }
     let_it_be(:key) { create(:key, user: user) }
     let(:secret_token) { Gitlab::Shell.secret_token }
-
-    context "for design repositories" do
-      let_it_be(:project) { create(:project) }
-      let(:gl_repository) { EE::Gitlab::GlRepository::DESIGN.identifier_for_container(project) }
-
-      it "does not allow access" do
-        post(api("/internal/allowed"),
-             params: {
-               key_id: key.id,
-               project: project.full_path,
-               gl_repository: gl_repository,
-               secret_token: secret_token,
-               protocol: 'ssh'
-             })
-
-        expect(response).to have_gitlab_http_status(:unauthorized)
-      end
-    end
 
     context "project alias" do
       let(:project) { create(:project, :public, :repository) }

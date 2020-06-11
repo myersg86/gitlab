@@ -10,19 +10,19 @@ describe Gitlab::Metrics::SidekiqMiddleware do
     it 'tracks the transaction' do
       worker = double(:worker, class: double(:class, name: 'TestWorker'))
 
-      expect(Gitlab::Metrics::BackgroundTransaction).to receive(:new)
-        .with(worker.class)
-        .and_call_original
+      expect_next_instance_of(Gitlab::Metrics::BackgroundTransaction) do |transaction|
+        expect(transaction).to receive(:set).with(:sidekiq_queue_duration, instance_of(Float))
+        expect(transaction).to receive(:increment).with(:db_count, 1)
+      end
 
-      expect_any_instance_of(Gitlab::Metrics::Transaction).to receive(:set)
-        .with(:sidekiq_queue_duration, instance_of(Float))
+      middleware.call(worker, message, :test) do
+        ActiveRecord::Base.connection.execute('SELECT pg_sleep(0.1);')
+      end
 
-      expect_any_instance_of(Gitlab::Metrics::Transaction).to receive(:finish)
-
-      middleware.call(worker, message, :test) { nil }
+      expect(message).to include(:db_count, :db_write_count, :db_cached_count)
     end
 
-    it 'tracks the transaction (for messages without `enqueued_at`)' do
+    it 'tracks the transaction (for messages without `enqueued_at`)', :aggregate_failures do
       worker = double(:worker, class: double(:class, name: 'TestWorker'))
 
       expect(Gitlab::Metrics::BackgroundTransaction).to receive(:new)
@@ -32,12 +32,10 @@ describe Gitlab::Metrics::SidekiqMiddleware do
       expect_any_instance_of(Gitlab::Metrics::Transaction).to receive(:set)
         .with(:sidekiq_queue_duration, instance_of(Float))
 
-      expect_any_instance_of(Gitlab::Metrics::Transaction).to receive(:finish)
-
       middleware.call(worker, {}, :test) { nil }
     end
 
-    it 'tracks any raised exceptions' do
+    it 'tracks any raised exceptions', :aggregate_failures do
       worker = double(:worker, class: double(:class, name: 'TestWorker'))
 
       expect_any_instance_of(Gitlab::Metrics::Transaction)
@@ -46,11 +44,10 @@ describe Gitlab::Metrics::SidekiqMiddleware do
       expect_any_instance_of(Gitlab::Metrics::Transaction)
         .to receive(:add_event).with(:sidekiq_exception)
 
-      expect_any_instance_of(Gitlab::Metrics::Transaction)
-        .to receive(:finish)
-
       expect { middleware.call(worker, message, :test) }
         .to raise_error(RuntimeError)
+
+      expect(message).to include(:db_count, :db_write_count, :db_cached_count)
     end
   end
 end

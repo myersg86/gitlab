@@ -1,15 +1,12 @@
-/* eslint-disable no-underscore-dangle, class-methods-use-this, consistent-return, no-shadow */
+/* eslint-disable no-underscore-dangle, class-methods-use-this */
 
 import ListIssue from 'ee_else_ce/boards/models/issue';
 import { __ } from '~/locale';
 import ListLabel from './label';
 import ListAssignee from './assignee';
-import { urlParamsToObject } from '~/lib/utils/common_utils';
 import flash from '~/flash';
 import boardsStore from '../stores/boards_store';
 import ListMilestone from './milestone';
-
-const PER_PAGE = 20;
 
 const TYPES = {
   backlog: {
@@ -40,8 +37,8 @@ class List {
     this.id = obj.id;
     this._uid = this.guid();
     this.position = obj.position;
-    this.title = obj.list_type === 'backlog' ? __('Open') : obj.title;
-    this.type = obj.list_type;
+    this.title = (obj.list_type || obj.listType) === 'backlog' ? __('Open') : obj.title;
+    this.type = obj.list_type || obj.listType;
 
     const typeInfo = this.getTypeInfo(this.type);
     this.preset = Boolean(typeInfo.isPreset);
@@ -52,14 +49,12 @@ class List {
     this.loadingMore = false;
     this.issues = obj.issues || [];
     this.issuesSize = obj.issuesSize ? obj.issuesSize : 0;
-    this.maxIssueCount = Object.hasOwnProperty.call(obj, 'max_issue_count')
-      ? obj.max_issue_count
-      : 0;
+    this.maxIssueCount = obj.maxIssueCount || obj.max_issue_count || 0;
 
     if (obj.label) {
       this.label = new ListLabel(obj.label);
-    } else if (obj.user) {
-      this.assignee = new ListAssignee(obj.user);
+    } else if (obj.user || obj.assignee) {
+      this.assignee = new ListAssignee(obj.user || obj.assignee);
       this.title = this.assignee.name;
     } else if (IS_EE && obj.milestone) {
       this.milestone = new ListMilestone(obj.milestone);
@@ -86,71 +81,23 @@ class List {
   }
 
   destroy() {
-    const index = boardsStore.state.lists.indexOf(this);
-    boardsStore.state.lists.splice(index, 1);
-    boardsStore.updateNewListDropdown(this.id);
-
-    boardsStore.destroyList(this.id).catch(() => {
-      // TODO: handle request error
-    });
+    boardsStore.destroy(this);
   }
 
   update() {
-    const collapsed = !this.isExpanded;
-    return boardsStore.updateList(this.id, this.position, collapsed).catch(() => {
-      // TODO: handle request error
-    });
+    return boardsStore.updateListFunc(this);
   }
 
   nextPage() {
-    if (this.issuesSize > this.issues.length) {
-      if (this.issues.length / PER_PAGE >= 1) {
-        this.page += 1;
-      }
-
-      return this.getIssues(false);
-    }
+    return boardsStore.goToNextPage(this);
   }
 
   getIssues(emptyIssues = true) {
-    const data = {
-      ...urlParamsToObject(boardsStore.filter.path),
-      page: this.page,
-    };
-
-    if (this.label && data.label_name) {
-      data.label_name = data.label_name.filter(label => label !== this.label.title);
-    }
-
-    if (emptyIssues) {
-      this.loading = true;
-    }
-
-    return boardsStore
-      .getIssuesForList(this.id, data)
-      .then(res => res.data)
-      .then(data => {
-        this.loading = false;
-        this.issuesSize = data.size;
-
-        if (emptyIssues) {
-          this.issues = [];
-        }
-
-        this.createIssues(data.issues);
-
-        return data;
-      });
+    return boardsStore.getListIssues(this, emptyIssues);
   }
 
   newIssue(issue) {
-    this.addIssue(issue, null, 0);
-    this.issuesSize += 1;
-
-    return boardsStore
-      .newIssue(this.id, issue)
-      .then(res => res.data)
-      .then(data => this.onNewIssueResponse(issue, data));
+    return boardsStore.newListIssue(this, issue);
   }
 
   createIssues(data) {
@@ -164,57 +111,11 @@ class List {
   }
 
   addIssue(issue, listFrom, newIndex) {
-    let moveBeforeId = null;
-    let moveAfterId = null;
-
-    if (!this.findIssue(issue.id)) {
-      if (newIndex !== undefined) {
-        this.issues.splice(newIndex, 0, issue);
-
-        if (this.issues[newIndex - 1]) {
-          moveBeforeId = this.issues[newIndex - 1].id;
-        }
-
-        if (this.issues[newIndex + 1]) {
-          moveAfterId = this.issues[newIndex + 1].id;
-        }
-      } else {
-        this.issues.push(issue);
-      }
-
-      if (this.label) {
-        issue.addLabel(this.label);
-      }
-
-      if (this.assignee) {
-        if (listFrom && listFrom.type === 'assignee') {
-          issue.removeAssignee(listFrom.assignee);
-        }
-        issue.addAssignee(this.assignee);
-      }
-
-      if (IS_EE && this.milestone) {
-        if (listFrom && listFrom.type === 'milestone') {
-          issue.removeMilestone(listFrom.milestone);
-        }
-        issue.addMilestone(this.milestone);
-      }
-
-      if (listFrom) {
-        this.issuesSize += 1;
-
-        this.updateIssueLabel(issue, listFrom, moveBeforeId, moveAfterId);
-      }
-    }
+    boardsStore.addListIssue(this, issue, listFrom, newIndex);
   }
 
   moveIssue(issue, oldIndex, newIndex, moveBeforeId, moveAfterId) {
-    this.issues.splice(oldIndex, 1);
-    this.issues.splice(newIndex, 0, issue);
-
-    boardsStore.moveIssue(issue.id, null, null, moveBeforeId, moveAfterId).catch(() => {
-      // TODO: handle request error
-    });
+    boardsStore.moveListIssues(this, issue, oldIndex, newIndex, moveBeforeId, moveAfterId);
   }
 
   moveMultipleIssues({ issues, oldIndicies, newIndex, moveBeforeId, moveAfterId }) {
@@ -253,35 +154,15 @@ class List {
   }
 
   findIssue(id) {
-    return this.issues.find(issue => issue.id === id);
+    return boardsStore.findListIssue(this, id);
   }
 
   removeMultipleIssues(removeIssues) {
-    const ids = removeIssues.map(issue => issue.id);
-
-    this.issues = this.issues.filter(issue => {
-      const matchesRemove = ids.includes(issue.id);
-
-      if (matchesRemove) {
-        this.issuesSize -= 1;
-        issue.removeLabel(this.label);
-      }
-
-      return !matchesRemove;
-    });
+    return boardsStore.removeListMultipleIssues(this, removeIssues);
   }
 
   removeIssue(removeIssue) {
-    this.issues = this.issues.filter(issue => {
-      const matchesRemove = removeIssue.id === issue.id;
-
-      if (matchesRemove) {
-        this.issuesSize -= 1;
-        issue.removeLabel(this.label);
-      }
-
-      return !matchesRemove;
-    });
+    return boardsStore.removeListIssues(this, removeIssue);
   }
 
   getTypeInfo(type) {

@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { createStore } from 'ee_else_ce/mr_notes/stores';
+import { createStore } from '~/mr_notes/stores';
 import { createComponentWithStore } from 'helpers/vue_mount_component_helper';
 import ParallelDiffView from '~/diffs/components/parallel_diff_view.vue';
 import * as constants from '~/diffs/constants';
@@ -7,7 +7,7 @@ import diffFileMockData from '../mock_data/diff_file';
 
 describe('ParallelDiffView', () => {
   let component;
-  const getDiffFileMock = () => Object.assign({}, diffFileMockData);
+  const getDiffFileMock = () => ({ ...diffFileMockData });
 
   beforeEach(() => {
     const diffFile = getDiffFileMock();

@@ -130,7 +130,7 @@ module Gitlab
     end
 
     def self.address_metadata(storage)
-      Base64.strict_encode64(JSON.dump(storage => connection_data(storage)))
+      Base64.strict_encode64(Gitlab::Json.dump(storage => connection_data(storage)))
     end
 
     def self.connection_data(storage)
@@ -201,7 +201,8 @@ module Gitlab
       request_hash = request.is_a?(Google::Protobuf::MessageExts) ? request.to_h : {}
 
       # Keep track, separately, for the performance bar
-      self.query_time += duration
+      self.add_query_time(duration)
+
       if Gitlab::PerformanceBar.enabled_for_request?
         add_call_details(feature: "#{service}##{rpc}", duration: duration, request: request_hash, rpc: rpc,
                          backtrace: Gitlab::BacktraceCleaner.clean_backtrace(caller))
@@ -209,11 +210,15 @@ module Gitlab
     end
 
     def self.query_time
-      SafeRequestStore[:gitaly_query_time] ||= 0
+      query_time = Gitlab::SafeRequestStore[:gitaly_query_time] || 0
+      query_time.round(Gitlab::InstrumentationHelper::DURATION_PRECISION)
     end
 
-    def self.query_time=(duration)
-      SafeRequestStore[:gitaly_query_time] = duration
+    def self.add_query_time(duration)
+      return unless Gitlab::SafeRequestStore.active?
+
+      Gitlab::SafeRequestStore[:gitaly_query_time] ||= 0
+      Gitlab::SafeRequestStore[:gitaly_query_time] += duration
     end
 
     def self.current_transaction_labels
@@ -457,7 +462,7 @@ module Gitlab
 
     def self.filesystem_id_from_disk(storage)
       metadata_file = File.read(storage_metadata_file_path(storage))
-      metadata_hash = JSON.parse(metadata_file)
+      metadata_hash = Gitlab::Json.parse(metadata_file)
       metadata_hash['gitaly_filesystem_id']
     rescue Errno::ENOENT, Errno::EACCES, JSON::ParserError
       nil

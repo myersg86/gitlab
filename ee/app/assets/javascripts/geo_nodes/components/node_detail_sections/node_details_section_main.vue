@@ -1,11 +1,14 @@
 <script>
-import { __ } from '~/locale';
+import { GlLink, GlIcon } from '@gitlab/ui';
+import { __, sprintf } from '~/locale';
 
 import GeoNodeHealthStatus from '../geo_node_health_status.vue';
 import GeoNodeActions from '../geo_node_actions.vue';
 
 export default {
   components: {
+    GlLink,
+    GlIcon,
     GeoNodeHealthStatus,
     GeoNodeActions,
   },
@@ -45,6 +48,23 @@ export default {
     nodeHealthStatus() {
       return this.nodeDetails.healthy ? this.nodeDetails.health : this.nodeDetails.healthStatus;
     },
+    selectiveSyncronization() {
+      const { selectiveSyncType } = this.nodeDetails;
+
+      if (selectiveSyncType === 'shards') {
+        return sprintf(__('Shards (%{shards})'), {
+          shards: this.node.selectiveSyncShards.join(', '),
+        });
+      }
+
+      if (selectiveSyncType === 'namespaces') {
+        return sprintf(__('Groups (%{groups})'), {
+          groups: this.nodeDetails.namespaces.map(n => n.full_path).join(', '),
+        });
+      }
+
+      return null;
+    },
   },
 };
 </script>
@@ -53,9 +73,14 @@ export default {
   <div class="row-fluid clearfix py-3 primary-section">
     <div class="col-md-12">
       <div class="d-flex geo-node-actions-container">
-        <div class="d-flex flex-column">
-          <span class="text-secondary-700 js-node-url-title">{{ s__('GeoNodes|Node URL') }}</span>
-          <span class="mt-1 font-weight-bold js-node-url-value">{{ node.url }}</span>
+        <div data-testid="nodeUrl" class="d-flex flex-column">
+          <span class="gl-text-gray-700">{{ s__('GeoNodes|Node URL') }}</span>
+          <gl-link
+            class="gl-display-flex gl-align-items-center gl-text-black-normal gl-font-weight-bold gl-text-decoration-underline gl-mt-1"
+            :href="node.url"
+            target="_blank"
+            >{{ node.url }} <gl-icon name="external-link" class="gl-ml-1"
+          /></gl-link>
         </div>
         <geo-node-actions
           class="flex-grow-1"
@@ -66,18 +91,22 @@ export default {
           :node-missing-oauth="nodeDetails.missingOAuthApplication"
         />
       </div>
-      <div class="d-flex flex-column mt-2">
-        <span class="text-secondary-700 js-node-version-title">{{
-          s__('GeoNodes|GitLab version')
-        }}</span>
-        <span
-          :class="{ 'text-danger-500': versionMismatch }"
-          class="mt-1 font-weight-bold js-node-version-value"
-        >
+      <div data-testid="nodeVersion" class="d-flex flex-column mt-2">
+        <span class="gl-text-gray-700">{{ s__('GeoNodes|GitLab version') }}</span>
+        <span :class="{ 'gl-text-red-500': versionMismatch }" class="gl-mt-1 gl-font-weight-bold">
           {{ nodeVersion }}
         </span>
       </div>
-      <geo-node-health-status :status="nodeHealthStatus" />
+      <div v-if="selectiveSyncronization" class="d-flex flex-column mt-2">
+        <span class="text-secondary-700">{{ s__('GeoNodes|Selective synchronization') }}</span>
+        <span data-testid="selectiveSync" class="gl-mt-1 gl-font-weight-bold">
+          {{ selectiveSyncronization }}
+        </span>
+      </div>
+      <geo-node-health-status
+        :status="nodeHealthStatus"
+        :status-check-timestamp="nodeDetails.statusCheckTimestamp"
+      />
     </div>
   </div>
 </template>

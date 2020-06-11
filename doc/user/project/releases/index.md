@@ -1,10 +1,13 @@
 ---
 type: reference, howto
+stage: Release
+group: Release Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 ---
 
 # Releases
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/41766) in GitLab 11.7.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/41766) in GitLab 11.7.
 
 It is typical to create a [Git tag](../../../university/training/topics/tags.md) at
 the moment of release to introduce a checkpoint in your source code
@@ -64,9 +67,11 @@ A link is any URL which can point to whatever you like; documentation, built
 binaries, or other related materials. These can be both internal or external
 links from your GitLab instance.
 
+The four types of links are "Runbook," "Package," "Image," and "Other."
+
 #### Permanent links to Release assets
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/27300) in GitLab 12.9.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/27300) in GitLab 12.9.
 
 The assets associated with a Release are accessible through a permanent URL.
 GitLab will always redirect this URL to the actual asset
@@ -102,12 +107,15 @@ The physical location of the asset can change at any time and the direct link wi
 
 ### Releases associated with milestones
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/29020) in GitLab 12.5.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/29020) in GitLab 12.5.
+> - [Updated](https://gitlab.com/gitlab-org/gitlab/-/issues/39467) to edit milestones in the UI in GitLab 13.0.
 
 Releases can optionally be associated with one or more
 [project milestones](../milestones/index.md#project-milestones-and-group-milestones)
 by including a `milestones` array in your requests to the
-[Releases API](../../../api/releases/index.md#create-a-release).
+[Releases API](../../../api/releases/index.md#create-a-release) or by using the dropdown in the [Edit Release](#editing-a-release) page.
+
+![Release edit page with milestones dropdown expanded](img/release_milestone_dropdown_v13_0.png)
 
 Releases display this association with the **Milestone** indicator in the top
 section of the Release block on the **Project overview > Releases** page, along
@@ -135,7 +143,7 @@ project.
 
 ### Number of Releases
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/36667) in GitLab 12.8.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/36667) in GitLab 12.8.
 
 The incremental number of Releases is displayed on the project's details page. When clicked,
 it takes you to the list of Releases.
@@ -148,7 +156,7 @@ it is displayed to every user regardless of their permission level.
 
 ### Upcoming Releases
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/38105) in GitLab 12.1.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/38105) in GitLab 12.1.
 
 A Release may be created ahead of time by specifying a future `released_at` date. Until
 the `released_at` date and time is reached, an **Upcoming Release** badge will appear next to the
@@ -180,7 +188,7 @@ we recommend doing this as one of the last steps in your CI/CD release pipeline.
 
 ## Editing a release
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/26016) in GitLab 12.6. Asset link editing was [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9427) in GitLab 12.10.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/26016) in GitLab 12.6. Asset link editing was [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/9427) in GitLab 12.10.
 
 To edit the details of a release, navigate to **Project overview > Releases** and click
 the edit button (pencil icon) in the top-right corner of the release you want to modify.
@@ -190,25 +198,16 @@ the edit button (pencil icon) in the top-right corner of the release you want to
 This will bring you to the **Edit Release** page, from which you can
 change some of the release's details.
 
-![Edit release page](img/edit_release_page_v12_10.png)
+![Edit release page](img/edit_release_page_v13_0.png)
 
-Currently, it is only possible to edit the release title, notes, and asset
-links. To change other release information, such as its tag, associated
-milestones, or release date, use the [Releases
+Currently, it is only possible to edit the release title, notes, associated milestones, and asset
+links. To change other release information, such as its tag, or release date, use the [Releases
 API](../../../api/releases/index.md#update-a-release). Editing this information
 through the **Edit Release** page is planned for a future version of GitLab.
 
-Please note that the ability to edit asset links is currently behind a feature
-flag which is disabled by default. For self-managed instances, it can be enabled
-through the Rails console by a GitLab administrator with the following command:
-
-```ruby
-Feature.enable(:release_asset_link_editing)
-```
-
 ## Notification for Releases
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/26001) in GitLab 12.4.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/26001) in GitLab 12.4.
 
 You can be notified by email when a new Release is created for your project.
 
@@ -246,7 +245,7 @@ You can also edit an existing tag to add release notes:
 
 ## Release Evidence
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/26019) in GitLab 12.6.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/26019) in GitLab 12.6.
 
 Each time a release is created, GitLab takes a snapshot of data that's related to it.
 This data is called Release Evidence. It includes linked milestones and issues, and
@@ -257,6 +256,9 @@ You can also [use the API](../../../api/releases/index.md#collect-release-eviden
 generate Release Evidence for an existing release. Because of this, [each release](#releases-list)
 can have multiple Release Evidence snapshots. You can view the Release Evidence and
 its details on the Release page.
+
+NOTE: **Note:**
+When the issue tracker is disabled, release evidence [is not collected](https://gitlab.com/gitlab-org/gitlab/-/issues/208397).
 
 Release Evidence is stored as a JSON object, so you can compare evidence by using
 commonly-available tools.
@@ -359,6 +361,41 @@ terminal.
 
 Read the [GitLab Releaser documentation](https://gitlab.com/gitlab-org/gitlab-releaser/-/tree/master/docs/index.md)
 for details.
+
+## Set a deploy freeze
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/29382) in GitLab 13.0.
+
+With a deploy freeze, you can prevent an unintended production release during a
+period of time you specify, whether a company event or public holiday. You can
+now rely on the enforcement of policies that are typically outside the scope of
+GitLab to reduce uncertainty and risk when automating deployments.
+
+Deploy freeze periods are set at the Project level, and may be created and
+managed using the [Freeze Periods API](../../../api/freeze_periods.md).
+Each Freeze Period has a `freeze_start` and a `freeze_end`, which are defined
+as [crontab](https://crontab.guru/) entries. If a project contains multiple
+freeze periods, all will apply, and should they overlap, the freeze covers the
+complete overlapped period.
+
+During pipeline processing, GitLab CI creates an environment variable named
+`$CI_DEPLOY_FREEZE` if the currently executing job is within a
+Freeze Period.
+
+To take advantage of this variable, create a `rules` entry in your
+`gitlab-ci.yaml` to prevent the deployment job from executing.
+
+For example:
+
+```yaml
+deploy_to_production:
+  stage: deploy
+  script: deploy_to_prod.sh
+  rules:
+    - if: $CI_DEPLOY_FREEZE == null
+```
+
+For more information, see [Deployment safety](../../../ci/environments/deployment_safety.md).
 
 <!-- ## Troubleshooting
 

@@ -1,5 +1,20 @@
 # Dealing with email in development
 
+## Ensuring compatibility with mailer Sidekiq jobs
+
+A Sidekiq job is enqueued whenever `deliver_later` is called on an `ActionMailer`.
+If a mailer argument needs to be added or removed, it is important to ensure
+both backward and forward compatibility. Adhere to the Sidekiq Style Guide steps for
+[changing the arguments for a worker](sidekiq_style_guide.md#changing-the-arguments-for-a-worker).
+
+In the following example from [`NotificationService`](https://gitlab.com/gitlab-org/gitlab/-/blob/33ccb22e4fc271dbaac94b003a7a1a2915a13441/app/services/notification_service.rb#L74)
+adding or removing an argument in this mailer's definition may cause problems
+during deployment before all Rails and Sidekiq nodes have the updated code.
+
+```ruby
+mailer.unknown_sign_in_email(user, ip, time).deliver_later
+```
+
 ## Sent emails
 
 To view rendered emails "sent" in your development instance, visit
@@ -14,12 +29,10 @@ Please note that [S/MIME signed](../administration/smime_signing_email.md) email
 Rails provides a way to preview our mailer templates in HTML and plaintext using
 dummy data.
 
-The previews live in [`app/mailers/previews`][previews] and can be viewed at
+The previews live in [`app/mailers/previews`](https://gitlab.com/gitlab-org/gitlab-foss/tree/master/app/mailers/previews) and can be viewed at
 [`/rails/mailers`](http://localhost:3000/rails/mailers).
 
 See the [Rails guides](https://guides.rubyonrails.org/action_mailer_basics.html#previewing-emails) for more information.
-
-[previews]: https://gitlab.com/gitlab-org/gitlab-foss/tree/master/app/mailers/previews
 
 ## Incoming email
 
@@ -59,6 +72,9 @@ See the [Rails guides](https://guides.rubyonrails.org/action_mailer_basics.html#
      mailbox: "inbox"
      # The IDLE command timeout.
      idle_timeout: 60
+
+     # Whether to expunge (permanently remove) messages from the mailbox when they are deleted after delivery
+     expunge_deleted: false
    ```
 
    As mentioned, the part after `+` is ignored, and this will end up in the mailbox for `gitlab-incoming@gmail.com`.
@@ -87,7 +103,7 @@ for the format of the email key:
 
 - Actions are always at the end, separated by `-`. For example `-issue` or `-merge-request`
 - If your feature is related to a project, the key begins with the project identifiers (project path slug
-  and project id), separated by `-`. For example, `gitlab-org-gitlab-foss-20`
+  and project ID), separated by `-`. For example, `gitlab-org-gitlab-foss-20`
 - Additional information, such as an author's token, can be added between the project identifiers and
   the action, separated by `-`. For example, `gitlab-org-gitlab-foss-20-Author_Token12345678-issue`
 - You register your handlers in `lib/gitlab/email/handler.rb`

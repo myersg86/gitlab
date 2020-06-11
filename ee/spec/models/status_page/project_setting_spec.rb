@@ -2,17 +2,44 @@
 
 require 'spec_helper'
 
-describe StatusPage::ProjectSetting do
+RSpec.describe StatusPage::ProjectSetting do
   describe 'associations' do
     it { is_expected.to belong_to(:project) }
   end
 
   describe 'validations' do
+    it { is_expected.not_to validate_presence_of(:status_page_url) }
     it { is_expected.to validate_presence_of(:aws_s3_bucket_name) }
     it { is_expected.to validate_length_of(:aws_s3_bucket_name).is_at_least(3).is_at_most(63) }
     it { is_expected.to validate_presence_of(:aws_region) }
     it { is_expected.to validate_presence_of(:aws_access_key) }
     it { is_expected.to validate_presence_of(:encrypted_aws_secret_key) }
+
+    describe 'status_page_url' do
+      it 'disallows invalid urls for status_page_url' do
+        unsafe_url = %{https://replaceme.com/'><script>alert(document.cookie)</script>}
+        non_ascii_url = 'http://status€.gitlab.com'
+        blank_url = ''
+        excessively_long_url = 'https://statu' + 's' * 1024 + '.com'
+
+        is_expected.not_to allow_values(
+          unsafe_url,
+          non_ascii_url,
+          blank_url,
+          excessively_long_url
+        ).for(:status_page_url)
+      end
+
+      it 'allows valid urls for status_page_url' do
+        external_url = 'http://status.gitlab.com/'
+        internal_url = 'http://192.168.1.1'
+
+        is_expected.to allow_value(
+          external_url,
+          internal_url
+        ).for(:status_page_url)
+      end
+    end
 
     describe 'aws_s3_bucket_name' do
       it { is_expected.to allow_value('bucket-name').for(:aws_s3_bucket_name) }
@@ -99,7 +126,7 @@ describe StatusPage::ProjectSetting do
 
     it { is_expected.to eq(true) }
 
-    context 'when status page setting is diabled' do
+    context 'when status page setting is disabled' do
       before do
         status_page_setting.enabled = false
       end
@@ -114,13 +141,47 @@ describe StatusPage::ProjectSetting do
 
       it { is_expected.to eq(false) }
     end
+  end
 
-    context 'when feature flag is disabled' do
-      before do
-        stub_feature_flags(status_page: false)
-      end
+  describe '#normalized_status_page_url' do
+    let(:status_page_setting) { build(:status_page_setting, status_page_url: status_page_url) }
+    let(:status_page_url) { 'https://status.gitlab.com' }
+    let(:expected_url) { 'https://status.gitlab.com/#/' }
 
-      it { is_expected.to eq(false) }
+    subject { status_page_setting.normalized_status_page_url }
+
+    context 'when status_page_url exists' do
+      it { is_expected.to eq(expected_url) }
+    end
+
+    context 'when status_page_url is blank' do
+      let(:status_page_url) { '' }
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'when status_page_url is nil' do
+      let(:status_page_url) { nil }
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'when status_page_url contains trailing slash' do
+      let(:status_page_url) { 'https://status.gitlab.com/' }
+
+      it { is_expected.to eq(expected_url) }
+    end
+
+    context 'when status_page_url contains trailing hash-navigator' do
+      let(:status_page_url) { 'https://status.gitlab.com/#' }
+
+      it { is_expected.to eq(expected_url) }
+    end
+
+    context 'when status_page_url matches expected url' do
+      let(:status_page_url) { 'https://status.gitlab.com/#/' }
+
+      it { is_expected.to eq(expected_url) }
     end
   end
 

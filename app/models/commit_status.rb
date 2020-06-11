@@ -7,14 +7,16 @@ class CommitStatus < ApplicationRecord
   include Presentable
   include EnumWithNil
 
-  prepend_if_ee('::EE::CommitStatus') # rubocop: disable Cop/InjectEnterpriseEditionModule
-
   self.table_name = 'ci_builds'
 
   belongs_to :user
   belongs_to :project
   belongs_to :pipeline, class_name: 'Ci::Pipeline', foreign_key: :commit_id
   belongs_to :auto_canceled_by, class_name: 'Ci::Pipeline'
+
+  has_many :needs, class_name: 'Ci::BuildNeed', foreign_key: :build_id, inverse_of: :build
+
+  enum scheduling_type: { stage: 0, dag: 1 }, _prefix: true
 
   delegate :commit, to: :pipeline
   delegate :sha, :short_sha, :before_sha, to: :pipeline
@@ -92,6 +94,11 @@ class CommitStatus < ApplicationRecord
   end
 
   before_save if: :status_changed?, unless: :importing? do
+    # we mark `processed` as always changed:
+    # another process might change its value and our object
+    # will not be refreshed to pick the change
+    self.processed_will_change!
+
     if Feature.disabled?(:ci_atomic_processing, project)
       self.processed = nil
     elsif latest?
@@ -134,15 +141,15 @@ class CommitStatus < ApplicationRecord
     end
 
     before_transition [:created, :waiting_for_resource, :preparing, :skipped, :manual, :scheduled] => :pending do |commit_status|
-      commit_status.queued_at = Time.now
+      commit_status.queued_at = Time.current
     end
 
     before_transition [:created, :preparing, :pending] => :running do |commit_status|
-      commit_status.started_at = Time.now
+      commit_status.started_at = Time.current
     end
 
     before_transition any => [:success, :failed, :canceled] do |commit_status|
-      commit_status.finished_at = Time.now
+      commit_status.finished_at = Time.current
     end
 
     before_transition any => :failed do |commit_status, transition|
@@ -187,8 +194,10 @@ class CommitStatus < ApplicationRecord
   end
 
   def self.update_as_processed!
-    # Marks items as processed, and increases `lock_version` (Optimisitc Locking)
-    update_all('processed=TRUE, lock_version=COALESCE(lock_version,0)+1')
+    # Marks items as processed
+    # we do not increase `lock_version`, as we are the one
+    # holding given lock_version (Optimisitc Locking)
+    update_all(processed: true)
   end
 
   def self.locking_enabled?
@@ -267,7 +276,15 @@ class CommitStatus < ApplicationRecord
     end
   end
 
+  def recoverable?
+    failed? && !unrecoverable_failure?
+  end
+
   private
+
+  def unrecoverable_failure?
+    script_failure? || missing_dependency_failure? || archived_failure? || scheduler_failure? || data_integrity_failure?
+  end
 
   def schedule_stage_and_pipeline_update
     if Feature.enabled?(:ci_atomic_processing, project)
@@ -284,3 +301,5 @@ class CommitStatus < ApplicationRecord
     end
   end
 end
+
+CommitStatus.prepend_if_ee('::EE::CommitStatus')

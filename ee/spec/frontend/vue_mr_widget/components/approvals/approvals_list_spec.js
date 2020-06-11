@@ -1,10 +1,9 @@
 import { shallowMount } from '@vue/test-utils';
-import _ from 'underscore';
 import ApprovedIcon from 'ee/vue_merge_request_widget/components/approvals/approved_icon.vue';
 import ApprovalsList from 'ee/vue_merge_request_widget/components/approvals/approvals_list.vue';
 import UserAvatarList from '~/vue_shared/components/user_avatar/user_avatar_list.vue';
 
-const testApprovers = () => _.range(1, 11).map(id => ({ id }));
+const testApprovers = () => Array.from({ length: 11 }, (_, i) => i).map(id => ({ id }));
 const testRuleApproved = () => ({
   id: 1,
   name: 'Lorem',
@@ -81,7 +80,7 @@ describe('EE MRWidget approvals list', () => {
       const rows = findRows();
       const names = rows.wrappers.map(row => findRowElement(row, 'name').text());
 
-      expect(rows.length).toEqual(expected.length);
+      expect(rows).toHaveLength(expected.length);
       expect(names).toEqual(expected.map(x => x.name));
     });
 
@@ -103,7 +102,7 @@ describe('EE MRWidget approvals list', () => {
         const rows = findRows();
 
         expect(wrapper.find('.js-section-title').exists()).toBe(true);
-        expect(rows.length).toEqual(rulesWithCodeOwner.length + 1);
+        expect(rows).toHaveLength(rulesWithCodeOwner.length + 1);
       });
     });
   });
@@ -280,7 +279,7 @@ describe('EE MRWidget approvals list', () => {
       const summary = findRowElement(row, 'summary');
       const lists = summary.findAll(UserAvatarList);
 
-      expect(lists.length).toEqual(1);
+      expect(lists).toHaveLength(1);
       expect(lists.at(0).props('items')).toEqual(rule.approved_by);
     });
   });

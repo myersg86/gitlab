@@ -118,9 +118,7 @@ describe('EpicHeaderComponent', () => {
 
       expect(actionsEl).not.toBeNull();
       expect(actionsEl.querySelector('.js-btn-epic-action')).not.toBeNull();
-      expect(actionsEl.querySelector('.js-loading-button-label').innerText.trim()).toBe(
-        'Close epic',
-      );
+      expect(actionsEl.querySelector('.js-btn-epic-action').innerText.trim()).toBe('Close epic');
     });
 
     it('renders toggle sidebar button element', () => {
@@ -131,6 +129,15 @@ describe('EpicHeaderComponent', () => {
       expect(toggleButtonEl.classList.contains('d-block')).toBe(true);
       expect(toggleButtonEl.classList.contains('d-sm-none')).toBe(true);
       expect(toggleButtonEl.classList.contains('gutter-toggle')).toBe(true);
+    });
+
+    it('renders GitLab team member badge when `author.isGitlabEmployee` is `true`', () => {
+      vm.$store.state.author.isGitlabEmployee = true;
+
+      // Wait for dynamic imports to resolve
+      return new Promise(setImmediate).then(() => {
+        expect(vm.$refs.gitlabTeamMemberBadge).not.toBeUndefined();
+      });
     });
   });
 });

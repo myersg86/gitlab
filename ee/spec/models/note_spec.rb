@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Note do
+RSpec.describe Note do
   include ::EE::GeoHelpers
 
   it_behaves_like 'an editable mentionable with EE-specific mentions' do
@@ -91,10 +91,6 @@ describe Note do
     end
   end
 
-  describe 'associations' do
-    it { is_expected.to belong_to(:review).inverse_of(:notes) }
-  end
-
   describe 'scopes' do
     describe '.with_suggestions' do
       it 'returns the correct note' do
@@ -103,38 +99,6 @@ describe Note do
 
         expect(described_class.with_suggestions).to include(note_with_suggestion)
         expect(described_class.with_suggestions).not_to include(note_without_suggestion)
-      end
-    end
-  end
-
-  describe 'callbacks' do
-    describe '#notify_after_create' do
-      it 'calls #after_note_created on the noteable' do
-        note = build(:note)
-
-        expect(note).to receive(:notify_after_create).and_call_original
-        expect(note.noteable).to receive(:after_note_created).with(note)
-
-        note.save!
-      end
-    end
-
-    describe '#notify_after_destroy' do
-      it 'calls #after_note_destroyed on the noteable' do
-        note = create(:note)
-
-        expect(note).to receive(:notify_after_destroy).and_call_original
-        expect(note.noteable).to receive(:after_note_destroyed).with(note)
-
-        note.destroy
-      end
-
-      it 'does not error if noteable is nil' do
-        note = create(:note)
-
-        expect(note).to receive(:notify_after_destroy).and_call_original
-        expect(note).to receive(:noteable).at_least(:once).and_return(nil)
-        expect { note.destroy }.not_to raise_error
       end
     end
   end
@@ -168,14 +132,6 @@ describe Note do
       note = create(:note_on_epic, noteable: create(:epic, group: group))
 
       expect(note.resource_parent).to eq(group)
-    end
-  end
-
-  describe '#for_design' do
-    it 'is true when the noteable is a design' do
-      note = build(:note, noteable: build(:design))
-
-      expect(note).to be_for_design
     end
   end
 

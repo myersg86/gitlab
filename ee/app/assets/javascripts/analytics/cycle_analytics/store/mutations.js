@@ -1,7 +1,6 @@
 import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 import * as types from './mutation_types';
-import { transformRawStages, transformRawTasksByTypeData, toggleSelectedLabel } from '../utils';
-import { TASKS_BY_TYPE_FILTERS } from '../constants';
+import { transformRawStages } from '../utils';
 
 export default {
   [types.SET_FEATURE_FLAGS](state, featureFlags) {
@@ -23,8 +22,6 @@ export default {
   },
   [types.REQUEST_CYCLE_ANALYTICS_DATA](state) {
     state.isLoading = true;
-    state.isCreatingCustomStage = false;
-    state.isEditingCustomStage = false;
   },
   [types.RECEIVE_CYCLE_ANALYTICS_DATA_SUCCESS](state) {
     state.errorCode = null;
@@ -49,32 +46,6 @@ export default {
     state.isEmptyStage = true;
     state.isLoadingStage = false;
   },
-  [types.REQUEST_TOP_RANKED_GROUP_LABELS](state) {
-    state.isLoadingTasksByTypeChartTopLabels = true;
-    state.topRankedLabels = [];
-    state.tasksByType = {
-      ...state.tasksByType,
-      selectedLabelIds: [],
-    };
-  },
-  [types.RECEIVE_TOP_RANKED_GROUP_LABELS_SUCCESS](state, data = []) {
-    const { tasksByType } = state;
-    state.isLoadingTasksByTypeChartTopLabels = false;
-    state.topRankedLabels = data.map(convertObjectPropsToCamelCase);
-    state.tasksByType = {
-      ...tasksByType,
-      selectedLabelIds: data.map(({ id }) => id),
-    };
-  },
-  [types.RECEIVE_TOP_RANKED_GROUP_LABELS_ERROR](state) {
-    const { tasksByType } = state;
-    state.isLoadingTasksByTypeChartTopLabels = false;
-    state.topRankedLabels = [];
-    state.tasksByType = {
-      ...tasksByType,
-      selectedLabelIds: [],
-    };
-  },
   [types.REQUEST_STAGE_MEDIANS](state) {
     state.medians = {};
   },
@@ -90,111 +61,29 @@ export default {
   [types.RECEIVE_STAGE_MEDIANS_ERROR](state) {
     state.medians = {};
   },
-  [types.SHOW_CUSTOM_STAGE_FORM](state) {
-    state.isCreatingCustomStage = true;
-    state.isEditingCustomStage = false;
-    state.customStageFormInitialData = null;
-    state.customStageFormErrors = null;
-  },
-  [types.SHOW_EDIT_CUSTOM_STAGE_FORM](state, initialData) {
-    state.isEditingCustomStage = true;
-    state.isCreatingCustomStage = false;
-    state.customStageFormInitialData = initialData;
-    state.customStageFormErrors = null;
-  },
-  [types.HIDE_CUSTOM_STAGE_FORM](state) {
-    state.isEditingCustomStage = false;
-    state.isCreatingCustomStage = false;
-    state.customStageFormInitialData = null;
-    state.customStageFormErrors = null;
-  },
-  [types.CLEAR_CUSTOM_STAGE_FORM_ERRORS](state) {
-    state.customStageFormErrors = null;
-  },
-  [types.REQUEST_GROUP_STAGES_AND_EVENTS](state) {
+  [types.REQUEST_GROUP_STAGES](state) {
     state.stages = [];
-    state.customStageFormEvents = [];
   },
-  [types.RECEIVE_GROUP_STAGES_AND_EVENTS_ERROR](state) {
+  [types.RECEIVE_GROUP_STAGES_ERROR](state) {
     state.stages = [];
-    state.customStageFormEvents = [];
   },
-  [types.RECEIVE_GROUP_STAGES_AND_EVENTS_SUCCESS](state, data) {
-    const { events = [], stages = [] } = data;
+  [types.RECEIVE_GROUP_STAGES_SUCCESS](state, stages) {
     state.stages = transformRawStages(stages);
-
-    state.customStageFormEvents = events.map(ev =>
-      convertObjectPropsToCamelCase(ev, { deep: true }),
-    );
-  },
-  [types.REQUEST_TASKS_BY_TYPE_DATA](state) {
-    state.isLoadingTasksByTypeChart = true;
-  },
-  [types.RECEIVE_TASKS_BY_TYPE_DATA_ERROR](state) {
-    state.isLoadingTasksByTypeChart = false;
-  },
-  [types.RECEIVE_TASKS_BY_TYPE_DATA_SUCCESS](state, data = []) {
-    state.isLoadingTasksByTypeChart = false;
-    state.tasksByType = {
-      ...state.tasksByType,
-      data: transformRawTasksByTypeData(data),
-    };
-  },
-  [types.REQUEST_CREATE_CUSTOM_STAGE](state) {
-    state.isSavingCustomStage = true;
-    state.customStageFormErrors = {};
-  },
-  [types.RECEIVE_CREATE_CUSTOM_STAGE_ERROR](state, { errors = null } = {}) {
-    state.isSavingCustomStage = false;
-    state.customStageFormErrors = convertObjectPropsToCamelCase(errors, { deep: true });
-  },
-  [types.RECEIVE_CREATE_CUSTOM_STAGE_SUCCESS](state) {
-    state.isSavingCustomStage = false;
-    state.customStageFormErrors = null;
-    state.customStageFormInitialData = null;
   },
   [types.REQUEST_UPDATE_STAGE](state) {
     state.isLoading = true;
-    state.isSavingCustomStage = true;
-    state.customStageFormErrors = null;
   },
   [types.RECEIVE_UPDATE_STAGE_SUCCESS](state) {
     state.isLoading = false;
-    state.isSavingCustomStage = false;
-    state.isEditingCustomStage = false;
-    state.customStageFormErrors = null;
-    state.customStageFormInitialData = null;
   },
-  [types.RECEIVE_UPDATE_STAGE_ERROR](state, { errors = null, data } = {}) {
+  [types.RECEIVE_UPDATE_STAGE_ERROR](state) {
     state.isLoading = false;
-    state.isSavingCustomStage = false;
-    state.customStageFormErrors = convertObjectPropsToCamelCase(errors, { deep: true });
-    state.customStageFormInitialData = convertObjectPropsToCamelCase(data, { deep: true });
   },
   [types.REQUEST_REMOVE_STAGE](state) {
     state.isLoading = true;
   },
   [types.RECEIVE_REMOVE_STAGE_RESPONSE](state) {
     state.isLoading = false;
-  },
-  [types.SET_TASKS_BY_TYPE_FILTERS](state, { filter, value }) {
-    const {
-      tasksByType: { selectedLabelIds, ...tasksByTypeRest },
-    } = state;
-    let updatedFilter = {};
-    switch (filter) {
-      case TASKS_BY_TYPE_FILTERS.LABEL:
-        updatedFilter = {
-          selectedLabelIds: toggleSelectedLabel({ selectedLabelIds, value }),
-        };
-        break;
-      case TASKS_BY_TYPE_FILTERS.SUBJECT:
-        updatedFilter = { subject: value };
-        break;
-      default:
-        break;
-    }
-    state.tasksByType = { ...tasksByTypeRest, selectedLabelIds, ...updatedFilter };
   },
   [types.INITIALIZE_CYCLE_ANALYTICS](
     state,

@@ -3,6 +3,7 @@
 require 'carrierwave/orm/activerecord'
 
 class Project < ApplicationRecord
+  extend ::Gitlab::Utils::Override
   include Gitlab::ConfigHelper
   include Gitlab::VisibilityLevel
   include AccessRequestable
@@ -18,6 +19,7 @@ class Project < ApplicationRecord
   include SelectForProjectAuthorization
   include Presentable
   include HasRepository
+  include HasWiki
   include Routable
   include GroupDescendant
   include Gitlab::SQL::Pattern
@@ -31,6 +33,7 @@ class Project < ApplicationRecord
   include OptionallySearch
   include FromUnion
   include IgnorableColumns
+  include Integration
   extend Gitlab::Cache::RequestCache
 
   extend Gitlab::ConfigHelper
@@ -93,8 +96,7 @@ class Project < ApplicationRecord
   after_create :create_project_feature, unless: :project_feature
 
   after_create :create_ci_cd_settings,
-    unless: :ci_cd_settings,
-    if: proc { ProjectCiCdSetting.available? }
+    unless: :ci_cd_settings
 
   after_create :create_container_expiration_policy,
                unless: :container_expiration_policy
@@ -175,6 +177,7 @@ class Project < ApplicationRecord
   has_one :packagist_service
   has_one :hangouts_chat_service
   has_one :unify_circuit_service
+  has_one :webex_teams_service
 
   has_one :root_of_fork_network,
           foreign_key: 'root_project_id',
@@ -195,7 +198,7 @@ class Project < ApplicationRecord
   has_one :error_tracking_setting, inverse_of: :project, class_name: 'ErrorTracking::ProjectErrorTrackingSetting'
   has_one :metrics_setting, inverse_of: :project, class_name: 'ProjectMetricsSetting'
   has_one :grafana_integration, inverse_of: :project
-  has_one :project_setting, ->(project) { where_or_create_by(project: project) }, inverse_of: :project
+  has_one :project_setting, inverse_of: :project, autosave: true
   has_one :alerting_setting, inverse_of: :project, class_name: 'Alerting::ProjectAlertingSetting'
 
   # Merge Requests for target project should be removed with it
@@ -206,12 +209,14 @@ class Project < ApplicationRecord
   has_many :services
   has_many :events
   has_many :milestones
+  has_many :iterations
   has_many :notes
   has_many :snippets, class_name: 'ProjectSnippet'
   has_many :hooks, class_name: 'ProjectHook'
   has_many :protected_branches
   has_many :protected_tags
   has_many :repository_languages, -> { order "share DESC" }
+  has_many :designs, inverse_of: :project, class_name: 'DesignManagement::Design'
 
   has_many :project_authorizations
   has_many :authorized_users, through: :project_authorizations, source: :user, class_name: 'User'
@@ -254,6 +259,9 @@ class Project < ApplicationRecord
   has_many :prometheus_alerts, inverse_of: :project
   has_many :prometheus_alert_events, inverse_of: :project
   has_many :self_managed_prometheus_alert_events, inverse_of: :project
+  has_many :metrics_users_starred_dashboards, class_name: 'Metrics::UsersStarredDashboard', inverse_of: :project
+
+  has_many :alert_management_alerts, class_name: 'AlertManagement::Alert', inverse_of: :project
 
   # Container repositories need to remove data from the container registry,
   # which is not managed by the DB. Hence we're still using dependent: :destroy
@@ -274,7 +282,7 @@ class Project < ApplicationRecord
           class_name: 'Ci::Pipeline',
           inverse_of: :project
   has_many :stages, class_name: 'Ci::Stage', inverse_of: :project
-  has_many :ci_refs, class_name: 'Ci::Ref'
+  has_many :ci_refs, class_name: 'Ci::Ref', inverse_of: :project
 
   # Ci::Build objects store data on the file system such as artifact files and
   # build traces. Currently there's no efficient way of removing this data in
@@ -283,6 +291,7 @@ class Project < ApplicationRecord
   has_many :builds, class_name: 'Ci::Build', inverse_of: :project, dependent: :destroy # rubocop:disable Cop/ActiveRecordDependent
   has_many :build_trace_section_names, class_name: 'Ci::BuildTraceSectionName'
   has_many :build_trace_chunks, class_name: 'Ci::BuildTraceChunk', through: :builds, source: :trace_chunks
+  has_many :build_report_results, class_name: 'Ci::BuildReportResult', inverse_of: :project
   has_many :job_artifacts, class_name: 'Ci::JobArtifact'
   has_many :runner_projects, class_name: 'Ci::RunnerProject', inverse_of: :project
   has_many :runners, through: :runner_projects, source: :runner, class_name: 'Ci::Runner'
@@ -295,6 +304,7 @@ class Project < ApplicationRecord
   has_many :project_deploy_tokens
   has_many :deploy_tokens, through: :project_deploy_tokens
   has_many :resource_groups, class_name: 'Ci::ResourceGroup', inverse_of: :project
+  has_many :freeze_periods, class_name: 'Ci::FreezePeriod', inverse_of: :project
 
   has_one :auto_devops, class_name: 'ProjectAutoDevops', inverse_of: :project, autosave: true
   has_many :custom_attributes, class_name: 'ProjectCustomAttribute'
@@ -315,10 +325,16 @@ class Project < ApplicationRecord
   has_many :import_failures, inverse_of: :project
   has_many :jira_imports, -> { order 'jira_imports.created_at' }, class_name: 'JiraImportState', inverse_of: :project
 
-  has_many :daily_report_results, class_name: 'Ci::DailyReportResult'
+  has_many :daily_build_group_report_results, class_name: 'Ci::DailyBuildGroupReportResult'
+
+  has_many :repository_storage_moves, class_name: 'ProjectRepositoryStorageMove'
+
+  has_many :webide_pipelines, -> { webide_source }, class_name: 'Ci::Pipeline', inverse_of: :project
+  has_many :reviews, inverse_of: :project
 
   accepts_nested_attributes_for :variables, allow_destroy: true
   accepts_nested_attributes_for :project_feature, update_only: true
+  accepts_nested_attributes_for :project_setting, update_only: true
   accepts_nested_attributes_for :import_data
   accepts_nested_attributes_for :auto_devops, update_only: true
   accepts_nested_attributes_for :ci_cd_settings, update_only: true
@@ -342,6 +358,9 @@ class Project < ApplicationRecord
     :wiki_access_level, :snippets_access_level, :builds_access_level,
     :repository_access_level, :pages_access_level, :metrics_dashboard_access_level,
     to: :project_feature, allow_nil: true
+  delegate :show_default_award_emojis, :show_default_award_emojis=,
+    :show_default_award_emojis?,
+    to: :project_setting, allow_nil: true
   delegate :scheduled?, :started?, :in_progress?, :failed?, :finished?,
     prefix: :import, to: :import_state, allow_nil: true
   delegate :no_import?, to: :import_state, allow_nil: true
@@ -353,8 +372,11 @@ class Project < ApplicationRecord
   delegate :root_ancestor, to: :namespace, allow_nil: true
   delegate :last_pipeline, to: :commit, allow_nil: true
   delegate :external_dashboard_url, to: :metrics_setting, allow_nil: true, prefix: true
+  delegate :dashboard_timezone, to: :metrics_setting, allow_nil: true, prefix: true
   delegate :default_git_depth, :default_git_depth=, to: :ci_cd_settings, prefix: :ci
   delegate :forward_deployment_enabled, :forward_deployment_enabled=, :forward_deployment_enabled?, to: :ci_cd_settings
+  delegate :actual_limits, :actual_plan_name, to: :namespace, allow_nil: true
+  delegate :allow_merge_on_skipped_pipeline, :allow_merge_on_skipped_pipeline?, :allow_merge_on_skipped_pipeline=, to: :project_setting
 
   # Validations
   validates :creator, presence: true, on: :create
@@ -386,7 +408,6 @@ class Project < ApplicationRecord
   validate :check_repository_path_availability, on: :update, if: ->(project) { project.renamed? }
   validate :visibility_level_allowed_by_group, if: :should_validate_visibility_level?
   validate :visibility_level_allowed_as_fork, if: :should_validate_visibility_level?
-  validate :check_wiki_path_conflict
   validate :validate_pages_https_only, if: -> { changes.has_key?(:pages_https_only) }
   validates :repository_storage,
     presence: true,
@@ -427,7 +448,7 @@ class Project < ApplicationRecord
   scope :archived, -> { where(archived: true) }
   scope :non_archived, -> { where(archived: false) }
   scope :for_milestones, ->(ids) { joins(:milestones).where('milestones.id' => ids).distinct }
-  scope :with_push, -> { joins(:events).where('events.action = ?', Event::PUSHED) }
+  scope :with_push, -> { joins(:events).merge(Event.pushed_action) }
   scope :with_project_feature, -> { joins('LEFT JOIN project_features ON projects.id = project_features.project_id') }
   scope :inc_routes, -> { includes(:route, namespace: :route) }
   scope :with_statistics, -> { includes(:statistics) }
@@ -492,6 +513,11 @@ class Project < ApplicationRecord
       .where(project_pages_metadata: { project_id: nil })
   end
 
+  scope :with_api_entity_associations, -> {
+    preload(:project_feature, :route, :tags,
+            group: :ip_restrictions, namespace: [:route, :owner])
+  }
+
   enum auto_cancel_pending_pipelines: { disabled: 0, enabled: 1 }
 
   chronic_duration_attr :build_timeout_human_readable, :build_timeout,
@@ -506,6 +532,10 @@ class Project < ApplicationRecord
   # Used by Projects::CleanupService to hold a map of rewritten object IDs
   mount_uploader :bfg_object_map, AttachmentUploader
 
+  def self.with_web_entity_associations
+    preload(:project_feature, :route, :creator, :group, namespace: [:route, :owner])
+  end
+
   def self.eager_load_namespace_and_owner
     includes(namespace: :owner)
   end
@@ -515,12 +545,14 @@ class Project < ApplicationRecord
   def self.public_or_visible_to_user(user = nil, min_access_level = nil)
     min_access_level = nil if user&.admin?
 
-    if user
+    return public_to_user unless user
+
+    if user.is_a?(DeployToken)
+      user.projects
+    else
       where('EXISTS (?) OR projects.visibility_level IN (?)',
             user.authorizations_for_projects(min_access_level: min_access_level),
             Gitlab::VisibilityLevel.levels_for_user(user))
-    else
-      public_to_user
     end
   end
 
@@ -696,6 +728,10 @@ class Project < ApplicationRecord
     super
   end
 
+  def project_setting
+    super.presence || build_project_setting
+  end
+
   def all_pipelines
     if builds_enabled?
       super
@@ -710,6 +746,10 @@ class Project < ApplicationRecord
     else
       super.external
     end
+  end
+
+  def active_webide_pipelines(user:)
+    webide_pipelines.running_or_pending.for_user(user)
   end
 
   def autoclose_referenced_issues
@@ -781,8 +821,9 @@ class Project < ApplicationRecord
     Feature.enabled?(:context_commits, default_enabled: true)
   end
 
-  def jira_issues_import_feature_flag_enabled?
-    Feature.enabled?(:jira_issue_import, self, default_enabled: true)
+  # LFS and hashed repository storage are required for using Design Management.
+  def design_management_enabled?
+    lfs_enabled? && hashed_storage?(:repository)
   end
 
   def team
@@ -791,6 +832,12 @@ class Project < ApplicationRecord
 
   def repository
     @repository ||= Repository.new(full_path, self, shard: repository_storage, disk_path: disk_path)
+  end
+
+  def design_repository
+    strong_memoize(:design_repository) do
+      DesignManagement::Repository.new(self)
+    end
   end
 
   def cleanup
@@ -819,7 +866,7 @@ class Project < ApplicationRecord
     latest_pipeline = ci_pipelines.latest_successful_for_ref(ref)
     return unless latest_pipeline
 
-    latest_pipeline.builds.latest.with_artifacts_archive.find_by(name: job_name)
+    latest_pipeline.builds.latest.with_downloadable_artifacts.find_by(name: job_name)
   end
 
   def latest_successful_build_for_sha(job_name, sha)
@@ -828,7 +875,7 @@ class Project < ApplicationRecord
     latest_pipeline = ci_pipelines.latest_successful_for_sha(sha)
     return unless latest_pipeline
 
-    latest_pipeline.builds.latest.with_artifacts_archive.find_by(name: job_name)
+    latest_pipeline.builds.latest.with_downloadable_artifacts.find_by(name: job_name)
   end
 
   def latest_successful_build_for_ref!(job_name, ref = default_branch)
@@ -861,16 +908,6 @@ class Project < ApplicationRecord
     latest_jira_import&.status || 'initial'
   end
 
-  def validate_jira_import_settings!(user: nil)
-    raise Projects::ImportService::Error, _('Jira import feature is disabled.') unless jira_issues_import_feature_flag_enabled?
-    raise Projects::ImportService::Error, _('Jira integration not configured.') unless jira_service&.active?
-
-    return unless user
-
-    raise Projects::ImportService::Error, _('Cannot import because issues are not available in this project.') unless feature_available?(:issues, user)
-    raise Projects::ImportService::Error, _('You do not have permissions to run the import.') unless user.can?(:admin_project, self)
-  end
-
   def human_import_status_name
     import_state&.human_status_name || 'none'
   end
@@ -891,17 +928,15 @@ class Project < ApplicationRecord
     job_id
   end
 
-  # rubocop:disable Gitlab/RailsLogger
   def log_import_activity(job_id, type: :import)
     job_type = type.to_s.capitalize
 
     if job_id
-      Rails.logger.info("#{job_type} job scheduled for #{full_path} with job ID #{job_id}.")
+      Gitlab::AppLogger.info("#{job_type} job scheduled for #{full_path} with job ID #{job_id}.")
     else
-      Rails.logger.error("#{job_type} job failed to create for #{full_path}.")
+      Gitlab::AppLogger.error("#{job_type} job failed to create for #{full_path}.")
     end
   end
-  # rubocop:enable Gitlab/RailsLogger
 
   def reset_cache_and_import_attrs
     run_after_commit do
@@ -977,7 +1012,7 @@ class Project < ApplicationRecord
   end
 
   def jira_import?
-    import_type == 'jira' && latest_jira_import.present? && jira_issues_import_feature_flag_enabled?
+    import_type == 'jira' && latest_jira_import.present?
   end
 
   def gitlab_project_import?
@@ -1006,7 +1041,7 @@ class Project < ApplicationRecord
     remote_mirrors.stuck.update_all(
       update_status: :failed,
       last_error: _('The remote mirror took to long to complete.'),
-      last_update_at: Time.now
+      last_update_at: Time.current
     )
   end
 
@@ -1054,16 +1089,6 @@ class Project < ApplicationRecord
 
     level_name = Gitlab::VisibilityLevel.level_name(self.visibility_level).downcase
     self.errors.add(:visibility_level, _("%{level_name} is not allowed since the fork source project has lower visibility.") % { level_name: level_name })
-  end
-
-  def check_wiki_path_conflict
-    return if path.blank?
-
-    path_to_check = path.ends_with?('.wiki') ? path.chomp('.wiki') : "#{path}.wiki"
-
-    if Project.where(namespace_id: namespace_id, path: path_to_check).exists?
-      errors.add(:name, _('has already been taken'))
-    end
   end
 
   def pages_https_only
@@ -1179,11 +1204,7 @@ class Project < ApplicationRecord
   end
 
   def issues_tracker
-    if external_issue_tracker
-      external_issue_tracker
-    else
-      default_issue_tracker
-    end
+    external_issue_tracker || default_issue_tracker
   end
 
   def external_issue_reference_pattern
@@ -1251,16 +1272,7 @@ class Project < ApplicationRecord
   def find_or_initialize_service(name)
     return if disabled_services.include?(name)
 
-    service = find_service(services, name)
-    return service if service
-
-    template = find_service(services_templates, name)
-
-    if template
-      Service.build_from_template(id, template)
-    else
-      public_send("build_#{name}_service") # rubocop:disable GitlabSecurity/PublicSend
-    end
+    find_service(services, name) || build_from_instance_or_template(name) || public_send("build_#{name}_service") # rubocop:disable GitlabSecurity/PublicSend
   end
 
   # rubocop: disable CodeReuse/ServiceClass
@@ -1328,11 +1340,7 @@ class Project < ApplicationRecord
   # rubocop: enable CodeReuse/ServiceClass
 
   def owner
-    if group
-      group
-    else
-      namespace.try(:owner)
-    end
+    group || namespace.try(:owner)
   end
 
   def to_ability_name
@@ -1432,15 +1440,12 @@ class Project < ApplicationRecord
 
   # Expires various caches before a project is renamed.
   def expire_caches_before_rename(old_path)
-    repo = Repository.new(old_path, self, shard: repository_storage)
-    wiki = Repository.new("#{old_path}.wiki", self, shard: repository_storage, repo_type: Gitlab::GlRepository::WIKI)
+    project_repo = Repository.new(old_path, self, shard: repository_storage)
+    wiki_repo = Repository.new("#{old_path}#{Gitlab::GlRepository::WIKI.path_suffix}", self, shard: repository_storage, repo_type: Gitlab::GlRepository::WIKI)
+    design_repo = Repository.new("#{old_path}#{Gitlab::GlRepository::DESIGN.path_suffix}", self, shard: repository_storage, repo_type: Gitlab::GlRepository::DESIGN)
 
-    if repo.exists?
-      repo.before_delete
-    end
-
-    if wiki.exists?
-      wiki.before_delete
+    [project_repo, wiki_repo, design_repo].each do |repo|
+      repo.before_delete if repo.exists?
     end
   end
 
@@ -1517,6 +1522,10 @@ class Project < ApplicationRecord
     end
   end
 
+  def bots
+    users.project_bot
+  end
+
   # Filters `users` to return only authorized users of the project
   def members_among(users)
     if users.is_a?(ActiveRecord::Relation) && !users.loaded?
@@ -1565,10 +1574,6 @@ class Project < ApplicationRecord
     create_repository(force: true) unless repository_exists?
   end
 
-  def wiki_repository_exists?
-    wiki.repository_exists?
-  end
-
   # update visibility_level of forks
   def update_forks_visibility_level
     return if unlink_forks_upon_visibility_decrease_enabled?
@@ -1579,20 +1584,6 @@ class Project < ApplicationRecord
         forked_project.visibility_level = visibility_level
         forked_project.save!
       end
-    end
-  end
-
-  def create_wiki
-    ProjectWiki.new(self, self.owner).wiki
-    true
-  rescue ProjectWiki::CouldNotCreateWikiError
-    errors.add(:base, _('Failed create wiki'))
-    false
-  end
-
-  def wiki
-    strong_memoize(:wiki) do
-      ProjectWiki.new(self, self.owner)
     end
   end
 
@@ -1786,17 +1777,15 @@ class Project < ApplicationRecord
     ensure_pages_metadatum.update!(deployed: false)
   end
 
-  # rubocop:disable Gitlab/RailsLogger
   def write_repository_config(gl_full_path: full_path)
     # We'd need to keep track of project full path otherwise directory tree
     # created with hashed storage enabled cannot be usefully imported using
     # the import rake task.
     repository.raw_repository.write_config(full_path: gl_full_path)
   rescue Gitlab::Git::Repository::NoRepository => e
-    Rails.logger.error("Error writing to .git/config for project #{full_path} (#{id}): #{e.message}.")
+    Gitlab::AppLogger.error("Error writing to .git/config for project #{full_path} (#{id}): #{e.message}.")
     nil
   end
-  # rubocop:enable Gitlab/RailsLogger
 
   def after_import
     repository.expire_content_cache
@@ -1839,17 +1828,15 @@ class Project < ApplicationRecord
     @pipeline_status ||= Gitlab::Cache::Ci::ProjectPipelineStatus.load_for_project(self)
   end
 
-  # rubocop:disable Gitlab/RailsLogger
   def add_export_job(current_user:, after_export_strategy: nil, params: {})
     job_id = ProjectExportWorker.perform_async(current_user.id, self.id, after_export_strategy, params)
 
     if job_id
-      Rails.logger.info "Export job started for project ID #{self.id} with job ID #{job_id}"
+      Gitlab::AppLogger.info "Export job started for project ID #{self.id} with job ID #{job_id}"
     else
-      Rails.logger.error "Export job failed to start for project ID #{self.id}"
+      Gitlab::AppLogger.error "Export job failed to start for project ID #{self.id}"
     end
   end
-  # rubocop:enable Gitlab/RailsLogger
 
   def import_export_shared
     @import_export_shared ||= Gitlab::ImportExport::Shared.new(self)
@@ -2024,6 +2011,14 @@ class Project < ApplicationRecord
     end
   end
 
+  def ci_instance_variables_for(ref:)
+    if protected_for?(ref)
+      Ci::InstanceVariable.all_cached
+    else
+      Ci::InstanceVariable.unprotected_cached
+    end
+  end
+
   def protected_for?(ref)
     raise Repository::AmbiguousRefError if repository.ambiguous_ref?(ref)
 
@@ -2077,16 +2072,6 @@ class Project < ApplicationRecord
     with_lock do
       update_column(:repository_read_only, false)
     end
-  end
-
-  def change_repository_storage(new_repository_storage_key)
-    return if repository_read_only?
-    return if repository_storage == new_repository_storage_key
-
-    raise ArgumentError unless ::Gitlab.config.repositories.storages.key?(new_repository_storage_key)
-
-    run_after_commit { ProjectUpdateRepositoryStorageWorker.perform_async(id, new_repository_storage_key) }
-    self.repository_read_only = true
   end
 
   def pushes_since_gc
@@ -2402,7 +2387,7 @@ class Project < ApplicationRecord
   end
 
   def deploy_token_create_url(opts = {})
-    Gitlab::Routing.url_helpers.create_deploy_token_project_settings_ci_cd_path(self, opts)
+    Gitlab::Routing.url_helpers.create_deploy_token_project_settings_repository_path(self, opts)
   end
 
   def deploy_token_revoke_url_for(token)
@@ -2425,10 +2410,35 @@ class Project < ApplicationRecord
     jira_imports.last
   end
 
+  override :after_wiki_activity
+  def after_wiki_activity
+    touch(:last_activity_at, :last_repository_updated_at)
+  end
+
+  def metrics_setting
+    super || build_metrics_setting
+  end
+
   private
 
   def find_service(services, name)
     services.find { |service| service.to_param == name }
+  end
+
+  def build_from_instance_or_template(name)
+    instance = find_service(services_instances, name)
+    return Service.build_from_integration(id, instance) if instance
+
+    template = find_service(services_templates, name)
+    return Service.build_from_integration(id, template) if template
+  end
+
+  def services_templates
+    @services_templates ||= Service.templates
+  end
+
+  def services_instances
+    @services_instances ||= Service.instances
   end
 
   def closest_namespace_setting(name)
@@ -2557,10 +2567,6 @@ class Project < ApplicationRecord
         end
       end
     end
-  end
-
-  def services_templates
-    @services_templates ||= Service.where(template: true)
   end
 
   def ensure_pages_metadatum

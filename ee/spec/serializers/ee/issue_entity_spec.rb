@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe IssueEntity do
+RSpec.describe IssueEntity do
   let_it_be(:project) { create(:project) }
   let_it_be(:resource) { create(:issue, project: project) }
   let_it_be(:user) { create(:user) }
@@ -32,10 +32,10 @@ describe IssueEntity do
       expect(subject).to include(:blocked_by_issues)
     end
 
-    it 'exposes only id and web_path' do
+    it 'exposes only iid and web_url' do
       response = described_class.new(blocked_issue, request: request, with_blocking_issues: true).as_json
 
-      expect(response[:blocked_by_issues].first.keys).to match_array([:id, :web_url])
+      expect(response[:blocked_by_issues].first.keys).to match_array([:iid, :web_url])
     end
   end
 end

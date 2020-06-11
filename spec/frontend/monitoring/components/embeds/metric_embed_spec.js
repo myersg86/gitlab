@@ -1,9 +1,10 @@
 import { createLocalVue, shallowMount } from '@vue/test-utils';
 import Vuex from 'vuex';
-import PanelType from 'ee_else_ce/monitoring/components/panel_type.vue';
+import DashboardPanel from '~/monitoring/components/dashboard_panel.vue';
 import { TEST_HOST } from 'helpers/test_constants';
 import MetricEmbed from '~/monitoring/components/embeds/metric_embed.vue';
 import { groups, initialState, metricsData, metricsWithData } from './mock_data';
+import { setHTMLFixture } from 'helpers/fixtures';
 
 const localVue = createLocalVue();
 localVue.use(Vuex);
@@ -25,6 +26,8 @@ describe('MetricEmbed', () => {
   }
 
   beforeEach(() => {
+    setHTMLFixture('<div class="layout-page"></div>');
+
     actions = {
       setInitialState: jest.fn(),
       setShowErrorBanner: jest.fn(),
@@ -62,7 +65,7 @@ describe('MetricEmbed', () => {
 
     it('shows an empty state when no metrics are present', () => {
       expect(wrapper.find('.metrics-embed').exists()).toBe(true);
-      expect(wrapper.find(PanelType).exists()).toBe(false);
+      expect(wrapper.find(DashboardPanel).exists()).toBe(false);
     });
   });
 
@@ -90,12 +93,12 @@ describe('MetricEmbed', () => {
 
     it('shows a chart when metrics are present', () => {
       expect(wrapper.find('.metrics-embed').exists()).toBe(true);
-      expect(wrapper.find(PanelType).exists()).toBe(true);
-      expect(wrapper.findAll(PanelType).length).toBe(2);
+      expect(wrapper.find(DashboardPanel).exists()).toBe(true);
+      expect(wrapper.findAll(DashboardPanel).length).toBe(2);
     });
 
     it('includes groupId with dashboardUrl', () => {
-      expect(wrapper.find(PanelType).props('groupId')).toBe(TEST_HOST);
+      expect(wrapper.find(DashboardPanel).props('groupId')).toBe(TEST_HOST);
     });
   });
 });

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe EE::AuditEvents::RepositoryPushAuditEventService do
+RSpec.describe EE::AuditEvents::RepositoryPushAuditEventService do
   let(:user) { create(:user) }
   let(:entity) { create(:project) }
   let(:entity_type) { 'Project' }
@@ -12,7 +12,7 @@ describe EE::AuditEvents::RepositoryPushAuditEventService do
   let(:service) { described_class.new(user, entity, target_ref, from, to) }
 
   describe '#attributes' do
-    let(:timestamp) { Time.new(2019, 10, 10) }
+    let(:timestamp) { Time.zone.local(2019, 10, 10) }
     let(:attrs) do
       {
         author_id: user.id,

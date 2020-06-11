@@ -32,6 +32,10 @@ constraints(::Constraints::GroupUrlConstrainer.new) do
       resource :ci_cd, only: [:show, :update], controller: 'ci_cd' do
         put :reset_registration_token
         patch :update_auto_devops
+        post :create_deploy_token, path: 'deploy_token/create', to: 'repository#create_deploy_token'
+      end
+
+      resource :repository, only: [:show], controller: 'repository' do
         post :create_deploy_token, path: 'deploy_token/create'
       end
 
@@ -74,7 +78,7 @@ constraints(::Constraints::GroupUrlConstrainer.new) do
       delete :leave, on: :collection
     end
 
-    resources :group_links, only: [:index, :create, :update, :destroy], constraints: { id: /\d+/ }
+    resources :group_links, only: [:create, :update, :destroy], constraints: { id: /\d+/ }
 
     resources :uploads, only: [:create] do
       collection do

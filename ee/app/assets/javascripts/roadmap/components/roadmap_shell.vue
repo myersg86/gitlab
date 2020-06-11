@@ -38,18 +38,20 @@ export default {
       type: Number,
       required: true,
     },
+    hasFiltersApplied: {
+      type: Boolean,
+      required: true,
+    },
   },
   data() {
-    const milestonesInRoadmap = gon.features && gon.features.milestonesInRoadmap;
     return {
       timeframeStartOffset: 0,
-      milestonesInRoadmap,
     };
   },
   computed: {
     ...mapState(['defaultInnerHeight']),
     displayMilestones() {
-      return this.milestonesInRoadmap && this.milestones.length !== 0;
+      return Boolean(this.milestones.length);
     },
   },
   mounted() {
@@ -114,6 +116,7 @@ export default {
       :epics="epics"
       :timeframe="timeframe"
       :current-group-id="currentGroupId"
+      :has-filters-applied="hasFiltersApplied"
     />
   </div>
 </template>

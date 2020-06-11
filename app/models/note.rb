@@ -72,6 +72,7 @@ class Note < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :updated_by, class_name: "User"
   belongs_to :last_edited_by, class_name: 'User'
+  belongs_to :review, inverse_of: :notes
 
   has_many :todos
 
@@ -159,6 +160,8 @@ class Note < ApplicationRecord
   after_save :touch_noteable, unless: :importing?
   after_destroy :expire_etag_cache
   after_save :store_mentions!, if: :any_mentionable_attributes_changed?
+  after_commit :notify_after_create, on: :create
+  after_commit :notify_after_destroy, on: :destroy
 
   class << self
     def model_name
@@ -279,6 +282,10 @@ class Note < ApplicationRecord
     !for_personal_snippet?
   end
 
+  def for_design?
+    noteable_type == DesignManagement::Design.name
+  end
+
   def for_issuable?
     for_issue? || for_merge_request?
   end
@@ -344,8 +351,10 @@ class Note < ApplicationRecord
     self.special_role = Note::SpecialRole::FIRST_TIME_CONTRIBUTOR
   end
 
-  def confidential?
-    confidential || noteable.try(:confidential?)
+  def confidential?(include_noteable: false)
+    return true if confidential
+
+    include_noteable && noteable.try(:confidential?)
   end
 
   def editable?
@@ -505,8 +514,16 @@ class Note < ApplicationRecord
     noteable_object
   end
 
+  def notify_after_create
+    noteable&.after_note_created(self)
+  end
+
+  def notify_after_destroy
+    noteable&.after_note_destroyed(self)
+  end
+
   def banzai_render_context(field)
-    super.merge(noteable: noteable, system_note: system?)
+    super.merge(noteable: noteable, system_note: system?, label_url_method: noteable_label_url_method)
   end
 
   def retrieve_upload(_identifier, paths)
@@ -588,6 +605,10 @@ class Note < ApplicationRecord
     return unless noteable
 
     errors.add(:base, _('Maximum number of comments exceeded')) if noteable.notes.count >= Noteable::MAX_NOTES_LIMIT
+  end
+
+  def noteable_label_url_method
+    for_merge_request? ? :project_merge_requests_url : :project_issues_url
   end
 end
 

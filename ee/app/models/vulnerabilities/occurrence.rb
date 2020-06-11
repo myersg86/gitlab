@@ -28,7 +28,7 @@ module Vulnerabilities
     attr_writer :sha
 
     CONFIDENCE_LEVELS = {
-      undefined: 0,
+      # undefined: 0, no longer applicable
       ignore: 1,
       unknown: 2,
       experimental: 3,
@@ -53,7 +53,8 @@ module Vulnerabilities
       sast: 0,
       dependency_scanning: 1,
       container_scanning: 2,
-      dast: 3
+      dast: 3,
+      secret_detection: 4
     }.with_indifferent_access.freeze
 
     enum confidence: CONFIDENCE_LEVELS, _prefix: :confidence
@@ -138,7 +139,7 @@ module Vulnerabilities
 
     def state
       return 'dismissed' if dismissal_feedback.present?
-      return 'detected' unless Feature.enabled?(:first_class_vulnerabilities, project)
+      return 'detected' unless Feature.enabled?(:first_class_vulnerabilities, project, default_enabled: true)
 
       if vulnerability.nil?
         'detected'
@@ -186,30 +187,26 @@ module Vulnerabilities
     end
 
     def feedback(feedback_type:)
-      params = {
-        project_id: project_id,
-        category: report_type,
-        project_fingerprint: project_fingerprint,
-        feedback_type: feedback_type
-      }
+      load_feedback.find { |f| f.feedback_type == feedback_type }
+    end
 
-      BatchLoader.for(params).batch do |items, loader|
-        project_ids = items.map { |i| i[:project_id] }
-        categories = items.map { |i| i[:category] }
-        fingerprints = items.map { |i| i[:project_fingerprint] }
+    def load_feedback
+      BatchLoader.for(occurrence_key).batch(replace_methods: false) do |occurrence_keys, loader|
+        project_ids = occurrence_keys.map { |key| key[:project_id] }
+        categories = occurrence_keys.map { |key| key[:category] }
+        fingerprints = occurrence_keys.map { |key| key[:project_fingerprint] }
 
-        Vulnerabilities::Feedback.all_preloaded.where(
+        feedback = Vulnerabilities::Feedback.all_preloaded.where(
           project_id: project_ids.uniq,
           category: categories.uniq,
           project_fingerprint: fingerprints.uniq
-        ).each do |feedback|
-          loaded_params = {
-            project_id: feedback.project_id,
-            category: feedback.category,
-            project_fingerprint: feedback.project_fingerprint,
-            feedback_type: feedback.feedback_type
-          }
-          loader.call(loaded_params, feedback)
+        ).to_a
+
+        occurrence_keys.each do |occurrence_key|
+          loader.call(
+            occurrence_key,
+            feedback.select { |f| occurrence_key = f.occurrence_key }
+          )
         end
       end
     end
@@ -228,7 +225,11 @@ module Vulnerabilities
 
     def metadata
       strong_memoize(:metadata) do
-        JSON.parse(raw_metadata)
+        data = Gitlab::Json.parse(raw_metadata)
+
+        data = {} unless data.is_a?(Hash)
+
+        data
       rescue JSON::ParserError
         {}
       end
@@ -252,6 +253,30 @@ module Vulnerabilities
 
     def remediations
       metadata.dig('remediations')
+    end
+
+    def evidence
+      {
+        summary: metadata.dig('evidence', 'summary'),
+        request: {
+          headers: metadata.dig('evidence', 'request', 'headers') || [],
+          method: metadata.dig('evidence', 'request', 'method'),
+          url: metadata.dig('evidence', 'request', 'url')
+        },
+        response: {
+          headers: metadata.dig('evidence', 'response', 'headers') || [],
+          status_code: metadata.dig('evidence', 'response', 'status_code'),
+          reason_phrase: metadata.dig('evidence', 'response', 'reason_phrase')
+        }
+      }
+    end
+
+    def message
+      metadata.dig('message')
+    end
+
+    def cve
+      metadata.dig('cve')
     end
 
     alias_method :==, :eql? # eql? is necessary in some cases like array intersection
@@ -279,6 +304,16 @@ module Vulnerabilities
 
     def first_fingerprint
       identifiers.first&.fingerprint
+    end
+
+    private
+
+    def occurrence_key
+      {
+        project_id: project_id,
+        category: report_type,
+        project_fingerprint: project_fingerprint
+      }
     end
   end
 end

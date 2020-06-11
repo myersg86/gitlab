@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::TransferService, '#execute' do
+RSpec.describe Groups::TransferService, '#execute' do
   let(:user) { create(:user) }
   let(:group) { create(:group, :public) }
   let(:project) { create(:project, :public, namespace: group) }
@@ -84,12 +84,9 @@ describe Groups::TransferService, '#execute' do
       project2 = create(:project, :repository, :public, namespace: group)
       project3 = create(:project, :repository, :private, namespace: group)
 
-      expect(ElasticIndexerWorker).to receive(:perform_async)
-        .with(:update, "Project", project1.id, project1.es_id)
-      expect(ElasticIndexerWorker).to receive(:perform_async)
-        .with(:update, "Project", project2.id, project2.es_id)
-      expect(ElasticIndexerWorker).not_to receive(:perform_async)
-        .with(:update, "Project", project3.id, project3.es_id)
+      expect(Elastic::ProcessBookkeepingService).to receive(:track!).with(project1)
+      expect(Elastic::ProcessBookkeepingService).to receive(:track!).with(project2)
+      expect(Elastic::ProcessBookkeepingService).not_to receive(:track!).with(project3)
 
       transfer_service.execute(new_group)
 

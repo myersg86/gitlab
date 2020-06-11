@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Projects > Settings > For a forked project', :js do
+RSpec.describe 'Projects > Settings > For a forked project', :js do
   let(:user) { create(:user) }
   let(:project) { create(:project, :repository, create_templates: :issue) }
   let(:role) { :maintainer }
@@ -76,7 +76,7 @@ describe 'Projects > Settings > For a forked project', :js do
       context 'success path' do
         let(:projects_sample_response) do
           Gitlab::Utils.deep_indifferent_access(
-            JSON.parse(fixture_file('sentry/list_projects_sample_response.json'))
+            Gitlab::Json.parse(fixture_file('sentry/list_projects_sample_response.json'))
           )
         end
 

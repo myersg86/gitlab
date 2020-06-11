@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Elastic::Latest::GitInstanceProxy do
+RSpec.describe Elastic::Latest::GitInstanceProxy do
   let(:project) { create(:project, :repository) }
   let(:included_class) { Elastic::Latest::RepositoryInstanceProxy }
 
@@ -26,7 +26,7 @@ describe Elastic::Latest::GitInstanceProxy do
   describe '#elastic_search' do
     let(:params) do
       {
-        type: :fake_type,
+        type: 'fake_type',
         page: 2,
         per: 30,
         options: { foo: :bar }

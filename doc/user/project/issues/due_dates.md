@@ -1,3 +1,9 @@
+---
+stage: Plan
+group: Project Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Due dates
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/3614) in GitLab 8.7.
@@ -23,6 +29,11 @@ sidebar and click **Edit** to pick a due date or remove the existing one.
 Changes are saved immediately.
 
 ![Edit a due date via the sidebar](img/due_dates_edit_sidebar.png)
+
+The last way to set a due date is by using [quick actions](../quick_actions.md), directly in an issue's description or comment:
+
+- `/due <date>`: set due date. Examples of valid `<date>` include `in 2 days`, `this Friday`, and `December 31st`.
+- `/remove_due_date`: remove due date.
 
 ## Making use of due dates
 

@@ -38,6 +38,11 @@ export default {
       keys: ['sql'],
     },
     {
+      metric: 'bullet',
+      header: s__('PerformanceBar|Bullet notifications'),
+      keys: ['notification'],
+    },
+    {
       metric: 'gitaly',
       header: s__('PerformanceBar|Gitaly calls'),
       keys: ['feature', 'request'],
@@ -51,6 +56,11 @@ export default {
       metric: 'redis',
       header: s__('PerformanceBar|Redis calls'),
       keys: ['cmd'],
+    },
+    {
+      metric: 'es',
+      header: s__('PerformanceBar|Elasticsearch calls'),
+      keys: ['request', 'body'],
     },
     {
       metric: 'total',

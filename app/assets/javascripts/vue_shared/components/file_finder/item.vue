@@ -1,8 +1,8 @@
 <script>
 import fuzzaldrinPlus from 'fuzzaldrin-plus';
 import Icon from '~/vue_shared/components/icon.vue';
-import FileIcon from '../../../vue_shared/components/file_icon.vue';
-import ChangedFileIcon from '../../../vue_shared/components/changed_file_icon.vue';
+import FileIcon from '../file_icon.vue';
+import ChangedFileIcon from '../changed_file_icon.vue';
 
 const MAX_PATH_LENGTH = 60;
 
@@ -75,12 +75,8 @@ export default {
     @mouseover="mouseOverRow"
     @mousemove="mouseMove"
   >
-    <file-icon
-      :file-name="file.name"
-      :size="16"
-      css-classes="diff-file-changed-icon append-right-8"
-    />
-    <span class="diff-changed-file-content append-right-8">
+    <file-icon :file-name="file.name" :size="16" css-classes="diff-file-changed-icon gl-mr-3" />
+    <span class="diff-changed-file-content gl-mr-3">
       <strong class="diff-changed-file-name">
         <span
           v-for="(char, charIndex) in file.name.split('')"

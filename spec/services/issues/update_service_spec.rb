@@ -3,13 +3,13 @@
 require 'spec_helper'
 
 describe Issues::UpdateService, :mailer do
-  let(:user) { create(:user) }
-  let(:user2) { create(:user) }
-  let(:user3) { create(:user) }
-  let(:group) { create(:group, :public) }
-  let(:project) { create(:project, :repository, group: group) }
-  let(:label) { create(:label, project: project) }
-  let(:label2) { create(:label) }
+  let_it_be(:user) { create(:user) }
+  let_it_be(:user2) { create(:user) }
+  let_it_be(:user3) { create(:user) }
+  let_it_be(:group) { create(:group, :public) }
+  let_it_be(:project, reload: true) { create(:project, :repository, group: group) }
+  let_it_be(:label) { create(:label, project: project) }
+  let_it_be(:label2) { create(:label, project: project) }
 
   let(:issue) do
     create(:issue, title: 'Old title',
@@ -19,7 +19,7 @@ describe Issues::UpdateService, :mailer do
                    author: create(:user))
   end
 
-  before do
+  before_all do
     project.add_maintainer(user)
     project.add_developer(user2)
     project.add_developer(user3)
@@ -510,7 +510,7 @@ describe Issues::UpdateService, :mailer do
         end
 
         it 'updates updated_at' do
-          expect(issue.reload.updated_at).to be > Time.now
+          expect(issue.reload.updated_at).to be > Time.current
         end
       end
     end
@@ -669,28 +669,24 @@ describe Issues::UpdateService, :mailer do
       context 'when add_label_ids and label_ids are passed' do
         let(:params) { { label_ids: [label.id], add_label_ids: [label3.id] } }
 
-        it 'ignores the label_ids parameter' do
-          expect(result.label_ids).not_to include(label.id)
+        before do
+          issue.update(labels: [label2])
         end
 
-        it 'adds the passed labels' do
-          expect(result.label_ids).to include(label3.id)
+        it 'replaces the labels with the ones in label_ids and adds those in add_label_ids' do
+          expect(result.label_ids).to contain_exactly(label.id, label3.id)
         end
       end
 
       context 'when remove_label_ids and label_ids are passed' do
-        let(:params) { { label_ids: [], remove_label_ids: [label.id] } }
+        let(:params) { { label_ids: [label.id, label2.id, label3.id], remove_label_ids: [label.id] } }
 
         before do
           issue.update(labels: [label, label3])
         end
 
-        it 'ignores the label_ids parameter' do
-          expect(result.label_ids).not_to be_empty
-        end
-
-        it 'removes the passed labels' do
-          expect(result.label_ids).not_to include(label.id)
+        it 'replaces the labels with the ones in label_ids and removes those in remove_label_ids' do
+          expect(result.label_ids).to contain_exactly(label2.id, label3.id)
         end
       end
 
@@ -841,6 +837,34 @@ describe Issues::UpdateService, :mailer do
     include_examples 'issuable update service' do
       let(:open_issuable) { issue }
       let(:closed_issuable) { create(:closed_issue, project: project) }
+    end
+
+    context 'real-time updates' do
+      let(:update_params) { { assignee_ids: [user2.id] } }
+
+      context 'when broadcast_issue_updates is enabled' do
+        before do
+          stub_feature_flags(broadcast_issue_updates: true)
+        end
+
+        it 'broadcasts to the issues channel' do
+          expect(IssuesChannel).to receive(:broadcast_to).with(issue, event: 'updated')
+
+          update_issue(update_params)
+        end
+      end
+
+      context 'when broadcast_issue_updates is disabled' do
+        before do
+          stub_feature_flags(broadcast_issue_updates: false)
+        end
+
+        it 'does not broadcast to the issues channel' do
+          expect(IssuesChannel).not_to receive(:broadcast_to)
+
+          update_issue(update_params)
+        end
+      end
     end
   end
 end

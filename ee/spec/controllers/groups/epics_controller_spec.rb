@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Groups::EpicsController do
+RSpec.describe Groups::EpicsController do
   let(:group) { create(:group, :private) }
   let(:epic) { create(:epic, group: group) }
   let(:user)  { create(:user) }
@@ -366,7 +366,7 @@ describe Groups::EpicsController do
 
       context 'when state_event param is reopen' do
         before do
-          epic.update!(state: 'closed', closed_at: Time.now, closed_by: user)
+          epic.update!(state: 'closed', closed_at: Time.current, closed_by: user)
         end
 
         it 'allows epic to be reopened' do

@@ -2,6 +2,9 @@
 
 module EE
   module EnvironmentsHelper
+    extend ::Gitlab::Utils::Override
+
+    override :environments_list_data
     def environments_list_data
       ee_environments_list_data = {
         "canary_deployment_feature_id" => UserCalloutsHelper::CANARY_DEPLOYMENT,
@@ -14,6 +17,7 @@ module EE
       super.merge(ee_environments_list_data)
     end
 
+    override :environments_folder_list_view_data
     def environments_folder_list_view_data
       ee_environments_folder_list_view_data = {
         "canary_deployment_feature_id" => UserCalloutsHelper::CANARY_DEPLOYMENT,
@@ -26,12 +30,20 @@ module EE
       super.merge(ee_environments_folder_list_view_data)
     end
 
-    def metrics_data(project, environment)
-      ee_metrics_data = {
-        "alerts-endpoint" => project_prometheus_alerts_path(project, environment_id: environment.id, format: :json),
-        "prometheus-alerts-available" => "#{can?(current_user, :read_prometheus_alerts, project)}"
-      }
-      ee_metrics_data["logs_path"] = project_logs_path(project, environment_name: environment.name) if can?(current_user, :read_pod_logs, project)
+    override :project_metrics_data
+    def project_metrics_data(project)
+      ee_metrics_data = {}
+      ee_metrics_data['logs_path'] = project_logs_path(project) if can?(current_user, :read_pod_logs, project)
+
+      super.merge(ee_metrics_data)
+    end
+
+    override :project_and_environment_metrics_data
+    def project_and_environment_metrics_data(project, environment)
+      ee_metrics_data = {}
+
+      # overwrites project_metrics_data logs_path if environment is available
+      ee_metrics_data['logs_path'] = project_logs_path(project, environment_name: environment.name) if can?(current_user, :read_pod_logs, project)
 
       super.merge(ee_metrics_data)
     end

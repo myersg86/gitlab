@@ -2,7 +2,7 @@
 
 ## Issue tracker guidelines
 
-**[Search the issue tracker](https://gitlab.com/gitlab-org/gitlab/issues)** for similar entries before
+**[Search the issue tracker](https://gitlab.com/gitlab-org/gitlab/-/issues)** for similar entries before
 submitting your own, there's a good chance somebody else had the same issue or
 feature proposal. Show your support with an award emoji and/or join the
 discussion.
@@ -16,7 +16,7 @@ see fit.
 
 Our issue triage policies are [described in our handbook](https://about.gitlab.com/handbook/engineering/quality/issue-triage/).
 You are very welcome to help the GitLab team triage issues.
-We also organize [issue bash events](https://gitlab.com/gitlab-org/gitlab-foss/issues/17815)
+We also organize [issue bash events](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/17815)
 once every quarter.
 
 The most important thing is making sure valid issues receive feedback from the
@@ -36,7 +36,7 @@ project.
 
 To allow for asynchronous issue handling, we use [milestones](https://gitlab.com/groups/gitlab-org/-/milestones)
 and [labels](https://gitlab.com/gitlab-org/gitlab/-/labels). Leads and product managers handle most of the
-scheduling into milestones. Labelling is a task for everyone.
+scheduling into milestones. Labeling is a task for everyone.
 
 Most issues will have labels for at least one of the following:
 
@@ -156,9 +156,9 @@ As a team needs some way to collect the work their members are planning to be as
 Normally there is a 1:1 relationship between Stage labels and Group labels. In
 the spirit of "Everyone can contribute", any issue can be picked up by any group,
 depending on current priorities. When picking up an issue belonging to a different
-group, it should be relabelled. For example, if an issue labelled `~"devops::create"`
+group, it should be relabeled. For example, if an issue labeled `~"devops::create"`
 and `~"group::knowledge"` is picked up by someone in the Access group of the Plan stage,
-the issue should be relabelled as `~"group::access"` while keeping the original
+the issue should be relabeled as `~"group::access"` while keeping the original
 `~"devops::create"` unchanged.
 
 We also use stage and group labels to help quantify our [throughput](https://about.gitlab.com/handbook/engineering/management/throughput/).
@@ -264,7 +264,7 @@ release. There are three levels of Release Scoping labels:
   milestone. If these issues are not done in the current release, they will
   strongly be considered for the next release.
 - ~"Next Patch Release": Issues to put in the next patch release. Work on these
-  first, and add the "Pick Into X" label to the merge request, along with the
+  first, and add the `~"Pick into X.Y"` label to the merge request, along with the
   appropriate milestone.
 
 Each issue scheduled for the current milestone should be labeled ~Deliverable
@@ -347,19 +347,19 @@ there is the ~"stewardship" label.
 
 This label is to be used for issues in which the stewardship of GitLab
 is a topic of discussion. For instance if GitLab Inc. is planning to add
-features from GitLab EE to GitLab CE, related issues would be labelled with
+features from GitLab EE to GitLab CE, related issues would be labeled with
 ~"stewardship".
 
 A recent example of this was the issue for
-[bringing the time tracking API to GitLab CE](https://gitlab.com/gitlab-org/gitlab-foss/issues/25517#note_20019084).
+[bringing the time tracking API to GitLab CE](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/25517#note_20019084).
 
 ## Feature proposals
 
 To create a feature proposal, open an issue on the
-[issue tracker](https://gitlab.com/gitlab-org/gitlab/issues).
+[issue tracker](https://gitlab.com/gitlab-org/gitlab/-/issues).
 
 In order to help track the feature proposals, we have created a
-[`feature`](https://gitlab.com/gitlab-org/gitlab/issues?label_name=feature) label. For the time being, users that are not members
+[`feature`](https://gitlab.com/gitlab-org/gitlab/-/issues?label_name=feature) label. For the time being, users that are not members
 of the project cannot add labels. You can instead ask one of the [core team](https://about.gitlab.com/community/core-team/)
 members to add the label ~feature to the issue or add the following
 code snippet right after your description in a new line: `~feature`.
@@ -403,7 +403,7 @@ below will make it easy to manage this, without unnecessary overhead.
 Every monthly release has a corresponding issue on the CE issue tracker to keep
 track of functionality broken by that release and any fixes that need to be
 included in a patch release (see
-[8.3 Regressions](https://gitlab.com/gitlab-org/gitlab-foss/issues/4127) as an example).
+[8.3 Regressions](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/4127) as an example).
 
 As outlined in the issue description, the intended workflow is to post one note
 with a reference to an issue describing the regression, and then to update that
@@ -420,7 +420,7 @@ in the regression issue as fixes are addressed.
 ## Technical and UX debt
 
 In order to track things that can be improved in GitLab's codebase,
-we use the ~"technical debt" label in [GitLab's issue tracker](https://gitlab.com/gitlab-org/gitlab/issues).
+we use the ~"technical debt" label in [GitLab's issue tracker](https://gitlab.com/gitlab-org/gitlab/-/issues).
 For missed user experience requirements, we use the ~"UX debt" label.
 
 These labels should be added to issues that describe things that can be improved,
@@ -461,7 +461,7 @@ fixing in the same MR, but not worth creating a follow-up issue for. Renaming a
 method that is used in many places to make its intent slightly clearer may be
 worth fixing, but it should not happen in the same MR, and is generally not
 worth the overhead of having an issue of its own. These issues would invariably
-be labelled `~P4 ~S4` if we were to create them.
+be labeled `~P4 ~S4` if we were to create them.
 
 More severe technical debt can have implications for development velocity. If
 it isn't addressed in a timely manner, the codebase becomes needlessly difficult

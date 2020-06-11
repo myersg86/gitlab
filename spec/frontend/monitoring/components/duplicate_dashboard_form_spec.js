@@ -3,9 +3,17 @@ import DuplicateDashboardForm from '~/monitoring/components/duplicate_dashboard_
 
 import { dashboardGitResponse } from '../mock_data';
 
-describe('DuplicateDashboardForm', () => {
-  let wrapper;
+let wrapper;
 
+const createMountedWrapper = (props = {}) => {
+  // Use `mount` to render native input elements
+  wrapper = mount(DuplicateDashboardForm, {
+    propsData: { ...props },
+    sync: false,
+  });
+};
+
+describe('DuplicateDashboardForm', () => {
   const defaultBranch = 'master';
 
   const findByRef = ref => wrapper.find({ ref });
@@ -20,14 +28,7 @@ describe('DuplicateDashboardForm', () => {
   };
 
   beforeEach(() => {
-    // Use `mount` to render native input elements
-    wrapper = mount(DuplicateDashboardForm, {
-      propsData: {
-        dashboard: dashboardGitResponse[0],
-        defaultBranch,
-      },
-      sync: false,
-    });
+    createMountedWrapper({ dashboard: dashboardGitResponse[0], defaultBranch });
   });
 
   it('renders correctly', () => {
@@ -81,7 +82,8 @@ describe('DuplicateDashboardForm', () => {
 
     it('with the inital form values', () => {
       expect(wrapper.emitted().change).toHaveLength(1);
-      expect(lastChange()).resolves.toEqual({
+
+      return expect(lastChange()).resolves.toEqual({
         branch: '',
         commitMessage: expect.any(String),
         dashboard: dashboardGitResponse[0].path,
@@ -92,7 +94,7 @@ describe('DuplicateDashboardForm', () => {
     it('containing an inputted file name', () => {
       setValue('fileName', 'my_dashboard.yml');
 
-      expect(lastChange()).resolves.toMatchObject({
+      return expect(lastChange()).resolves.toMatchObject({
         fileName: 'my_dashboard.yml',
       });
     });
@@ -100,7 +102,7 @@ describe('DuplicateDashboardForm', () => {
     it('containing a default commit message when no message is set', () => {
       setValue('commitMessage', '');
 
-      expect(lastChange()).resolves.toMatchObject({
+      return expect(lastChange()).resolves.toMatchObject({
         commitMessage: expect.stringContaining('Create custom dashboard'),
       });
     });
@@ -108,7 +110,7 @@ describe('DuplicateDashboardForm', () => {
     it('containing an inputted commit message', () => {
       setValue('commitMessage', 'My commit message');
 
-      expect(lastChange()).resolves.toMatchObject({
+      return expect(lastChange()).resolves.toMatchObject({
         commitMessage: expect.stringContaining('My commit message'),
       });
     });
@@ -116,7 +118,7 @@ describe('DuplicateDashboardForm', () => {
     it('containing an inputted branch name', () => {
       setValue('branchName', 'a-new-branch');
 
-      expect(lastChange()).resolves.toMatchObject({
+      return expect(lastChange()).resolves.toMatchObject({
         branch: 'a-new-branch',
       });
     });
@@ -125,13 +127,14 @@ describe('DuplicateDashboardForm', () => {
       setChecked(wrapper.vm.$options.radioVals.DEFAULT);
       setValue('branchName', 'a-new-branch');
 
-      expect(lastChange()).resolves.toMatchObject({
-        branch: defaultBranch,
-      });
-
-      return wrapper.vm.$nextTick(() => {
-        expect(findByRef('branchName').isVisible()).toBe(false);
-      });
+      return Promise.all([
+        expect(lastChange()).resolves.toMatchObject({
+          branch: defaultBranch,
+        }),
+        wrapper.vm.$nextTick(() => {
+          expect(findByRef('branchName').isVisible()).toBe(false);
+        }),
+      ]);
     });
 
     it('when `new` branch option is chosen, focuses on the branch name input', () => {
@@ -142,5 +145,20 @@ describe('DuplicateDashboardForm', () => {
         expect(findByRef('branchName').is(':focus')).toBe(true);
       });
     });
+  });
+});
+
+describe('DuplicateDashboardForm escapes elements', () => {
+  const branchToEscape = "<img/src='x'onerror=alert(document.domain)>";
+
+  beforeEach(() => {
+    createMountedWrapper({ dashboard: dashboardGitResponse[0], defaultBranch: branchToEscape });
+  });
+
+  it('should escape branch name data', () => {
+    const branchOptionHtml = wrapper.vm.branchOptions[0].html;
+    const escapedBranch = '&lt;img/src=&#39;x&#39;onerror=alert(document.domain)&gt';
+
+    expect(branchOptionHtml).toEqual(expect.stringContaining(escapedBranch));
   });
 });

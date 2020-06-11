@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import '~/behaviors/markdown/render_gfm';
-import { createStore } from 'ee_else_ce/mr_notes/stores';
+import { createStore } from '~/mr_notes/stores';
 import { createComponentWithStore } from 'helpers/vue_mount_component_helper';
 import InlineDiffView from '~/diffs/components/inline_diff_view.vue';
 import diffFileMockData from '../mock_data/diff_file';
@@ -8,8 +8,8 @@ import discussionsMockData from '../mock_data/diff_discussions';
 
 describe('InlineDiffView', () => {
   let component;
-  const getDiffFileMock = () => Object.assign({}, diffFileMockData);
-  const getDiscussionsMockData = () => [Object.assign({}, discussionsMockData)];
+  const getDiffFileMock = () => ({ ...diffFileMockData });
+  const getDiscussionsMockData = () => [{ ...discussionsMockData }];
   const notesLength = getDiscussionsMockData()[0].notes.length;
 
   beforeEach(done => {

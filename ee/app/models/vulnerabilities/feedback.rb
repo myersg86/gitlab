@@ -15,7 +15,7 @@ module Vulnerabilities
     attr_accessor :vulnerability_data
 
     enum feedback_type: { dismissal: 0, issue: 1, merge_request: 2 }, _prefix: :for
-    enum category: { sast: 0, dependency_scanning: 1, container_scanning: 2, dast: 3 }
+    enum category: { sast: 0, dependency_scanning: 1, container_scanning: 2, dast: 3, secret_detection: 4 }
 
     validates :project, presence: true
     validates :author, presence: true
@@ -74,6 +74,14 @@ module Vulnerabilities
     # will still exist.
     def has_comment?
       comment.present? && comment_author.present?
+    end
+
+    def occurrence_key
+      {
+        project_id: project_id,
+        category: category,
+        project_fingerprint: project_fingerprint
+      }
     end
   end
 end

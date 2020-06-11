@@ -16,17 +16,13 @@ FactoryBot.define do
     factory :note_on_merge_request,      traits: [:on_merge_request]
     factory :note_on_project_snippet,    traits: [:on_project_snippet]
     factory :note_on_personal_snippet,   traits: [:on_personal_snippet]
+    factory :note_on_design,             traits: [:on_design]
     factory :system_note,                traits: [:system]
 
     factory :discussion_note, class: 'DiscussionNote'
 
     factory :discussion_note_on_merge_request, traits: [:on_merge_request], class: 'DiscussionNote' do
       association :project, :repository
-
-      trait :resolved do
-        resolved_at { Time.now }
-        resolved_by { create(:user) }
-      end
     end
 
     factory :track_mr_picking_note, traits: [:on_merge_request, :system] do
@@ -75,11 +71,6 @@ FactoryBot.define do
         end
       end
 
-      trait :resolved do
-        resolved_at { Time.now }
-        resolved_by { create(:user) }
-      end
-
       factory :image_diff_note_on_merge_request do
         position do
           build(:image_diff_position,
@@ -105,6 +96,10 @@ FactoryBot.define do
           diff_refs: diff_refs
         )
       end
+    end
+
+    factory :diff_note_on_design, parent: :note, traits: [:on_design], class: 'DiffNote' do
+      position { build(:image_diff_position, file: noteable.full_path, diff_refs: noteable.diff_refs) }
     end
 
     trait :on_commit do
@@ -136,6 +131,25 @@ FactoryBot.define do
       project { nil }
     end
 
+    trait :on_design do
+      transient do
+        issue { association(:issue, project: project) }
+      end
+      noteable { association(:design, :with_file, issue: issue) }
+
+      after(:build) do |note|
+        next if note.project == note.noteable.project
+
+        # note validations require consistency between these two objects
+        note.project = note.noteable.project
+      end
+    end
+
+    trait :resolved do
+      resolved_at { Time.now }
+      resolved_by { association(:user) }
+    end
+
     trait :system do
       system { true }
     end
@@ -162,6 +176,10 @@ FactoryBot.define do
 
     trait :confidential do
       confidential { true }
+    end
+
+    trait :with_review do
+      review
     end
 
     transient do

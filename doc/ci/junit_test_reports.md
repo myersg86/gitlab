@@ -1,10 +1,13 @@
 ---
+stage: Verify
+group: Testing
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
 # JUnit test reports
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/45318) in GitLab 11.2. Requires GitLab Runner 11.2 and above.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/45318) in GitLab 11.2. Requires GitLab Runner 11.2 and above.
 
 ## Overview
 
@@ -17,6 +20,8 @@ tests failed so that they can fix them.
 You can configure your job to use JUnit test reports, and GitLab will display a
 report on the merge request so that it's easier and faster to identify the
 failure without having to check the entire log.
+
+If you don't use Merge Requests but still want to see the JUnit output without searching through job logs, the full [JUnit test reports](#viewing-junit-test-reports-on-gitlab) are available in the pipeline detail view.
 
 ## Use cases
 
@@ -66,7 +71,7 @@ For a list of supported languages on JUnit tests, check the
 [Wikipedia article](https://en.wikipedia.org/wiki/JUnit#Ports).
 
 To enable the JUnit reports in merge requests, you need to add
-[`artifacts:reports:junit`](yaml/README.md#artifactsreportsjunit)
+[`artifacts:reports:junit`](pipelines/job_artifacts.md#artifactsreportsjunit)
 in `.gitlab-ci.yml`, and specify the path(s) of the generated test reports.
 
 In the following examples, the job in the `test` stage runs and GitLab
@@ -187,6 +192,20 @@ cpp:
       junit: report.xml
 ```
 
+#### CUnit
+
+[CUnit](https://cunity.gitlab.io/cunit/) can be made to produce [JUnit XML reports](https://cunity.gitlab.io/cunit/group__CI.html) automatically when run using its `CUnitCI.h` macros:
+
+```yaml
+cunit:
+  stage: test
+  script:
+    - ./my-cunit-test
+  artifacts:
+    reports:
+      junit: ./my-cunit-test.xml
+```
+
 ### .Net example
 
 The [JunitXML.TestLogger](https://www.nuget.org/packages/JunitXml.TestLogger/) NuGet
@@ -213,17 +232,9 @@ Test:
         - ./**/*test-result.xml
 ```
 
-## Limitations
-
-Currently, the following tools might not work because their XML formats are unsupported in GitLab.
-
-|Case|Tool|Issue|
-|---|---|---|
-|`<testcase>` does not have `classname` attribute|ESlint, sass-lint|<https://gitlab.com/gitlab-org/gitlab-foss/issues/50964>|
-
 ## Viewing JUnit test reports on GitLab
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/24792) in GitLab 12.5.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/24792) in GitLab 12.5.
 
 If JUnit XML files are generated and uploaded as part of a pipeline, these reports
 can be viewed inside the pipelines details page. The **Tests** tab on this page will
@@ -235,15 +246,47 @@ You can view all the known test suites and click on each of these to see further
 details, including the cases that makeup the suite. Cases are ordered by status,
 with failed showing at the top, skipped next and successful cases last.
 
+You can also retrieve the reports via the [GitLab API](../api/pipelines.md#get-a-pipelines-test-report).
+
 ### Enabling the feature
 
 This feature comes with the `:junit_pipeline_view` feature flag disabled by default. This
 feature is disabled due to some performance issues with very large data sets.
 When [the performance is improved](https://gitlab.com/groups/gitlab-org/-/epics/2854), the feature will be enabled by default.
 
-To enable this feature, ask a GitLab administrator with Rails console access to run the
+To enable this feature, ask a GitLab administrator with [Rails console access](../administration/feature_flags.md#how-to-enable-and-disable-features-behind-flags) to run the
 following command:
 
 ```ruby
 Feature.enable(:junit_pipeline_view)
+
+# Enable the feature for a specific project
+Feature.enable(:junit_pipeline_view, Project.find(<your-project-id-here>))
+```
+
+## Viewing JUnit screenshots on GitLab
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/202114) in GitLab 13.0.
+
+If JUnit XML files contain an `attachment` tag, GitLab parses the attachment.
+
+Upload your screenshots as [artifacts](pipelines/job_artifacts.md#artifactsreportsjunit) to GitLab. The `attachment` tag **must** contain the absolute path to the screenshots you uploaded.
+
+```xml
+<testcase time="1.00" name="Test">
+  <system-out>[[ATTACHMENT|/absolute/path/to/some/file]]</system-out>
+</testcase>
+```
+
+When [this issue](https://gitlab.com/gitlab-org/gitlab/-/issues/6061) is complete, the attached file will be visible on the pipeline details page.
+
+### Enabling the feature
+
+This feature comes with the `:junit_pipeline_screenshots_view` feature flag disabled by default.
+
+To enable this feature, ask a GitLab administrator with [Rails console access](../administration/feature_flags.md#how-to-enable-and-disable-features-behind-flags) to run the
+following command:
+
+```ruby
+Feature.enable(:junit_pipeline_screenshots_view)
 ```

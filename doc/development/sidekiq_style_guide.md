@@ -82,6 +82,11 @@ As a general rule, a worker can be considered idempotent if:
 
 A good example of that would be a cache expiration worker.
 
+NOTE: **Note:**
+A job scheduled for an idempotent worker will automatically be
+[deduplicated](#deduplication) when an unstarted job with the same
+arguments is already in the queue.
+
 ### Ensuring a worker is idempotent
 
 Make sure the worker tests pass using the following shared example:
@@ -118,8 +123,50 @@ It's encouraged to only have the `idempotent!` call in the top-most worker class
 the `perform` method is defined in another class or module.
 
 NOTE: **Note:**
-Note that a cop will fail if the worker class is not marked as idempotent.
-Consider skipping the cop if you're not confident your job can safely run multiple times.
+If the worker class is not marked as idempotent, a cop will fail.
+Consider skipping the cop if you're not confident your job can safely
+run multiple times.
+
+### Deduplication
+
+When a job for an idempotent worker is enqueued while another
+unstarted job is already in the queue, GitLab drops the second
+job. The work is skipped because the same work would be
+done by the job that was scheduled first; by the time the second
+job executed, the first job would do nothing.
+
+For example, `AuthorizedProjectsWorker` takes a user ID. When the
+worker runs, it recalculates a user's authorizations. GitLab schedules
+this job each time an action potentially changes a user's
+authorizations. If the same user is added to two projects at the
+same time, the second job can be skipped if the first job hasn't
+begun, because when the first job runs, it creates the
+authorizations for both projects.
+
+GitLab doesn't skip jobs scheduled in the future, as we assume that
+the state will have changed by the time the job is scheduled to
+execute.
+
+More [deduplication strategies have been suggested](https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/195). If you are implementing a worker that
+could benefit from a different strategy, please comment in the issue.
+
+If the automatic deduplication were to cause issues in certain
+queues. This can be temporarily disabled by enabling a feature flag
+named `disable_<queue name>_deduplication`. For example to disable
+deduplication for the `AuthorizedProjectsWorker`, we would enable the
+feature flag `disable_authorized_projects_deduplication`.
+
+From chatops:
+
+```shell
+/chatops run feature set disable_authorized_projects_deduplication true
+```
+
+From the rails console:
+
+```ruby
+Feature.enable!(:disable_authorized_projects_deduplication)
+```
 
 ## Job urgency
 
@@ -348,7 +395,7 @@ in the default execution mode - using
 does not account for weights.
 
 As we are [moving towards using `sidekiq-cluster` in
-Core](https://gitlab.com/gitlab-org/gitlab/issues/34396), newly-added
+Core](https://gitlab.com/gitlab-org/gitlab/-/issues/34396), newly-added
 workers do not need to have weights specified. They can simply use the
 default weight, which is 1.
 
@@ -490,18 +537,74 @@ possible situations:
 
 ### Changing the arguments for a worker
 
-Jobs need to be backwards- and forwards-compatible between consecutive versions
-of the application.
+Jobs need to be backward and forward compatible between consecutive versions
+of the application. Adding or removing an argument may cause problems
+during deployment before all Rails and Sidekiq nodes have the updated code.
 
-This can be done by following this process:
+#### Remove an argument
 
-1. **Do not remove arguments from the `perform` function.**. Instead, use the
-   following approach
-   1. Provide a default value (usually `nil`) and use a comment to mark the
-      argument as deprecated
-   1. Stop using the argument in `perform_async`.
-   1. Ignore the value in the worker class, but do not remove it until the next
-      major release.
+**Do not remove arguments from the `perform` function.**. Instead, use the
+following approach:
+
+1. Provide a default value (usually `nil`) and use a comment to mark the
+   argument as deprecated
+1. Stop using the argument in `perform_async`.
+1. Ignore the value in the worker class, but do not remove it until the next
+   major release.
+
+In the following example, if you want to remove `arg2`, first set a `nil` default value,
+and then update locations where `ExampleWorker.perform_async` is called.
+
+```ruby
+class ExampleWorker
+  def perform(object_id, arg1, arg2 = nil)
+    # ...
+  end
+end
+```
+
+#### Add an argument
+
+There are two options for safely adding new arguments to Sidekiq workers:
+
+1. Set up a [multi-step deployment](#multi-step-deployment) in which the new argument is first added to the worker
+1. Use a [parameter hash](#parameter-hash) for additional arguments. This is perhaps the most flexible option.
+1. Use a parameter hash for additional arguments. This is perhaps the most flexible option.
+
+##### Multi-step deployment
+
+This approach requires multiple merge requests and for the first merge request
+to be merged and deployed before additional changes are merged.
+
+1. In an initial merge request, add the argument to the worker with a default
+   value:
+
+    ```ruby
+    class ExampleWorker
+      def perform(object_id, new_arg = nil)
+        # ...
+      end
+    end
+    ```
+
+1. Merge and deploy the worker with the new argument.
+1. In a further merge request, update `ExampleWorker.perform_async` calls to
+   use the new argument.
+
+##### Parameter hash  
+
+This approach will not require multiple deployments if an existing worker already
+utilizes a parameter hash.
+
+1. Use a parameter hash in the worker to allow for future flexibility:
+
+    ```ruby
+    class ExampleWorker
+      def perform(object_id, params = {})
+        # ...
+      end
+    end
+    ```
 
 ### Removing workers
 

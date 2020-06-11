@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Event do
+RSpec.describe Event do
   describe '#visible_to_user?' do
     let_it_be(:non_member) { create(:user) }
     let_it_be(:member) { create(:user) }
@@ -66,48 +66,26 @@ describe Event do
 
         expect(event).to be_visible_to(member)
         expect(event).to be_visible_to(guest)
-        expect(event).to be_visible_to(admin)
+      end
+
+      context 'when admin mode enabled', :enable_admin_mode do
+        it 'is visible to admin', :aggregate_failures do
+          expect(event).to be_visible_to(admin)
+        end
+      end
+
+      context 'when admin mode disabled' do
+        # Skipped because `Group#max_member_access_for_user` needs to be migrated to use admin mode
+        # See https://gitlab.com/gitlab-org/gitlab/-/issues/207950
+        xit 'is not visible to admin', :aggregate_failures do
+          expect(event).not_to be_visible_to(admin)
+        end
       end
     end
 
     shared_examples 'visible to everybody' do
       it 'is visible to other users', :aggregate_failures do
         expect(users).to all(have_access_to(event))
-      end
-    end
-
-    context 'design event' do
-      include DesignManagementTestHelpers
-
-      before do
-        enable_design_management
-      end
-
-      it_behaves_like 'visible to group members only' do
-        let(:event) { create(:event, :for_design, project: project) }
-      end
-
-      context 'the event refers to a design on a confidential issue' do
-        let(:project) { create(:project, :public) }
-        let(:issue) { create(:issue, :confidential, project: project) }
-        let(:note) { create(:note, :on_design, issue: issue) }
-        let(:event) { create(:event, project: project, target: note) }
-
-        let(:assignees) do
-          create_list(:user, 3).each { |user| issue.assignees << user }
-        end
-
-        it 'visible to group reporters, the issue author, and assignees', :aggregate_failures do
-          expect(event).not_to be_visible_to(non_member)
-          expect(event).not_to be_visible_to(guest)
-
-          expect(event).to be_visible_to(reporter)
-          expect(event).to be_visible_to(member)
-          expect(event).to be_visible_to(admin)
-          expect(event).to be_visible_to(issue.author)
-
-          expect(assignees).to all(have_access_to(event))
-        end
       end
     end
 
@@ -141,6 +119,26 @@ describe Event do
 
         it_behaves_like 'visible to group members only'
       end
+    end
+  end
+
+  describe '#action_name' do
+    let_it_be(:approved_event) {create(:event, :approved)}
+    let_it_be(:created_event) {create(:event, :created)}
+
+    it 'returns the appropriate action name' do
+      expect(approved_event.action_name).to eq 'approved'
+      expect(created_event.action_name).to eq 'created'
+    end
+  end
+
+  describe '#approved_action?' do
+    let_it_be(:approved_event) {create(:event, :approved)}
+    let_it_be(:created_event) {create(:event, :created)}
+
+    it 'return true only for approved event type' do
+      expect(approved_event.approved_action?).to be true
+      expect(created_event.approved_action?).to be false
     end
   end
 end

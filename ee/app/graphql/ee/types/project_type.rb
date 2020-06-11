@@ -16,33 +16,35 @@ module EE
               ::Types::VulnerabilityType.connection_type,
               null: true,
               description: 'Vulnerabilities reported on the project',
-              resolver: Resolvers::VulnerabilitiesResolver,
-              feature_flag: :first_class_vulnerabilities
+              resolver: ::Resolvers::VulnerabilitiesResolver
 
         field :vulnerability_severities_count, ::Types::VulnerabilitySeveritiesCountType, null: true,
                description: 'Counts for each severity of vulnerability of the project',
-               feature_flag: :first_class_vulnerabilities,
                resolve: -> (obj, _args, ctx) do
                  Hash.new(0).merge(
                    obj.vulnerabilities.with_states([:detected, :confirmed]).counts_by_severity
                  )
                end
 
-        field :requirement, ::Types::RequirementType, null: true,
+        field :requirement, ::Types::RequirementsManagement::RequirementType, null: true,
               description: 'Find a single requirement. Available only when feature flag `requirements_management` is enabled.',
-              resolver: ::Resolvers::RequirementsResolver.single
+              resolver: ::Resolvers::RequirementsManagement::RequirementsResolver.single
 
-        field :requirements, ::Types::RequirementType.connection_type, null: true,
+        field :requirements, ::Types::RequirementsManagement::RequirementType.connection_type, null: true,
               description: 'Find requirements. Available only when feature flag `requirements_management` is enabled.',
-              resolver: ::Resolvers::RequirementsResolver
+              resolver: ::Resolvers::RequirementsManagement::RequirementsResolver
 
-        field :requirement_states_count, ::Types::RequirementStatesCountType, null: true,
+        field :requirement_states_count, ::Types::RequirementsManagement::RequirementStatesCountType, null: true,
               description: 'Number of requirements for the project by their state',
               resolve: -> (project, args, ctx) do
                 return unless requirements_available?(project, ctx[:current_user])
 
                 Hash.new(0).merge(project.requirements.counts_by_state)
               end
+
+        field :packages, ::Types::PackageType.connection_type, null: true,
+              description: 'Packages of the project',
+              resolver: ::Resolvers::PackagesResolver
 
         def self.requirements_available?(project, user)
           ::Feature.enabled?(:requirements_management, project, default_enabled: true) && Ability.allowed?(user, :read_requirement, project)

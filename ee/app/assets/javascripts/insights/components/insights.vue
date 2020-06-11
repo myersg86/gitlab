@@ -1,11 +1,12 @@
 <script>
 import { mapActions, mapState } from 'vuex';
-import { GlDropdown, GlDropdownItem, GlLoadingIcon } from '@gitlab/ui';
+import { GlAlert, GlDropdown, GlDropdownItem, GlLoadingIcon } from '@gitlab/ui';
 import InsightsPage from './insights_page.vue';
 import InsightsConfigWarning from './insights_config_warning.vue';
 
 export default {
   components: {
+    GlAlert,
     GlLoadingIcon,
     InsightsPage,
     InsightsConfigWarning,
@@ -20,6 +21,11 @@ export default {
     queryEndpoint: {
       type: String,
       required: true,
+    },
+    notice: {
+      type: String,
+      default: '',
+      required: false,
     },
   },
   computed: {
@@ -54,6 +60,9 @@ export default {
         isActive: this.activeTab === key,
       }));
     },
+    allItemsAreFilteredOut() {
+      return this.configPresent && Object.keys(this.configData).length === 0;
+    },
     configPresent() {
       return !this.configLoading && this.configData != null;
     },
@@ -82,12 +91,24 @@ export default {
 </script>
 <template>
   <div class="insights-container prepend-top-default">
+    <div class="mb-3">
+      <h3>{{ __('Insights') }}</h3>
+    </div>
     <div v-if="configLoading" class="insights-config-loading text-center">
       <gl-loading-icon :inline="true" size="lg" />
     </div>
+    <div v-else-if="allItemsAreFilteredOut" class="insights-wrapper">
+      <gl-alert>
+        {{
+          s__(
+            'Insights|This project is filtered out in the insights.yml file (see the projects.only config for more information).',
+          )
+        }}
+      </gl-alert>
+    </div>
     <div v-else-if="configPresent" class="insights-wrapper">
       <gl-dropdown
-        class="js-insights-dropdown col-8 col-md-9 gl-pr-0"
+        class="js-insights-dropdown w-100"
         data-qa-selector="insights_dashboard_dropdown"
         menu-class="w-100 mw-100"
         toggle-class="dropdown-menu-toggle w-100 gl-field-error-outline"
@@ -102,6 +123,9 @@ export default {
           >{{ page.name }}</gl-dropdown-item
         >
       </gl-dropdown>
+      <gl-alert v-if="notice != ''">
+        {{ notice }}
+      </gl-alert>
       <insights-page :query-endpoint="queryEndpoint" :page-config="activePage" />
     </div>
     <insights-config-warning

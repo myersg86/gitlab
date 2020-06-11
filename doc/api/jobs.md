@@ -14,7 +14,7 @@ GET /projects/:id/jobs
 | `scope`   | string **or** array of strings | no       | Scope of jobs to show. Either one of or an array of the following: `created`, `pending`, `running`, `failed`, `success`, `canceled`, `skipped`, or `manual`. All jobs are returned if `scope` is not provided. |
 
 ```shell
-curl --globoff --header "PRIVATE-TOKEN: <your_access_token>" 'https://gitlab.example.com/api/v4/projects/1/jobs?scope[]=pending&scope[]=running'
+curl --globoff --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/jobs?scope[]=pending&scope[]=running"
 ```
 
 Example of response
@@ -149,7 +149,7 @@ GET /projects/:id/pipelines/:pipeline_id/jobs
 | `scope`       | string **or** array of strings | no       | Scope of jobs to show. Either one of or an array of the following: `created`, `pending`, `running`, `failed`, `success`, `canceled`, `skipped`, or `manual`. All jobs are returned if `scope` is not provided. |
 
 ```shell
-curl --header "PRIVATE-TOKEN: <your_access_token>" 'https://gitlab.example.com/api/v4/projects/1/pipelines/6/jobs?scope[]=pending&scope[]=running'
+curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/pipelines/6/jobs?scope[]=pending&scope[]=running"
 ```
 
 Example of response
@@ -345,7 +345,7 @@ Example of response
 
 > **Notes**:
 >
-> - [Introduced][ce-2893] in GitLab 8.5.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/2893) in GitLab 8.5.
 > - The use of `CI_JOB_TOKEN` in the artifacts download API was [introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/2346)
 >   in [GitLab Premium](https://about.gitlab.com/pricing/) 9.5.
 
@@ -399,13 +399,11 @@ Possible response status codes:
 | 200       | Serves the artifacts file.      |
 | 404       | Build not found or no artifacts.|
 
-[ce-2893]: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/2893
-
 ## Download the artifacts archive
 
 > **Notes**:
 >
-> - [Introduced][ce-5347] in GitLab 8.10.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/5347) in GitLab 8.10.
 > - The use of `CI_JOB_TOKEN` in the artifacts download API was [introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/2346)
 >   in [GitLab Premium](https://about.gitlab.com/pricing/) 9.5.
 
@@ -465,8 +463,6 @@ Possible response status codes:
 |-----------|---------------------------------|
 | 200       | Serves the artifacts file.      |
 | 404       | Build not found or no artifacts.|
-
-[ce-5347]: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/5347
 
 ## Download a single artifact file by job ID
 
@@ -547,8 +543,8 @@ GET /projects/:id/jobs/:job_id/trace
 
 | Attribute | Type           | Required | Description                                                                                                      |
 |-----------|----------------|----------|------------------------------------------------------------------------------------------------------------------|
-| id        | integer/string | yes      | ID or [URL-encoded path of the project](README.md#namespaced-path-encoding) owned by the authenticated user. |
-| job_id    | integer        | yes      | ID of a job.                                                                                                 |
+| `id`      | integer/string | yes      | ID or [URL-encoded path of the project](README.md#namespaced-path-encoding) owned by the authenticated user. |
+| `job_id`  | integer        | yes      | ID of a job.                                                                                                 |
 
 ```shell
 curl --location --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/1/jobs/8/trace"

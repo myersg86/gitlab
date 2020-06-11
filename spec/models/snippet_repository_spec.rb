@@ -116,17 +116,81 @@ describe SnippetRepository do
       end
 
       context 'when commit actions are present' do
-        let(:file_action) { { file_path: 'foo.txt', content: 'foo', action: :foobar } }
-        let(:data) { [file_action] }
+        shared_examples 'uses the expected action' do |action, expected_action|
+          let(:file_action) { { file_path: 'foo.txt', content: 'foo', action: action } }
+          let(:data) { [file_action] }
 
-        it 'does not change commit action' do
-          expect(repo).to(
-            receive(:multi_action).with(
-              user,
-              hash_including(actions: array_including(hash_including(action: :foobar)))))
+          specify do
+            expect(repo).to(
+              receive(:multi_action).with(
+                user,
+                hash_including(actions: array_including(hash_including(action: expected_action)))))
 
-          snippet_repository.multi_files_action(user, data, commit_opts)
+            snippet_repository.multi_files_action(user, data, commit_opts)
+          end
         end
+
+        it_behaves_like 'uses the expected action', :foobar, :foobar
+
+        context 'when action is a string' do
+          it_behaves_like 'uses the expected action', 'foobar', :foobar
+        end
+      end
+    end
+
+    context 'when move action does not include content' do
+      let(:previous_path) { 'CHANGELOG' }
+      let(:new_path) { 'CHANGELOG_new' }
+      let(:move_action) { { previous_path: previous_path, file_path: new_path, action: action } }
+
+      shared_examples 'renames file and does not update content' do
+        specify do
+          existing_content = blob_at(snippet, previous_path).data
+
+          snippet_repository.multi_files_action(user, [move_action], commit_opts)
+
+          blob = blob_at(snippet, new_path)
+          expect(blob).not_to be_nil
+          expect(blob.data).to eq existing_content
+        end
+      end
+
+      context 'when action is not set' do
+        let(:action) { nil }
+
+        it_behaves_like 'renames file and does not update content'
+      end
+
+      context 'when action is set' do
+        let(:action) { :move }
+
+        it_behaves_like 'renames file and does not update content'
+      end
+    end
+
+    context 'when update action does not include content' do
+      let(:update_action) { { previous_path: 'CHANGELOG', file_path: 'CHANGELOG', action: action } }
+
+      shared_examples 'does not commit anything' do
+        specify do
+          last_commit_id = snippet.repository.head_commit.id
+
+          snippet_repository.multi_files_action(user, [update_action], commit_opts)
+
+          expect(snippet.repository.head_commit.id).to eq last_commit_id
+        end
+      end
+
+      context 'when action is not set' do
+        let(:action) { nil }
+
+        it_behaves_like 'does not commit anything'
+      end
+
+      context 'when action is set' do
+        let(:action) { :update }
+
+        it_behaves_like 'does not commit anything'
       end
     end
 
@@ -201,6 +265,38 @@ describe SnippetRepository do
       end
 
       it_behaves_like 'snippet repository with file names', 'snippetfile10.txt', 'snippetfile11.txt'
+    end
+
+    shared_examples 'snippet repository with git errors' do |path, error|
+      let(:new_file) { { file_path: path, content: 'bar' } }
+
+      it 'raises a path specific error' do
+        expect do
+          snippet_repository.multi_files_action(user, data, commit_opts)
+        end.to raise_error(error)
+      end
+    end
+
+    context 'with git errors' do
+      it_behaves_like 'snippet repository with git errors', 'invalid://path/here', described_class::InvalidPathError
+      it_behaves_like 'snippet repository with git errors', '../../path/traversal/here', described_class::InvalidPathError
+      it_behaves_like 'snippet repository with git errors', 'README', described_class::CommitError
+
+      context 'when user name is invalid' do
+        let(:user) { create(:user, name: '.') }
+
+        it_behaves_like 'snippet repository with git errors', 'non_existing_file', described_class::InvalidSignatureError
+      end
+
+      context 'when user email is empty' do
+        let(:user) { create(:user) }
+
+        before do
+          user.update_column(:email, '')
+        end
+
+        it_behaves_like 'snippet repository with git errors', 'non_existing_file', described_class::InvalidSignatureError
+      end
     end
   end
 

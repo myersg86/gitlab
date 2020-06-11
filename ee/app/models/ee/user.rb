@@ -32,9 +32,9 @@ module EE
                :extra_shared_runners_minutes_limit, :extra_shared_runners_minutes_limit=,
                to: :namespace
 
-      has_many :reviews,                  foreign_key: :author_id, inverse_of: :author
       has_many :epics,                    foreign_key: :author_id
-      has_many :requirements,             foreign_key: :author_id
+      has_many :requirements,             foreign_key: :author_id, inverse_of: :author, class_name: 'RequirementsManagement::Requirement'
+      has_many :test_reports,             foreign_key: :author_id, inverse_of: :author, class_name: 'RequirementsManagement::TestReport'
       has_many :assigned_epics,           foreign_key: :assignee_id, class_name: "Epic"
       has_many :path_locks,               dependent: :destroy # rubocop: disable Cop/ActiveRecordDependent
       has_many :vulnerability_feedback, foreign_key: :author_id, class_name: 'Vulnerabilities::Feedback'
@@ -57,6 +57,8 @@ module EE
 
       has_many :smartcard_identities
       has_many :scim_identities
+
+      has_many :board_preferences, class_name: 'BoardUserPreference', inverse_of: :user
 
       belongs_to :managing_group, class_name: 'Group', optional: true, inverse_of: :managed_users
 
@@ -132,6 +134,16 @@ module EE
         end
 
         ''
+      end
+
+      # Limits the users to those who have an identity that belongs to
+      # the given SAML Provider
+      def limit_to_saml_provider(saml_provider_id)
+        if saml_provider_id
+          joins(:identities).where(identities: { saml_provider_id: saml_provider_id })
+        else
+          all
+        end
       end
     end
 
@@ -217,40 +229,40 @@ module EE
       super || DEFAULT_GROUP_VIEW
     end
 
-    def any_namespace_with_trial?
-      ::Namespace
-        .from("(#{namespace_union_for_owned(:trial_ends_on)}) #{::Namespace.table_name}")
-        .where('trial_ends_on > ?', Time.now.utc)
-        .any?
-    end
-
+    # Returns true if the user is a Reporter or higher on any namespace
+    # that has never had a trial (now or in the past)
     def any_namespace_without_trial?
       ::Namespace
-        .from("(#{namespace_union_for_owned(:trial_ends_on)}) #{::Namespace.table_name}")
-        .where(trial_ends_on: nil)
+        .from("(#{namespace_union_for_reporter_developer_maintainer_owned}) #{::Namespace.table_name}")
+        .include_gitlab_subscription
+        .where(gitlab_subscriptions: { trial_ends_on: nil })
         .any?
     end
 
+    # Returns true if the user is a Reporter or higher on any namespace
+    # currently on a paid plan
     def has_paid_namespace?
       ::Namespace
         .from("(#{namespace_union_for_reporter_developer_maintainer_owned}) #{::Namespace.table_name}")
         .include_gitlab_subscription
-        .where(gitlab_subscriptions: { hosted_plan: Plan.where(name: Plan::PAID_HOSTED_PLANS) })
+        .where(gitlab_subscriptions: { hosted_plan: ::Plan.where(name: ::Plan::PAID_HOSTED_PLANS) })
         .any?
     end
 
-    def owns_paid_namespace?
+    # Returns true if the user is an Owner on any namespace currently on
+    # a paid plan
+    def owns_paid_namespace?(plans: ::Plan::PAID_HOSTED_PLANS)
       ::Namespace
         .from("(#{namespace_union_for_owned}) #{::Namespace.table_name}")
         .include_gitlab_subscription
-        .where(gitlab_subscriptions: { hosted_plan: Plan.where(name: Plan::PAID_HOSTED_PLANS) })
+        .where(gitlab_subscriptions: { hosted_plan: ::Plan.where(name: plans) })
         .any?
     end
 
     def managed_free_namespaces
       manageable_groups
         .left_joins(:gitlab_subscription)
-        .merge(GitlabSubscription.left_joins(:hosted_plan).where(plans: { name: [nil, *Plan::DEFAULT_PLANS] }))
+        .merge(GitlabSubscription.left_joins(:hosted_plan).where(plans: { name: [nil, *::Plan.default_plans] }))
         .order(:name)
     end
 
@@ -289,13 +301,17 @@ module EE
       managing_group.present?
     end
 
+    def managed_by?(user)
+      self.group_managed_account? && self.managing_group.owned_by?(user)
+    end
+
     override :ldap_sync_time
     def ldap_sync_time
       ::Gitlab.config.ldap['sync_time']
     end
 
     def admin_unsubscribe!
-      update_column :admin_email_unsubscribed_at, Time.now
+      update_column :admin_email_unsubscribed_at, Time.current
     end
 
     override :allow_password_authentication_for_web?
@@ -323,8 +339,8 @@ module EE
       filter = user_preference.feature_filter_type.presence || 0
 
       # We use a 2nd feature flag for control as enabled and percentage_of_time for chatops
-      flipper_feature = ::Feature.get((feature.to_s + '_control').to_sym)
-      percentage ||= flipper_feature.gate_values[:percentage_of_time] || 0 if flipper_feature
+      flipper_feature = ::Feature.get((feature.to_s + '_control').to_sym) # rubocop:disable Gitlab/AvoidFeatureGet
+      percentage ||= flipper_feature&.percentage_of_time_value || 0
       return false if percentage <= 0
 
       if filter == UserPreference::FEATURE_FILTER_UNKNOWN
@@ -333,6 +349,25 @@ module EE
       end
 
       filter == UserPreference::FEATURE_FILTER_EXPERIMENT
+    end
+
+    def gitlab_employee?
+      strong_memoize(:gitlab_employee) do
+        if ::Gitlab.com? && ::Feature.enabled?(:gitlab_employee_badge)
+          human? && ::Gitlab::Com.gitlab_com_group_member_id?(id)
+        else
+          false
+        end
+      end
+    end
+
+    def security_dashboard
+      InstanceSecurityDashboard.new(self)
+    end
+
+    def owns_upgradeable_namespace?
+      !owns_paid_namespace?(plans: [::Plan::GOLD]) &&
+        owns_paid_namespace?(plans: [::Plan::BRONZE, ::Plan::SILVER])
     end
 
     protected

@@ -2,10 +2,22 @@
 
 require 'spec_helper'
 
-describe Issue do
+RSpec.describe Issue do
   include ExternalAuthorizationServiceHelpers
 
   using RSpec::Parameterized::TableSyntax
+
+  describe 'associations' do
+    subject { build(:issue) }
+
+    it { is_expected.to have_many(:resource_weight_events) }
+  end
+
+  describe 'modules' do
+    subject { build(:issue) }
+
+    it { is_expected.to include_module(EE::WeightEventable) }
+  end
 
   context 'callbacks' do
     describe '.after_create' do
@@ -78,24 +90,14 @@ describe Issue do
     end
 
     describe '.on_status_page' do
-      context 'with public issue and private issue' do
-        let_it_be(:status_page_setting) { create(:status_page_setting, enabled: true) }
-        let_it_be(:public_issue) { create(:issue, project: status_page_setting.project) }
-        let_it_be(:private_issue) { create(:issue, :confidential, project: status_page_setting.project) }
+      let_it_be(:status_page_setting) { create(:status_page_setting, :enabled) }
+      let_it_be(:project) { status_page_setting.project }
+      let_it_be(:published_issue) { create(:issue, :published, project: project) }
+      let_it_be(:confidential_issue) { create(:issue, :published, :confidential, project: project) }
+      let_it_be(:nonpublished_issue) { create(:issue, project: project) }
 
-        it { expect(Issue.on_status_page.count).to eq(1) }
-        it { expect(Issue.on_status_page.first).to eq(public_issue) }
-      end
-
-      context 'with project status page settings enabled and disabled' do
-        let_it_be(:status_page_setting_enabled) { create(:status_page_setting, enabled: true) }
-        let_it_be(:status_page_setting_disabled) { create(:status_page_setting, enabled: false) }
-        let_it_be(:issue_with_enabled_project) { create(:issue, project: status_page_setting_enabled.project) }
-        let_it_be(:issue_with_disabled_project) { create(:issue, project: status_page_setting_disabled.project) }
-
-        it { expect(Issue.on_status_page.count).to eq(1) }
-        it { expect(Issue.on_status_page.first).to eq(issue_with_enabled_project) }
-      end
+      it { expect(Issue.on_status_page.count).to eq(1) }
+      it { expect(Issue.on_status_page.first).to eq(published_issue) }
     end
 
     context 'epics' do
@@ -113,6 +115,13 @@ describe Issue do
         it 'returns only issues without an epic assigned' do
           expect(described_class.count).to eq 3
           expect(described_class.no_epic).to eq [issue_no_epic]
+        end
+      end
+
+      describe '.any_epic' do
+        it 'returns only issues with an epic assigned' do
+          expect(described_class.count).to eq 3
+          expect(described_class.any_epic).to eq [epic_issue1.issue, epic_issue2.issue]
         end
       end
 
@@ -169,25 +178,11 @@ describe Issue do
   end
 
   describe 'relations' do
-    it { is_expected.to have_many(:designs) }
-    it { is_expected.to have_many(:design_versions) }
-    it { is_expected.to have_and_belong_to_many(:prometheus_alert_events) }
-    it { is_expected.to have_and_belong_to_many(:self_managed_prometheus_alert_events) }
-    it { is_expected.to have_many(:prometheus_alerts) }
     it { is_expected.to have_many(:vulnerability_links).class_name('Vulnerabilities::IssueLink').inverse_of(:issue) }
     it { is_expected.to have_many(:related_vulnerabilities).through(:vulnerability_links).source(:vulnerability) }
     it { is_expected.to belong_to(:promoted_to_epic).class_name('Epic') }
     it { is_expected.to have_many(:resource_weight_events) }
-
-    describe 'versions.most_recent' do
-      it 'returns the most recent version' do
-        issue = create(:issue)
-        create_list(:design_version, 2, issue: issue)
-        last_version = create(:design_version, issue: issue)
-
-        expect(issue.design_versions.most_recent).to eq(last_version)
-      end
-    end
+    it { is_expected.to have_one(:status_page_published_incident) }
   end
 
   it_behaves_like 'an editable mentionable with EE-specific mentions' do
@@ -232,7 +227,7 @@ describe Issue do
 
     describe 'when a user cannot read cross project' do
       it 'only returns issues within the same project' do
-        expect(Ability).to receive(:allowed?).with(user, :read_all_resources, :global).and_call_original
+        expect(Ability).to receive(:allowed?).with(user, :read_all_resources, :global).at_least(:once).and_call_original
         expect(Ability).to receive(:allowed?).with(user, :read_cross_project).and_return(false)
 
         expect(authorized_issue_a.related_issues(user))
@@ -592,50 +587,6 @@ describe Issue do
     end
   end
 
-  describe "#design_collection" do
-    it "returns a design collection" do
-      issue = build(:issue)
-      collection = issue.design_collection
-
-      expect(collection).to be_a(DesignManagement::DesignCollection)
-      expect(collection.issue).to eq(issue)
-    end
-  end
-
-  describe 'current designs' do
-    let(:issue) { create(:issue) }
-
-    subject { issue.designs.current }
-
-    context 'an issue has no designs' do
-      it { is_expected.to be_empty }
-    end
-
-    context 'an issue only has current designs' do
-      let!(:design_a) { create(:design, :with_file, issue: issue) }
-      let!(:design_b) { create(:design, :with_file, issue: issue) }
-      let!(:design_c) { create(:design, :with_file, issue: issue) }
-
-      it { is_expected.to include(design_a, design_b, design_c) }
-    end
-
-    context 'an issue only has deleted designs' do
-      let!(:design_a) { create(:design, :with_file, issue: issue, deleted: true) }
-      let!(:design_b) { create(:design, :with_file, issue: issue, deleted: true) }
-      let!(:design_c) { create(:design, :with_file, issue: issue, deleted: true) }
-
-      it { is_expected.to be_empty }
-    end
-
-    context 'an issue has a mixture of current and deleted designs' do
-      let!(:design_a) { create(:design, :with_file, issue: issue) }
-      let!(:design_b) { create(:design, :with_file, issue: issue, deleted: true) }
-      let!(:design_c) { create(:design, :with_file, issue: issue) }
-
-      it { is_expected.to contain_exactly(design_a, design_c) }
-    end
-  end
-
   describe "#issue_link_type" do
     let(:issue) { build(:issue) }
 
@@ -725,6 +676,51 @@ describe Issue do
       let(:issue) { create(:issue) }
 
       it { is_expected.to be_falsey }
+    end
+  end
+
+  describe '#can_assign_epic?' do
+    let(:user)    { create(:user) }
+    let(:group)   { create(:group) }
+    let(:project) { create(:project, group: group) }
+    let(:issue)   { create(:issue, project: project) }
+
+    subject { issue.can_assign_epic?(user) }
+
+    context 'when epics feature is available' do
+      before do
+        stub_licensed_features(epics: true)
+      end
+
+      context 'when a user is not a project member' do
+        it 'returns false' do
+          expect(subject).to be_falsey
+        end
+      end
+
+      context 'when a user is a project member' do
+        it 'returns false' do
+          project.add_developer(user)
+
+          expect(subject).to be_falsey
+        end
+      end
+
+      context 'when a user is a group member' do
+        it 'returns true' do
+          group.add_developer(user)
+
+          expect(subject).to be_truthy
+        end
+      end
+    end
+
+    context 'when epics feature is not available' do
+      it 'returns false' do
+        group.add_developer(user)
+
+        expect(subject).to be_falsey
+      end
     end
   end
 end

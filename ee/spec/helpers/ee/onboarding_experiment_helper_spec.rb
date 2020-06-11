@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe OnboardingExperimentHelper, type: :helper do
+RSpec.describe OnboardingExperimentHelper, type: :helper do
   using RSpec::Parameterized::TableSyntax
 
   describe '.allow_access_to_onboarding?' do
@@ -55,10 +55,9 @@ describe OnboardingExperimentHelper, type: :helper do
 
           context 'and experiment_growth_onboarding has been set' do
             it 'checks if feature is enabled for current_user' do
-              percentage = ::Feature.flipper.actors(50)
-              ::Feature.flipper[described_class::EXPERIMENT_GROWTH_ONBOARDING_FEATURE_NAME].enable(percentage)
+              Feature.enable_percentage_of_actors(
+                described_class::EXPERIMENT_GROWTH_ONBOARDING_FEATURE_NAME, 50)
 
-              expect(Feature).to receive(:enabled?).with(described_class::EXPERIMENT_GROWTH_ONBOARDING_FEATURE_NAME, user).and_call_original
               expect(helper.allow_access_to_onboarding?).to eq(true)
             end
           end

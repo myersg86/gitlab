@@ -3,33 +3,21 @@
 require 'spec_helper'
 
 describe Gitlab::JiraImport::BaseImporter do
+  include JiraServiceHelper
+
   let(:project) { create(:project) }
 
   describe 'with any inheriting class' do
-    context 'when feature flag disabled' do
+    context 'when project validation is ok' do
+      let!(:jira_service) { create(:jira_service, project: project) }
+
       before do
-        stub_feature_flags(jira_issue_import: false)
-      end
+        stub_jira_service_test
 
-      it 'raises exception' do
-        expect { described_class.new(project) }.to raise_error(Projects::ImportService::Error, 'Jira import feature is disabled.')
-      end
-    end
-
-    context 'when feature flag enabled' do
-      before do
-        stub_feature_flags(jira_issue_import: true)
-      end
-
-      context 'when Jira service was not setup' do
-        it 'raises exception' do
-          expect { described_class.new(project) }.to raise_error(Projects::ImportService::Error, 'Jira integration not configured.')
-        end
+        allow(Gitlab::JiraImport).to receive(:validate_project_settings!)
       end
 
       context 'when Jira service exists' do
-        let!(:jira_service) { create(:jira_service, project: project) }
-
         context 'when Jira import data is not present' do
           it 'raises exception' do
             expect { described_class.new(project) }.to raise_error(Projects::ImportService::Error, 'Unable to find Jira project to import data from.')

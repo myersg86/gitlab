@@ -5,6 +5,9 @@ import {
   parseAnnotationsResponse,
   removeLeadingSlash,
   mapToDashboardViewModel,
+  normalizeQueryResult,
+  convertToGrafanaTimeRange,
+  addDashboardMetaDataToLink,
 } from '~/monitoring/stores/utils';
 import { annotationsData } from '../mock_data';
 import { NOT_IN_DB_PREFIX } from '~/monitoring/constants';
@@ -16,6 +19,8 @@ describe('mapToDashboardViewModel', () => {
     expect(mapToDashboardViewModel({})).toEqual({
       dashboard: '',
       panelGroups: [],
+      links: [],
+      variables: {},
     });
   });
 
@@ -27,6 +32,7 @@ describe('mapToDashboardViewModel', () => {
           group: 'Group 1',
           panels: [
             {
+              id: 'ID_ABC',
               title: 'Title A',
               xLabel: '',
               xAxis: {
@@ -43,12 +49,15 @@ describe('mapToDashboardViewModel', () => {
 
     expect(mapToDashboardViewModel(response)).toEqual({
       dashboard: 'Dashboard Name',
+      links: [],
+      variables: {},
       panelGroups: [
         {
           group: 'Group 1',
           key: 'group-1-0',
           panels: [
             {
+              id: 'ID_ABC',
               title: 'Title A',
               type: 'chart-type',
               xLabel: '',
@@ -61,6 +70,7 @@ describe('mapToDashboardViewModel', () => {
                 format: 'engineering',
                 precision: 2,
               },
+              links: [],
               metrics: [],
             },
           ],
@@ -73,6 +83,8 @@ describe('mapToDashboardViewModel', () => {
     it('key', () => {
       const response = {
         dashboard: 'Dashboard Name',
+        links: [],
+        variables: {},
         panel_groups: [
           {
             group: 'Group A',
@@ -127,11 +139,13 @@ describe('mapToDashboardViewModel', () => {
 
     it('panel with x_label', () => {
       setupWithPanel({
+        id: 'ID_123',
         title: panelTitle,
         x_label: 'x label',
       });
 
       expect(getMappedPanel()).toEqual({
+        id: 'ID_123',
         title: panelTitle,
         xLabel: 'x label',
         xAxis: {
@@ -143,16 +157,19 @@ describe('mapToDashboardViewModel', () => {
           format: SUPPORTED_FORMATS.engineering,
           precision: 2,
         },
+        links: [],
         metrics: [],
       });
     });
 
     it('group y_axis defaults', () => {
       setupWithPanel({
+        id: 'ID_456',
         title: panelTitle,
       });
 
       expect(getMappedPanel()).toEqual({
+        id: 'ID_456',
         title: panelTitle,
         xLabel: '',
         y_label: '',
@@ -164,6 +181,7 @@ describe('mapToDashboardViewModel', () => {
           format: SUPPORTED_FORMATS.engineering,
           precision: 2,
         },
+        links: [],
         metrics: [],
       });
     });
@@ -231,6 +249,77 @@ describe('mapToDashboardViewModel', () => {
       });
 
       expect(getMappedPanel().maxValue).toBe(100);
+    });
+
+    describe('panel with links', () => {
+      const title = 'Example';
+      const url = 'https://example.com';
+
+      it('maps an empty link collection', () => {
+        setupWithPanel({
+          links: undefined,
+        });
+
+        expect(getMappedPanel().links).toEqual([]);
+      });
+
+      it('maps a link', () => {
+        setupWithPanel({ links: [{ title, url }] });
+
+        expect(getMappedPanel().links).toEqual([{ title, url }]);
+      });
+
+      it('maps a link without a title', () => {
+        setupWithPanel({
+          links: [{ url }],
+        });
+
+        expect(getMappedPanel().links).toEqual([{ title: url, url }]);
+      });
+
+      it('maps a link without a url', () => {
+        setupWithPanel({
+          links: [{ title }],
+        });
+
+        expect(getMappedPanel().links).toEqual([{ title, url: '#' }]);
+      });
+
+      it('maps a link without a url or title', () => {
+        setupWithPanel({
+          links: [{}],
+        });
+
+        expect(getMappedPanel().links).toEqual([{ title: 'null', url: '#' }]);
+      });
+
+      it('maps a link with an unsafe url safely', () => {
+        // eslint-disable-next-line no-script-url
+        const unsafeUrl = 'javascript:alert("XSS")';
+
+        setupWithPanel({
+          links: [
+            {
+              title,
+              url: unsafeUrl,
+            },
+          ],
+        });
+
+        expect(getMappedPanel().links).toEqual([{ title, url: '#' }]);
+      });
+
+      it('maps multple links', () => {
+        setupWithPanel({
+          links: [{ title, url }, { url }, { title }],
+        });
+
+        expect(getMappedPanel().links).toEqual([
+          { title, url },
+          { title: url, url },
+          { title, url: '#' },
+        ]);
+      });
     });
   });
 
@@ -307,6 +396,28 @@ describe('mapToDashboardViewModel', () => {
         x_label: 'Another label',
         unkown_option: 'unkown_data',
       });
+    });
+  });
+});
+
+describe('normalizeQueryResult', () => {
+  const testData = {
+    metric: {
+      __name__: 'up',
+      job: 'prometheus',
+      instance: 'localhost:9090',
+    },
+    values: [[1435781430.781, '1'], [1435781445.781, '1'], [1435781460.781, '1']],
+  };
+
+  it('processes a simple matrix result', () => {
+    expect(normalizeQueryResult(testData)).toEqual({
+      metric: { __name__: 'up', job: 'prometheus', instance: 'localhost:9090' },
+      values: [
+        ['2015-07-01T20:10:30.781Z', 1],
+        ['2015-07-01T20:10:45.781Z', 1],
+        ['2015-07-01T20:11:00.781Z', 1],
+      ],
     });
   });
 });
@@ -410,6 +521,89 @@ describe('removeLeadingSlash', () => {
   ].forEach(({ input, output }) => {
     it(`removeLeadingSlash returns ${output} with input ${input}`, () => {
       expect(removeLeadingSlash(input)).toEqual(output);
+    });
+  });
+});
+
+describe('user-defined links utils', () => {
+  const mockRelativeTimeRange = {
+    metricsDashboard: {
+      duration: {
+        seconds: 86400,
+      },
+    },
+    grafana: {
+      from: 'now-86400s',
+      to: 'now',
+    },
+  };
+  const mockAbsoluteTimeRange = {
+    metricsDashboard: {
+      start: '2020-06-08T16:13:01.995Z',
+      end: '2020-06-08T21:12:32.243Z',
+    },
+    grafana: {
+      from: 1591632781995,
+      to: 1591650752243,
+    },
+  };
+  describe('convertToGrafanaTimeRange', () => {
+    it('converts relative timezone to grafana timezone', () => {
+      expect(convertToGrafanaTimeRange(mockRelativeTimeRange.metricsDashboard)).toEqual(
+        mockRelativeTimeRange.grafana,
+      );
+    });
+
+    it('converts absolute timezone to grafana timezone', () => {
+      expect(convertToGrafanaTimeRange(mockAbsoluteTimeRange.metricsDashboard)).toEqual(
+        mockAbsoluteTimeRange.grafana,
+      );
+    });
+  });
+
+  describe('addDashboardMetaDataToLink', () => {
+    const link = { title: 'title', url: 'https://gitlab.com' };
+    const grafanaLink = { ...link, type: 'grafana' };
+
+    it('adds relative time range to link w/o type for metrics dashboards', () => {
+      const adder = addDashboardMetaDataToLink({
+        timeRange: mockRelativeTimeRange.metricsDashboard,
+      });
+      expect(adder(link)).toMatchObject({
+        title: 'title',
+        url: 'https://gitlab.com?duration_seconds=86400',
+      });
+    });
+
+    it('adds relative time range to Grafana type links', () => {
+      const adder = addDashboardMetaDataToLink({
+        timeRange: mockRelativeTimeRange.metricsDashboard,
+      });
+      expect(adder(grafanaLink)).toMatchObject({
+        title: 'title',
+        url: 'https://gitlab.com?from=now-86400s&to=now',
+      });
+    });
+
+    it('adds absolute time range to link w/o type for metrics dashboard', () => {
+      const adder = addDashboardMetaDataToLink({
+        timeRange: mockAbsoluteTimeRange.metricsDashboard,
+      });
+      expect(adder(link)).toMatchObject({
+        title: 'title',
+        url:
+          'https://gitlab.com?start=2020-06-08T16%3A13%3A01.995Z&end=2020-06-08T21%3A12%3A32.243Z',
+      });
+    });
+
+    it('adds absolute time range to Grafana type links', () => {
+      const adder = addDashboardMetaDataToLink({
+        timeRange: mockAbsoluteTimeRange.metricsDashboard,
+      });
+      expect(adder(grafanaLink)).toMatchObject({
+        title: 'title',
+        url: 'https://gitlab.com?from=1591632781995&to=1591650752243',
+      });
     });
   });
 });

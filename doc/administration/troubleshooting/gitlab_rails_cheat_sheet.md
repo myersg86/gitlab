@@ -150,9 +150,9 @@ Project.update_all(visibility_level: 0)
 #
 projects = Project.where(pending_delete: true)
 projects.each do |p|
-  puts "Project name: #{p.id}"
+  puts "Project ID: #{p.id}"
   puts "Project name: #{p.name}"
-  puts "Repository path: #{p.repository.storage_path}"
+  puts "Repository path: #{p.repository.full_path}"
 end
 
 #
@@ -214,6 +214,20 @@ p.each do |project|
 end
 ```
 
+### Bulk update to disable the Slack Notification service
+
+To disable notifications for all projects that have Slack service enabled, do:
+
+```ruby
+# Grab all projects that have the Slack notifications enabled
+p = Project.find_by_sql("SELECT p.id FROM projects p LEFT JOIN services s ON p.id = s.project_id WHERE s.type = 'SlackService' AND s.active = true")
+
+# Disable the service on each of the projects that were found.
+p.each do |project|
+  project.slack_service.update_attribute(:active, false)
+end
+```
+
 ## Wikis
 
 ### Recreate
@@ -249,7 +263,7 @@ p.import_state.mark_as_failed("Failed manually through console.")
 
 In a specific situation, an imported repository needed to be renamed. The Support
 Team was informed of a backup restore that failed on a single repository, which created
-the project with an empty repository. The project was successfully restored to a dev
+the project with an empty repository. The project was successfully restored to a development
 instance, then exported, and imported into a new project under a different name.
 
 The Support Team was able to transfer the incorrectly named imported project into the
@@ -288,7 +302,7 @@ you will see two pushes with the same "from" SHA:
 
 ```ruby
 p = Project.find_with_namespace('u/p')
-p.events.code_push.last(100).each do |e|
+p.events.pushed_action.last(100).each do |e|
   printf "%-20.20s %8s...%8s (%s)\n", e.data[:ref], e.data[:before], e.data[:after], e.author.try(:username)
 end
 ```
@@ -297,7 +311,7 @@ GitLab 9.5 and above:
 
 ```ruby
 p = Project.find_by_full_path('u/p')
-p.events.code_push.last(100).each do |e|
+p.events.pushed_action.last(100).each do |e|
   printf "%-20.20s %8s...%8s (%s)\n", e.push_event_payload[:ref], e.push_event_payload[:commit_from], e.push_event_payload[:commit_to], e.author.try(:username)
 end
 ```
@@ -364,39 +378,6 @@ end
 ```ruby
 user = User.find_by_username ''
 user.skip_reconfirmation!
-```
-
-### Get an admin token
-
-```ruby
-# Get the first admin's first access token (no longer works on 11.9+. see: https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/22743)
-User.where(admin:true).first.personal_access_tokens.first.token
-
-# Get the first admin's private token (no longer works on 10.2+)
-User.where(admin:true).private_token
-```
-
-### Create personal access token
-
-```ruby
-personal_access_token = User.find(123).personal_access_tokens.create(
-  name: 'apitoken',
-  impersonation: false,
-  scopes: [:api]
-)
-
-puts personal_access_token.token
-```
-
-You might also want to manually set the token string:
-
-```ruby
-User.find(123).personal_access_tokens.create(
-  name: 'apitoken',
-  token_digest: Gitlab::CryptoHelper.sha256('some-token-string-here'),
-  impersonation: false,
-  scopes: [:api]
-)
 ```
 
 ### Active users & Historical users
@@ -504,7 +485,7 @@ group.project_creation_level=0
 
 ### Remove redirecting routes
 
-See <https://gitlab.com/gitlab-org/gitlab-foss/issues/41758#note_54828133>.
+See <https://gitlab.com/gitlab-org/gitlab-foss/-/issues/41758#note_54828133>.
 
 ```ruby
 path = 'foo'
@@ -558,33 +539,11 @@ Ci::Pipeline.where(project_id: p.id).where(status: 'pending').count
 
 ### Remove artifacts more than a week old
 
-The Latest version of these steps can be found in the [job artifacts documentation](../job_artifacts.md)
-
-```ruby
-### SELECTING THE BUILDS TO CLEAR
-# For a single project:
-project = Project.find_by_full_path('')
-builds_with_artifacts =  project.builds.with_artifacts_archive
-
-# Instance-wide:
-builds_with_artifacts = Ci::Build.with_artifacts_archive
-
-# Prior to 10.6 the above lines would be:
-# builds_with_artifacts =  project.builds.with_artifacts
-# builds_with_artifacts = Ci::Build.with_artifacts
-
-### CLEAR THEM OUT
-# Note that this will also erase artifacts that developers marked to "Keep"
-builds_to_clear = builds_with_artifacts.where("finished_at < ?", 1.week.ago)
-builds_to_clear.each do |build|
-  build.artifacts_expire_at = Time.now
-  build.erase_erasable_artifacts!
-end
-```
+This section has been moved to the [job artifacts troubleshooting documentation](../job_artifacts.md#delete-job-artifacts-from-jobs-completed-before-a-specific-date).
 
 ### Find reason failure (for when build trace is empty) (Introduced in 10.3.0)
 
-See <https://gitlab.com/gitlab-org/gitlab-foss/issues/41111>.
+See <https://gitlab.com/gitlab-org/gitlab-foss/-/issues/41111>.
 
 ```ruby
 build = Ci::Build.find(78420)
@@ -601,6 +560,14 @@ build.dependencies.each do |d| { puts "status: #{d.status}, finished at: #{d.fin
 p = Project.find_by_full_path('')
 m = project.merge_requests.find_by(iid: )
 m.project.try(:ci_service)
+```
+
+### Validate the `.gitlab-ci.yml`
+
+```ruby
+project = Project.find_by_full_path 'group/project'
+content = project.repository.gitlab_ci_yml_for(project.repository.root_ref_sha)
+Gitlab::Ci::YamlProcessor.validation_message(content,  user: User.first)
 ```
 
 ### Disable AutoDevOps on Existing Projects
@@ -620,10 +587,26 @@ Gitlab::CurrentSettings.current_application_settings.runners_registration_token
 
 ## License
 
-### See license plan name (since v9.3.0-ee)
+### See current license information
 
 ```ruby
+# License information (name, company, email address)
+License.current.licensee
+
+# Plan:
 License.current.plan
+
+# Uploaded:
+License.current.created_at
+
+# Started:
+License.current.starts_at
+
+# Expires at:
+License.current.expires_at
+
+# Is this a trial license?
+License.current.trial?
 ```
 
 ### Check if a project feature is available on the instance
@@ -636,7 +619,7 @@ License.current.feature_available?(:jira_dev_panel_integration)
 
 ### Check if a project feature is available in a project
 
-Features listed in <https://gitlab.com/gitlab-org/gitlab/blob/master/ee/app/models/license.rb>.
+Features listed in [`license.rb`](https://gitlab.com/gitlab-org/gitlab/blob/master/ee/app/models/license.rb).
 
 ```ruby
 p = Project.find_by_full_path('<group>/<project>')

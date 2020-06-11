@@ -15,14 +15,15 @@ import { __ } from '../locale';
 export default function setupVueRepositoryList() {
   const el = document.getElementById('js-tree-list');
   const { dataset } = el;
-  const { projectPath, projectShortPath, ref, fullName } = dataset;
-  const router = createRouter(projectPath, ref);
+  const { projectPath, projectShortPath, ref, escapedRef, fullName } = dataset;
+  const router = createRouter(projectPath, escapedRef);
 
   apolloProvider.clients.defaultClient.cache.writeData({
     data: {
       projectPath,
       projectShortPath,
       ref,
+      escapedRef,
       vueFileListLfsBadge: gon.features?.vueFileListLfsBadge || false,
       commits: [],
     },
@@ -100,7 +101,9 @@ export default function setupVueRepositoryList() {
     render(h) {
       return h(TreeActionLink, {
         props: {
-          path: `${historyLink}/${this.$route.params.path ? escape(this.$route.params.path) : ''}`,
+          path: `${historyLink}/${
+            this.$route.params.path ? encodeURIComponent(this.$route.params.path) : ''
+          }`,
           text: __('History'),
         },
       });

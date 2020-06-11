@@ -19,6 +19,7 @@ import { TEST_HOST } from 'spec/test_constants';
 import {
   mockInitialConfig,
   mockParentItem,
+  mockParentItem2,
   mockQueryResponse,
   mockEpicTreeReorderInput,
   mockReorderMutationResponse,
@@ -100,17 +101,9 @@ describe('RelatedItemTree', () => {
       });
 
       describe('updateChildrenCount', () => {
-        const mockEpicsWithType = mockEpics.map(item =>
-          Object.assign({}, item, {
-            type: ChildType.Epic,
-          }),
-        );
+        const mockEpicsWithType = mockEpics.map(item => ({ ...item, type: ChildType.Epic }));
 
-        const mockIssuesWithType = mockIssues.map(item =>
-          Object.assign({}, item, {
-            type: ChildType.Issue,
-          }),
-        );
+        const mockIssuesWithType = mockIssues.map(item => ({ ...item, type: ChildType.Issue }));
 
         it('should update openedEpics, by incrementing it', () => {
           testAction(
@@ -680,10 +673,7 @@ describe('RelatedItemTree', () => {
         let mock;
         const data = {
           parentItem: mockParentItem,
-          item: Object.assign({}, mockParentItem, {
-            iid: 2,
-            relationPath: '/foo/bar',
-          }),
+          item: { ...mockParentItem, iid: 2, relationPath: '/foo/bar' },
         };
 
         beforeEach(() => {
@@ -836,12 +826,11 @@ describe('RelatedItemTree', () => {
           state.issuableType = issuableTypesMap.EPIC;
           state.isEpic = true;
 
-          const mockEpicsWithoutPerm = mockEpics.map(item =>
-            Object.assign({}, item, {
-              pathIdSeparator: PathIdSeparator.Epic,
-              userPermissions: { adminEpic: undefined },
-            }),
-          );
+          const mockEpicsWithoutPerm = mockEpics.map(item => ({
+            ...item,
+            pathIdSeparator: PathIdSeparator.Epic,
+            userPermissions: { adminEpic: undefined },
+          }));
 
           testAction(
             actions.receiveAddItemSuccess,
@@ -995,11 +984,12 @@ describe('RelatedItemTree', () => {
 
       describe('receiveCreateItemSuccess', () => {
         it('should set `state.itemCreateInProgress` to false', () => {
-          const createdEpic = Object.assign({}, mockEpics[0], {
+          const createdEpic = {
+            ...mockEpics[0],
             id: `gid://gitlab/Epic/${mockEpics[0].id}`,
             reference: `${mockEpics[0].group.fullPath}${mockEpics[0].reference}`,
             pathIdSeparator: PathIdSeparator.Epic,
-          });
+          };
           state.parentItem = {
             fullPath: createdEpic.group.fullPath,
           };
@@ -1089,11 +1079,7 @@ describe('RelatedItemTree', () => {
               {
                 type: 'receiveCreateItemSuccess',
                 payload: {
-                  rawItem: Object.assign({}, mockEpic1, {
-                    path: '',
-                    state: ChildState.Open,
-                    created_at: '',
-                  }),
+                  rawItem: { ...mockEpic1, path: '', state: ChildState.Open, created_at: '' },
                 },
               },
             ],
@@ -1259,6 +1245,191 @@ describe('RelatedItemTree', () => {
                   oldIndex: 0,
                   newIndex: 1,
                 },
+              },
+            ],
+          );
+        });
+      });
+
+      describe('receiveMoveItemFailure', () => {
+        it('should revert moved item back to its original position on its original parent via MOVE_ITEM_FAILURE mutation', () => {
+          testAction(
+            actions.receiveMoveItemFailure,
+            {},
+            {},
+            [{ type: types.MOVE_ITEM_FAILURE, payload: {} }],
+            [],
+          );
+        });
+
+        it('should show flash error with message "Something went wrong while ordering item."', () => {
+          const message = 'Something went wrong while moving item.';
+          actions.receiveMoveItemFailure(
+            {
+              commit: () => {},
+            },
+            {
+              message,
+            },
+          );
+
+          expect(createFlash).toHaveBeenCalledWith(message);
+        });
+      });
+
+      describe('moveItem', () => {
+        beforeAll(() => {
+          state.children[mockParentItem2.parentReference] = [];
+        });
+
+        it('should perform MOVE_ITEM mutation with isFirstChild to true if parent has no children before request and do nothing on request success', () => {
+          jest.spyOn(epicUtils.gqClient, 'mutate').mockReturnValue(
+            Promise.resolve({
+              data: mockReorderMutationResponse,
+            }),
+          );
+
+          testAction(
+            actions.moveItem,
+            {
+              oldParentItem: mockParentItem,
+              newParentItem: mockParentItem2,
+              targetItem: mockItems[1],
+              newIndex: 1,
+              oldIndex: 0,
+            },
+            state,
+            [
+              {
+                type: types.MOVE_ITEM,
+                payload: {
+                  oldParentItem: mockParentItem,
+                  newParentItem: mockParentItem2,
+                  targetItem: mockItems[1],
+                  newIndex: 1,
+                  oldIndex: 0,
+                  isFirstChild: true,
+                },
+              },
+            ],
+            [],
+          );
+        });
+
+        it('should perform MOVE_ITEM mutation with isFirstChild to false if parent has children before request and do nothing on request success', () => {
+          jest.spyOn(epicUtils.gqClient, 'mutate').mockReturnValue(
+            Promise.resolve({
+              data: mockReorderMutationResponse,
+            }),
+          );
+
+          state.children[mockParentItem2.parentReference] = [{ id: '33' }];
+
+          testAction(
+            actions.moveItem,
+            {
+              oldParentItem: mockParentItem,
+              newParentItem: mockParentItem2,
+              targetItem: mockItems[1],
+              newIndex: 1,
+              oldIndex: 0,
+            },
+            state,
+            [
+              {
+                type: types.MOVE_ITEM,
+                payload: {
+                  oldParentItem: mockParentItem,
+                  newParentItem: mockParentItem2,
+                  targetItem: mockItems[1],
+                  newIndex: 1,
+                  oldIndex: 0,
+                  isFirstChild: false,
+                },
+              },
+            ],
+            [],
+          );
+        });
+
+        it('should perform MOVE_ITEM mutation before request and dispatch `receiveReorderItemFailure` when request response has errors on request success', () => {
+          jest.spyOn(epicUtils.gqClient, 'mutate').mockReturnValue(
+            Promise.resolve({
+              data: {
+                epicTreeReorder: {
+                  ...mockReorderMutationResponse.epicTreeReorder,
+                  errors: [{ foo: 'bar' }],
+                },
+              },
+            }),
+          );
+
+          const payload = {
+            oldParentItem: mockParentItem,
+            newParentItem: mockParentItem2,
+            targetItem: mockItems[1],
+            newIndex: 1,
+            oldIndex: 0,
+          };
+
+          testAction(
+            actions.moveItem,
+            payload,
+            state,
+            [
+              {
+                type: types.MOVE_ITEM,
+                payload: {
+                  oldParentItem: mockParentItem,
+                  newParentItem: mockParentItem2,
+                  targetItem: mockItems[1],
+                  newIndex: 1,
+                  oldIndex: 0,
+                  isFirstChild: true,
+                },
+              },
+            ],
+            [
+              {
+                type: 'receiveMoveItemFailure',
+                payload,
+              },
+            ],
+          );
+        });
+
+        it('should perform MOVE_ITEM mutation before request and dispatch `receiveReorderItemFailure` on request failure', () => {
+          jest.spyOn(epicUtils.gqClient, 'mutate').mockReturnValue(Promise.reject());
+
+          const payload = {
+            oldParentItem: mockParentItem,
+            newParentItem: mockParentItem2,
+            targetItem: mockItems[1],
+            newIndex: 1,
+            oldIndex: 0,
+          };
+
+          testAction(
+            actions.moveItem,
+            payload,
+            state,
+            [
+              {
+                type: types.MOVE_ITEM,
+                payload: {
+                  oldParentItem: mockParentItem,
+                  newParentItem: mockParentItem2,
+                  targetItem: mockItems[1],
+                  newIndex: 1,
+                  oldIndex: 0,
+                  isFirstChild: true,
+                },
+              },
+            ],
+            [
+              {
+                type: 'receiveMoveItemFailure',
+                payload,
               },
             ],
           );

@@ -34,7 +34,7 @@ describe Gitlab::ProjectSearchResults do
       'blobs'      | :limited_blobs_count    | max_limited_count
       'notes'      | :limited_notes_count    | max_limited_count
       'wiki_blobs' | :wiki_blobs_count       | '1234'
-      'commits'    | :commits_count          | '1234'
+      'commits'    | :commits_count          | max_limited_count
       'projects'   | :limited_projects_count | max_limited_count
       'unknown'    | nil                     | nil
     end
@@ -45,22 +45,36 @@ describe Gitlab::ProjectSearchResults do
         expect(results.formatted_count(scope)).to eq(expected)
       end
     end
+
+    context 'blobs' do
+      it "limits the search to #{described_class::COUNT_LIMIT} items" do
+        expect(results).to receive(:blobs).with(limit: described_class::COUNT_LIMIT).and_call_original
+        expect(results.formatted_count('blobs')).to eq('0')
+      end
+    end
+
+    context 'wiki_blobs' do
+      it "limits the search to #{described_class::COUNT_LIMIT} items" do
+        expect(results).to receive(:wiki_blobs).with(limit: described_class::COUNT_LIMIT).and_call_original
+        expect(results.formatted_count('wiki_blobs')).to eq('0')
+      end
+    end
   end
 
-  shared_examples 'general blob search' do |entity_type, blob_kind|
+  shared_examples 'general blob search' do |entity_type, blob_type|
     let(:query) { 'files' }
     subject(:results) { described_class.new(user, project, query).objects(blob_type) }
 
     context "when #{entity_type} is disabled" do
       let(:project) { disabled_project }
 
-      it "hides #{blob_kind} from members" do
+      it "hides #{blob_type} from members" do
         project.add_reporter(user)
 
         is_expected.to be_empty
       end
 
-      it "hides #{blob_kind} from non-members" do
+      it "hides #{blob_type} from non-members" do
         is_expected.to be_empty
       end
     end
@@ -68,13 +82,13 @@ describe Gitlab::ProjectSearchResults do
     context "when #{entity_type} is internal" do
       let(:project) { private_project }
 
-      it "finds #{blob_kind} for members" do
+      it "finds #{blob_type} for members" do
         project.add_reporter(user)
 
         is_expected.not_to be_empty
       end
 
-      it "hides #{blob_kind} from non-members" do
+      it "hides #{blob_type} from non-members" do
         is_expected.to be_empty
       end
     end
@@ -96,7 +110,7 @@ describe Gitlab::ProjectSearchResults do
     end
   end
 
-  shared_examples 'blob search repository ref' do |entity_type|
+  shared_examples 'blob search repository ref' do |entity_type, blob_type|
     let(:query) { 'files' }
     let(:file_finder) { double }
     let(:project_branch) { 'project_branch' }
@@ -139,9 +153,41 @@ describe Gitlab::ProjectSearchResults do
     end
   end
 
+  shared_examples 'blob search pagination' do |blob_type|
+    let(:per_page) { 20 }
+    let(:count_limit) { described_class::COUNT_LIMIT }
+    let(:file_finder) { instance_double('Gitlab::FileFinder') }
+    let(:results) { described_class.new(user, project, query) }
+    let(:repository_ref) { 'master' }
+
+    before do
+      allow(file_finder).to receive(:find).and_return([])
+      expect(Gitlab::FileFinder).to receive(:new).with(project, repository_ref).and_return(file_finder)
+    end
+
+    it 'limits search results based on the first page' do
+      expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit)
+      results.objects(blob_type, page: 1, per_page: per_page)
+    end
+
+    it 'limits search results based on the second page' do
+      expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit + per_page)
+      results.objects(blob_type, page: 2, per_page: per_page)
+    end
+
+    it 'limits search results based on the third page' do
+      expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit + per_page * 2)
+      results.objects(blob_type, page: 3, per_page: per_page)
+    end
+
+    it 'uses the per_page value when passed' do
+      expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit + 10 * 2)
+      results.objects(blob_type, page: 3, per_page: 10)
+    end
+  end
+
   describe 'blob search' do
     let(:project) { create(:project, :public, :repository) }
-    let(:blob_type) { 'blobs' }
 
     it_behaves_like 'general blob search', 'repository', 'blobs' do
       let(:disabled_project) { create(:project, :public, :repository, :repository_disabled) }
@@ -150,37 +196,11 @@ describe Gitlab::ProjectSearchResults do
       let(:expected_file_by_content) { 'CHANGELOG' }
     end
 
-    it_behaves_like 'blob search repository ref', 'project' do
+    it_behaves_like 'blob search repository ref', 'project', 'blobs' do
       let(:entity) { project }
     end
 
-    context 'pagination' do
-      let(:per_page) { 20 }
-      let(:count_limit) { described_class::COUNT_LIMIT }
-      let(:file_finder) { instance_double('Gitlab::FileFinder') }
-      let(:results) { described_class.new(user, project, query, per_page: per_page) }
-      let(:repository_ref) { 'master' }
-
-      before do
-        allow(file_finder).to receive(:find).and_return([])
-        expect(Gitlab::FileFinder).to receive(:new).with(project, repository_ref).and_return(file_finder)
-      end
-
-      it 'limits search results based on the first page' do
-        expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit)
-        results.objects(blob_type, 1)
-      end
-
-      it 'limits search results based on the second page' do
-        expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit + per_page)
-        results.objects(blob_type, 2)
-      end
-
-      it 'limits search results based on the third page' do
-        expect(file_finder).to receive(:find).with(query, content_match_cutoff: count_limit + per_page * 2)
-        results.objects(blob_type, 3)
-      end
-    end
+    it_behaves_like 'blob search pagination', 'blobs'
   end
 
   describe 'wiki search' do
@@ -192,7 +212,7 @@ describe Gitlab::ProjectSearchResults do
       wiki.create_page('CHANGELOG', 'Files example')
     end
 
-    it_behaves_like 'general blob search', 'wiki', 'wiki blobs' do
+    it_behaves_like 'general blob search', 'wiki', 'wiki_blobs' do
       let(:blob_type) { 'wiki_blobs' }
       let(:disabled_project) { create(:project, :public, :wiki_repo, :wiki_disabled) }
       let(:private_project) { create(:project, :public, :wiki_repo, :wiki_private) }
@@ -200,9 +220,26 @@ describe Gitlab::ProjectSearchResults do
       let(:expected_file_by_content) { 'CHANGELOG.md' }
     end
 
-    it_behaves_like 'blob search repository ref', 'wiki' do
-      let(:blob_type) { 'wiki_blobs' }
+    it_behaves_like 'blob search repository ref', 'wiki', 'wiki_blobs' do
       let(:entity) { project.wiki }
+    end
+
+    it_behaves_like 'blob search pagination', 'wiki_blobs'
+
+    context 'return type' do
+      let(:blobs) { [Gitlab::Search::FoundBlob.new(project: project)] }
+      let(:results) { described_class.new(user, project, "Files", per_page: 20) }
+
+      before do
+        allow(results).to receive(:wiki_blobs).and_return(blobs)
+      end
+
+      it 'returns list of FoundWikiPage type object' do
+        objects = results.objects('wiki_blobs')
+
+        expect(objects).to be_present
+        expect(objects).to all(be_a(Gitlab::Search::FoundWikiPage))
+      end
     end
   end
 
@@ -349,6 +386,19 @@ describe Gitlab::ProjectSearchResults do
     end
   end
 
+  describe '#commits_count' do
+    let(:project) { create(:project, :public, :repository) }
+
+    it 'limits the number of commits requested' do
+      expect(project.repository)
+        .to receive(:find_commits_by_message)
+        .with(anything, anything, anything, described_class::COUNT_LIMIT)
+        .and_call_original
+
+      described_class.new(user, project, '.').commits_count
+    end
+  end
+
   # Examples for commit access level test
   #
   # params:
@@ -415,6 +465,54 @@ describe Gitlab::ProjectSearchResults do
   end
 
   describe 'commit search' do
+    context 'pagination' do
+      let(:project) { create(:project, :public, :repository) }
+
+      it 'returns the correct results for each page' do
+        expect(results_page(1)).to contain_exactly(commit('b83d6e391c22777fca1ed3012fce84f633d7fed0'))
+
+        expect(results_page(2)).to contain_exactly(commit('498214de67004b1da3d820901307bed2a68a8ef6'))
+
+        expect(results_page(3)).to contain_exactly(commit('1b12f15a11fc6e62177bef08f47bc7b5ce50b141'))
+      end
+
+      it 'returns the correct number of pages' do
+        expect(results_page(1).total_pages).to eq(project.repository.commit_count)
+      end
+
+      context 'limiting requested commits' do
+        context 'on page 1' do
+          it "limits to #{described_class::COUNT_LIMIT}" do
+            expect(project.repository)
+              .to receive(:find_commits_by_message)
+              .with(anything, anything, anything, described_class::COUNT_LIMIT)
+              .and_call_original
+
+            results_page(1)
+          end
+        end
+
+        context 'on subsequent pages' do
+          it "limits to #{described_class::COUNT_LIMIT} plus page offset" do
+            expect(project.repository)
+              .to receive(:find_commits_by_message)
+              .with(anything, anything, anything, described_class::COUNT_LIMIT + 1)
+              .and_call_original
+
+            results_page(2)
+          end
+        end
+      end
+
+      def results_page(page)
+        described_class.new(user, project, '.').objects('commits', per_page: 1, page: page)
+      end
+
+      def commit(hash)
+        project.repository.commit(hash)
+      end
+    end
+
     context 'by commit message' do
       let(:project) { create(:project, :public, :repository) }
       let(:commit) { project.repository.commit('59e29889be61e6e0e5e223bfa9ac2721d31605b8') }
@@ -430,6 +528,18 @@ describe Gitlab::ProjectSearchResults do
         commits = described_class.new(user, project, 'not really an existing description').objects('commits')
 
         expect(commits).to be_empty
+      end
+
+      context 'when repository_ref is provided' do
+        let(:message) { 'Feature added' }
+        let(:repository_ref) { 'feature' }
+
+        it 'searches in the specified ref' do
+          commits = described_class.new(user, project, message, repository_ref).objects('commits')
+
+          # This commit is unique to the feature branch
+          expect(commits).to contain_exactly(project.repository.commit('0b4bc9a49b562e85de7cc9e834518ea6828729b9'))
+        end
       end
 
       it_behaves_like 'access restricted commits' do

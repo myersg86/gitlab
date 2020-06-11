@@ -1,6 +1,6 @@
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex';
-import { s__ } from '~/locale';
+import { sprintf, s__ } from '~/locale';
 import { componentNames } from './issue_body';
 import ReportSection from './report_section.vue';
 import SummaryRow from './summary_row.vue';
@@ -52,8 +52,17 @@ export default {
   methods: {
     ...mapActions(['setEndpoint', 'fetchReports']),
     reportText(report) {
-      const summary = report.summary || {};
-      return reportTextBuilder(report.name, summary);
+      const { name, summary } = report || {};
+
+      if (report.status === 'error') {
+        return sprintf(s__('Reports|An error occurred while loading %{name} results'), { name });
+      }
+
+      if (!report.name) {
+        return s__('Reports|An error occured while loading report');
+      }
+
+      return reportTextBuilder(name, summary);
     },
     getReportIcon(report) {
       return statusIcon(report.status);
@@ -89,25 +98,27 @@ export default {
     :has-issues="reports.length > 0"
     class="mr-widget-section grouped-security-reports mr-report"
   >
-    <div slot="body" class="mr-widget-grouped-section report-block">
-      <template v-for="(report, i) in reports">
-        <summary-row
-          :key="`summary-row-${i}`"
-          :summary="reportText(report)"
-          :status-icon="getReportIcon(report)"
-        />
-        <issues-list
-          v-if="shouldRenderIssuesList(report)"
-          :key="`issues-list-${i}`"
-          :unresolved-issues="unresolvedIssues(report)"
-          :new-issues="newIssues(report)"
-          :resolved-issues="resolvedIssues(report)"
-          :component="$options.componentNames.TestIssueBody"
-          class="report-block-group-list"
-        />
-      </template>
+    <template #body>
+      <div class="mr-widget-grouped-section report-block">
+        <template v-for="(report, i) in reports">
+          <summary-row
+            :key="`summary-row-${i}`"
+            :summary="reportText(report)"
+            :status-icon="getReportIcon(report)"
+          />
+          <issues-list
+            v-if="shouldRenderIssuesList(report)"
+            :key="`issues-list-${i}`"
+            :unresolved-issues="unresolvedIssues(report)"
+            :new-issues="newIssues(report)"
+            :resolved-issues="resolvedIssues(report)"
+            :component="$options.componentNames.TestIssueBody"
+            class="report-block-group-list"
+          />
+        </template>
 
-      <modal :title="modalTitle" :modal-data="modalData" />
-    </div>
+        <modal :title="modalTitle" :modal-data="modalData" />
+      </div>
+    </template>
   </report-section>
 </template>

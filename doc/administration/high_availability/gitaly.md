@@ -1,31 +1,30 @@
 ---
+stage: Create
+group: Gitaly
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 type: reference
 ---
 
 # Configuring Gitaly for Scaled and High Availability
 
-Gitaly does not yet support full high availability. However, Gitaly is quite
-stable and is in use on GitLab.com. Scaled and highly available GitLab environments
-should consider using Gitaly on a separate node.
+A [Gitaly Cluster](../gitaly/praefect.md) can be used to increase the fault
+tolerance of Gitaly in high availability configurations.
 
-See the [Gitaly HA Epic](https://gitlab.com/groups/gitlab-org/-/epics/289) to
-track plans and progress toward high availability support.
-
-This document is relevant for [Scalable and Highly Available Setups](../scaling/index.md).
+This document is relevant for [scalable and highly available setups](../reference_architectures/index.md).
 
 ## Running Gitaly on its own server
 
-See [Running Gitaly on its own server](../gitaly/index.md#running-gitaly-on-its-own-server)
+See [Run Gitaly on its own server](../gitaly/index.md#run-gitaly-on-its-own-server)
 in Gitaly documentation.
 
 Continue configuration of other components by going back to the
-[High Availability](../availability/index.md#gitlab-components-and-configuration-instructions) page.
+[reference architecture](../reference_architectures/index.md#configure-gitlab-to-scale) page.
 
 ## Enable Monitoring
 
-> [Introduced](https://gitlab.com/gitlab-org/omnibus-gitlab/issues/3786) in GitLab 12.0.
+> [Introduced](https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/3786) in GitLab 12.0.
 
-1. Make sure to collect [`CONSUL_SERVER_NODES`](database.md#consul-information), which are the IP addresses or DNS records of the Consul server nodes, for the next step. Note they are presented as `Y.Y.Y.Y consul1.gitlab.example.com Z.Z.Z.Z`
+1. Make sure to collect [`CONSUL_SERVER_NODES`](../postgresql/replication_and_failover.md#consul-information), which are the IP addresses or DNS records of the Consul server nodes, for the next step. Note they are presented as `Y.Y.Y.Y consul1.gitlab.example.com Z.Z.Z.Z`
 
 1. Create/edit `/etc/gitlab/gitlab.rb` and add the following configuration:
 

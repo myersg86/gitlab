@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::DeployKeysController do
+RSpec.describe Projects::DeployKeysController do
   let(:project) { create(:project, :repository) }
   let(:user) { create(:user) }
 
@@ -30,7 +30,7 @@ describe Projects::DeployKeysController do
     it 'records an audit event' do
       expect { post :create, params: params }.to change { AuditEvent.count }.by(1)
 
-      expect(response).to redirect_to(project_settings_ci_cd_path(project, anchor: 'js-deploy-keys-settings'))
+      expect(response).to redirect_to(project_settings_repository_path(project, anchor: 'js-deploy-keys-settings'))
     end
   end
 

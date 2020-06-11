@@ -49,9 +49,11 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
             get :trace, defaults: { format: 'json' }
             get :raw
             get :terminal
+            get :proxy
 
-            # This route is also defined in gitlab-workhorse. Make sure to update accordingly.
+            # These routes are also defined in gitlab-workhorse. Make sure to update accordingly.
             get '/terminal.ws/authorize', to: 'jobs#terminal_websocket_authorize', format: false
+            get '/proxy.ws/authorize', to: 'jobs#proxy_websocket_authorize', format: false
           end
 
           resource :artifacts, only: [] do
@@ -65,15 +67,14 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
         namespace :ci do
           resource :lint, only: [:show, :create]
+          resources :daily_build_group_report_results, only: [:index], constraints: { format: /(csv|json)/ }
         end
 
         namespace :settings do
-          get :members, to: redirect("%{namespace_id}/%{project_id}/-/project_members")
-
           resource :ci_cd, only: [:show, :update], controller: 'ci_cd' do
             post :reset_cache
             put :reset_registration_token
-            post :create_deploy_token, path: 'deploy_token/create'
+            post :create_deploy_token, path: 'deploy_token/create', to: 'repository#create_deploy_token'
           end
 
           resource :operations, only: [:show, :update] do
@@ -87,8 +88,14 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           resource :repository, only: [:show], controller: :repository do
             # TODO: Removed this "create_deploy_token" route after change was made in app/helpers/ci_variables_helper.rb:14
             # See MR comment for more detail: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/27059#note_311585356
-            post :create_deploy_token, path: 'deploy_token/create', to: 'ci_cd#create_deploy_token'
+            post :create_deploy_token, path: 'deploy_token/create'
             post :cleanup
+          end
+
+          resources :access_tokens, only: [:index, :create] do
+            member do
+              put :revoke
+            end
           end
         end
 
@@ -192,7 +199,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
         resources :starrers, only: [:index]
         resources :forks, only: [:index, :new, :create]
-        resources :group_links, only: [:index, :create, :update, :destroy], constraints: { id: /\d+/ }
+        resources :group_links, only: [:create, :update, :destroy], constraints: { id: /\d+/ }
 
         resource :import, only: [:new, :create, :show]
         resource :avatar, only: [:show, :destroy]
@@ -277,6 +284,10 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
+        resources :alert_management, only: [:index] do
+          get 'details', on: :member
+        end
+
         namespace :error_tracking do
           resources :projects, only: :index
         end
@@ -295,8 +306,16 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
+        namespace :design_management do
+          namespace :designs, path: 'designs/:design_id(/:sha)', constraints: -> (params) { params[:sha].nil? || Gitlab::Git.commit_id?(params[:sha]) } do
+            resource :raw_image, only: :show
+            resources :resized_image, only: :show, constraints: -> (params) { DesignManagement::DESIGN_IMAGE_SIZES.include?(params[:id]) }
+          end
+        end
+
         draw :issues
         draw :merge_requests
+        draw :pipelines
 
         # The wiki and repository routing contains wildcard characters so
         # its preferable to keep it below all other project routes
@@ -305,16 +324,13 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         draw :wiki
 
         namespace :import do
-          resource :jira, only: [:show], controller: :jira do
-            post :import
-          end
+          resource :jira, only: [:show], controller: :jira
         end
       end
       # End of the /-/ scope.
 
       # All new routes should go under /-/ scope.
       # Look for scope '-' at the top of the file.
-      # rubocop: disable Cop/PutProjectRoutesUnderScope
 
       #
       # Templates
@@ -330,8 +346,8 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           defaults: { format: 'json' },
           constraints: { template_type: %r{issue|merge_request}, format: 'json' }
 
-      resource :pages, only: [:show, :update, :destroy] do
-        resources :domains, except: :index, controller: 'pages_domains', constraints: { id: %r{[^/]+} } do
+      resource :pages, only: [:show, :update, :destroy] do # rubocop: disable Cop/PutProjectRoutesUnderScope
+        resources :domains, except: :index, controller: 'pages_domains', constraints: { id: %r{[^/]+} } do # rubocop: disable Cop/PutProjectRoutesUnderScope
           member do
             post :verify
             post :retry_auto_ssl
@@ -340,7 +356,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         end
       end
 
-      resources :snippets, concerns: :awardable, constraints: { id: /\d+/ } do
+      resources :snippets, concerns: :awardable, constraints: { id: /\d+/ } do # rubocop: disable Cop/PutProjectRoutesUnderScope
         member do
           get :raw
           post :mark_as_spam
@@ -348,14 +364,14 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
       end
 
       namespace :prometheus do
-        resources :alerts, constraints: { id: /\d+/ }, only: [:index, :create, :show, :update, :destroy] do
+        resources :alerts, constraints: { id: /\d+/ }, only: [:index, :create, :show, :update, :destroy] do # rubocop: disable Cop/PutProjectRoutesUnderScope
           post :notify, on: :collection
           member do
             get :metrics_dashboard
           end
         end
 
-        resources :metrics, constraints: { id: %r{[^\/]+} }, only: [:index, :new, :create, :edit, :update, :destroy] do
+        resources :metrics, constraints: { id: %r{[^\/]+} }, only: [:index, :new, :create, :edit, :update, :destroy] do # rubocop: disable Cop/PutProjectRoutesUnderScope
           get :active_common, on: :collection
           post :validate_query, on: :collection
         end
@@ -363,65 +379,30 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
       post 'alerts/notify', to: 'alerting/notifications#create'
 
-      resources :pipelines, only: [:index, :new, :create, :show, :destroy] do
-        collection do
-          resource :pipelines_settings, path: 'settings', only: [:show, :update]
-          get :charts
-          scope '(*ref)', constraints: { ref: Gitlab::PathRegex.git_reference_regex } do
-            get :latest, action: :show, defaults: { latest: true }
-          end
-        end
-
-        member do
-          get :stage
-          get :stage_ajax
-          post :cancel
-          post :retry
-          get :builds
-          get :failures
-          get :status
-          get :test_report
-          get :test_reports_count
-        end
-
-        member do
-          resources :stages, only: [], param: :name do
-            post :play_manual
-          end
-        end
-      end
-
-      resources :pipeline_schedules, except: [:show] do
-        member do
-          post :play
-          post :take_ownership
-        end
-      end
-
       draw :legacy_builds
 
-      resources :hooks, only: [:index, :create, :edit, :update, :destroy], constraints: { id: /\d+/ } do
+      resources :hooks, only: [:index, :create, :edit, :update, :destroy], constraints: { id: /\d+/ } do # rubocop: disable Cop/PutProjectRoutesUnderScope
         member do
           post :test
         end
 
-        resources :hook_logs, only: [:show] do
+        resources :hook_logs, only: [:show] do # rubocop: disable Cop/PutProjectRoutesUnderScope
           member do
             post :retry
           end
         end
       end
 
-      resources :container_registry, only: [:index, :destroy, :show],
+      resources :container_registry, only: [:index, :destroy, :show], # rubocop: disable Cop/PutProjectRoutesUnderScope
                                      controller: 'registry/repositories'
 
       namespace :registry do
-        resources :repository, only: [] do
+        resources :repository, only: [] do # rubocop: disable Cop/PutProjectRoutesUnderScope
           # We default to JSON format in the controller to avoid ambiguity.
           # `latest.json` could either be a request for a tag named `latest`
           # in JSON format, or a request for tag named `latest.json`.
           scope format: false do
-            resources :tags, only: [:index, :destroy],
+            resources :tags, only: [:index, :destroy], # rubocop: disable Cop/PutProjectRoutesUnderScope
                              constraints: { id: Gitlab::Regex.container_registry_tag_regex } do
               collection do
                 delete :bulk_destroy
@@ -431,13 +412,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         end
       end
 
-      # Unscoped route. It will be replaced with redirect to /-/issues/
-      # Issue https://gitlab.com/gitlab-org/gitlab/issues/118849
-      scope as: 'deprecated' do
-        draw :issues
-      end
-
-      resources :notes, only: [:create, :destroy, :update], concerns: :awardable, constraints: { id: /\d+/ } do
+      resources :notes, only: [:create, :destroy, :update], concerns: :awardable, constraints: { id: /\d+/ } do # rubocop: disable Cop/PutProjectRoutesUnderScope
         member do
           delete :delete_attachment
           post :resolve
@@ -447,16 +422,16 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
       get 'noteable/:target_type/:target_id/notes' => 'notes#index', as: 'noteable_notes'
 
-      resources :todos, only: [:create]
+      resources :todos, only: [:create] # rubocop: disable Cop/PutProjectRoutesUnderScope
 
-      resources :uploads, only: [:create] do
+      resources :uploads, only: [:create] do # rubocop: disable Cop/PutProjectRoutesUnderScope
         collection do
           get ":secret/:filename", action: :show, as: :show, constraints: { filename: %r{[^/]+} }, format: false, defaults: { format: nil }
           post :authorize
         end
       end
 
-      resources :runners, only: [:index, :edit, :update, :destroy, :show] do
+      resources :runners, only: [:index, :edit, :update, :destroy, :show] do # rubocop: disable Cop/PutProjectRoutesUnderScope
         member do
           post :resume
           post :pause
@@ -468,8 +443,8 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         end
       end
 
-      resources :runner_projects, only: [:create, :destroy]
-      resources :badges, only: [:index] do
+      resources :runner_projects, only: [:create, :destroy] # rubocop: disable Cop/PutProjectRoutesUnderScope
+      resources :badges, only: [:index] do # rubocop: disable Cop/PutProjectRoutesUnderScope
         collection do
           scope '*ref', constraints: { ref: Gitlab::PathRegex.git_reference_regex } do
             constraints format: /svg/ do
@@ -482,30 +457,38 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
 
       scope :usage_ping, controller: :usage_ping do
         post :web_ide_clientside_preview
+        post :web_ide_pipelines_count
+      end
+
+      resources :web_ide_terminals, path: :ide_terminals, only: [:create, :show], constraints: { id: /\d+/, format: :json } do # rubocop: disable Cop/PutProjectRoutesUnderScope
+        member do
+          post :cancel
+          post :retry
+        end
+
+        collection do
+          post :check_config
+        end
       end
 
       # Deprecated unscoped routing.
       # Issue https://gitlab.com/gitlab-org/gitlab/issues/118849
       scope as: 'deprecated' do
+        draw :pipelines
         draw :repository
       end
 
       # All new routes should go under /-/ scope.
       # Look for scope '-' at the top of the file.
-      # rubocop: enable Cop/PutProjectRoutesUnderScope
 
       # Legacy routes.
       # Introduced in 12.0.
       # Should be removed with https://gitlab.com/gitlab-org/gitlab/issues/28848.
-      Gitlab::Routing.redirect_legacy_paths(self, :settings, :branches, :tags,
-                                            :network, :graphs, :autocomplete_sources,
-                                            :project_members, :deploy_keys, :deploy_tokens,
-                                            :labels, :milestones, :services, :boards, :releases,
-                                            :forks, :group_links, :import, :avatar, :mirror,
+      Gitlab::Routing.redirect_legacy_paths(self, :mirror, :tags,
                                             :cycle_analytics, :mattermost, :variables, :triggers,
-                                            :environments, :protected_environments, :error_tracking,
+                                            :environments, :protected_environments, :error_tracking, :alert_management,
                                             :serverless, :clusters, :audit_events, :wikis, :merge_requests,
-                                            :vulnerability_feedback, :security, :dependencies)
+                                            :vulnerability_feedback, :security, :dependencies, :issues)
     end
 
     # rubocop: disable Cop/PutProjectRoutesUnderScope

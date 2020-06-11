@@ -9,6 +9,7 @@ module Packages
 
       def detail_view
         package_detail = {
+          id: @package.id,
           created_at: @package.created_at,
           name: @package.name,
           package_files: @package.package_files.map { |pf| build_package_file_view(pf) },
@@ -20,10 +21,14 @@ module Packages
         }
 
         package_detail[:maven_metadatum] = @package.maven_metadatum if @package.maven_metadatum
+        package_detail[:nuget_metadatum] = @package.nuget_metadatum if @package.nuget_metadatum
+        package_detail[:dependency_links] = @package.dependency_links.map(&method(:build_dependency_links))
         package_detail[:pipeline] = build_pipeline_info(@package.build_info.pipeline) if @package.build_info
 
         package_detail
       end
+
+      private
 
       def build_package_file_view(package_file)
         {
@@ -41,7 +46,11 @@ module Packages
           sha: pipeline_info.sha,
           ref: pipeline_info.ref,
           git_commit_message: pipeline_info.git_commit_message,
-          user: build_user_info(pipeline_info.user)
+          user: build_user_info(pipeline_info.user),
+          project: {
+            name: pipeline_info.project.name,
+            web_url: pipeline_info.project.web_url
+          }
         }
       end
 
@@ -52,6 +61,14 @@ module Packages
           avatar_url: user.avatar_url,
           name: user.name
         }
+      end
+
+      def build_dependency_links(link)
+        {
+          name: link.dependency.name,
+          version_pattern: link.dependency.version_pattern,
+          target_framework: link.nuget_metadatum&.target_framework
+        }.compact
       end
     end
   end

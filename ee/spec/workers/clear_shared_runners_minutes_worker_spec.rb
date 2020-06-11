@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ClearSharedRunnersMinutesWorker do
+RSpec.describe ClearSharedRunnersMinutesWorker do
   let(:worker) { described_class.new }
 
   describe '#perform' do
@@ -49,7 +49,7 @@ describe ClearSharedRunnersMinutesWorker do
 
           it 'raises an exception' do
             expect { worker.perform }.to raise_error(
-              EE::Namespace::NamespaceStatisticsNotResetError,
+              Ci::Minutes::BatchResetService::BatchNotResetError,
               "#{namespace_ids.count} namespace shared runner minutes were not reset and the transaction was rolled back. Namespace Ids: #{namespace_ids}")
           end
         end

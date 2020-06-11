@@ -35,9 +35,6 @@ describe Gitlab::Database::WithLockRetries do
     end
 
     context 'when lock retry is enabled' do
-      class ActiveRecordSecond < ActiveRecord::Base
-      end
-
       let(:lock_fiber) do
         Fiber.new do
           # Initiating a second DB connection for the lock
@@ -52,6 +49,8 @@ describe Gitlab::Database::WithLockRetries do
       end
 
       before do
+        stub_const('ActiveRecordSecond', Class.new(ActiveRecord::Base))
+
         lock_fiber.resume # start the transaction and lock the table
       end
 
@@ -84,7 +83,7 @@ describe Gitlab::Database::WithLockRetries do
           subject.run do
             lock_attempts += 1
 
-            if lock_attempts == retry_count # we reached the last retry iteration, if we kill the thread, the last try (no lock_timeout) will succeed)
+            if lock_attempts == retry_count # we reached the last retry iteration, if we kill the thread, the last try (no lock_timeout) will succeed
               lock_fiber.resume
             end
 
@@ -106,9 +105,13 @@ describe Gitlab::Database::WithLockRetries do
       end
 
       context 'after the retries, without setting lock_timeout' do
-        let(:retry_count) { timing_configuration.size }
+        let(:retry_count) { timing_configuration.size + 1 }
 
-        it_behaves_like 'retriable exclusive lock on `projects`'
+        it_behaves_like 'retriable exclusive lock on `projects`' do
+          before do
+            expect(subject).to receive(:run_block_without_lock_timeout).and_call_original
+          end
+        end
       end
 
       context 'when statement timeout is reached' do
@@ -129,11 +132,22 @@ describe Gitlab::Database::WithLockRetries do
     end
   end
 
+  context 'restore local database variables' do
+    it do
+      expect { subject.run {} }.not_to change { ActiveRecord::Base.connection.execute("SHOW lock_timeout").to_a }
+    end
+
+    it do
+      expect { subject.run {} }.not_to change { ActiveRecord::Base.connection.execute("SHOW idle_in_transaction_session_timeout").to_a }
+    end
+  end
+
   context 'casting durations correctly' do
     let(:timing_configuration) { [[0.015.seconds, 0.025.seconds], [0.015.seconds, 0.025.seconds]] } # 15ms, 25ms
 
     it 'executes `SET LOCAL lock_timeout` using the configured timeout value in milliseconds' do
       expect(ActiveRecord::Base.connection).to receive(:execute).with("SAVEPOINT active_record_1").and_call_original
+      expect(ActiveRecord::Base.connection).to receive(:execute).with('RESET idle_in_transaction_session_timeout; RESET lock_timeout').and_call_original
       expect(ActiveRecord::Base.connection).to receive(:execute).with("SET LOCAL lock_timeout TO '15ms'").and_call_original
       expect(ActiveRecord::Base.connection).to receive(:execute).with("RELEASE SAVEPOINT active_record_1").and_call_original
 

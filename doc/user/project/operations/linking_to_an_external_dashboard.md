@@ -1,6 +1,6 @@
 # Linking to an external dashboard
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/57171) in GitLab 12.0.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/57171) in GitLab 12.0.
 
 You can add a button to the Monitoring dashboard linking directly to your existing external dashboards.
 
@@ -13,7 +13,7 @@ You can add a button to the Monitoring dashboard linking directly to your existi
    ![External Dashboard Settings](img/external_dashboard_settings.png)
 
 1. There should now be a button on your
-   [Monitoring dashboard](../../../ci/environments.md#monitoring-environments) which
+   [Monitoring dashboard](../../../ci/environments/index.md#monitoring-environments) which
    will open the URL you entered in the above step.
 
    ![External Dashboard Link](img/external_dashboard_link.png)

@@ -1,16 +1,16 @@
 <script>
+import { GlLoadingIcon } from '@gitlab/ui';
 import { mapState, mapActions } from 'vuex';
-
-import epicsListEmpty from './epics_list_empty.vue';
-import roadmapShell from './roadmap_shell.vue';
+import EpicsListEmpty from './epics_list_empty.vue';
+import RoadmapShell from './roadmap_shell.vue';
 import eventHub from '../event_hub';
-
 import { EXTEND_AS } from '../constants';
 
 export default {
   components: {
-    epicsListEmpty,
-    roadmapShell,
+    EpicsListEmpty,
+    GlLoadingIcon,
+    RoadmapShell,
   },
   props: {
     presetType: {
@@ -37,7 +37,6 @@ export default {
       'milestones',
       'timeframe',
       'extendedTimeframe',
-      'windowResizeInProgress',
       'epicsFetchInProgress',
       'epicsFetchForTimeframeInProgress',
       'epicsFetchResultEmpty',
@@ -52,14 +51,6 @@ export default {
       const last = this.timeframe.length - 1;
       return this.timeframe[last];
     },
-    showRoadmap() {
-      return (
-        !this.windowResizeInProgress &&
-        !this.epicsFetchFailure &&
-        !this.epicsFetchInProgress &&
-        !this.epicsFetchResultEmpty
-      );
-    },
   },
   mounted() {
     this.fetchEpics();
@@ -67,7 +58,6 @@ export default {
   },
   methods: {
     ...mapActions([
-      'setWindowResizeInProgress',
       'fetchEpics',
       'fetchEpicsForTimeframe',
       'extendTimeframe',
@@ -129,18 +119,9 @@ export default {
 
 <template>
   <div :class="{ 'overflow-reset': epicsFetchResultEmpty }" class="roadmap-container">
-    <roadmap-shell
-      v-if="showRoadmap"
-      :preset-type="presetType"
-      :epics="epics"
-      :milestones="milestones"
-      :timeframe="timeframe"
-      :current-group-id="currentGroupId"
-      @onScrollToStart="handleScrollToExtend"
-      @onScrollToEnd="handleScrollToExtend"
-    />
+    <gl-loading-icon v-if="epicsFetchInProgress" class="mt-4" size="md" />
     <epics-list-empty
-      v-if="epicsFetchResultEmpty"
+      v-else-if="epicsFetchResultEmpty"
       :preset-type="presetType"
       :timeframe-start="timeframeStart"
       :timeframe-end="timeframeEnd"
@@ -148,6 +129,17 @@ export default {
       :new-epic-endpoint="newEpicEndpoint"
       :empty-state-illustration-path="emptyStateIllustrationPath"
       :is-child-epics="isChildEpics"
+    />
+    <roadmap-shell
+      v-else-if="!epicsFetchFailure"
+      :preset-type="presetType"
+      :epics="epics"
+      :milestones="milestones"
+      :timeframe="timeframe"
+      :current-group-id="currentGroupId"
+      :has-filters-applied="hasFiltersApplied"
+      @onScrollToStart="handleScrollToExtend"
+      @onScrollToEnd="handleScrollToExtend"
     />
   </div>
 </template>

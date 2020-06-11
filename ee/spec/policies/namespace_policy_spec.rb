@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe NamespacePolicy do
+RSpec.describe NamespacePolicy do
   let(:owner) { build_stubbed(:user) }
   let(:namespace) { build_stubbed(:namespace, owner: owner) }
   let(:owner_permissions) { [:create_projects, :admin_namespace, :read_namespace] }
@@ -27,7 +27,13 @@ describe NamespacePolicy do
     context 'admin' do
       let(:current_user) { build_stubbed(:admin) }
 
-      it { is_expected.to be_allowed(:create_jira_connect_subscription) }
+      context 'when admin mode enabled', :enable_admin_mode do
+        it { is_expected.to be_allowed(:create_jira_connect_subscription) }
+      end
+
+      context 'when admin mode disabled' do
+        it { is_expected.to be_disallowed(:create_jira_connect_subscription) }
+      end
     end
 
     context 'owner' do

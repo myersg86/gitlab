@@ -5,6 +5,8 @@ import SecurityDashboardLayout from 'ee/security_dashboard/components/security_d
 import FirstClassInstanceDashboard from 'ee/security_dashboard/components/first_class_instance_security_dashboard.vue';
 import FirstClassInstanceVulnerabilities from 'ee/security_dashboard/components/first_class_instance_security_dashboard_vulnerabilities.vue';
 import VulnerabilitySeverity from 'ee/security_dashboard/components/vulnerability_severity.vue';
+import VulnerabilityChart from 'ee/security_dashboard/components/first_class_vulnerability_chart.vue';
+import CsvExportButton from 'ee/security_dashboard/components/csv_export_button.vue';
 import Filters from 'ee/security_dashboard/components/first_class_vulnerability_filters.vue';
 import ProjectManager from 'ee/security_dashboard/components/project_manager.vue';
 
@@ -18,11 +20,14 @@ describe('First Class Instance Dashboard Component', () => {
   const dashboardDocumentation = 'dashboard-documentation';
   const emptyStateSvgPath = 'empty-state-path';
   const vulnerableProjectsEndpoint = '/vulnerable/projects';
+  const vulnerabilitiesExportEndpoint = '/vulnerabilities/exports';
   const projectAddEndpoint = 'projectAddEndpoint';
   const projectListEndpoint = 'projectListEndpoint';
 
   const findInstanceVulnerabilities = () => wrapper.find(FirstClassInstanceVulnerabilities);
   const findVulnerabilitySeverity = () => wrapper.find(VulnerabilitySeverity);
+  const findVulnerabilityChart = () => wrapper.find(VulnerabilityChart);
+  const findCsvExportButton = () => wrapper.find(CsvExportButton);
   const findProjectManager = () => wrapper.find(ProjectManager);
   const findEmptyState = () => wrapper.find(GlEmptyState);
   const findFilters = () => wrapper.find(Filters);
@@ -55,6 +60,7 @@ describe('First Class Instance Dashboard Component', () => {
         projectAddEndpoint,
         projectListEndpoint,
         vulnerableProjectsEndpoint,
+        vulnerabilitiesExportEndpoint,
       },
       stubs: {
         ...stubs,
@@ -88,7 +94,19 @@ describe('First Class Instance Dashboard Component', () => {
       expect(findFilters().exists()).toBe(true);
     });
 
-    it('it responds to the filterChange event', () => {
+    it('does not pass down a groupFullPath to the vulnerability chart', () => {
+      expect(findVulnerabilityChart().props('groupFullPath')).toBeUndefined();
+    });
+
+    it('responds to the projectFetch event', () => {
+      const projects = [{ id: 1, name: 'GitLab Org' }];
+      findInstanceVulnerabilities().vm.$listeners.projectFetch(projects);
+      return wrapper.vm.$nextTick(() => {
+        expect(findFilters().props('projects')).toEqual(projects);
+      });
+    });
+
+    it('responds to the filterChange event', () => {
       const filters = { severity: 'critical' };
       findFilters().vm.$listeners.filterChange(filters);
       return wrapper.vm.$nextTick(() => {
@@ -99,6 +117,12 @@ describe('First Class Instance Dashboard Component', () => {
 
     it('displays the vulnerability severity in an aside', () => {
       expect(findVulnerabilitySeverity().exists()).toBe(true);
+    });
+
+    it('displays the csv export button', () => {
+      expect(findCsvExportButton().props('vulnerabilitiesExportEndpoint')).toBe(
+        vulnerabilitiesExportEndpoint,
+      );
     });
   });
 

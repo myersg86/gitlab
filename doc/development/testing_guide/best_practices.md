@@ -17,31 +17,36 @@ our test design. We can find some helpful heuristics documented in the Handbook 
 
 ## Test speed
 
-GitLab has a massive test suite that, without [parallelization], can take hours
+GitLab has a massive test suite that, without [parallelization](ci.md#test-suite-parallelization-on-the-ci), can take hours
 to run. It's important that we make an effort to write tests that are accurate
 and effective _as well as_ fast.
 
 Here are some things to keep in mind regarding test performance:
 
-- `double` and `spy` are faster than `FactoryBot.build(...)`
+- `instance_double` and `spy` are faster than `FactoryBot.build(...)`
 - `FactoryBot.build(...)` and `.build_stubbed` are faster than `.create`.
 - Don't `create` an object when `build`, `build_stubbed`, `attributes_for`,
-  `spy`, or `double` will do. Database persistence is slow!
+  `spy`, or `instance_double` will do. Database persistence is slow!
 - Don't mark a feature as requiring JavaScript (through `:js` in RSpec) unless it's _actually_ required for the test
   to be valid. Headless browser testing is slow!
 
-[parallelization]: ci.md#test-suite-parallelization-on-the-ci
-
 ## RSpec
 
-To run rspec tests:
+To run RSpec tests:
 
 ```shell
-# run all tests
+# run test for a file
+bin/rspec spec/models/project_spec.rb
+
+# run test for the example on line 10 on that file
+bin/rspec spec/models/project_spec.rb:10
+
+# run tests matching the example name has that string
+bin/rspec spec/models/project_spec.rb -e associations
+
+# run all tests, will take hours for GitLab codebase!
 bin/rspec
 
-# run test for path
-bin/rspec spec/[path]/[to]/[spec].rb
 ```
 
 Use [Guard](https://github.com/guard/guard) to continuously monitor for changes and only run matching tests:
@@ -61,7 +66,7 @@ FDOC=1 bin/rspec spec/[path]/[to]/[spec].rb
 
 ### General guidelines
 
-- Use a single, top-level `describe ClassName` block.
+- Use a single, top-level `RSpec.describe ClassName` block.
 - Use `.method` to describe class methods and `#method` to describe instance
   methods.
 - Use `context` to test branching logic.
@@ -70,6 +75,8 @@ FDOC=1 bin/rspec spec/[path]/[to]/[spec].rb
   to separate phases.
 - Use `Gitlab.config.gitlab.host` rather than hard coding `'localhost'`
 - Don't assert against the absolute value of a sequence-generated attribute (see
+  [Gotchas](../gotchas.md#do-not-assert-against-the-absolute-value-of-a-sequence-generated-attribute)).
+- Avoid using `expect_any_instance_of` or `allow_any_instance_of` (see
   [Gotchas](../gotchas.md#do-not-assert-against-the-absolute-value-of-a-sequence-generated-attribute)).
 - Don't supply the `:each` argument to hooks since it's the default.
 - On `before` and `after` hooks, prefer it scoped to `:context` over `:all`
@@ -320,26 +327,102 @@ stub_feature_flags(ci_live_trace: false)
 Feature.enabled?(:ci_live_trace) # => false
 ```
 
-If you wish to set up a test where a feature flag is disabled for some
-actors and not others, you can specify this in options passed to the
-helper. For example, to disable the `ci_live_trace` feature flag for a
-specifc project:
+If you wish to set up a test where a feature flag is enabled only
+for some actors and not others, you can specify this in options
+passed to the helper. For example, to enable the `ci_live_trace`
+feature flag for a specifc project:
 
 ```ruby
 project1, project2 = build_list(:project, 2)
 
-# Feature will only be disabled for project1
-stub_feature_flags(ci_live_trace: { enabled: false, thing: project1 })
+# Feature will only be enabled for project1
+stub_feature_flags(ci_live_trace: project1)
 
-Feature.enabled?(:ci_live_trace, project1) # => false
-Feature.enabled?(:ci_live_trace, project2) # => true
+Feature.enabled?(:ci_live_trace) # => false
+Feature.enabled?(:ci_live_trace, project1) # => true
+Feature.enabled?(:ci_live_trace, project2) # => false
+```
+
+This represents an actual behavior of FlipperGate:
+
+1. You can enable an override for a specified actor to be enabled
+1. You can disable (remove) an override for a specified actor,
+   fallbacking to default state
+1. There's no way to model that you explicitly disable a specified actor
+
+```ruby
+Feature.enable(:my_feature)
+Feature.disable(:my_feature, project1)
+Feature.enabled?(:my_feature) # => true
+Feature.enabled?(:my_feature, project1) # => true
+```
+
+```ruby
+Feature.disable(:my_feature2)
+Feature.enable(:my_feature2, project1)
+Feature.enabled?(:my_feature2) # => false
+Feature.enabled?(:my_feature2, project1) # => true
+```
+
+#### `stub_feature_flags` vs `Feature.enable*`
+
+It is preferred to use `stub_feature_flags` for enabling feature flags
+in testing environment. This method provides a simple and well described
+interface for a simple use-cases.
+
+However, in some cases a more complex behaviors needs to be tested,
+like a feature flag percentage rollouts. This can be achieved using
+the `.enable_percentage_of_time` and `.enable_percentage_of_actors`
+
+```ruby
+# Good: feature needs to be explicitly disabled, as it is enabled by default if not defined
+stub_feature_flags(my_feature: false)
+stub_feature_flags(my_feature: true)
+stub_feature_flags(my_feature: project)
+stub_feature_flags(my_feature: [project, project2])
+
+# Bad
+Feature.enable(:my_feature_2)
+
+# Good: enable my_feature for 50% of time
+Feature.enable_percentage_of_time(:my_feature_3, 50)
+
+# Good: enable my_feature for 50% of actors/gates/things
+Feature.enable_percentage_of_actors(:my_feature_4, 50)
+```
+
+Each feature flag that has a defined state will be persisted
+for test execution time:
+
+```ruby
+Feature.persisted_names.include?('my_feature') => true
+Feature.persisted_names.include?('my_feature_2') => true
+Feature.persisted_names.include?('my_feature_3') => true
+Feature.persisted_names.include?('my_feature_4') => true
+```
+
+#### Stubbing gate
+
+It is required that a gate that is passed as an argument to `Feature.enabled?`
+and `Feature.disabled?` is an object that includes `FeatureGate`.
+
+In specs you can use a `stub_feature_flag_gate` method that allows you to have
+quickly your custom gate:
+
+```ruby
+gate = stub_feature_flag_gate('CustomActor')
+
+stub_feature_flags(ci_live_trace: gate)
+
+Feature.enabled?(:ci_live_trace) # => false
+Feature.enabled?(:ci_live_trace, gate) # => true
 ```
 
 ### Pristine test environments
 
 The code exercised by a single GitLab test may access and modify many items of
 data. Without careful preparation before a test runs, and cleanup afterward,
-data can be changed by a test in such a way that it affects the behaviour of
+data can be changed by a test in such a way that it affects the behavior of
 following tests. This should be avoided at all costs! Fortunately, the existing
 test framework handles most cases already.
 
@@ -493,7 +576,7 @@ range of inputs. By specifying the test case once, alongside a table of inputs
 and the expected output for each, your tests can be made easier to read and more
 compact.
 
-We use the [rspec-parameterized](https://github.com/tomykaira/rspec-parameterized)
+We use the [RSpec::Parameterized](https://github.com/tomykaira/rspec-parameterized)
 gem. A short example, using the table syntax and checking Ruby equality for a
 range of inputs, might look like this:
 
@@ -526,7 +609,7 @@ objects, FactoryBot-created objects etc. can lead to
 ### Prometheus tests
 
 Prometheus metrics may be preserved from one test run to another. To ensure that metrics are
-reset before each example, add the `:prometheus` tag to the Rspec test.
+reset before each example, add the `:prometheus` tag to the RSpec test.
 
 ### Matchers
 
@@ -651,7 +734,7 @@ end
 
 ### Factories
 
-GitLab uses [factory_bot] as a test fixture replacement.
+GitLab uses [factory_bot](https://github.com/thoughtbot/factory_bot) as a test fixture replacement.
 
 - Factory definitions live in `spec/factories/`, named using the pluralization
   of their corresponding model (`User` factories are defined in `users.rb`).
@@ -665,8 +748,6 @@ GitLab uses [factory_bot] as a test fixture replacement.
   required by the test.
 - Factories don't have to be limited to `ActiveRecord` objects.
   [See example](https://gitlab.com/gitlab-org/gitlab-foss/commit/0b8cefd3b2385a21cfed779bd659978c0402766d).
-
-[factory_bot]: https://github.com/thoughtbot/factory_bot
 
 ### Fixtures
 

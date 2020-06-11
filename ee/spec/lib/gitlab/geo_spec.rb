@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Geo, :geo, :request_store do
+RSpec.describe Gitlab::Geo, :geo, :request_store do
   using RSpec::Parameterized::TableSyntax
   include ::EE::GeoHelpers
 
@@ -13,7 +13,7 @@ describe Gitlab::Geo, :geo, :request_store do
     it 'includes GitLab version and Rails.version in the cache key' do
       expanded_key = "geo:#{key}:#{Gitlab::VERSION}:#{Rails.version}"
 
-      expect(Gitlab::ThreadMemoryCache.cache_backend).to receive(:write)
+      expect(Gitlab::ProcessMemoryCache.cache_backend).to receive(:write)
         .with(expanded_key, an_instance_of(String), expires_in: 1.minute).and_call_original
       expect(Rails.cache).to receive(:write)
         .with(expanded_key, an_instance_of(String), expires_in: 2.minutes)
@@ -300,7 +300,7 @@ describe Gitlab::Geo, :geo, :request_store do
     end
 
     with_them do
-      it do
+      specify do
         stub_application_setting(geo_node_allowed_ips: allowed_ips)
 
         expect(described_class.allowed_ip?(ip)).to eq(allowed)

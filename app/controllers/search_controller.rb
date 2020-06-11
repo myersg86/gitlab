@@ -5,7 +5,10 @@ class SearchController < ApplicationController
   include SearchHelper
   include RendersCommits
 
-  before_action :override_snippet_scope, only: :show
+  SCOPE_PRELOAD_METHOD = {
+    projects: :with_web_entity_associations
+  }.freeze
+
   around_action :allow_gitaly_ref_name_caching
 
   skip_before_action :authenticate_user!
@@ -29,12 +32,12 @@ class SearchController < ApplicationController
     @scope = search_service.scope
     @show_snippets = search_service.show_snippets?
     @search_results = search_service.search_results
-    @search_objects = search_service.search_objects
+    @search_objects = search_service.search_objects(preload_method)
 
     render_commits if @scope == 'commits'
     eager_load_user_status if @scope == 'users'
 
-    increment_navbar_searches_counter
+    increment_search_counters
 
     check_single_commit_result
   end
@@ -48,22 +51,11 @@ class SearchController < ApplicationController
     render json: { count: count }
   end
 
-  # rubocop: disable CodeReuse/ActiveRecord
-  def autocomplete
-    term = params[:term]
-
-    if params[:project_id].present?
-      @project = Project.find_by(id: params[:project_id])
-      @project = nil unless can?(current_user, :read_project, @project)
-    end
-
-    @ref = params[:project_ref] if params[:project_ref].present?
-
-    render json: search_autocomplete_opts(term).to_json
-  end
-  # rubocop: enable CodeReuse/ActiveRecord
-
   private
+
+  def preload_method
+    SCOPE_PRELOAD_METHOD[@scope.to_sym]
+  end
 
   def search_term_valid?
     unless search_service.valid_query_length?
@@ -99,19 +91,11 @@ class SearchController < ApplicationController
     end
   end
 
-  def increment_navbar_searches_counter
+  def increment_search_counters
+    Gitlab::UsageDataCounters::SearchCounter.count(:all_searches)
+
     return if params[:nav_source] != 'navbar'
 
-    Gitlab::UsageDataCounters::SearchCounter.increment_navbar_searches_count
-  end
-
-  # Disallow web snippet_blobs search as we migrate snippet
-  # from database-backed storage to git repository-based,
-  # and searching across multiple git repositories is not feasible.
-  #
-  # TODO: after 13.0 refactor this into Search::SnippetService
-  # See https://gitlab.com/gitlab-org/gitlab/issues/208882
-  def override_snippet_scope
-    params[:scope] = 'snippet_titles' if params[:snippets] == 'true'
+    Gitlab::UsageDataCounters::SearchCounter.count(:navbar_searches)
   end
 end

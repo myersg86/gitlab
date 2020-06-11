@@ -16,8 +16,7 @@ class Gitlab::Seeder::Packages
       name = "@#{@project.root_namespace.path}/npm_package_#{SecureRandom.hex}"
       version = "1.12.#{i}"
 
-      params = JSON.parse(
-        read_fixture_file('npm', 'payload.json')
+      params = Gitlab::Json.parse(read_fixture_file('npm', 'payload.json')
           .gsub('@root/npm-test', name)
           .gsub('1.0.1', version))
         .with_indifferent_access
@@ -65,7 +64,7 @@ class Gitlab::Seeder::Packages
       params = {
         package_name: name,
         package_version: version,
-        package_username: ::Packages::ConanMetadatum.package_username_from(full_path: project.full_path),
+        package_username: ::Packages::Conan::Metadatum.package_username_from(full_path: project.full_path),
         package_channel: 'stable'
       }
 
@@ -130,7 +129,7 @@ class Gitlab::Seeder::Packages
   end
 
   def fixture_path(package_type, file)
-    Rails.root.join('ee', 'spec', 'fixtures', package_type, file)
+    Rails.root.join('spec', 'fixtures', 'packages', package_type, file)
   end
 
   def with_cloned_fixture_file(package_type, file)

@@ -71,6 +71,28 @@ describe ApplicationHelper do
     end
   end
 
+  describe '#admin_section?' do
+    context 'when controller is under the admin namespace' do
+      before do
+        allow(helper).to receive(:controller).and_return(Admin::UsersController.new)
+      end
+
+      it 'returns true' do
+        expect(helper.admin_section?).to eq(true)
+      end
+    end
+
+    context 'when controller is not under the admin namespace' do
+      before do
+        allow(helper).to receive(:controller).and_return(UsersController.new)
+      end
+
+      it 'returns true' do
+        expect(helper.admin_section?).to eq(false)
+      end
+    end
+  end
+
   describe 'simple_sanitize' do
     let(:a_tag) { '<a href="#">Foo</a>' }
 
@@ -90,8 +112,11 @@ describe ApplicationHelper do
   end
 
   describe 'time_ago_with_tooltip' do
+    around do |example|
+      Time.use_zone('UTC') { example.run }
+    end
+
     def element(*arguments)
-      Time.zone = 'UTC'
       @time = Time.zone.parse('2015-07-02 08:23')
       element = helper.time_ago_with_tooltip(@time, *arguments)
 
@@ -253,7 +278,7 @@ describe ApplicationHelper do
             page: 'application',
             page_type_id: nil,
             find_file: nil,
-            group: ''
+            group: nil
           }
         )
       end
@@ -277,22 +302,46 @@ describe ApplicationHelper do
     end
 
     context 'when @project is set' do
-      it 'includes all possible body data elements and associates the project elements with project' do
-        project = create(:project)
+      let_it_be(:project) { create(:project, :repository) }
+      let_it_be(:user) { create(:user) }
 
+      before do
         assign(:project, project)
+        allow(helper).to receive(:current_user).and_return(nil)
+      end
 
+      it 'includes all possible body data elements and associates the project elements with project' do
+        expect(helper).to receive(:can?).with(nil, :download_code, project)
         expect(helper.body_data).to eq(
           {
             page: 'application',
             page_type_id: nil,
             find_file: nil,
-            group: '',
+            group: nil,
             project_id: project.id,
             project: project.name,
             namespace_id: project.namespace.id
           }
         )
+      end
+
+      context 'when @project is owned by a group' do
+        let_it_be(:project) { create(:project, :repository, group: create(:group)) }
+
+        it 'includes all possible body data elements and associates the project elements with project' do
+          expect(helper).to receive(:can?).with(nil, :download_code, project)
+          expect(helper.body_data).to eq(
+            {
+              page: 'application',
+              page_type_id: nil,
+              find_file: nil,
+              group: project.group.name,
+              project_id: project.id,
+              project: project.name,
+              namespace_id: project.namespace.id
+            }
+          )
+        end
       end
 
       context 'when controller is issues' do
@@ -302,24 +351,32 @@ describe ApplicationHelper do
 
         context 'when params[:id] is present and the issue exsits and action_name is show' do
           it 'sets all project and id elements correctly related to the issue' do
-            issue = create(:issue)
+            issue = create(:issue, project: project)
             stub_controller_method(:action_name, 'show')
             stub_controller_method(:params, { id: issue.id })
 
-            assign(:project, issue.project)
-
+            expect(helper).to receive(:can?).with(nil, :download_code, project).and_return(false)
             expect(helper.body_data).to eq(
               {
                 page: 'projects:issues:show',
                 page_type_id: issue.id,
                 find_file: nil,
-                group: '',
+                group: nil,
                 project_id: issue.project.id,
                 project: issue.project.name,
                 namespace_id: issue.project.namespace.id
               }
             )
           end
+        end
+      end
+
+      context 'when current_user has download_code permission' do
+        it 'returns find_file with the default branch' do
+          allow(helper).to receive(:current_user).and_return(user)
+
+          expect(helper).to receive(:can?).with(user, :download_code, project).and_return(true)
+          expect(helper.body_data[:find_file]).to end_with(project.default_branch)
         end
       end
     end

@@ -48,6 +48,55 @@ export const metricStates = {
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 };
 
+/**
+ * Supported panel types in dashboards, values of `panel.type`.
+ *
+ * Values should not be changed as they correspond to
+ * values in users the `.yml` dashboard definition.
+ */
+export const panelTypes = {
+  /**
+   * Area Chart
+   *
+   * Time Series chart with an area
+   */
+  AREA_CHART: 'area-chart',
+  /**
+   * Line Chart
+   *
+   * Time Series chart with a line
+   */
+  LINE_CHART: 'line-chart',
+  /**
+   * Anomaly Chart
+   *
+   * Time Series chart with 3 metrics
+   */
+  ANOMALY_CHART: 'anomaly-chart',
+  /**
+   * Single Stat
+   *
+   * Single data point visualization
+   */
+  SINGLE_STAT: 'single-stat',
+  /**
+   * Heatmap
+   */
+  HEATMAP: 'heatmap',
+  /**
+   * Bar chart
+   */
+  BAR: 'bar',
+  /**
+   * Column chart
+   */
+  COLUMN: 'column',
+  /**
+   * Stacked column chart
+   */
+  STACKED_COLUMN: 'stacked-column',
+};
+
 export const sidebarAnimationDuration = 300; // milliseconds.
 export const chartHeight = 300;
 
@@ -78,9 +127,12 @@ export const lineWidths = {
   default: 2,
 };
 
-export const dateFormats = {
-  timeOfDay: 'h:MM TT',
-  default: 'dd mmm yyyy, h:MMTT',
+/**
+ * User-defined links can be passed in dashboard yml file.
+ * These are the supported type of links.
+ */
+export const linkTypes = {
+  GRAFANA: 'grafana',
 };
 
 /**
@@ -91,7 +143,6 @@ export const dateFormats = {
  * Currently used in `receiveMetricsDashboardSuccess` action.
  */
 export const endpointKeys = [
-  'metricsEndpoint',
   'deploymentsEndpoint',
   'dashboardEndpoint',
   'dashboardsEndpoint',
@@ -143,3 +194,38 @@ export const annotationsSymbolIcon = 'path://m5 229 5 8h-10z';
  * https://gitlab.com/gitlab-org/gitlab/-/issues/214671
  */
 export const DEFAULT_DASHBOARD_PATH = 'config/prometheus/common_metrics.yml';
+
+export const OPERATORS = {
+  greaterThan: '>',
+  equalTo: '==',
+  lessThan: '<',
+};
+
+/**
+ * Dashboard yml files support custom user-defined variables that
+ * are rendered as input elements in the monitoring dashboard.
+ * These values can be edited by the user and are passed on to the
+ * the backend and eventually to Prometheus API proxy.
+ *
+ * As of 13.0, the supported types are:
+ * simple custom -> dropdown elements
+ * advanced custom -> dropdown elements
+ * text -> text input elements
+ *
+ * Custom variables have a simple and a advanced variant.
+ */
+export const VARIABLE_TYPES = {
+  custom: 'custom',
+  text: 'text',
+};
+
+/**
+ * The names of templating variables defined in the dashboard yml
+ * file are prefixed with a constant so that it doesn't collide with
+ * other URL params that the monitoring dashboard relies on for
+ * features like panel fullscreen etc.
+ *
+ * The prefix is added before it is appended to the URL and removed
+ * before passing the data to the backend.
+ */
+export const VARIABLE_PREFIX = 'var-';

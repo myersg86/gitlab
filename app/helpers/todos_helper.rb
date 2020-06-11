@@ -37,11 +37,12 @@ module TodosHelper
   end
 
   def todo_target_title(todo)
-    if todo.target
-      "\"#{todo.target.title}\""
-    else
-      ""
-    end
+    # Design To Dos' filenames are displayed in `#todo_target_link` (see `Design#to_reference`),
+    # so to avoid displaying duplicate filenames in the To Do list for designs,
+    # we return an empty string here.
+    return "" if todo.target.blank? || todo.for_design?
+
+    "\"#{todo.target.title}\""
   end
 
   def todo_parent_path(todo)
@@ -53,6 +54,9 @@ module TodosHelper
   end
 
   def todo_target_type_name(todo)
+    return _('design') if todo.for_design?
+    return _('alert') if todo.for_alert?
+
     todo.target_type.titleize.downcase
   end
 
@@ -63,6 +67,10 @@ module TodosHelper
 
     if todo.for_commit?
       project_commit_path(todo.project, todo.target, path_options)
+    elsif todo.for_design?
+      todos_design_path(todo, path_options)
+    elsif todo.for_alert?
+      details_project_alert_management_path(todo.project, todo.target)
     else
       path = [todo.resource_parent, todo.target]
 
@@ -151,7 +159,8 @@ module TodosHelper
     [
       { id: '', text: 'Any Type' },
       { id: 'Issue', text: 'Issue' },
-      { id: 'MergeRequest', text: 'Merge Request' }
+      { id: 'MergeRequest', text: 'Merge Request' },
+      { id: 'DesignManagement::Design', text: 'Design' }
     ]
   end
 
@@ -187,6 +196,18 @@ module TodosHelper
   end
 
   private
+
+  def todos_design_path(todo, path_options)
+    design = todo.target
+
+    designs_project_issue_path(
+      todo.resource_parent,
+      design.issue,
+      path_options.merge(
+        vueroute: design.filename
+      )
+    )
+  end
 
   def todo_action_subject(todo)
     todo.self_added? ? 'yourself' : 'you'

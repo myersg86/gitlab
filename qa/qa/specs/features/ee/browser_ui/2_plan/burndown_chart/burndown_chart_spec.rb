@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module QA
-  context 'Plan', :reliable, quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/merge_requests/29719', type: :waiting_on } do
+  context 'Plan', :reliable do
     describe 'Burndown chart' do
       include ::QA::Support::Dates
 
       let(:milestone) do
-        QA::EE::Resource::ProjectMilestone.fabricate_via_api! do |m|
+        Resource::ProjectMilestone.fabricate_via_api! do |m|
           m.start_date = current_date_yyyy_mm_dd
           m.due_date = next_month_yyyy_mm_dd
         end

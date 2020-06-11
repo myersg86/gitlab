@@ -1,5 +1,6 @@
 import * as types from './mutation_types';
 import { uniqueId, cloneDeep } from 'lodash';
+import { DEFAULT_ASSET_LINK_TYPE } from '../../../constants';
 
 const findReleaseLink = (release, id) => {
   return release.assets.links.find(l => l.id === id);
@@ -28,6 +29,10 @@ export default {
     state.release.description = notes;
   },
 
+  [types.UPDATE_RELEASE_MILESTONES](state, milestones) {
+    state.release.milestones = milestones;
+  },
+
   [types.REQUEST_UPDATE_RELEASE](state) {
     state.isUpdatingRelease = true;
   },
@@ -45,6 +50,7 @@ export default {
       id: uniqueId('new-link-'),
       url: '',
       name: '',
+      linkType: DEFAULT_ASSET_LINK_TYPE,
     });
   },
 
@@ -56,6 +62,11 @@ export default {
   [types.UPDATE_ASSET_LINK_NAME](state, { linkIdToUpdate, newName }) {
     const linkToUpdate = findReleaseLink(state.release, linkIdToUpdate);
     linkToUpdate.name = newName;
+  },
+
+  [types.UPDATE_ASSET_LINK_TYPE](state, { linkIdToUpdate, newType }) {
+    const linkToUpdate = findReleaseLink(state.release, linkIdToUpdate);
+    linkToUpdate.linkType = newType;
   },
 
   [types.REMOVE_ASSET_LINK](state, linkIdToRemove) {

@@ -78,7 +78,7 @@ module API
 
           def project
             strong_memoize(:project) do
-              full_path = ::Packages::ConanMetadatum.full_path_from(package_username: params[:package_username])
+              full_path = ::Packages::Conan::Metadatum.full_path_from(package_username: params[:package_username])
               Project.find_by_full_path(full_path)
             end
           end
@@ -94,6 +94,16 @@ module API
             end
           end
 
+          def token
+            strong_memoize(:token) do
+              token = nil
+              token = ::Gitlab::ConanToken.from_personal_access_token(access_token) if access_token
+              token = ::Gitlab::ConanToken.from_deploy_token(deploy_token_from_request) if deploy_token_from_request
+              token = ::Gitlab::ConanToken.from_job(find_job_from_token) if find_job_from_token
+              token
+            end
+          end
+
           def download_package_file(file_type)
             authorize!(:read_package, project)
 
@@ -105,7 +115,7 @@ module API
                 conan_package_reference: params[:conan_package_reference]
               ).execute!
 
-            track_event('pull_package') if params[:file_name] == ::Packages::ConanFileMetadatum::PACKAGE_BINARY
+            track_event('pull_package') if params[:file_name] == ::Packages::Conan::FileMetadatum::PACKAGE_BINARY
 
             present_carrierwave_file!(package_file.file)
           end
@@ -115,7 +125,7 @@ module API
           end
 
           def track_push_package_event
-            if params[:file_name] == ::Packages::ConanFileMetadatum::PACKAGE_BINARY && params['file.size'].positive?
+            if params[:file_name] == ::Packages::Conan::FileMetadatum::PACKAGE_BINARY && params['file.size'].positive?
               track_event('push_package')
             end
           end
@@ -156,6 +166,10 @@ module API
             job.user
           end
 
+          def deploy_token_from_request
+            find_deploy_token_from_conan_jwt || find_deploy_token_from_http_basic_auth
+          end
+
           def find_job_from_token
             find_job_from_conan_jwt || find_job_from_http_basic_auth
           end
@@ -171,6 +185,18 @@ module API
             return unless token
 
             PersonalAccessToken.find_by_id_and_user_id(token.access_token_id, token.user_id)
+          end
+
+          def find_deploy_token_from_conan_jwt
+            token = decode_oauth_token_from_jwt
+
+            return unless token
+
+            deploy_token = DeployToken.active.find_by_token(token.access_token_id.to_s)
+            # note: uesr_id is not a user record id, but is the attribute set on ConanToken
+            return if token.user_id != deploy_token&.username
+
+            deploy_token
           end
 
           def find_job_from_conan_jwt

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe API::Helpers::PackagesManagerClientsHelpers do
+RSpec.describe API::Helpers::PackagesManagerClientsHelpers do
   let_it_be(:personal_access_token) { create(:personal_access_token) }
   let_it_be(:username) { personal_access_token.user.username }
   let_it_be(:helper) { Class.new.include(described_class).new }
@@ -75,6 +75,42 @@ describe API::Helpers::PackagesManagerClientsHelpers do
 
     context 'with an unknown Authorization header' do
       let(:password) { 'Unknown' }
+
+      it { is_expected.to be nil }
+    end
+  end
+
+  describe '#find_deploy_token_from_http_basic_auth' do
+    let_it_be(:deploy_token) { create(:deploy_token) }
+    let(:token) { deploy_token.token }
+    let(:headers) { { Authorization: basic_http_auth(deploy_token.username, token) } }
+
+    subject { helper.find_deploy_token_from_http_basic_auth }
+
+    before do
+      allow(helper).to receive(:headers).and_return(headers&.with_indifferent_access)
+    end
+
+    context 'with a valid Authorization header' do
+      it { is_expected.to eq deploy_token }
+    end
+
+    context 'with an invalid Authorization header' do
+      where(:headers) do
+        [
+          [{ Authorization: 'Invalid' }],
+          [{}],
+          [nil]
+        ]
+      end
+
+      with_them do
+        it { is_expected.to be nil }
+      end
+    end
+
+    context 'with an invalid token' do
+      let(:token) { 'Unknown' }
 
       it { is_expected.to be nil }
     end

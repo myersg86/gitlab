@@ -361,7 +361,7 @@ describe QuickActions::InterpretService do
         expect(updates).to eq(spend_time: {
                                 duration: 3600,
                                 user_id: developer.id,
-                                spent_at: DateTime.now.to_date
+                                spent_at: DateTime.current.to_date
                               })
       end
 
@@ -379,7 +379,7 @@ describe QuickActions::InterpretService do
         expect(updates).to eq(spend_time: {
                                 duration: -1800,
                                 user_id: developer.id,
-                                spent_at: DateTime.now.to_date
+                                spent_at: DateTime.current.to_date
                               })
       end
     end
@@ -1619,6 +1619,29 @@ describe QuickActions::InterpretService do
         _, _, message = service.execute(content, issuable)
 
         expect(message).to eq("Created branch '#{branch_name}' and a merge request to resolve this issue.")
+      end
+    end
+
+    context 'submit_review command' do
+      using RSpec::Parameterized::TableSyntax
+
+      where(:note) do
+        [
+          'I like it',
+          '/submit_review'
+        ]
+      end
+
+      with_them do
+        let(:content) { '/submit_review' }
+        let!(:draft_note) { create(:draft_note, note: note, merge_request: merge_request, author: developer) }
+
+        it 'submits the users current review' do
+          _, _, message = service.execute(content, merge_request)
+
+          expect { draft_note.reload }.to raise_error(ActiveRecord::RecordNotFound)
+          expect(message).to eq('Submitted the current review.')
+        end
       end
     end
   end

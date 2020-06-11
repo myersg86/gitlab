@@ -19,6 +19,7 @@ class MergeRequest < ApplicationRecord
   include ShaAttribute
   include IgnorableColumns
   include MilestoneEventable
+  include StateEventable
 
   sha_attribute :squash_commit_sha
 
@@ -32,6 +33,7 @@ class MergeRequest < ApplicationRecord
   belongs_to :target_project, class_name: "Project"
   belongs_to :source_project, class_name: "Project"
   belongs_to :merge_user, class_name: "User"
+  belongs_to :iteration, foreign_key: 'sprint_id'
 
   has_internal_id :iid, scope: :target_project, track_if: -> { !importing? }, init: ->(s) { s&.target_project&.merge_requests&.maximum(:iid) }
 
@@ -86,6 +88,9 @@ class MergeRequest < ApplicationRecord
   has_many :deployments,
     through: :deployment_merge_requests
 
+  has_many :draft_notes
+  has_many :reviews, inverse_of: :merge_request
+
   KNOWN_MERGE_PARAMS = [
     :auto_merge_strategy,
     :should_remove_source_branch,
@@ -99,7 +104,7 @@ class MergeRequest < ApplicationRecord
   after_create :ensure_merge_request_diff
   after_update :clear_memoized_shas
   after_update :reload_diff_if_branch_changed
-  after_save :ensure_metrics, unless: :importing?
+  after_commit :ensure_metrics, on: [:create, :update], unless: :importing?
   after_commit :expire_etag_cache, unless: :importing?
 
   # When this attribute is true some MR validation is ignored
@@ -163,7 +168,7 @@ class MergeRequest < ApplicationRecord
   state_machine :merge_status, initial: :unchecked do
     event :mark_as_unchecked do
       transition [:can_be_merged, :checking, :unchecked] => :unchecked
-      transition [:cannot_be_merged, :cannot_be_merged_recheck] => :cannot_be_merged_recheck
+      transition [:cannot_be_merged, :cannot_be_merged_rechecking, :cannot_be_merged_recheck] => :cannot_be_merged_recheck
     end
 
     event :mark_as_checking do
@@ -200,7 +205,7 @@ class MergeRequest < ApplicationRecord
     # rubocop: enable CodeReuse/ServiceClass
 
     def check_state?(merge_status)
-      [:unchecked, :cannot_be_merged_recheck, :checking].include?(merge_status.to_sym)
+      [:unchecked, :cannot_be_merged_recheck, :checking, :cannot_be_merged_rechecking].include?(merge_status.to_sym)
     end
   end
 
@@ -539,13 +544,21 @@ class MergeRequest < ApplicationRecord
     merge_request_diffs.where.not(id: merge_request_diff.id)
   end
 
-  # Overwritten in EE
-  def note_positions_for_paths(paths, _user = nil)
+  def note_positions_for_paths(paths, user = nil)
     positions = notes.new_diff_notes.joins(:note_diff_file)
       .where('note_diff_files.old_path IN (?) OR note_diff_files.new_path IN (?)', paths, paths)
       .positions
 
-    Gitlab::Diff::PositionCollection.new(positions, diff_head_sha)
+    collection = Gitlab::Diff::PositionCollection.new(positions, diff_head_sha)
+
+    return collection unless user
+
+    positions = draft_notes
+      .authored_by(user)
+      .positions
+      .select { |pos| paths.include?(pos.file_path) }
+
+    collection.concat(positions)
   end
 
   def preloads_discussion_diff_highlighting?
@@ -864,7 +877,7 @@ class MergeRequest < ApplicationRecord
 
     check_service = MergeRequests::MergeabilityCheckService.new(self)
 
-    if async && Feature.enabled?(:async_merge_request_check_mergeability, project)
+    if async
       check_service.async_execute
     else
       check_service.execute(retry_lease: false)
@@ -873,7 +886,7 @@ class MergeRequest < ApplicationRecord
   # rubocop: enable CodeReuse/ServiceClass
 
   def diffable_merge_ref?
-    Feature.enabled?(:diff_compare_with_head, target_project) && can_be_merged? && merge_ref_head.present?
+    can_be_merged? && merge_ref_head.present?
   end
 
   # Returns boolean indicating the merge_status should be rechecked in order to
@@ -883,11 +896,11 @@ class MergeRequest < ApplicationRecord
   end
 
   def merge_event
-    @merge_event ||= target_project.events.where(target_id: self.id, target_type: "MergeRequest", action: Event::MERGED).last
+    @merge_event ||= target_project.events.where(target_id: self.id, target_type: "MergeRequest", action: :merged).last
   end
 
   def closed_event
-    @closed_event ||= target_project.events.where(target_id: self.id, target_type: "MergeRequest", action: Event::CLOSED).last
+    @closed_event ||= target_project.events.where(target_id: self.id, target_type: "MergeRequest", action: :closed).last
   end
 
   def work_in_progress?
@@ -1129,26 +1142,6 @@ class MergeRequest < ApplicationRecord
     end
   end
 
-  # Return array of possible target branches
-  # depends on target project of MR
-  def target_branches
-    if target_project.nil?
-      []
-    else
-      target_project.repository.branch_names
-    end
-  end
-
-  # Return array of possible source branches
-  # depends on source project of MR
-  def source_branches
-    if source_project.nil?
-      []
-    else
-      source_project.repository.branch_names
-    end
-  end
-
   def has_ci?
     return false if has_no_commits?
 
@@ -1176,6 +1169,7 @@ class MergeRequest < ApplicationRecord
   def mergeable_ci_state?
     return true unless project.only_allow_merge_if_pipeline_succeeds?
     return false unless actual_head_pipeline
+    return true if project.allow_merge_on_skipped_pipeline? && actual_head_pipeline.skipped?
 
     actual_head_pipeline.success?
   end
@@ -1319,10 +1313,26 @@ class MergeRequest < ApplicationRecord
     compare_reports(Ci::CompareTestReportsService)
   end
 
+  def has_accessibility_reports?
+    actual_head_pipeline.present? && actual_head_pipeline.has_reports?(Ci::JobArtifact.accessibility_reports)
+  end
+
   def has_coverage_reports?
     return false unless Feature.enabled?(:coverage_report_view, project)
 
     actual_head_pipeline&.has_reports?(Ci::JobArtifact.coverage_reports)
+  end
+
+  def has_terraform_reports?
+    actual_head_pipeline&.has_reports?(Ci::JobArtifact.terraform_reports)
+  end
+
+  def compare_accessibility_reports
+    unless has_accessibility_reports?
+      return { status: :error, status_reason: _('This merge request does not have accessibility reports') }
+    end
+
+    compare_reports(Ci::CompareAccessibilityReportsService)
   end
 
   # TODO: this method and compare_test_reports use the same
@@ -1337,9 +1347,15 @@ class MergeRequest < ApplicationRecord
     compare_reports(Ci::GenerateCoverageReportsService)
   end
 
-  def has_exposed_artifacts?
-    return false unless Feature.enabled?(:ci_expose_arbitrary_artifacts_in_mr, default_enabled: true)
+  def find_terraform_reports
+    unless has_terraform_reports?
+      return { status: :error, status_reason: 'This merge request does not have terraform reports' }
+    end
 
+    compare_reports(Ci::GenerateTerraformReportsService)
+  end
+
+  def has_exposed_artifacts?
     actual_head_pipeline&.has_exposed_artifacts?
   end
 
@@ -1560,6 +1576,10 @@ class MergeRequest < ApplicationRecord
 
   def recent_visible_deployments
     deployments.visible.includes(:environment).order(id: :desc).limit(10)
+  end
+
+  def banzai_render_context(field)
+    super.merge(label_url_method: :project_merge_requests_url)
   end
 
   private

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Subscriptions::CreateService do
+RSpec.describe Subscriptions::CreateService do
   subject { described_class.new(user, group: group, customer_params: customer_params, subscription_params: subscription_params) }
 
   let_it_be(:user) { create(:user, id: 111, first_name: 'First name', last_name: 'Last name', email: 'first.last@gitlab.com') }
@@ -29,7 +29,7 @@ describe Subscriptions::CreateService do
   end
 
   let_it_be(:client) { Gitlab::SubscriptionPortal::Client }
-  let_it_be(:create_service_params) { JSON.parse(fixture_file('create_service_params.json', dir: 'ee')).deep_symbolize_keys }
+  let_it_be(:create_service_params) { Gitlab::Json.parse(fixture_file('create_service_params.json', dir: 'ee')).deep_symbolize_keys }
 
   describe '#execute' do
     context 'when failing to create a customer' do

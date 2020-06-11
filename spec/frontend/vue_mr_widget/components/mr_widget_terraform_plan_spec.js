@@ -1,8 +1,9 @@
-import { GlLoadingIcon, GlSprintf } from '@gitlab/ui';
+import { GlLink, GlLoadingIcon, GlSprintf } from '@gitlab/ui';
 import { shallowMount } from '@vue/test-utils';
 import axios from '~/lib/utils/axios_utils';
 import MockAdapter from 'axios-mock-adapter';
 import MrWidgetTerraformPlan from '~/vue_merge_request_widget/components/mr_widget_terraform_plan.vue';
+import Poll from '~/lib/utils/poll';
 
 const plan = {
   create: 10,
@@ -37,7 +38,7 @@ describe('MrWidgetTerraformPlan', () => {
 
   describe('loading poll', () => {
     beforeEach(() => {
-      mockPollingApi(200, { 'tfplan.json': plan }, {});
+      mockPollingApi(200, { '123': plan }, {});
 
       return mountWrapper().then(() => {
         wrapper.setData({ loading: true });
@@ -57,9 +58,21 @@ describe('MrWidgetTerraformPlan', () => {
   });
 
   describe('successful poll', () => {
+    let pollRequest;
+    let pollStop;
+
     beforeEach(() => {
-      mockPollingApi(200, { 'tfplan.json': plan }, {});
+      pollRequest = jest.spyOn(Poll.prototype, 'makeRequest');
+      pollStop = jest.spyOn(Poll.prototype, 'stop');
+
+      mockPollingApi(200, { '123': plan }, {});
+
       return mountWrapper();
+    });
+
+    afterEach(() => {
+      pollRequest.mockRestore();
+      pollStop.mockRestore();
     });
 
     it('content change text', () => {
@@ -67,7 +80,12 @@ describe('MrWidgetTerraformPlan', () => {
     });
 
     it('renders button when url is found', () => {
-      expect(wrapper.find('a').text()).toContain('View full log');
+      expect(wrapper.find(GlLink).exists()).toBe(true);
+    });
+
+    it('does not make additional requests after poll is successful', () => {
+      expect(pollRequest).toHaveBeenCalledTimes(1);
+      expect(pollStop).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -83,7 +101,7 @@ describe('MrWidgetTerraformPlan', () => {
       );
 
       expect(wrapper.find('.js-terraform-report-link').exists()).toBe(false);
-      expect(wrapper.text()).not.toContain('View full log');
+      expect(wrapper.find(GlLink).exists()).toBe(false);
     });
   });
 });

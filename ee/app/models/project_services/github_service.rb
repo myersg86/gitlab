@@ -38,7 +38,7 @@ class GithubService < Service
 
   def fields
     [
-      { type: 'text',
+      { type: 'password',
         name: "token",
         required: true,
         placeholder: "e.g. 8d3f016698e...",
@@ -63,24 +63,12 @@ class GithubService < Service
     project&.ci_pipelines&.any?
   end
 
-  def disabled_title
-    'Please set up a pipeline on your repository.'
-  end
-
   def execute(data)
     return if disabled? || invalid? || irrelevant_result?(data)
 
     status_message = StatusMessage.from_pipeline_data(project, self, data)
 
     update_status(status_message)
-  end
-
-  def test_data(project, user)
-    pipeline = project.ci_pipelines.newest_first.first
-
-    raise disabled_title unless pipeline
-
-    Gitlab::DataBuilder::Pipeline.build(pipeline)
   end
 
   def test(data)

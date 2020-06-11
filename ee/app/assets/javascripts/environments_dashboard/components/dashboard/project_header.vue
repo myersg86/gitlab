@@ -33,17 +33,17 @@ export default {
 
 <template>
   <div
-    class="d-flex align-items-center page-title-holder text-secondary justify-content-between pb-2"
+    class="d-flex align-items-center page-title-holder text-secondary justify-content-between pb-2 mb-3"
   >
     <div class="d-flex align-items-center">
       <project-avatar :project="project.namespace" :size="20" class="flex-shrink-0" />
       <gl-link class="js-namespace-link text-secondary" :href="`/${project.namespace.full_path}`">
-        <span class="js-namespace append-right-8"> {{ project.namespace.name }} </span>
+        <span class="js-namespace gl-mr-3"> {{ project.namespace.name }} </span>
       </gl-link>
-      <span class="append-right-8">&gt;</span>
+      <span class="gl-mr-3">&gt;</span>
       <project-avatar :project="project" :size="20" class="flex-shrink-0" />
       <gl-link class="js-project-link text-secondary" :href="project.web_url">
-        <span class="js-name append-right-8"> {{ project.name }} </span>
+        <span class="js-name gl-mr-3"> {{ project.name }} </span>
       </gl-link>
     </div>
     <div class="dropdown js-more-actions">

@@ -105,7 +105,7 @@ describe 'Merge request > User posts notes', :js do
 
       page.within('.discussion-reply-holder') do
         fill_in 'note[note]', with: 'A reply'
-        click_button 'Comment'
+        click_button 'Add comment now'
         wait_for_requests
         expect(page).to have_content('Your comment could not be submitted because discussion to reply to cannot be found')
       end
@@ -147,7 +147,10 @@ describe 'Merge request > User posts notes', :js do
       it 'resets the edit note form textarea with the original content of the note if cancelled' do
         within('.current-note-edit-form') do
           fill_in 'note[note]', with: 'Some new content'
-          find('.btn-cancel').click
+
+          accept_confirm do
+            find('.btn-cancel').click
+          end
         end
         expect(find('.js-note-text').text).to eq ''
       end

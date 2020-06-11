@@ -19,7 +19,7 @@ the configuration options as follows:
 
 ### For HTTP
 
-```yml
+```yaml
   gravatar:
     enabled: true
     # gravatar URLs: possible placeholders: %{hash} %{size} %{email} %{username}
@@ -28,7 +28,7 @@ the configuration options as follows:
 
 ### For HTTPS
 
-```yml
+```yaml
   gravatar:
     enabled: true
     # gravatar URLs: possible placeholders: %{hash} %{size} %{email} %{username}
@@ -37,7 +37,7 @@ the configuration options as follows:
 
 ### Your own Libravatar server
 
-If you are [running your own libravatar service](https://wiki.libravatar.org/running_your_own/),
+If you are [running your own Libravatar service](https://wiki.libravatar.org/running_your_own/),
 the URL will be different in the configuration, but you must provide the same
 placeholders so GitLab can parse the URL correctly.
 

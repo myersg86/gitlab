@@ -35,7 +35,6 @@ export default {
       'labelsWebUrl',
       'epicsWebUrl',
       'scopedLabels',
-      'scopedLabelsDocumentationLink',
       'epicLabelsSelectInProgress',
     ]),
     epicContext() {
@@ -68,7 +67,7 @@ export default {
       // sidebar size.
       debounce(() => {
         this.sidebarExpandedOnClick = true;
-        if (contentContainer) {
+        if (this.canUpdate && contentContainer) {
           contentContainer
             .querySelector('.js-sidebar-dropdown-toggle')
             .dispatchEvent(new Event('click', { bubbles: true, cancelable: false }));
@@ -102,7 +101,22 @@ export default {
       }
     },
     handleUpdateSelectedLabels(labels) {
-      this.updateEpicLabels(labels);
+      // Iterate over selection and check if labels which were
+      // either selected or removed aren't leading to same selection
+      // as current one, as then we don't want to make network call
+      // since nothing has changed.
+      const anyLabelUpdated = labels.some(label => {
+        // Find this label in existing selection.
+        const existingLabel = this.epicContext.labels.find(l => l.id === label.id);
+
+        // Check either of the two following conditions;
+        // 1. A label that's not currently applied is being applied.
+        // 2. A label that's already applied is being removed.
+        return (!existingLabel && label.set) || (existingLabel && !label.set);
+      });
+
+      // Only proceed with action if there are any label updates to be done.
+      if (anyLabelUpdated) this.updateEpicLabels(labels);
     },
   },
 };
@@ -112,13 +126,14 @@ export default {
   <labels-select-vue
     :allow-label-edit="canUpdate"
     :allow-label-create="true"
+    :allow-multiselect="true"
     :allow-scoped-labels="scopedLabels"
     :selected-labels="labels"
     :labels-select-in-progress="epicLabelsSelectInProgress"
     :labels-fetch-path="labelsPath"
     :labels-manage-path="labelsWebUrl"
     :labels-filter-base-path="epicsWebUrl"
-    :scoped-labels-documentation-path="scopedLabelsDocumentationLink"
+    variant="sidebar"
     class="block labels js-labels-block"
     @updateSelectedLabels="handleUpdateSelectedLabels"
     @onDropdownClose="handleDropdownClose"

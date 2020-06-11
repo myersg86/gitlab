@@ -55,6 +55,7 @@ For an existing project, you can set up push mirroring as follows:
 1. Select **Push** from the **Mirror direction** dropdown.
 1. Select an authentication method from the **Authentication method** dropdown, if necessary.
 1. Check the **Only mirror protected branches** box, if necessary.
+1. Check the **Keep divergent refs** box, if desired.
 1. Click the **Mirror repository** button to save the configuration.
 
 ![Repository mirroring push settings screen](img/repository_mirroring_push_settings.png)
@@ -88,6 +89,27 @@ You can choose to only push your protected branches from GitLab to your remote r
 To use this option, check the **Only mirror protected branches** box when creating a repository
 mirror.
 
+### Keep divergent refs **(CORE)**
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/208828) in GitLab 13.0.
+
+By default, if any ref on the remote mirror has diverged from the local
+repository, the *entire push* will fail, and nothing will be updated.
+
+For example, if a repository has `master`, `develop`, and `stable` branches that
+have been mirrored to a remote, and then a new commit is added to `develop` on
+the mirror, the next push attempt will fail, leaving `master` and `stable`
+out-of-date despite not having diverged. No change on any branch can be mirrored
+until the divergence is resolved.
+
+With the **Keep divergent refs** option enabled, the `develop` branch is
+skipped, allowing `master` and `stable` to be updated. The mirror status will
+reflect that `develop` has diverged and was skipped, and be marked as a failed
+update.
+
+NOTE: **Note:**
+After the mirror is created, this option can currently only be modified via the [API](../../../api/remote_mirrors.md).
+
 ## Setting up a push mirror from GitLab to GitHub **(CORE)**
 
 To set up a mirror from GitLab to GitHub, you need to follow these steps:
@@ -112,7 +134,7 @@ The repository will push soon. To force a push, click the appropriate button.
 ## Pulling from a remote repository **(STARTER)**
 
 > - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/51) in GitLab Enterprise Edition 8.2.
-> - [Added Git LFS support](https://gitlab.com/gitlab-org/gitlab/issues/10871) in [GitLab Starter](https://about.gitlab.com/pricing/) 11.11.
+> - [Added Git LFS support](https://gitlab.com/gitlab-org/gitlab/-/issues/10871) in [GitLab Starter](https://about.gitlab.com/pricing/) 11.11.
 
 You can set up a repository to automatically have its branches, tags, and commits updated from an
 upstream repository.
@@ -333,6 +355,24 @@ branch causes conflicts. The race condition can be mitigated by reducing the mir
 a [Push event webhook](../integrations/webhooks.md#push-events) to trigger an immediate
 pull to GitLab. Push mirroring from GitLab is rate limited to once per minute when only push mirroring
 protected branches.
+
+### Configure a webhook to trigger an immediate pull to GitLab
+
+Assuming you have already configured the [push](#setting-up-a-push-mirror-to-another-gitlab-instance-with-2fa-activated) and [pull](#pulling-from-a-remote-repository-starter) mirrors in the upstream GitLab instance, to trigger an immediate pull as suggested above, you will need to configure a [Push Event Web Hook](../integrations/webhooks.md#push-events) in the downstream instance.
+
+To do this:
+
+- Create a [personal access token](../../profile/personal_access_tokens.md) with `API` scope.
+- Navigate to **Settings > Webhooks**
+- Add the webhook URL which in this case will use the [Pull Mirror API](../../../api/projects.md#start-the-pull-mirroring-process-for-a-project-starter) request to trigger an immediate pull after updates to the repository.
+
+  ```plaintext
+  https://gitlab.example.com/api/v4/projects/:id/mirror/pull?private_token=<your_access_token>
+  ```
+
+- Ensure that the **Push Events** checkbox is selected.
+- Click on **Add Webhook** button to save the webhook.
+- To test the integration click on the **Test** button and confirm GitLab does not return any error.
 
 ### Preventing conflicts using a `pre-receive` hook
 

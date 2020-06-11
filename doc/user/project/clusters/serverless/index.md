@@ -1,3 +1,9 @@
+---
+stage: Configure
+group: Configure
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # Serverless
 
 > Introduced in GitLab 11.5.
@@ -101,7 +107,7 @@ on a given project but not both. The current implementation makes use of a `serv
 
 ## Using an existing installation of Knative
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/issues/58941) in GitLab 12.0.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/58941) in GitLab 12.0.
 
 NOTE: **Note:**
 The "invocations" monitoring feature of GitLab serverless will not work when
@@ -193,7 +199,7 @@ You must provide a `Dockerfile` to run serverless functions if no runtime is spe
 
 ### OpenFaaS runtimes
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/29253) in GitLab 12.5.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/29253) in GitLab 12.5.
 
 [OpenFaaS classic runtimes](https://github.com/openfaas/templates#templates-in-store) can be used with GitLab serverless.
 
@@ -510,7 +516,7 @@ cluster.
 
 ## Configuring logging
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/33330) in GitLab 12.5.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/33330) in GitLab 12.5.
 
 ### Prerequisites
 

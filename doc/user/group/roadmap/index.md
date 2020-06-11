@@ -1,13 +1,17 @@
 ---
 type: reference
+stage: Plan
+group: Portfolio Management
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
 ---
 
 # Roadmap **(PREMIUM)**
 
 > - Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 10.5.
-> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/issues/198062), Roadmaps were moved to the Premium tier.
-> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/issues/5164) and later, the epic bars show epics' title, progress, and completed weight percentage.
-> - In [GitLab 12.10](https://gitlab.com/gitlab-org/gitlab/-/issues/6802), and later, milestones appear in Roadmaps.
+> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/-/issues/198062), Roadmaps were moved to the Premium tier.
+> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/-/issues/5164) and later, the epic bars show epics' title, progress, and completed weight percentage.
+> - Milestones appear in roadmaps in [GitLab 12.10](https://gitlab.com/gitlab-org/gitlab/-/issues/6802), and later.
+> - Feature flag for milestones visible in roadmaps removed in [GitLab 13.0](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/29641).
 
 Epics and milestones within a group containing **Start date** and/or **Due date**
 can be visualized in a form of a timeline (that is, a Gantt chart). The Roadmap page
@@ -23,7 +27,7 @@ You can click the chevron **{chevron-down}** next to the epic title to expand an
 
 On top of the milestone bars, you can see their title. When you hover a milestone bar or title, a popover appears with its title, start date and due date.
 
-![roadmap view](img/roadmap_view_v12_10.png)
+![roadmap view](img/roadmap_view_v13_0.png)
 
 A dropdown menu allows you to show only open or closed epics. By default, all epics are shown.
 
@@ -44,7 +48,7 @@ Roadmaps can also be [visualized inside an epic](../epics/index.md#roadmap-in-ep
 ## Timeline duration
 
 > - Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.0.
-> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/issues/198062), Timelines were moved to the Premium tier.
+> - In [GitLab 12.9](https://gitlab.com/gitlab-org/gitlab/-/issues/198062), Timelines were moved to the Premium tier.
 
 Roadmap supports the following date ranges:
 

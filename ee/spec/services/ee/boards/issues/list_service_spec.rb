@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Boards::Issues::ListService, services: true do
+RSpec.describe Boards::Issues::ListService, services: true do
   describe '#execute' do
     let(:user)    { create(:user) }
     let(:group) { create(:group) }
@@ -32,7 +32,7 @@ describe Boards::Issues::ListService, services: true do
     let!(:opened_issue1) { create(:labeled_issue, project: project, milestone: m1, weight: 9, title: 'Issue 1', labels: [bug]) }
     let!(:opened_issue2) { create(:labeled_issue, project: project, milestone: m2, weight: 1, title: 'Issue 2', labels: [p2]) }
     let!(:opened_issue3) { create(:labeled_issue, project: project, milestone: m2, title: 'Assigned Issue', labels: [p3]) }
-    let!(:reopened_issue1) { create(:issue, state: 'opened', project: project, title: 'Issue 3', closed_at: Time.now ) }
+    let!(:reopened_issue1) { create(:issue, state: 'opened', project: project, title: 'Issue 3', closed_at: Time.current ) }
 
     let(:list1_issue1) { create(:labeled_issue, project: project, milestone: m1, labels: [p2, development]) }
     let(:list1_issue2) { create(:labeled_issue, project: project, milestone: m2, labels: [development]) }
@@ -153,43 +153,18 @@ describe Boards::Issues::ListService, services: true do
     end
 
     context 'when search param is present' do
-      shared_examples 'returns correct result using 3 characters' do
-        it 'returns correct issues' do
-          params = { board_id: board.id, search: 'Iss' }
+      it 'returns correct issues' do
+        params = { board_id: board.id, search: 'Iss' }
 
-          issues = described_class.new(parent, user, params).execute
-          expect(issues).to contain_exactly(opened_issue1, opened_issue2, reopened_issue1)
-        end
+        issues = described_class.new(parent, user, params).execute
+        expect(issues).to contain_exactly(opened_issue1, opened_issue2, reopened_issue1)
       end
 
-      context 'when board_search_optimization feature is enabled' do
-        before do
-          stub_feature_flags(board_search_optimization: true)
-        end
+      it 'returns correct issues using 2 characters' do
+        params = { board_id: board.id, search: 'Is' }
 
-        it_behaves_like 'returns correct result using 3 characters'
-
-        it 'returns correct issues using 2 characters' do
-          params = { board_id: board.id, search: 'Is' }
-
-          issues = described_class.new(parent, user, params).execute
-          expect(issues).to contain_exactly(opened_issue1, opened_issue2, reopened_issue1)
-        end
-      end
-
-      context 'when board_search_optimization feature is disabled' do
-        before do
-          stub_feature_flags(board_search_optimization: false)
-        end
-
-        it_behaves_like 'returns correct result using 3 characters'
-
-        it 'returns empty result using 2 characters' do
-          params = { board_id: board.id, search: 'Is' }
-
-          issues = described_class.new(parent, user, params).execute
-          expect(issues).to be_empty
-        end
+        issues = described_class.new(parent, user, params).execute
+        expect(issues).to contain_exactly(opened_issue1, opened_issue2, reopened_issue1)
       end
     end
   end

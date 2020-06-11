@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::Environments::PrometheusApiController do
+RSpec.describe Projects::Environments::PrometheusApiController do
   let_it_be(:project) { create(:project) }
   let_it_be(:environment) { create(:environment, project: project) }
   let_it_be(:user) { create(:user) }
@@ -38,7 +38,7 @@ describe Projects::Environments::PrometheusApiController do
       context 'with success result' do
         let(:service_result) { { status: :success, body: prometheus_body } }
         let(:prometheus_body) { '{"status":"success"}' }
-        let(:prometheus_json_body) { JSON.parse(prometheus_body) }
+        let(:prometheus_json_body) { Gitlab::Json.parse(prometheus_body) }
 
         it 'returns prometheus response' do
           get :proxy, params: environment_params
@@ -55,7 +55,7 @@ describe Projects::Environments::PrometheusApiController do
           end
 
           it 'replaces variables with values' do
-            get :proxy, params: environment_params.merge(query: 'up{environment="%{ci_environment_slug}"}')
+            get :proxy, params: environment_params.merge(query: 'up{environment="{{ci_environment_slug}}"}')
 
             expect(Prometheus::ProxyService).to have_received(:new)
               .with(environment, 'GET', 'query', expected_params)
@@ -84,12 +84,12 @@ describe Projects::Environments::PrometheusApiController do
 
           before do
             expected_params[:query] = %{up{pod_name="#{pod_name}"}}
-            expected_params[:variables] = ['pod_name', pod_name]
+            expected_params[:variables] = { 'pod_name' => pod_name }
           end
 
           it 'replaces variables with values' do
             get :proxy, params: environment_params.merge(
-              query: 'up{pod_name="{{pod_name}}"}', variables: ['pod_name', pod_name]
+              query: 'up{pod_name="{{pod_name}}"}', variables: { 'pod_name' => pod_name }
             )
 
             expect(response).to have_gitlab_http_status(:success)

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Geo::JwtRequestDecoder do
+RSpec.describe Gitlab::Geo::JwtRequestDecoder do
   include EE::GeoHelpers
 
   let!(:primary_node) { FactoryBot.create(:geo_node, :primary) }
@@ -24,6 +24,14 @@ describe Gitlab::Geo::JwtRequestDecoder do
       primary_node.update_attribute(:enabled, false)
 
       expect(subject.decode).to be_nil
+    end
+
+    it 'decodes when node is disabled if `include_disabled!` is called first' do
+      primary_node.update_attribute(:enabled, false)
+
+      subject.include_disabled!
+
+      expect(subject.decode).to eq(data)
     end
 
     it 'fails to decode with wrong key' do

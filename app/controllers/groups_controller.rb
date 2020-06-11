@@ -31,6 +31,10 @@ class GroupsController < Groups::ApplicationController
     push_frontend_feature_flag(:vue_issuables_list, @group)
   end
 
+  before_action do
+    set_not_query_feature_flag(@group)
+  end
+
   before_action :export_rate_limit, only: [:export, :download_export]
 
   skip_cross_project_access_check :index, :new, :create, :edit, :update,
@@ -53,6 +57,8 @@ class GroupsController < Groups::ApplicationController
     @group = Groups::CreateService.new(current_user, group_params).execute
 
     if @group.persisted?
+      track_experiment_event(:onboarding_issues, 'created_namespace')
+
       notice = if @group.chat_team.present?
                  "Group '#{@group.name}' and its Mattermost team were successfully created."
                else
@@ -142,7 +148,7 @@ class GroupsController < Groups::ApplicationController
     export_service = Groups::ImportExport::ExportService.new(group: @group, user: current_user)
 
     if export_service.async_execute
-      redirect_to edit_group_path(@group), notice: _('Group export started.')
+      redirect_to edit_group_path(@group), notice: _('Group export started. A download link will be sent by email and made available on this page.')
     else
       redirect_to edit_group_path(@group), alert: _('Group export could not be started.')
     end
@@ -260,11 +266,12 @@ class GroupsController < Groups::ApplicationController
   def export_rate_limit
     prefixed_action = "group_#{params[:action]}".to_sym
 
-    if Gitlab::ApplicationRateLimiter.throttled?(prefixed_action, scope: [current_user, prefixed_action, @group])
+    scope = params[:action] == :download_export ? @group : nil
+
+    if Gitlab::ApplicationRateLimiter.throttled?(prefixed_action, scope: [current_user, scope].compact)
       Gitlab::ApplicationRateLimiter.log_request(request, "#{prefixed_action}_request_limit".to_sym, current_user)
 
-      flash[:alert] = _('This endpoint has been requested too many times. Try again later.')
-      redirect_to edit_group_path(@group)
+      render plain: _('This endpoint has been requested too many times. Try again later.'), status: :too_many_requests
     end
   end
 

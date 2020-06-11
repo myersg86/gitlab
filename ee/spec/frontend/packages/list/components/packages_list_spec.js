@@ -4,8 +4,8 @@ import { GlTable, GlPagination, GlModal } from '@gitlab/ui';
 import Tracking from '~/tracking';
 import { mount, createLocalVue } from '@vue/test-utils';
 import PackagesList from 'ee/packages/list/components/packages_list.vue';
-import PackagesListLoader from 'ee/packages/list/components/packages_list_loader.vue';
-import PackagesListRow from 'ee/packages/list/components/packages_list_row.vue';
+import PackagesListLoader from 'ee/packages/shared/components/packages_list_loader.vue';
+import PackagesListRow from 'ee/packages/shared/components/package_list_row.vue';
 import * as SharedUtils from 'ee/packages/shared/utils';
 import { TrackingActions } from 'ee/packages/shared/constants';
 import stubChildren from 'helpers/stub_children';
@@ -121,15 +121,6 @@ describe('packages_list', () => {
   describe('when the user can destroy the package', () => {
     beforeEach(() => {
       mountComponent();
-    });
-
-    it('shows the correct deletePackageDescription', () => {
-      expect(wrapper.vm.deletePackageDescription).toEqual('');
-
-      wrapper.setData({ itemToBeDeleted: { name: 'foo', version: '1.0.10-beta' } });
-      expect(wrapper.vm.deletePackageDescription).toMatchInlineSnapshot(
-        `"You are about to delete <b>foo:1.0.10-beta</b>, this operation is irreversible, are you sure?"`,
-      );
     });
 
     it('setItemToBeDeleted sets itemToBeDeleted and open the modal', () => {

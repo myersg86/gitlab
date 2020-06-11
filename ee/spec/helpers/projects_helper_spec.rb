@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ProjectsHelper do
+RSpec.describe ProjectsHelper do
   let(:project) { create(:project) }
 
   before do
@@ -35,6 +35,20 @@ describe ProjectsHelper do
     it 'returns true if membership is not locked' do
       allow(helper).to receive(:membership_locked?) { false }
       expect(helper.can_import_members?).to eq true
+    end
+  end
+
+  describe '#show_compliance_framework_badge?' do
+    it 'returns false if compliance framework setting is not present' do
+      project = build(:project)
+
+      expect(helper.show_compliance_framework_badge?(project)).to be_falsey
+    end
+
+    it 'returns true if compliance framework setting is present' do
+      project = build(:project, :with_compliance_framework)
+
+      expect(helper.show_compliance_framework_badge?(project)).to be_truthy
     end
   end
 
@@ -90,6 +104,10 @@ describe ProjectsHelper do
   describe '#project_security_dashboard_config' do
     include_context 'project with owner and pipeline'
 
+    before do
+      allow(helper).to receive(:current_user).and_return(user)
+    end
+
     let(:project) { create(:project, :repository, group: group) }
 
     context 'project without pipeline' do
@@ -107,27 +125,27 @@ describe ProjectsHelper do
       subject { helper.project_security_dashboard_config(project, pipeline) }
 
       it 'checks if first vulnerability class is enabled' do
-        expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project)
+        expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project, default_enabled: true)
 
         subject
       end
 
       context 'when first first class vulnerabilities is enabled for project' do
         before do
-          expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project).and_return(true)
+          expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project, default_enabled: true).and_return(true)
         end
 
         it 'checks if first vulnerability class is enabled' do
           expect(subject[:vulnerabilities_export_endpoint]).to(
             eq(
-              api_v4_projects_vulnerability_exports_path(id: project.id)
+              api_v4_security_projects_vulnerability_exports_path(id: project.id)
             ))
         end
       end
 
       context 'when first first class vulnerabilities is disabled for project' do
         before do
-          expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project).and_return(false)
+          expect(::Feature).to receive(:enabled?).with(:first_class_vulnerabilities, project, default_enabled: true).and_return(false)
         end
 
         it 'checks if first vulnerability class is enabled' do
@@ -153,12 +171,12 @@ describe ProjectsHelper do
   describe '#get_project_nav_tabs' do
     using RSpec::Parameterized::TableSyntax
 
-    where(:ability, :nav_tab) do
-      :read_dependencies               | :dependencies
-      :read_feature_flag               | :operations
-      :read_licenses                   | :licenses
-      :read_project_security_dashboard | :security
-      :read_threat_monitoring          | :threat_monitoring
+    where(:ability, :nav_tabs) do
+      :read_dependencies               | [:dependencies]
+      :read_feature_flag               | [:operations]
+      :read_licenses                   | [:licenses]
+      :read_project_security_dashboard | [:security, :security_configuration]
+      :read_threat_monitoring          | [:threat_monitoring]
     end
 
     with_them do
@@ -173,23 +191,23 @@ describe ProjectsHelper do
         helper.send(:get_project_nav_tabs, project, user)
       end
 
-      context 'when the feature is disabled' do
+      context 'when the feature is not available' do
         before do
           allow(helper).to receive(:can?).with(user, ability, project).and_return(false)
         end
 
-        it 'does not include the nav tab' do
-          is_expected.not_to include(nav_tab)
+        it 'does not include the nav tabs' do
+          is_expected.not_to include(*nav_tabs)
         end
       end
 
-      context 'when threat monitoring is enabled' do
+      context 'when the feature is available' do
         before do
           allow(helper).to receive(:can?).with(user, ability, project).and_return(true)
         end
 
-        it 'includes the nav tab' do
-          is_expected.to include(nav_tab)
+        it 'includes the nav tabs' do
+          is_expected.to include(*nav_tabs)
         end
       end
     end
@@ -221,60 +239,6 @@ describe ProjectsHelper do
                          ab_feature_enabled? && !security_dashboard_feature_available? && can_admin_namespace?
 
         expect(helper.show_discover_project_security?(project)).to eq(expected_value)
-      end
-    end
-  end
-
-  describe '#subscription_message' do
-    let(:gitlab_subscription) { double(:gitlab_subscription) }
-    let(:decorated_mock) { double(:decorated_mock) }
-    let(:message_mock) { double(:message_mock) }
-    let(:user) { double(:user_mock) }
-
-    it 'if it is not Gitlab.com? it returns nil' do
-      allow(Gitlab).to receive(:com?).and_return(false)
-
-      expect(helper.subscription_message).to be_nil
-    end
-
-    it 'calls Gitlab::ExpiringSubscriptionMessage and SubscriptionPresenter if is Gitlab.com?' do
-      allow(Gitlab).to receive(:com?).and_return(true)
-      allow(helper).to receive(:signed_in?).and_return(true)
-      allow(helper).to receive(:current_user).and_return(user)
-      allow(helper).to receive(:can?).with(user, :owner_access, project).and_return(true)
-      allow(project).to receive(:gitlab_subscription).and_return(gitlab_subscription)
-
-      expect(SubscriptionPresenter).to receive(:new).with(gitlab_subscription).and_return(decorated_mock)
-      expect(::Gitlab::ExpiringSubscriptionMessage).to receive(:new).with(
-        subscribable: decorated_mock,
-        signed_in: true,
-        is_admin: true,
-        namespace: project.namespace
-      ).and_return(message_mock)
-      expect(message_mock).to receive(:message).and_return('hey yay yay yay')
-
-      expect(helper.subscription_message).to eq('hey yay yay yay')
-    end
-  end
-
-  describe '#decorated_subscription' do
-    subject { helper.decorated_subscription }
-
-    context 'when a subscription exists' do
-      let(:gitlab_subscription) { build_stubbed(:gitlab_subscription) }
-
-      it 'returns a decorator' do
-        allow(project).to receive(:gitlab_subscription).and_return(gitlab_subscription)
-
-        expect(subject).to be_a(SubscriptionPresenter)
-      end
-    end
-
-    context 'when no subscription exists' do
-      it 'returns a nil object' do
-        allow(project).to receive(:gitlab_subscription).and_return(nil)
-
-        expect(subject).to be_nil
       end
     end
   end

@@ -9,6 +9,8 @@ export default () => ({
   // Data
   epicIid: '',
   epics: [],
+  childrenEpics: {},
+  childrenFlags: {},
   visibleEpics: [],
   epicIds: [],
   currentGroupId: -1,
@@ -24,7 +26,6 @@ export default () => ({
   // UI Flags
   defaultInnerHeight: 0,
   isChildEpics: false,
-  windowResizeInProgress: false,
   epicsFetchInProgress: false,
   epicsFetchForTimeframeInProgress: false,
   epicsFetchFailure: false,
@@ -32,4 +33,5 @@ export default () => ({
   milestonesFetchInProgress: false,
   milestonesFetchFailure: false,
   milestonesFetchResultEmpty: false,
+  allowSubEpics: false,
 });
