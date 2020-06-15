@@ -397,6 +397,7 @@ Read the documentation on [templating](#templating-variables-for-metrics-dashboa
 | -------- | ---- | -------- | ----------- |
 | `url` | string | yes | The address of the link. |
 | `title` | string | no | Display title for the link. |
+| `type` | string | no | Type of the link. Specifies the link type, can be: `grafana` |
 
 Read the documentation on [links](#add-related-links-to-custom-dashboards).
 
@@ -747,7 +748,7 @@ Templating variables can be used to make your metrics dashboard more versatile.
 [dashboard YAML](#dashboard-top-level-properties).
 Define your variables in the `variables` key, under `templating`. The value of
 the `variables` key should be a hash, and each key under `variables`
-defines a templating variable on the dashboard.
+defines a templating variable on the dashboard, and may contain alphanumeric and underscore characters.
 
 A variable can be used in a Prometheus query in the same dashboard using the syntax
 described [here](#using-variables).
@@ -844,8 +845,13 @@ templating:
 Related links can be added to the top of your metrics dashboard, which can be used for quickly
 navigating between dashboards or external services. The links will open in the same tab.
 
+The dashboard's time range is appended to the `url` as URL parameters.
+
 The `url` attribute is required for the link but the `title` attribute is optional; if the `title`
 is missing then the full address of the URL will be displayed.
+
+The `type` attribute is optional; if the `type` is `grafana`, the dashboard's time range values are
+converted to Grafana's time range format and appended to the `url`.
 
 ![Links UI](img/related_links_v13_1.png)
 
@@ -857,6 +863,9 @@ links:
     url: https://gitlab.com
   - title: GitLab Documentation
     url: https://docs.gitlab.com
+  - title: Public Grafana playground dashboard
+    url: https://play.grafana.org/d/000000012/grafana-play-home?orgId=1
+    type: grafana
 ```
 
 ### View and edit the source file of a custom dashboard
@@ -989,7 +998,7 @@ In GitLab versions 13.1 and greater, you can configure your manually configured 
 >- [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/4925) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.11.
 >- [From GitLab Ultimate 12.5](https://gitlab.com/gitlab-org/gitlab/-/issues/13401), when GitLab receives a recovery alert, it will automatically close the associated issue.
 
-Alerts can be used to trigger actions, like opening an issue automatically (enabled by default since `12.1`). To configure the actions:
+Alerts can be used to trigger actions, like opening an issue automatically (disabled by default since `13.1`). To configure the actions:
 
 1. Navigate to your project's **Settings > Operations > Incidents**.
 1. Enable the option to create issues.

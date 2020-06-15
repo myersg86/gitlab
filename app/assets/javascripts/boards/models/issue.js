@@ -78,7 +78,7 @@ class ListIssue {
   }
 
   updateData(newData) {
-    Object.assign(this, newData);
+    boardsStore.updateIssueData(this, newData);
   }
 
   setFetchingState(key, value) {
@@ -86,7 +86,7 @@ class ListIssue {
   }
 
   setLoadingState(key, value) {
-    this.isLoading[key] = value;
+    boardsStore.setIssueLoadingState(this, key, value);
   }
 
   update() {

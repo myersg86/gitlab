@@ -37,6 +37,24 @@ CREATE SEQUENCE public.alert_management_alert_assignees_id_seq
 
 ALTER SEQUENCE public.alert_management_alert_assignees_id_seq OWNED BY public.alert_management_alert_assignees.id;
 
+CREATE TABLE public.alert_management_alert_user_mentions (
+    id bigint NOT NULL,
+    alert_management_alert_id bigint NOT NULL,
+    note_id bigint,
+    mentioned_users_ids integer[],
+    mentioned_projects_ids integer[],
+    mentioned_groups_ids integer[]
+);
+
+CREATE SEQUENCE public.alert_management_alert_user_mentions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.alert_management_alert_user_mentions_id_seq OWNED BY public.alert_management_alert_user_mentions.id;
+
 CREATE TABLE public.alert_management_alerts (
     id bigint NOT NULL,
     created_at timestamp with time zone NOT NULL,
@@ -803,6 +821,24 @@ CREATE SEQUENCE public.board_project_recent_visits_id_seq
     CACHE 1;
 
 ALTER SEQUENCE public.board_project_recent_visits_id_seq OWNED BY public.board_project_recent_visits.id;
+
+CREATE TABLE public.board_user_preferences (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    board_id bigint NOT NULL,
+    hide_labels boolean,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE SEQUENCE public.board_user_preferences_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.board_user_preferences_id_seq OWNED BY public.board_user_preferences.id;
 
 CREATE TABLE public.boards (
     id integer NOT NULL,
@@ -3145,6 +3181,31 @@ CREATE TABLE public.group_deletion_schedules (
     marked_for_deletion_on date NOT NULL
 );
 
+CREATE TABLE public.group_deploy_keys (
+    id bigint NOT NULL,
+    user_id bigint,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    last_used_at timestamp with time zone,
+    expires_at timestamp with time zone,
+    key text NOT NULL,
+    title text,
+    fingerprint text NOT NULL,
+    fingerprint_sha256 bytea,
+    CONSTRAINT check_cc0365908d CHECK ((char_length(title) <= 255)),
+    CONSTRAINT check_e4526dcf91 CHECK ((char_length(fingerprint) <= 255)),
+    CONSTRAINT check_f58fa0a0f7 CHECK ((char_length(key) <= 4096))
+);
+
+CREATE SEQUENCE public.group_deploy_keys_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.group_deploy_keys_id_seq OWNED BY public.group_deploy_keys.id;
+
 CREATE TABLE public.group_deploy_tokens (
     id bigint NOT NULL,
     created_at timestamp with time zone NOT NULL,
@@ -5205,7 +5266,7 @@ ALTER SEQUENCE public.project_import_data_id_seq OWNED BY public.project_import_
 
 CREATE TABLE public.project_incident_management_settings (
     project_id integer NOT NULL,
-    create_issue boolean DEFAULT true NOT NULL,
+    create_issue boolean DEFAULT false NOT NULL,
     send_email boolean DEFAULT false NOT NULL,
     issue_template_key text
 );
@@ -5340,6 +5401,7 @@ CREATE TABLE public.project_settings (
     updated_at timestamp with time zone NOT NULL,
     push_rule_id bigint,
     show_default_award_emojis boolean DEFAULT true,
+    allow_merge_on_skipped_pipeline boolean,
     CONSTRAINT check_bde223416c CHECK ((show_default_award_emojis IS NOT NULL))
 );
 
@@ -7382,6 +7444,8 @@ ALTER TABLE ONLY public.abuse_reports ALTER COLUMN id SET DEFAULT nextval('publi
 
 ALTER TABLE ONLY public.alert_management_alert_assignees ALTER COLUMN id SET DEFAULT nextval('public.alert_management_alert_assignees_id_seq'::regclass);
 
+ALTER TABLE ONLY public.alert_management_alert_user_mentions ALTER COLUMN id SET DEFAULT nextval('public.alert_management_alert_user_mentions_id_seq'::regclass);
+
 ALTER TABLE ONLY public.alert_management_alerts ALTER COLUMN id SET DEFAULT nextval('public.alert_management_alerts_id_seq'::regclass);
 
 ALTER TABLE ONLY public.alerts_service_data ALTER COLUMN id SET DEFAULT nextval('public.alerts_service_data_id_seq'::regclass);
@@ -7433,6 +7497,8 @@ ALTER TABLE ONLY public.board_group_recent_visits ALTER COLUMN id SET DEFAULT ne
 ALTER TABLE ONLY public.board_labels ALTER COLUMN id SET DEFAULT nextval('public.board_labels_id_seq'::regclass);
 
 ALTER TABLE ONLY public.board_project_recent_visits ALTER COLUMN id SET DEFAULT nextval('public.board_project_recent_visits_id_seq'::regclass);
+
+ALTER TABLE ONLY public.board_user_preferences ALTER COLUMN id SET DEFAULT nextval('public.board_user_preferences_id_seq'::regclass);
 
 ALTER TABLE ONLY public.boards ALTER COLUMN id SET DEFAULT nextval('public.boards_id_seq'::regclass);
 
@@ -7647,6 +7713,8 @@ ALTER TABLE ONLY public.gpg_signatures ALTER COLUMN id SET DEFAULT nextval('publ
 ALTER TABLE ONLY public.grafana_integrations ALTER COLUMN id SET DEFAULT nextval('public.grafana_integrations_id_seq'::regclass);
 
 ALTER TABLE ONLY public.group_custom_attributes ALTER COLUMN id SET DEFAULT nextval('public.group_custom_attributes_id_seq'::regclass);
+
+ALTER TABLE ONLY public.group_deploy_keys ALTER COLUMN id SET DEFAULT nextval('public.group_deploy_keys_id_seq'::regclass);
 
 ALTER TABLE ONLY public.group_deploy_tokens ALTER COLUMN id SET DEFAULT nextval('public.group_deploy_tokens_id_seq'::regclass);
 
@@ -8024,6 +8092,9 @@ ALTER TABLE ONLY public.abuse_reports
 ALTER TABLE ONLY public.alert_management_alert_assignees
     ADD CONSTRAINT alert_management_alert_assignees_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.alert_management_alert_user_mentions
+    ADD CONSTRAINT alert_management_alert_user_mentions_pkey PRIMARY KEY (id);
+
 ALTER TABLE ONLY public.alert_management_alerts
     ADD CONSTRAINT alert_management_alerts_pkey PRIMARY KEY (id);
 
@@ -8108,6 +8179,9 @@ ALTER TABLE ONLY public.board_labels
 ALTER TABLE ONLY public.board_project_recent_visits
     ADD CONSTRAINT board_project_recent_visits_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.board_user_preferences
+    ADD CONSTRAINT board_user_preferences_pkey PRIMARY KEY (id);
+
 ALTER TABLE ONLY public.boards
     ADD CONSTRAINT boards_pkey PRIMARY KEY (id);
 
@@ -8119,6 +8193,9 @@ ALTER TABLE ONLY public.chat_names
 
 ALTER TABLE ONLY public.chat_teams
     ADD CONSTRAINT chat_teams_pkey PRIMARY KEY (id);
+
+ALTER TABLE public.design_management_designs
+    ADD CONSTRAINT check_07155e2715 CHECK ((char_length((filename)::text) <= 255)) NOT VALID;
 
 ALTER TABLE public.ci_job_artifacts
     ADD CONSTRAINT check_27f0f6dbab CHECK ((file_store IS NOT NULL)) NOT VALID;
@@ -8446,6 +8523,9 @@ ALTER TABLE ONLY public.group_custom_attributes
 
 ALTER TABLE ONLY public.group_deletion_schedules
     ADD CONSTRAINT group_deletion_schedules_pkey PRIMARY KEY (group_id);
+
+ALTER TABLE ONLY public.group_deploy_keys
+    ADD CONSTRAINT group_deploy_keys_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.group_deploy_tokens
     ADD CONSTRAINT group_deploy_tokens_pkey PRIMARY KEY (id);
@@ -9115,6 +9195,8 @@ CREATE INDEX idx_merge_requests_on_state_id_and_merge_status ON public.merge_req
 
 CREATE INDEX idx_merge_requests_on_target_project_id_and_iid_opened ON public.merge_requests USING btree (target_project_id, iid) WHERE (state_id = 1);
 
+CREATE INDEX idx_merge_requests_on_target_project_id_and_locked_state ON public.merge_requests USING btree (target_project_id) WHERE (state_id = 4);
+
 CREATE UNIQUE INDEX idx_metrics_users_starred_dashboard_on_user_project_dashboard ON public.metrics_users_starred_dashboards USING btree (user_id, project_id, dashboard_path);
 
 CREATE INDEX idx_mr_cc_diff_files_on_mr_cc_id_and_sha ON public.merge_request_context_commit_diff_files USING btree (merge_request_context_commit_id, sha);
@@ -9164,6 +9246,12 @@ CREATE INDEX index_alert_management_alerts_on_issue_id ON public.alert_managemen
 CREATE UNIQUE INDEX index_alert_management_alerts_on_project_id_and_fingerprint ON public.alert_management_alerts USING btree (project_id, fingerprint);
 
 CREATE UNIQUE INDEX index_alert_management_alerts_on_project_id_and_iid ON public.alert_management_alerts USING btree (project_id, iid);
+
+CREATE UNIQUE INDEX index_alert_user_mentions_on_alert_id ON public.alert_management_alert_user_mentions USING btree (alert_management_alert_id) WHERE (note_id IS NULL);
+
+CREATE UNIQUE INDEX index_alert_user_mentions_on_alert_id_and_note_id ON public.alert_management_alert_user_mentions USING btree (alert_management_alert_id, note_id);
+
+CREATE UNIQUE INDEX index_alert_user_mentions_on_note_id ON public.alert_management_alert_user_mentions USING btree (note_id) WHERE (note_id IS NOT NULL);
 
 CREATE INDEX index_alerts_service_data_on_service_id ON public.alerts_service_data USING btree (service_id);
 
@@ -9292,6 +9380,12 @@ CREATE INDEX index_board_project_recent_visits_on_project_id ON public.board_pro
 CREATE INDEX index_board_project_recent_visits_on_user_id ON public.board_project_recent_visits USING btree (user_id);
 
 CREATE UNIQUE INDEX index_board_project_recent_visits_on_user_project_and_board ON public.board_project_recent_visits USING btree (user_id, project_id, board_id);
+
+CREATE INDEX index_board_user_preferences_on_board_id ON public.board_user_preferences USING btree (board_id);
+
+CREATE INDEX index_board_user_preferences_on_user_id ON public.board_user_preferences USING btree (user_id);
+
+CREATE UNIQUE INDEX index_board_user_preferences_on_user_id_and_board_id ON public.board_user_preferences USING btree (user_id, board_id);
 
 CREATE INDEX index_boards_on_group_id ON public.boards USING btree (group_id);
 
@@ -9451,7 +9545,7 @@ CREATE INDEX index_ci_pipelines_on_project_idandrefandiddesc ON public.ci_pipeli
 
 CREATE INDEX index_ci_pipelines_on_status ON public.ci_pipelines USING btree (status);
 
-CREATE INDEX index_ci_pipelines_on_user_id_and_created_at ON public.ci_pipelines USING btree (user_id, created_at);
+CREATE INDEX index_ci_pipelines_on_user_id_and_created_at_and_source ON public.ci_pipelines USING btree (user_id, created_at, source);
 
 CREATE UNIQUE INDEX index_ci_refs_on_project_id_and_ref_path ON public.ci_refs USING btree (project_id, ref_path);
 
@@ -9888,6 +9982,12 @@ CREATE INDEX index_group_custom_attributes_on_key_and_value ON public.group_cust
 CREATE INDEX index_group_deletion_schedules_on_marked_for_deletion_on ON public.group_deletion_schedules USING btree (marked_for_deletion_on);
 
 CREATE INDEX index_group_deletion_schedules_on_user_id ON public.group_deletion_schedules USING btree (user_id);
+
+CREATE UNIQUE INDEX index_group_deploy_keys_on_fingerprint ON public.group_deploy_keys USING btree (fingerprint);
+
+CREATE INDEX index_group_deploy_keys_on_fingerprint_sha256 ON public.group_deploy_keys USING btree (fingerprint_sha256);
+
+CREATE INDEX index_group_deploy_keys_on_user_id ON public.group_deploy_keys USING btree (user_id);
 
 CREATE INDEX index_group_deploy_tokens_on_deploy_token_id ON public.group_deploy_tokens USING btree (deploy_token_id);
 
@@ -12113,6 +12213,9 @@ ALTER TABLE ONLY public.clusters_applications_knative
 ALTER TABLE ONLY public.terraform_states
     ADD CONSTRAINT fk_rails_558901b030 FOREIGN KEY (locked_by_user_id) REFERENCES public.users(id);
 
+ALTER TABLE ONLY public.group_deploy_keys
+    ADD CONSTRAINT fk_rails_5682fc07f8 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE RESTRICT;
+
 ALTER TABLE ONLY public.issue_user_mentions
     ADD CONSTRAINT fk_rails_57581fda73 FOREIGN KEY (issue_id) REFERENCES public.issues(id) ON DELETE CASCADE;
 
@@ -12329,6 +12432,9 @@ ALTER TABLE ONLY public.snippet_repositories
 ALTER TABLE ONLY public.gpg_key_subkeys
     ADD CONSTRAINT fk_rails_8b2c90b046 FOREIGN KEY (gpg_key_id) REFERENCES public.gpg_keys(id) ON DELETE CASCADE;
 
+ALTER TABLE ONLY public.board_user_preferences
+    ADD CONSTRAINT fk_rails_8b3b23ce82 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
 ALTER TABLE ONLY public.allowed_email_domains
     ADD CONSTRAINT fk_rails_8b5da859f9 FOREIGN KEY (group_id) REFERENCES public.namespaces(id) ON DELETE CASCADE;
 
@@ -12352,6 +12458,9 @@ ALTER TABLE ONLY public.design_user_mentions
 
 ALTER TABLE ONLY public.clusters_kubernetes_namespaces
     ADD CONSTRAINT fk_rails_8df789f3ab FOREIGN KEY (environment_id) REFERENCES public.environments(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.alert_management_alert_user_mentions
+    ADD CONSTRAINT fk_rails_8e48eca0fe FOREIGN KEY (alert_management_alert_id) REFERENCES public.alert_management_alerts(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.project_daily_statistics
     ADD CONSTRAINT fk_rails_8e549b272d FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
@@ -12668,6 +12777,9 @@ ALTER TABLE ONLY public.dependency_proxy_blobs
 ALTER TABLE ONLY public.issues_prometheus_alert_events
     ADD CONSTRAINT fk_rails_db5b756534 FOREIGN KEY (issue_id) REFERENCES public.issues(id) ON DELETE CASCADE;
 
+ALTER TABLE ONLY public.board_user_preferences
+    ADD CONSTRAINT fk_rails_dbebdaa8fe FOREIGN KEY (board_id) REFERENCES public.boards(id) ON DELETE CASCADE;
+
 ALTER TABLE ONLY public.vulnerability_occurrence_pipelines
     ADD CONSTRAINT fk_rails_dc3ae04693 FOREIGN KEY (occurrence_id) REFERENCES public.vulnerability_occurrences(id) ON DELETE CASCADE;
 
@@ -12727,6 +12839,9 @@ ALTER TABLE ONLY public.merge_request_blocks
 
 ALTER TABLE ONLY public.protected_branch_unprotect_access_levels
     ADD CONSTRAINT fk_rails_e9eb8dc025 FOREIGN KEY (protected_branch_id) REFERENCES public.protected_branches(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.alert_management_alert_user_mentions
+    ADD CONSTRAINT fk_rails_eb2de0cdef FOREIGN KEY (note_id) REFERENCES public.notes(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.ci_daily_report_results
     ADD CONSTRAINT fk_rails_ebc2931b90 FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
@@ -13613,6 +13728,7 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200323134519
 20200324093258
 20200324115359
+20200325094612
 20200325104755
 20200325104756
 20200325104833
@@ -13754,6 +13870,7 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200429182245
 20200430103158
 20200430130048
+20200430174637
 20200505164958
 20200505171834
 20200505172405
@@ -13831,13 +13948,25 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200527151413
 20200527152116
 20200527152657
+20200527170649
 20200527211000
 20200528054112
 20200528123703
 20200528125905
 20200528171933
 20200601210148
+20200602013900
+20200602013901
 20200603073101
 20200604143628
+20200604145731
+20200604174544
+20200604174558
+20200605003204
+20200608072931
+20200608075553
+20200608214008
+20200609002841
+20200609212701
 \.
 

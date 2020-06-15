@@ -1,11 +1,13 @@
 <script>
-import { escape } from 'lodash';
+import { GlSprintf, GlLink } from '@gitlab/ui';
 import EventItem from 'ee/vue_shared/security_reports/components/event_item.vue';
-import { __, sprintf } from '~/locale';
+import { __ } from '~/locale';
 
 export default {
   components: {
     EventItem,
+    GlSprintf,
+    GlLink,
   },
   props: {
     feedback: {
@@ -19,23 +21,15 @@ export default {
     },
   },
   computed: {
+    hasProjectUrl() {
+      return this.project?.value && this.project?.url;
+    },
     eventText() {
-      const { project, feedback } = this;
-      const issueLink = `<a href="${feedback.issue_url}">#${feedback.issue_iid}</a>`;
-
-      if (project && project.value && project.url) {
-        const projectLink = `<a href="${escape(project.url)}">${escape(project.value)}</a>`;
-
-        return sprintf(
-          __('Created issue %{issueLink} at %{projectLink}'),
-          {
-            issueLink,
-            projectLink,
-          },
-          false,
-        );
+      if (this.hasProjectUrl) {
+        return __('Created issue %{issueLink} at %{projectLink}');
       }
-      return sprintf(__('Created issue %{issueLink}'), { issueLink }, false);
+
+      return __('Created issue %{issueLink}');
     },
   },
 };

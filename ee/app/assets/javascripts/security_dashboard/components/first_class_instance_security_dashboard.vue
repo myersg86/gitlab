@@ -46,7 +46,6 @@ export default {
       type: String,
       required: true,
     },
-
     vulnerabilitiesExportEndpoint: {
       type: String,
       required: true,
@@ -118,6 +117,8 @@ export default {
           >{{ toggleButtonProps.text }}</gl-button
         >
       </header>
+    </template>
+    <template #sticky>
       <filters
         v-if="shouldShowDashboard"
         :projects="graphqlProjectList"

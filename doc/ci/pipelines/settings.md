@@ -62,7 +62,7 @@ if the job surpasses the threshold, it is marked as failed.
 > [Introduced](https://gitlab.com/gitlab-org/gitlab-foss/-/merge_requests/17221) in GitLab 10.7.
 
 Project defined timeout (either specific timeout set by user or the default
-60 minutes timeout) may be [overridden on Runner level](../runners/README.md#setting-maximum-job-timeout-for-a-runner).
+60 minutes timeout) may be [overridden on Runner level](../runners/README.md#set-maximum-job-timeout-for-a-runner).
 
 ## Maximum artifacts size **(CORE ONLY)**
 
@@ -208,6 +208,8 @@ you can enable this in the project settings:
 1. Expand **General Pipelines**.
 1. Check the **Auto-cancel redundant, pending pipelines** checkbox.
 1. Click **Save changes**.
+
+Note that only jobs with [interruptible](../yaml/README.md#interruptible) set to `true` will be cancelled.
 
 ## Skip outdated deployment jobs
 

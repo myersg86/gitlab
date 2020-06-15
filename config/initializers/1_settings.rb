@@ -561,6 +561,9 @@ Gitlab.ee do
   Settings.cron_jobs['elastic_index_bulk_cron_worker'] ||= Settingslogic.new({})
   Settings.cron_jobs['elastic_index_bulk_cron_worker']['cron'] ||= '*/1 * * * *'
   Settings.cron_jobs['elastic_index_bulk_cron_worker']['job_class'] ||= 'ElasticIndexBulkCronWorker'
+  Settings.cron_jobs['elastic_index_initial_bulk_cron_worker'] ||= Settingslogic.new({})
+  Settings.cron_jobs['elastic_index_initial_bulk_cron_worker']['cron'] ||= '*/1 * * * *'
+  Settings.cron_jobs['elastic_index_initial_bulk_cron_worker']['job_class'] ||= 'ElasticIndexInitialBulkCronWorker'
   Settings.cron_jobs['sync_seat_link_worker'] ||= Settingslogic.new({})
   Settings.cron_jobs['sync_seat_link_worker']['cron'] ||= "#{rand(60)} 0 * * *"
   Settings.cron_jobs['sync_seat_link_worker']['job_class'] = 'SyncSeatLinkWorker'
@@ -729,7 +732,6 @@ Settings.webpack.dev_server['port']    ||= 3808
 # ActionCable settings
 #
 Settings['action_cable'] ||= Settingslogic.new({})
-Settings.action_cable['in_app'] ||= false
 Settings.action_cable['worker_pool_size'] ||= 4
 
 #

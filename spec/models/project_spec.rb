@@ -183,9 +183,9 @@ describe Project do
         expect(project.pages_metadatum).to be_persisted
       end
 
-      it 'automatically creates a project setting row' do
+      it 'automatically builds a project setting row' do
         expect(project.project_setting).to be_an_instance_of(ProjectSetting)
-        expect(project.project_setting).to be_persisted
+        expect(project.project_setting).to be_new_record
       end
     end
 
@@ -6062,6 +6062,14 @@ describe Project do
 
     it { is_expected.to contain_exactly(project_bot) }
     it { is_expected.not_to include(user) }
+  end
+
+  describe "#metrics_setting" do
+    let(:project) { build(:project) }
+
+    it 'creates setting if it does not exist' do
+      expect(project.metrics_setting).to be_an_instance_of(ProjectMetricsSetting)
+    end
   end
 
   def finish_job(export_job)

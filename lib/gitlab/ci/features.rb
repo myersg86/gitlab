@@ -25,6 +25,18 @@ module Gitlab
       def self.pipeline_fixed_notifications?
         ::Feature.enabled?(:ci_pipeline_fixed_notifications)
       end
+
+      def self.instance_variables_ui_enabled?
+        ::Feature.enabled?(:ci_instance_variables_ui, default_enabled: true)
+      end
+
+      def self.composite_status?(project)
+        ::Feature.enabled?(:ci_composite_status, project, default_enabled: true)
+      end
+
+      def self.atomic_processing?(project)
+        ::Feature.enabled?(:ci_atomic_processing, project, default_enabled: true)
+      end
     end
   end
 end

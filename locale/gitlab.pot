@@ -371,7 +371,10 @@ msgstr ""
 msgid "%{host} sign-in from new location"
 msgstr ""
 
-msgid "%{icon}You are about to add %{usersTag} people to the discussion. Proceed with caution."
+msgid "%{icon}You are about to add %{usersTag} people to the discussion. They will all receive a notification."
+msgstr ""
+
+msgid "%{integrations_link_start}Integrations%{link_end} enable you to make third-party applications part of your GitLab workflow. If the available integrations don't meet your needs, consider using a %{webhooks_link_start}webhook%{link_end}."
 msgstr ""
 
 msgid "%{issuableType} will be removed! Are you sure?"
@@ -426,9 +429,6 @@ msgid "%{link_start}Learn more%{link_end} about what information is shared with 
 msgstr ""
 
 msgid "%{link_start}Read more%{link_end} about role permissions"
-msgstr ""
-
-msgid "%{link} can be used for binding events when something is happening within the project."
 msgstr ""
 
 msgid "%{listToShow}, and %{awardsListLength} more."
@@ -656,6 +656,12 @@ msgid "%{value} s"
 msgstr ""
 
 msgid "%{verb} %{time_spent_value} spent time."
+msgstr ""
+
+msgid "%{webhooks_link_start}%{webhook_type}%{link_end} enable you to send notifications to web applications in response to events in a group or project."
+msgstr ""
+
+msgid "%{webhooks_link_start}%{webhook_type}%{link_end} enable you to send notifications to web applications in response to events in a group or project. We recommend using an %{integrations_link_start}integration%{link_end} in preference to a webhook."
 msgstr ""
 
 msgid "'%{level}' is not a valid visibility level"
@@ -901,6 +907,12 @@ msgid "<code>\"johnsmith@example.com\": \"johnsm...@example.com\"</code> will ad
 msgstr ""
 
 msgid "<code>\"johnsmith@example.com\": \"johnsmith@example.com\"</code> will add \"By <a href=\"#\">johnsmith@example.com</a>\" to all issues and comments originally created by johnsmith@example.com. By default, the email address or username is masked to ensure the user's privacy. Use this option if you want to show the full email address."
+msgstr ""
+
+msgid "<code>Masked</code> to prevent the values from being displayed in job logs (must match certain regexp requirements)."
+msgstr ""
+
+msgid "<code>Protected</code> to expose them to protected branches or tags only."
 msgstr ""
 
 msgid "<namespace / project>"
@@ -1846,6 +1858,9 @@ msgstr ""
 msgid "AlertManagement|Alert"
 msgstr ""
 
+msgid "AlertManagement|Alert assignee(s): %{assignees}"
+msgstr ""
+
 msgid "AlertManagement|Alert detail"
 msgstr ""
 
@@ -1861,7 +1876,16 @@ msgstr ""
 msgid "AlertManagement|All alerts"
 msgstr ""
 
+msgid "AlertManagement|Assign Assignees"
+msgstr ""
+
 msgid "AlertManagement|Assign status"
+msgstr ""
+
+msgid "AlertManagement|Assignee"
+msgstr ""
+
+msgid "AlertManagement|Assignee(s)"
 msgstr ""
 
 msgid "AlertManagement|Assignees"
@@ -1901,6 +1925,9 @@ msgid "AlertManagement|Medium"
 msgstr ""
 
 msgid "AlertManagement|More information"
+msgstr ""
+
+msgid "AlertManagement|No Matching Results"
 msgstr ""
 
 msgid "AlertManagement|No alert data to display."
@@ -1949,6 +1976,12 @@ msgid "AlertManagement|There was an error displaying the alert. Please refresh t
 msgstr ""
 
 msgid "AlertManagement|There was an error displaying the alerts. Confirm your endpoint's configuration details to ensure alerts appear."
+msgstr ""
+
+msgid "AlertManagement|There was an error while updating the assignee(s) list. Please try again."
+msgstr ""
+
+msgid "AlertManagement|There was an error while updating the assignee(s) of the alert. Please try again."
 msgstr ""
 
 msgid "AlertManagement|There was an error while updating the status of the alert. Please try again."
@@ -3799,6 +3832,9 @@ msgstr ""
 msgid "Can override approvers and approvals required per merge request"
 msgstr ""
 
+msgid "Can't apply as this line has changed or the suggestion already matches its content."
+msgstr ""
+
 msgid "Can't create snippet: %{err}"
 msgstr ""
 
@@ -4714,7 +4750,7 @@ msgstr ""
 msgid "ClusterIntegration|Cert-Manager"
 msgstr ""
 
-msgid "ClusterIntegration|Cert-Manager is a native Kubernetes certificate management controller that helps with issuing certificates. Installing Cert-Manager on your cluster will issue a certificate by %{letsEncrypt} and ensure that certificates are valid and up-to-date."
+msgid "ClusterIntegration|Cert-Manager is a native Kubernetes certificate management controller that helps with issuing certificates. Installing Cert-Manager on your cluster will issue a certificate by %{linkStart}Let's Encrypt%{linkEnd} and ensure that certificates are valid and up-to-date."
 msgstr ""
 
 msgid "ClusterIntegration|Certificate Authority bundle (PEM format)"
@@ -4739,9 +4775,6 @@ msgid "ClusterIntegration|Clear cluster cache"
 msgstr ""
 
 msgid "ClusterIntegration|Clear the local cache of namespace and service accounts. This is necessary if your integration has become out of sync. The cache is repopulated during the next CI job that requires namespace and service accounts."
-msgstr ""
-
-msgid "ClusterIntegration|Cloud Run"
 msgstr ""
 
 msgid "ClusterIntegration|Cluster being created"
@@ -4828,7 +4861,7 @@ msgstr ""
 msgid "ClusterIntegration|Crossplane"
 msgstr ""
 
-msgid "ClusterIntegration|Crossplane enables declarative provisioning of managed services from your cloud of choice using %{codeStart}kubectl%{codeEnd} or %{gitlabIntegrationLink}. Crossplane runs inside your Kubernetes cluster and supports secure connectivity and secrets management between app containers and the cloud services they depend on."
+msgid "ClusterIntegration|Crossplane enables declarative provisioning of managed services from your cloud of choice using %{codeStart}kubectl%{codeEnd} or %{linkStart}GitLab Integration%{linkEnd}. Crossplane runs inside your Kubernetes cluster and supports secure connectivity and secrets management between app containers and the cloud services they depend on."
 msgstr ""
 
 msgid "ClusterIntegration|Deletes all GitLab resources attached to this cluster during removal"
@@ -4912,9 +4945,6 @@ msgstr ""
 msgid "ClusterIntegration|GitLab-managed cluster"
 msgstr ""
 
-msgid "ClusterIntegration|Gitlab Integration"
-msgstr ""
-
 msgid "ClusterIntegration|Global default"
 msgstr ""
 
@@ -4960,7 +4990,7 @@ msgstr ""
 msgid "ClusterIntegration|Ingress gives you a way to route requests to services based on the request host or path, centralizing a number of services into a single entrypoint."
 msgstr ""
 
-msgid "ClusterIntegration|Installing Ingress may incur additional costs. Learn more about %{pricingLink}."
+msgid "ClusterIntegration|Installing Ingress may incur additional costs. Learn more about %{linkStart}pricing%{linkEnd}."
 msgstr ""
 
 msgid "ClusterIntegration|Instance cluster"
@@ -4975,7 +5005,7 @@ msgstr ""
 msgid "ClusterIntegration|Issuer Email"
 msgstr ""
 
-msgid "ClusterIntegration|Issuers represent a certificate authority. You must provide an email address for your Issuer. "
+msgid "ClusterIntegration|Issuers represent a certificate authority. You must provide an email address for your Issuer."
 msgstr ""
 
 msgid "ClusterIntegration|Jupyter Hostname"
@@ -5045,9 +5075,6 @@ msgid "ClusterIntegration|Learn more about group Kubernetes clusters"
 msgstr ""
 
 msgid "ClusterIntegration|Learn more about instance Kubernetes clusters"
-msgstr ""
-
-msgid "ClusterIntegration|Let's Encrypt"
 msgstr ""
 
 msgid "ClusterIntegration|Loading IAM Roles"
@@ -5161,7 +5188,7 @@ msgstr ""
 msgid "ClusterIntegration|Prometheus"
 msgstr ""
 
-msgid "ClusterIntegration|Prometheus is an open-source monitoring system with %{gitlabIntegrationLink} to monitor deployed applications."
+msgid "ClusterIntegration|Prometheus is an open-source monitoring system with %{linkStart}GitLab Integration%{linkEnd} to monitor deployed applications."
 msgstr ""
 
 msgid "ClusterIntegration|Provider details"
@@ -5488,13 +5515,10 @@ msgstr ""
 msgid "ClusterIntegration|documentation"
 msgstr ""
 
-msgid "ClusterIntegration|installed via %{installed_via}"
+msgid "ClusterIntegration|installed via %{linkStart}Cloud Run%{linkEnd}"
 msgstr ""
 
 msgid "ClusterIntegration|meets the requirements"
-msgstr ""
-
-msgid "ClusterIntegration|pricing"
 msgstr ""
 
 msgid "ClusterIntegration|sign up"
@@ -6702,7 +6726,7 @@ msgstr ""
 msgid "Current vulnerabilities count"
 msgstr ""
 
-msgid "CurrentUser|Buy CI minutes"
+msgid "CurrentUser|Buy Pipeline minutes"
 msgstr ""
 
 msgid "CurrentUser|Profile"
@@ -8468,10 +8492,16 @@ msgstr ""
 msgid "Environment scope"
 msgstr ""
 
+msgid "Environment variables are applied to all project environments in this instance via the Runner. You can use environment variables for passwords, secret keys, etc. Make variables available to the running application by prepending the variable key with <code>K8S_SECRET_</code>. You can set variables to be:"
+msgstr ""
+
 msgid "Environment variables are applied to environments via the runner. They can be protected by only exposing them to protected branches or tags. Additionally, they can be masked so they are hidden in job logs, though they must match certain regexp requirements to do so. You can use environment variables for passwords, secret keys, or whatever you want."
 msgstr ""
 
 msgid "Environment variables are configured by your administrator to be %{link_start}protected%{link_end} by default"
+msgstr ""
+
+msgid "Environment variables on this GitLab instance are configured to be %{link_start}protected%{link_end} by default"
 msgstr ""
 
 msgid "Environment:"
@@ -10190,6 +10220,9 @@ msgstr ""
 msgid "GeoNodes|Not checksummed"
 msgstr ""
 
+msgid "GeoNodes|Package files"
+msgstr ""
+
 msgid "GeoNodes|Pausing replication stops the sync process. Are you sure?"
 msgstr ""
 
@@ -10733,6 +10766,9 @@ msgstr ""
 msgid "Go to %{link_to_google_takeout}."
 msgstr ""
 
+msgid "Go to <strong>Issues</strong> > <strong>Boards</strong> to access your personalized learning issue board."
+msgstr ""
+
 msgid "Go to Pipelines"
 msgstr ""
 
@@ -10904,9 +10940,6 @@ msgstr ""
 msgid "Group %{group_name} was successfully created."
 msgstr ""
 
-msgid "Group '%{group_name}' is being imported."
-msgstr ""
-
 msgid "Group Audit Events"
 msgstr ""
 
@@ -10943,9 +10976,6 @@ msgstr ""
 msgid "Group by:"
 msgstr ""
 
-msgid "Group could not be imported: %{errors}"
-msgstr ""
-
 msgid "Group description"
 msgstr ""
 
@@ -10971,6 +11001,9 @@ msgid "Group has been already marked for deletion"
 msgstr ""
 
 msgid "Group has not been marked for deletion"
+msgstr ""
+
+msgid "Group import could not be scheduled"
 msgstr ""
 
 msgid "Group info:"
@@ -11037,6 +11070,24 @@ msgid "GroupActivyMetrics|Merge Requests created"
 msgstr ""
 
 msgid "GroupActivyMetrics|Recent activity (last 90 days)"
+msgstr ""
+
+msgid "GroupImport|Failed to import group."
+msgstr ""
+
+msgid "GroupImport|Group '%{group_name}' is being imported."
+msgstr ""
+
+msgid "GroupImport|Group could not be imported: %{errors}"
+msgstr ""
+
+msgid "GroupImport|Please wait while we import the group for you. Refresh at will."
+msgstr ""
+
+msgid "GroupImport|The group was successfully imported."
+msgstr ""
+
+msgid "GroupImport|Unable to process group import file"
 msgstr ""
 
 msgid "GroupRoadmap|%{dateWord} – No end date"
@@ -11451,6 +11502,9 @@ msgid "Helps reduce alert volume (e.g. if creating too many issues)"
 msgstr ""
 
 msgid "Helps reduce request volume for protected paths"
+msgstr ""
+
+msgid "Here are all your projects in your group, including the one you just created. To start, let’s take a look at your personalized learning project which will help you learn about GitLab at your own pace."
 msgstr ""
 
 msgid "Here you will find recent merge request activity"
@@ -12057,9 +12111,6 @@ msgid "Integration Settings"
 msgstr ""
 
 msgid "Integrations"
-msgstr ""
-
-msgid "Integrations allow you to integrate GitLab with other applications"
 msgstr ""
 
 msgid "Integrations|All details"
@@ -12973,6 +13024,9 @@ msgstr ""
 msgid "License History"
 msgstr ""
 
+msgid "License URL"
+msgstr ""
+
 msgid "License-Check"
 msgstr ""
 
@@ -13401,6 +13455,9 @@ msgid "Manage milestones"
 msgstr ""
 
 msgid "Manage project labels"
+msgstr ""
+
+msgid "Manage storage usage"
 msgstr ""
 
 msgid "Manage two-factor authentication"
@@ -13940,6 +13997,12 @@ msgstr ""
 msgid "MetricsSettings|Add a button to the metrics dashboard linking directly to your existing external dashboard."
 msgstr ""
 
+msgid "MetricsSettings|Choose whether to display dashboard metrics in UTC or the user's local timezone."
+msgstr ""
+
+msgid "MetricsSettings|Dashboard timezone"
+msgstr ""
+
 msgid "MetricsSettings|External dashboard URL"
 msgstr ""
 
@@ -13947,6 +14010,12 @@ msgid "MetricsSettings|Manage Metrics Dashboard settings."
 msgstr ""
 
 msgid "MetricsSettings|Metrics Dashboard"
+msgstr ""
+
+msgid "MetricsSettings|UTC (Coordinated Universal Time)"
+msgstr ""
+
+msgid "MetricsSettings|User's local timezone"
 msgstr ""
 
 msgid "Metrics|Add metric"
@@ -15253,6 +15322,9 @@ msgstr ""
 msgid "One or more of you personal access tokens were revoked"
 msgstr ""
 
+msgid "One or more of your %{provider} projects cannot be imported into GitLab directly because they use Subversion or Mercurial for version control, rather than Git."
+msgstr ""
+
 msgid "One or more of your Bitbucket projects cannot be imported into GitLab directly because they use Subversion or Mercurial for version control, rather than Git."
 msgstr ""
 
@@ -16171,6 +16243,9 @@ msgstr ""
 msgid "Pipeline|Stop pipeline #%{pipelineId}?"
 msgstr ""
 
+msgid "Pipeline|Tag name"
+msgstr ""
+
 msgid "Pipeline|Trigger author"
 msgstr ""
 
@@ -16258,6 +16333,9 @@ msgstr ""
 msgid "Please complete your profile with email address"
 msgstr ""
 
+msgid "Please convert %{linkStart}them to Git%{linkEnd}, and go through the %{linkToImportFlow} again."
+msgstr ""
+
 msgid "Please convert them to %{link_to_git}, and go through the %{link_to_import_flow} again."
 msgstr ""
 
@@ -16313,6 +16391,9 @@ msgid "Please provide a valid URL"
 msgstr ""
 
 msgid "Please provide a valid email address."
+msgstr ""
+
+msgid "Please provide attributes to update"
 msgstr ""
 
 msgid "Please refer to <a href=\"%{docs_url}\">%{docs_url}</a>"
@@ -17218,6 +17299,9 @@ msgstr ""
 msgid "ProjectSettings|Enable 'Delete source branch' option by default"
 msgstr ""
 
+msgid "ProjectSettings|Enable merge trains and pipelines for merged results"
+msgstr ""
+
 msgid "ProjectSettings|Every merge creates a merge commit"
 msgstr ""
 
@@ -17284,9 +17368,6 @@ msgstr ""
 msgid "ProjectSettings|Merge options"
 msgstr ""
 
-msgid "ProjectSettings|Merge pipelines will try to validate the post-merge result prior to merging"
-msgstr ""
-
 msgid "ProjectSettings|Merge requests"
 msgstr ""
 
@@ -17312,6 +17393,9 @@ msgid "ProjectSettings|Pages for project documentation"
 msgstr ""
 
 msgid "ProjectSettings|Pipelines"
+msgstr ""
+
+msgid "ProjectSettings|Pipelines for merge requests must be enabled in the CI/CD configuration file, or pipelines could be unresolvable or dropped"
 msgstr ""
 
 msgid "ProjectSettings|Pipelines must succeed"
@@ -17341,6 +17425,9 @@ msgstr ""
 msgid "ProjectSettings|Show link to create/view merge request when pushing from the command line"
 msgstr ""
 
+msgid "ProjectSettings|Skipped pipelines are considered successful"
+msgstr ""
+
 msgid "ProjectSettings|Snippets"
 msgstr ""
 
@@ -17354,6 +17441,9 @@ msgid "ProjectSettings|The variables GitLab supports:"
 msgstr ""
 
 msgid "ProjectSettings|These checks must pass before merge requests can be merged"
+msgstr ""
+
+msgid "ProjectSettings|This introduces the risk of merging changes that will not pass the pipeline."
 msgstr ""
 
 msgid "ProjectSettings|This setting is applied on the server level and can be overridden by an admin."
@@ -17977,6 +18067,9 @@ msgstr ""
 msgid "Publish to status page"
 msgstr ""
 
+msgid "Published on status page"
+msgstr ""
+
 msgid "Publishes this issue to the associated status page."
 msgstr ""
 
@@ -18151,6 +18244,9 @@ msgstr ""
 msgid "Recipe"
 msgstr ""
 
+msgid "Reconfigure"
+msgstr ""
+
 msgid "Recover hidden stage"
 msgstr ""
 
@@ -18287,13 +18383,22 @@ msgstr ""
 msgid "ReleaseAssetLinkType|Image"
 msgstr ""
 
+msgid "ReleaseAssetLinkType|Images"
+msgstr ""
+
 msgid "ReleaseAssetLinkType|Other"
 msgstr ""
 
 msgid "ReleaseAssetLinkType|Package"
 msgstr ""
 
+msgid "ReleaseAssetLinkType|Packages"
+msgstr ""
+
 msgid "ReleaseAssetLinkType|Runbook"
+msgstr ""
+
+msgid "ReleaseAssetLinkType|Runbooks"
 msgstr ""
 
 msgid "Releases"
@@ -19561,6 +19666,9 @@ msgid "SecurityReports|Error fetching the vulnerability list. Please check your 
 msgstr ""
 
 msgid "SecurityReports|False positive"
+msgstr ""
+
+msgid "SecurityReports|Group Security Dashboard"
 msgstr ""
 
 msgid "SecurityReports|Hide dismissed"
@@ -20936,6 +21044,9 @@ msgid "Source (branch or tag)"
 msgstr ""
 
 msgid "Source code"
+msgstr ""
+
+msgid "Source code (%{fileExtension})"
 msgstr ""
 
 msgid "Source is not available"
@@ -22378,6 +22489,9 @@ msgstr ""
 msgid "There was a problem fetching project branches."
 msgstr ""
 
+msgid "There was a problem fetching project tags."
+msgstr ""
+
 msgid "There was a problem fetching project users."
 msgstr ""
 
@@ -22570,7 +22684,7 @@ msgstr ""
 msgid "This also resolves all related threads"
 msgstr ""
 
-msgid "This also resolves the thread"
+msgid "This also resolves the discussion"
 msgstr ""
 
 msgid "This application was created by %{link_to_owner}."
@@ -22694,6 +22808,9 @@ msgid "This is a \"Ghost User\", created to hold all issues authored by users th
 msgstr ""
 
 msgid "This is a Work in Progress"
+msgstr ""
+
+msgid "This is a confidential epic."
 msgstr ""
 
 msgid "This is a confidential issue."
@@ -22835,6 +22952,9 @@ msgid "This job will automatically run after its timer finishes. Often they are 
 msgstr ""
 
 msgid "This license has already expired."
+msgstr ""
+
+msgid "This link points to external content"
 msgstr ""
 
 msgid "This may expose confidential information as the selected fork is in another namespace that can have other members."
@@ -23793,9 +23913,6 @@ msgid "Unable to load the diff. %{button_try_again}"
 msgstr ""
 
 msgid "Unable to load the merge request widget. Try reloading the page."
-msgstr ""
-
-msgid "Unable to process group import file"
 msgstr ""
 
 msgid "Unable to resolve"
@@ -25241,10 +25358,16 @@ msgstr ""
 msgid "WikiEmptyIssueMessage|Suggest wiki improvement"
 msgstr ""
 
+msgid "WikiEmptyIssueMessage|You must be a group member in order to add wiki pages. If you have suggestions for how to improve the wiki for this group, consider opening an issue in the %{issues_link}."
+msgstr ""
+
 msgid "WikiEmptyIssueMessage|You must be a project member in order to add wiki pages. If you have suggestions for how to improve the wiki for this project, consider opening an issue in the %{issues_link}."
 msgstr ""
 
 msgid "WikiEmptyIssueMessage|issue tracker"
+msgstr ""
+
+msgid "WikiEmpty|A wiki is where you can store all the details about your group. This can include why you've created it, its principles, how to use it, and so on."
 msgstr ""
 
 msgid "WikiEmpty|A wiki is where you can store all the details about your project. This can include why you've created it, its principles, how to use it, and so on."
@@ -25256,10 +25379,19 @@ msgstr ""
 msgid "WikiEmpty|Suggest wiki improvement"
 msgstr ""
 
+msgid "WikiEmpty|The wiki lets you write documentation for your group"
+msgstr ""
+
 msgid "WikiEmpty|The wiki lets you write documentation for your project"
 msgstr ""
 
+msgid "WikiEmpty|This group has no wiki pages"
+msgstr ""
+
 msgid "WikiEmpty|This project has no wiki pages"
+msgstr ""
+
+msgid "WikiEmpty|You must be a group member in order to add wiki pages."
 msgstr ""
 
 msgid "WikiEmpty|You must be a project member in order to add wiki pages."
@@ -25766,7 +25898,7 @@ msgstr ""
 msgid "You need to upload a Google Takeout archive."
 msgstr ""
 
-msgid "You reached %{usage_in_percent} of %{namespace_name}'s capacity (%{used_storage} of %{storage_limit})"
+msgid "You reached %{usage_in_percent} of %{namespace_name}'s storage capacity (%{used_storage} of %{storage_limit})"
 msgstr ""
 
 msgid "You tried to fork %{link_to_the_project} but it failed for the following reason:"
