@@ -12,6 +12,7 @@ RSpec.describe Gitlab::Middleware::Multipart do
       using RSpec::Parameterized::TableSyntax
 
       let(:storage_path) { 'shared/packages' }
+      let(:call_count) { 1 }
 
       RSpec.shared_examples 'allowing the multipart upload' do
         it 'allows files to be uploaded' do
@@ -47,7 +48,7 @@ RSpec.describe Gitlab::Middleware::Multipart do
 
       RSpec.shared_examples 'adding package storage to multipart allowed paths' do
         before do
-          expect(::Packages::PackageFileUploader).to receive(:workhorse_upload_path).and_call_original
+          expect(::Packages::PackageFileUploader).to receive(:workhorse_upload_path).exactly(call_count).and_call_original
         end
 
         it_behaves_like 'allowing the multipart upload'
@@ -61,26 +62,46 @@ RSpec.describe Gitlab::Middleware::Multipart do
         it_behaves_like 'not allowing the multipart upload when package upload path is used'
       end
 
-      where(:object_storage_enabled, :direct_upload_enabled, :example_name) do
-        false | true  | 'adding package storage to multipart allowed paths'
-        false | false | 'adding package storage to multipart allowed paths'
-        true  | true  | 'not adding package storage to multipart allowed paths'
-        true  | false | 'adding package storage to multipart allowed paths'
-      end
-
-      with_them do
-        before do
-          stub_config(packages: {
-            enabled: true,
-            object_store: {
-              enabled: object_storage_enabled,
-              direct_upload: direct_upload_enabled
-            },
-            storage_path: storage_path
-          })
+      RSpec.shared_examples 'supporting all package upload cases' do
+        where(:object_storage_enabled, :direct_upload_enabled, :example_name) do
+          false | true  | 'adding package storage to multipart allowed paths'
+          false | false | 'adding package storage to multipart allowed paths'
+          true  | true  | 'not adding package storage to multipart allowed paths'
+          true  | false | 'adding package storage to multipart allowed paths'
         end
 
-        it_behaves_like params[:example_name]
+        with_them do
+          before do
+            stub_config(packages: {
+              enabled: true,
+              object_store: {
+                enabled: object_storage_enabled,
+                direct_upload: direct_upload_enabled
+              },
+              storage_path: storage_path
+            })
+          end
+
+          it_behaves_like params[:example_name]
+        end
+      end
+
+      context 'with upload_middleware_jwt_params_handler disabled' do
+        before do
+          stub_feature_flags(upload_middleware_jwt_params_handler: false)
+        end
+
+        it_behaves_like 'supporting all package upload cases'
+      end
+
+      context 'with upload_middleware_jwt_params_handler enabled' do
+        let(:call_count) { 2 } # multipart.rb with jwt params handler enabled will call #workhorse_upload_path twice
+
+        before do
+          stub_feature_flags(upload_middleware_jwt_params_handler: true)
+        end
+
+        it_behaves_like 'supporting all package upload cases'
       end
     end
   end

@@ -7,9 +7,6 @@ require 'tempfile'
 describe Gitlab::Middleware::Multipart do
   include_context 'multipart middleware context'
 
-  let(:jwt_issuer) { 'gitlab-workhorse' }
-  let(:jwt_secret) { Gitlab::Workhorse.secret }
-
   RSpec.shared_examples_for 'multipart upload files' do
     it 'opens top-level files' do
       Tempfile.open('top-level') do |tempfile|

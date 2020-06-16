@@ -4,6 +4,8 @@ RSpec.shared_context 'multipart middleware context' do
   let(:app) { double(:app) }
   let(:middleware) { described_class.new(app) }
   let(:original_filename) { 'filename' }
+  let(:jwt_issuer) { 'gitlab-workhorse' }
+  let(:jwt_secret) { Gitlab::Workhorse.secret }
 
   # Rails 5 doesn't combine the GET/POST parameters in
   # ActionDispatch::HTTP::Parameters if action_dispatch.request.parameters is set:
