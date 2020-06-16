@@ -3,6 +3,8 @@
 module WorkhorseHelpers
   extend self
 
+  UPLOAD_PARAM_NAMES = %w[name size path remote_id sha256 type].freeze
+
   def workhorse_send_data
     @_workhorse_send_data ||= begin
       header = response.headers[Gitlab::Workhorse::SEND_DATA_HEADER]
@@ -76,7 +78,7 @@ module WorkhorseHelpers
   private
 
   def jwt_file_upload_param(key:, params:)
-    upload_params = %w[name size path remote_id].map do |file_upload_param|
+    upload_params = UPLOAD_PARAM_NAMES.map do |file_upload_param|
       [file_upload_param, params["#{key}.#{file_upload_param}"]]
     end
     upload_params = upload_params.to_h.compact
