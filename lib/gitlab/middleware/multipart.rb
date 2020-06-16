@@ -179,7 +179,7 @@ module Gitlab
           raise "Empty JWT param: #{param_key}" if message.blank?
 
           message = Gitlab::Workhorse.decode_jwt(message).first
-          raise "" unless message.is_a?(Hash)
+          raise "Invalid JWT param: not a Hash" unless message.is_a?(Hash)
 
           params = message.fetch(JWT_PARAM_FIXED_KEY, {})
           raise "Empty params for: #{param_key}" if params.empty?

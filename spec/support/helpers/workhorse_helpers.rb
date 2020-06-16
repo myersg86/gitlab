@@ -59,6 +59,7 @@ module WorkhorseHelpers
       file = workhorse_params.delete(key)
       rewritten_fields[key] = file.path if file
       workhorse_params = workhorse_disk_accelerated_file_params(key, file).merge(workhorse_params)
+      workhorse_params = workhorse_params.merge(jwt_file_upload_param(key: key, params: workhorse_params))
     end
 
     headers = if send_rewritten_field
@@ -73,6 +74,17 @@ module WorkhorseHelpers
   end
 
   private
+
+  def jwt_file_upload_param(key:, params:)
+    upload_params = %w[name size path remote_id].map do |file_upload_param|
+      [file_upload_param, params["#{key}.#{file_upload_param}"]]
+    end
+    upload_params = upload_params.to_h.compact
+
+    return {} if upload_params.empty?
+
+    { "#{key}.gitlab-workhorse-upload" => jwt_token('upload' => upload_params) }
+  end
 
   def jwt_token(data = {})
     JWT.encode({ 'iss' => 'gitlab-workhorse' }.merge(data), Gitlab::Workhorse.secret, 'HS256')
