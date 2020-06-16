@@ -380,6 +380,9 @@ msgstr ""
 msgid "%{issuableType} will be removed! Are you sure?"
 msgstr ""
 
+msgid "%{issuesCount} issues in this group"
+msgstr ""
+
 msgid "%{issuesSize} issues"
 msgstr ""
 
@@ -1852,6 +1855,9 @@ msgid_plural "Alerts"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "AlertManagement| assign yourself"
+msgstr ""
+
 msgid "AlertManagement|Acknowledged"
 msgstr ""
 
@@ -1876,16 +1882,13 @@ msgstr ""
 msgid "AlertManagement|All alerts"
 msgstr ""
 
-msgid "AlertManagement|Assign Assignees"
+msgid "AlertManagement|Assign To"
 msgstr ""
 
 msgid "AlertManagement|Assign status"
 msgstr ""
 
 msgid "AlertManagement|Assignee"
-msgstr ""
-
-msgid "AlertManagement|Assignee(s)"
 msgstr ""
 
 msgid "AlertManagement|Assignees"
@@ -1940,6 +1943,9 @@ msgid "AlertManagement|No alerts to display."
 msgstr ""
 
 msgid "AlertManagement|None"
+msgstr ""
+
+msgid "AlertManagement|None -"
 msgstr ""
 
 msgid "AlertManagement|Open"
@@ -2227,7 +2233,7 @@ msgstr ""
 msgid "An error occurred while adding formatted title for epic"
 msgstr ""
 
-msgid "An error occurred while checking group path"
+msgid "An error occurred while checking group path. Please refresh and try again."
 msgstr ""
 
 msgid "An error occurred while committing your changes."
@@ -2668,6 +2674,9 @@ msgstr ""
 msgid "Approval rules"
 msgstr ""
 
+msgid "Approval rules reset to project defaults"
+msgstr ""
+
 msgid "ApprovalRuleRemove|%d member"
 msgid_plural "ApprovalRuleRemove|%d members"
 msgstr[0] ""
@@ -2937,6 +2946,9 @@ msgstr ""
 msgid "Assign"
 msgstr ""
 
+msgid "Assign Iteration"
+msgstr ""
+
 msgid "Assign custom color like #FF0000"
 msgstr ""
 
@@ -2988,6 +3000,9 @@ msgid "Assignee lists show all issues assigned to the selected user."
 msgstr ""
 
 msgid "Assignee(s)"
+msgstr ""
+
+msgid "Assignees"
 msgstr ""
 
 msgid "Assigns %{assignee_users_sentence}."
@@ -8411,6 +8426,9 @@ msgstr ""
 msgid "Enforce DNS rebinding attack protection"
 msgstr ""
 
+msgid "Enforce personal access token expiration"
+msgstr ""
+
 msgid "Ensure connectivity is available from the GitLab server to the Prometheus server"
 msgstr ""
 
@@ -9461,6 +9479,9 @@ msgstr ""
 msgid "Failed to set due date because the date format is invalid."
 msgstr ""
 
+msgid "Failed to set iteration on this issue. Please try again."
+msgstr ""
+
 msgid "Failed to signing using smartcard authentication"
 msgstr ""
 
@@ -9681,12 +9702,6 @@ msgid "FeatureFlags|Strategies"
 msgstr ""
 
 msgid "FeatureFlags|Target environments"
-msgstr ""
-
-msgid "FeatureFlags|There are no active feature flags"
-msgstr ""
-
-msgid "FeatureFlags|There are no inactive feature flags"
 msgstr ""
 
 msgid "FeatureFlags|There was an error fetching the feature flags."
@@ -11402,6 +11417,33 @@ msgstr ""
 msgid "GroupsEmptyState|You can manage your group member’s permissions and access to each project in the group."
 msgstr ""
 
+msgid "GroupsNew|Contact an administrator to enable options for importing your group."
+msgstr ""
+
+msgid "GroupsNew|Create"
+msgstr ""
+
+msgid "GroupsNew|Create group"
+msgstr ""
+
+msgid "GroupsNew|GitLab group export"
+msgstr ""
+
+msgid "GroupsNew|Import"
+msgstr ""
+
+msgid "GroupsNew|Import group"
+msgstr ""
+
+msgid "GroupsNew|My Awesome Group"
+msgstr ""
+
+msgid "GroupsNew|No import options available"
+msgstr ""
+
+msgid "GroupsNew|To copy a GitLab group between installations, navigate to the group settings page for the original installation, generate an export file, and upload it here."
+msgstr ""
+
 msgid "GroupsTree|Are you sure you want to leave the \"%{fullName}\" group?"
 msgstr ""
 
@@ -12464,6 +12506,9 @@ msgstr ""
 msgid "It's you"
 msgstr ""
 
+msgid "Iteration"
+msgstr ""
+
 msgid "Iteration changed to"
 msgstr ""
 
@@ -13274,6 +13319,9 @@ msgstr ""
 msgid "List your Bitbucket Server repositories"
 msgstr ""
 
+msgid "Lists"
+msgstr ""
+
 msgid "Live preview"
 msgstr ""
 
@@ -14033,6 +14081,9 @@ msgstr ""
 msgid "Metrics|Create metric"
 msgstr ""
 
+msgid "Metrics|Current"
+msgstr ""
+
 msgid "Metrics|Delete metric"
 msgstr ""
 
@@ -14081,6 +14132,9 @@ msgid "Metrics|Manage chart links"
 msgstr ""
 
 msgid "Metrics|Max"
+msgstr ""
+
+msgid "Metrics|Min"
 msgstr ""
 
 msgid "Metrics|Must be a valid PromQL query."
@@ -14894,6 +14948,9 @@ msgstr ""
 msgid "No grouping"
 msgstr ""
 
+msgid "No iteration"
+msgstr ""
+
 msgid "No iterations to show"
 msgstr ""
 
@@ -15287,13 +15344,49 @@ msgstr ""
 msgid "On track"
 msgstr ""
 
+msgid "OnDemandScans|Attached branch"
+msgstr ""
+
+msgid "OnDemandScans|Attached branch is where the scan job runs."
+msgstr ""
+
+msgid "OnDemandScans|Could not run the scan. Please try again."
+msgstr ""
+
 msgid "OnDemandScans|Create new DAST scan"
+msgstr ""
+
+msgid "OnDemandScans|DAST will scan the target URL and any discovered sub URLs."
+msgstr ""
+
+msgid "OnDemandScans|New on-demand DAST scan"
 msgstr ""
 
 msgid "OnDemandScans|On-demand Scans"
 msgstr ""
 
+msgid "OnDemandScans|On-demand scans run outside the DevOps cycle and find vulnerabilities in your projects. %{learnMoreLinkStart}Learn more%{learnMoreLinkEnd}"
+msgstr ""
+
+msgid "OnDemandScans|Only a passive scan can be performed on demand."
+msgstr ""
+
+msgid "OnDemandScans|Passive DAST Scan"
+msgstr ""
+
+msgid "OnDemandScans|Please enter a valid URL format, ex: http://www.example.com/home"
+msgstr ""
+
+msgid "OnDemandScans|Run this scan"
+msgstr ""
+
+msgid "OnDemandScans|Scan mode"
+msgstr ""
+
 msgid "OnDemandScans|Schedule or run scans immediately against target sites. Currently available on-demand scan type: DAST. %{helpLinkStart}More information%{helpLinkEnd}"
+msgstr ""
+
+msgid "OnDemandScans|Target URL"
 msgstr ""
 
 msgid "Onboarding"
@@ -18947,6 +19040,9 @@ msgstr ""
 msgid "Reset template"
 msgstr ""
 
+msgid "Reset to project defaults"
+msgstr ""
+
 msgid "Resetting the authorization key for this project will require updating the authorization key in every alert source it is enabled in."
 msgstr ""
 
@@ -19881,6 +19977,9 @@ msgstr ""
 msgid "Select a timezone"
 msgstr ""
 
+msgid "Select a weight for the storage new repositories will be placed on."
+msgstr ""
+
 msgid "Select all"
 msgstr ""
 
@@ -19960,9 +20059,6 @@ msgid "Select target branch"
 msgstr ""
 
 msgid "Select the branch you want to set as the default for this project. All merge requests and commits will automatically be made against this branch unless you specify a different one."
-msgstr ""
-
-msgid "Select the configured storage available for new repositories to be placed on."
 msgstr ""
 
 msgid "Select the custom project template source group."
@@ -20845,7 +20941,7 @@ msgstr ""
 msgid "Something went wrong while updating your list settings"
 msgstr ""
 
-msgid "Something went wrong with your automatic subscription renewal"
+msgid "Something went wrong with your automatic subscription renewal."
 msgstr ""
 
 msgid "Something went wrong, unable to add %{project} to dashboard"
@@ -23930,6 +24026,9 @@ msgstr ""
 msgid "Unable to sign you in to the group with SAML due to \"%{reason}\""
 msgstr ""
 
+msgid "Unable to suggest a path. Please refresh and try again."
+msgstr ""
+
 msgid "Unable to update label prioritization at this time"
 msgstr ""
 
@@ -24378,6 +24477,9 @@ msgid "User Cohorts are only shown when the %{usage_ping_link_start}usage ping%{
 msgstr ""
 
 msgid "User IDs"
+msgstr ""
+
+msgid "User Lists can only be created and modified with %{linkStart}the API%{linkEnd}"
 msgstr ""
 
 msgid "User OAuth applications"
@@ -26201,13 +26303,13 @@ msgstr ""
 msgid "Your subscription expired!"
 msgstr ""
 
-msgid "Your subscription has been downgraded"
+msgid "Your subscription has been downgraded."
 msgstr ""
 
-msgid "Your subscription will automatically renew in %{remaining_days}"
+msgid "Your subscription will automatically renew in %{remaining_days}."
 msgstr ""
 
-msgid "Your subscription will expire in %{remaining_days}"
+msgid "Your subscription will expire in %{remaining_days}."
 msgstr ""
 
 msgid "Zoom meeting added"
@@ -26582,6 +26684,9 @@ msgid "created"
 msgstr ""
 
 msgid "created %{timeAgo}"
+msgstr ""
+
+msgid "created %{timeago}"
 msgstr ""
 
 msgid "customize"

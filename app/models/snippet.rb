@@ -167,7 +167,11 @@ class Snippet < ApplicationRecord
   end
 
   def self.find_by_id_and_project(id:, project:)
-    Snippet.find_by(id: id, project: project)
+    if project.is_a?(Project)
+      ProjectSnippet.find_by(id: id, project: project)
+    elsif project.nil?
+      PersonalSnippet.find_by(id: id)
+    end
   end
 
   def self.max_file_limit(user)
@@ -337,7 +341,7 @@ class Snippet < ApplicationRecord
   class << self
     # Searches for snippets with a matching title, description or file name.
     #
-    # This method uses ILIKE on PostgreSQL and LIKE on MySQL.
+    # This method uses ILIKE on PostgreSQL.
     #
     # query - The search query as a String.
     #

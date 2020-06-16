@@ -153,7 +153,7 @@
   :urgency: :low
   :resource_boundary: :unknown
   :weight: 1
-  :idempotent: 
+  :idempotent: true
   :tags: []
 - :name: cronjob:geo_sidekiq_cron_config
   :feature_category: :geo_replication
@@ -174,6 +174,14 @@
 - :name: cronjob:import_software_licenses
   :feature_category: :license_compliance
   :has_external_dependencies: 
+  :urgency: :low
+  :resource_boundary: :unknown
+  :weight: 1
+  :idempotent: 
+  :tags: []
+- :name: cronjob:ingress_modsecurity_counter_metrics
+  :feature_category: :web_firewall
+  :has_external_dependencies: true
   :urgency: :low
   :resource_boundary: :unknown
   :weight: 1

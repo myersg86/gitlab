@@ -130,10 +130,6 @@ module EE
       ::License.feature_available?(:ci_cd_projects) && import_sources_enabled?
     end
 
-    def first_class_vulnerabilities_available?(project)
-      ::Feature.enabled?(:first_class_vulnerabilities, project, default_enabled: true)
-    end
-
     def merge_pipelines_available?
       return false unless @project.builds_enabled?
 
@@ -179,7 +175,7 @@ module EE
     end
 
     def project_security_dashboard_config(project, pipeline)
-      if pipeline.nil?
+      if project.vulnerabilities.none?
         {
           empty_state_svg_path: image_path('illustrations/security-dashboard_empty.svg'),
           security_dashboard_help_path: help_page_path('user/application_security/security_dashboard/index')
@@ -190,31 +186,42 @@ module EE
           project_full_path: project.full_path,
           vulnerabilities_endpoint: project_security_vulnerability_findings_path(project),
           vulnerabilities_summary_endpoint: summary_project_security_vulnerability_findings_path(project),
+          vulnerabilities_export_endpoint: api_v4_security_projects_vulnerability_exports_path(id: project.id),
           vulnerability_feedback_help_path: help_page_path("user/application_security/index", anchor: "interacting-with-the-vulnerabilities"),
           empty_state_svg_path: image_path('illustrations/security-dashboard-empty-state.svg'),
           dashboard_documentation: help_page_path('user/application_security/security_dashboard/index'),
           security_dashboard_help_path: help_page_path('user/application_security/security_dashboard/index'),
-          pipeline_id: pipeline.id,
-          user_path: user_url(pipeline.user),
-          user_avatar_path: pipeline.user.avatar_url,
-          user_name: pipeline.user.name,
-          commit_id: pipeline.commit.short_id,
-          commit_path: project_commit_url(project, pipeline.commit),
-          ref_id: pipeline.ref,
-          ref_path: project_commits_url(project, pipeline.ref),
-          pipeline_path: pipeline_url(pipeline),
-          pipeline_created: pipeline.created_at.to_s(:iso8601),
-          has_pipeline_data: "true",
           user_callouts_path: user_callouts_path,
           user_callout_id: UserCalloutsHelper::STANDALONE_VULNERABILITIES_INTRODUCTION_BANNER,
           show_introduction_banner: show_standalone_vulnerabilities_introduction_banner?.to_s
-        }.merge(project_vulnerabilities_config(project))
+        }.merge!(
+          project_vulnerabilities_config(project),
+          security_dashboard_pipeline_data(project, pipeline)
+        )
       end
     end
 
-    def project_vulnerabilities_config(project)
-      return {} unless first_class_vulnerabilities_available?(project)
+    # TODO(@gitlab-org/defend/backend): Remove this method and it's
+    # references with https://gitlab.com/gitlab-org/gitlab/-/issues/207448.
+    def security_dashboard_pipeline_data(project, pipeline)
+      return { has_pipeline_data: 'false' } unless pipeline
 
+      {
+        pipeline_id: pipeline.id,
+        user_path: pipeline.user && user_url(pipeline.user),
+        user_avatar_path: pipeline.user&.avatar_url,
+        user_name: pipeline.user&.name,
+        commit_id: pipeline.commit.short_id,
+        commit_path: project_commit_url(project, pipeline.commit),
+        ref_id: pipeline.ref,
+        ref_path: project_commits_url(project, pipeline.ref),
+        pipeline_path: pipeline_url(pipeline),
+        pipeline_created: pipeline.created_at.to_s(:iso8601),
+        has_pipeline_data: 'true'
+      }
+    end
+
+    def project_vulnerabilities_config(project)
       { vulnerabilities_export_endpoint: api_v4_security_projects_vulnerability_exports_path(id: project.id) }
     end
 

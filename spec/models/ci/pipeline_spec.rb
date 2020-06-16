@@ -26,6 +26,7 @@ describe Ci::Pipeline, :mailer do
   it { is_expected.to have_many(:trigger_requests) }
   it { is_expected.to have_many(:variables) }
   it { is_expected.to have_many(:builds) }
+  it { is_expected.to have_many(:bridges) }
   it { is_expected.to have_many(:job_artifacts).through(:builds) }
   it { is_expected.to have_many(:auto_canceled_pipelines) }
   it { is_expected.to have_many(:auto_canceled_jobs) }
@@ -118,6 +119,17 @@ describe Ci::Pipeline, :mailer do
       pipeline.save!
 
       expect(pipeline.processables.reload.count).to eq 3
+    end
+  end
+
+  describe '.for_iid' do
+    subject { described_class.for_iid(iid) }
+
+    let(:iid) { '1234' }
+    let!(:pipeline) { create(:ci_pipeline, iid: '1234') }
+
+    it 'returns the pipeline' do
+      is_expected.to contain_exactly(pipeline)
     end
   end
 

@@ -7,8 +7,12 @@ import {
   GlDeprecatedButton,
   GlModalDirective,
   GlLink,
+  GlAlert,
+  GlSprintf,
 } from '@gitlab/ui';
+import { FEATURE_FLAG_SCOPE, USER_LIST_SCOPE } from '../constants';
 import FeatureFlagsTable from './feature_flags_table.vue';
+import UserListsTable from './user_lists_table.vue';
 import store from '../store';
 import { __, s__ } from '~/locale';
 import NavigationTabs from '~/vue_shared/components/navigation_tabs.vue';
@@ -27,12 +31,15 @@ export default {
   store,
   components: {
     FeatureFlagsTable,
+    UserListsTable,
     NavigationTabs,
     TablePagination,
     GlEmptyState,
     GlLoadingIcon,
     GlDeprecatedButton,
     GlLink,
+    GlAlert,
+    GlSprintf,
     ConfigureFeatureFlagsModal,
   },
   directives: {
@@ -40,6 +47,10 @@ export default {
   },
   props: {
     endpoint: {
+      type: String,
+      required: true,
+    },
+    projectId: {
       type: String,
       required: true,
     },
@@ -56,6 +67,10 @@ export default {
       required: true,
     },
     featureFlagsAnchoredHelpPagePath: {
+      type: String,
+      required: true,
+    },
+    userListsApiDocPath: {
       type: String,
       required: true,
     },
@@ -84,18 +99,19 @@ export default {
   },
   data() {
     return {
-      scope: getParameterByName('scope') || this.$options.scopes.all,
+      scope: getParameterByName('scope') || this.$options.scopes.featureFlags,
       page: getParameterByName('page') || '1',
+      isUserListAlertDismissed: false,
     };
   },
   scopes: {
-    all: 'all',
-    enabled: 'enabled',
-    disabled: 'disabled',
+    [FEATURE_FLAG_SCOPE]: FEATURE_FLAG_SCOPE,
+    [USER_LIST_SCOPE]: USER_LIST_SCOPE,
   },
   computed: {
     ...mapState([
-      'featureFlags',
+      FEATURE_FLAG_SCOPE,
+      USER_LIST_SCOPE,
       'count',
       'pageInfo',
       'isLoading',
@@ -108,23 +124,23 @@ export default {
     canUserRotateToken() {
       return this.rotateInstanceIdPath !== '';
     },
+    currentlyDisplayedData() {
+      return this.dataForScope(this.scope);
+    },
     shouldRenderTabs() {
       /* Do not show tabs until after the first request to get the count */
-      return this.count.all !== undefined;
+      return this.count[this.scope] !== undefined;
     },
     shouldRenderPagination() {
       return (
         !this.isLoading &&
         !this.hasError &&
-        this.featureFlags.length &&
-        this.pageInfo.total > this.pageInfo.perPage
+        this.currentlyDisplayedData.length > 0 &&
+        this.pageInfo[this.scope].total > this.pageInfo[this.scope].perPage
       );
     },
     shouldShowEmptyState() {
-      return !this.isLoading && !this.hasError && this.featureFlags.length === 0;
-    },
-    shouldRenderTable() {
-      return !this.isLoading && this.featureFlags.length > 0 && !this.hasError;
+      return !this.isLoading && !this.hasError && this.currentlyDisplayedData.length === 0;
     },
     shouldRenderErrorState() {
       return this.hasError && !this.isLoading;
@@ -134,22 +150,16 @@ export default {
 
       return [
         {
-          name: __('All'),
-          scope: scopes.all,
-          count: this.count.all,
-          isActive: this.scope === scopes.all,
+          name: __('Feature Flags'),
+          scope: scopes[FEATURE_FLAG_SCOPE],
+          count: this.count[FEATURE_FLAG_SCOPE],
+          isActive: this.scope === scopes[FEATURE_FLAG_SCOPE],
         },
         {
-          name: __('Enabled'),
-          scope: scopes.enabled,
-          count: this.count.enabled,
-          isActive: this.scope === scopes.enabled,
-        },
-        {
-          name: __('Disabled'),
-          scope: scopes.disabled,
-          count: this.count.disabled,
-          isActive: this.scope === scopes.disabled,
+          name: __('Lists'),
+          scope: scopes[USER_LIST_SCOPE],
+          count: this.count[USER_LIST_SCOPE],
+          isActive: this.scope === scopes[USER_LIST_SCOPE],
         },
       ];
     },
@@ -157,18 +167,15 @@ export default {
       return !isEmpty(this.newFeatureFlagPath);
     },
     emptyStateTitle() {
-      if (this.scope === this.$options.scopes.disabled) {
-        return s__(`FeatureFlags|There are no inactive feature flags`);
-      } else if (this.scope === this.$options.scopes.enabled) {
-        return s__(`FeatureFlags|There are no active feature flags`);
-      }
       return s__(`FeatureFlags|Get started with feature flags`);
     },
   },
   created() {
     this.setFeatureFlagsEndpoint(this.endpoint);
     this.setFeatureFlagsOptions({ scope: this.scope, page: this.page });
+    this.setProjectId(this.projectId);
     this.fetchFeatureFlags();
+    this.fetchUserLists();
     this.setInstanceId(this.unleashApiInstanceId);
     this.setInstanceIdEndpoint(this.rotateInstanceIdPath);
   },
@@ -177,8 +184,10 @@ export default {
       'setFeatureFlagsEndpoint',
       'setFeatureFlagsOptions',
       'fetchFeatureFlags',
+      'fetchUserLists',
       'setInstanceIdEndpoint',
       'setInstanceId',
+      'setProjectId',
       'rotateInstanceId',
       'toggleFeatureFlag',
     ]),
@@ -206,7 +215,22 @@ export default {
 
       historyPushState(buildUrlWithCurrentLocation(`?${queryString}`));
       this.setFeatureFlagsOptions(parameters);
-      this.fetchFeatureFlags();
+      if (this.scope === this.$options.scopes.featureFlags) {
+        this.fetchFeatureFlags();
+      } else {
+        this.fetchUserLists();
+      }
+    },
+    shouldRenderTable(scope) {
+      return (
+        !this.isLoading &&
+        this.dataForScope(scope).length > 0 &&
+        !this.hasError &&
+        this.scope === scope
+      );
+    },
+    dataForScope(scope) {
+      return this[scope];
     },
   },
 };
@@ -246,6 +270,19 @@ export default {
         >
       </div>
     </h3>
+    <gl-alert v-if="!isUserListAlertDismissed" @dismiss="isUserListAlertDismissed = true">
+      <gl-sprintf
+        :message="
+          __('User Lists can only be created and modified with %{linkStart}the API%{linkEnd}')
+        "
+      >
+        <template #link="{ content }">
+          <gl-link :href="userListsApiDocPath" target="_blank">
+            {{ content }}
+          </gl-link>
+        </template>
+      </gl-sprintf>
+    </gl-alert>
 
     <div v-if="shouldRenderTabs" class="top-area scrolling-tabs-container inner-page-scroll-tabs">
       <navigation-tabs :tabs="tabs" scope="featureflags" @onChangeTab="onChangeTab" />
@@ -284,12 +321,21 @@ export default {
     </gl-empty-state>
 
     <feature-flags-table
-      v-else-if="shouldRenderTable"
+      v-else-if="shouldRenderTable($options.scopes.featureFlags)"
       :csrf-token="csrfToken"
       :feature-flags="featureFlags"
       @toggle-flag="toggleFeatureFlag"
     />
 
-    <table-pagination v-if="shouldRenderPagination" :change="onChangePage" :page-info="pageInfo" />
+    <user-lists-table
+      v-else-if="shouldRenderTable($options.scopes.userLists)"
+      :user-lists="userLists"
+    />
+
+    <table-pagination
+      v-if="shouldRenderPagination"
+      :change="onChangePage"
+      :page-info="pageInfo[scope]"
+    />
   </div>
 </template>

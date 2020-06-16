@@ -17,6 +17,7 @@ export default () =>
       return createElement('feature-flags-component', {
         props: {
           endpoint: this.dataset.endpoint,
+          projectId: this.dataset.projectId,
           errorStateSvgPath: this.dataset.errorStateSvgPath,
           featureFlagsHelpPagePath: this.dataset.featureFlagsHelpPagePath,
           featureFlagsAnchoredHelpPagePath: this.dataset.featureFlagsAnchoredHelpPagePath,
@@ -26,6 +27,7 @@ export default () =>
           canUserConfigure: this.dataset.canUserAdminFeatureFlag,
           newFeatureFlagPath: this.dataset.newFeatureFlagPath,
           rotateInstanceIdPath: this.dataset.rotateInstanceIdPath,
+          userListsApiDocPath: this.dataset.userListsApiDocPath,
         },
       });
     },

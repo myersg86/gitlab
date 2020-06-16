@@ -41,7 +41,7 @@
     "@babel/preset-env": "^7.10.1",
     "@gitlab/at.js": "1.5.5",
     "@gitlab/svgs": "1.139.0",
-    "@gitlab/ui": "16.10.0",
+    "@gitlab/ui": "16.12.1",
     "@gitlab/visual-review-tools": "1.6.1",
     "@rails/actioncable": "^6.0.3-1",
     "@sentry/browser": "^5.10.2",
@@ -155,6 +155,7 @@
     "xterm": "^3.5.0"
   },
   "devDependencies": {
+    "acorn": "^6.3.0",
     "@babel/plugin-transform-modules-commonjs": "^7.10.1",
     "@gitlab/eslint-plugin": "3.1.0",
     "@vue/test-utils": "^1.0.0-beta.30",
@@ -183,7 +184,7 @@
     "jasmine-jquery": "^2.1.1",
     "jest": "^24.1.0",
     "jest-canvas-mock": "^2.1.2",
-    "jest-environment-jsdom": "^24.0.0",
+    "jest-environment-jsdom-sixteen": "^1.0.0",
     "jest-junit": "^6.3.0",
     "jest-util": "^24.0.0",
     "jsdoc": "^3.5.5",
