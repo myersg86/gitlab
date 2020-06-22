@@ -56,10 +56,9 @@ RSpec.describe SubmitUsagePingService do
 
     it 'does not run' do
       expect(HTTParty).not_to receive(:post)
+      expect(Gitlab::UsageData).not_to receive(:to_json)
 
-      result = subject.execute
-
-      expect(result).to eq false
+      subject.execute
     end
   end
 
@@ -81,27 +80,38 @@ RSpec.describe SubmitUsagePingService do
       stub_application_setting(usage_ping_enabled: true)
     end
 
+    context 'and user requires usage stats consent' do
+      before do
+        allow(User).to receive(:single_user).and_return(double(:user, requires_usage_stats_consent?: true))
+      end
+
+      it 'does not run' do
+        expect(HTTParty).not_to receive(:post)
+        expect(Gitlab::UsageData).not_to receive(:to_json)
+
+        subject.execute
+      end
+    end
+
     it 'sends a POST request' do
-      response = stub_response(without_dev_ops_score_params)
+      response = stub_response(body: without_dev_ops_score_params)
 
       subject.execute
 
       expect(response).to have_been_requested
     end
 
-    it 'refreshes usage data statistics before submitting' do
-      stub_response(without_dev_ops_score_params)
+    it 'forces a refresh of usage data statistics before submitting' do
+      stub_response(body: without_dev_ops_score_params)
 
-      expect(Gitlab::UsageData).to receive(:to_json)
-        .with(force_refresh: true)
-        .and_call_original
+      expect(Gitlab::UsageData).to receive(:to_json).with(force_refresh: true).and_call_original
 
       subject.execute
     end
 
     context 'when conv_index data is passed' do
       before do
-        stub_response(with_conv_index_params)
+        stub_response(body: with_conv_index_params)
       end
 
       it_behaves_like 'saves DevOps score data from the response'
@@ -109,18 +119,61 @@ RSpec.describe SubmitUsagePingService do
 
     context 'when DevOps score data is passed' do
       before do
-        stub_response(with_dev_ops_score_params)
+        stub_response(body: with_dev_ops_score_params)
       end
 
       it_behaves_like 'saves DevOps score data from the response'
     end
+
+    context 'and request is not successful' do
+      before do
+        stub_response(body: nil, status: 504)
+      end
+
+      it 'does not send usage ping request' do
+        expect(HTTParty).not_to receive(:post)
+
+        subject.execute rescue nil
+      end
+
+      it 'raises an exception' do
+        expect { subject.execute }.to raise_error(described_class::SubmissionError) do |error|
+          expect(error.message).to include('Unsuccessful response code: 504')
+        end
+      end
+    end
+
+    context 'and usage data is empty' do
+      using RSpec::Parameterized::TableSyntax
+
+      where(data: [nil, ""])
+
+      with_them do
+        before do
+          allow(Gitlab::UsageData).to receive(:to_json).and_return(data)
+        end
+
+        it 'does not send usage ping request' do
+          expect(HTTParty).not_to receive(:post)
+
+          subject.execute rescue nil
+        end
+
+        it 'raises an exception' do
+          expect { subject.execute }.to raise_error(described_class::SubmissionError) do |error|
+            expect(error.message).to include('Usage data contains empty value: ')
+          end
+        end
+      end
+    end
   end
 
-  def stub_response(body)
+  def stub_response(body:, status: 201)
     stub_full_request('https://version.gitlab.com/usage_data', method: :post)
       .to_return(
         headers: { 'Content-Type' => 'application/json' },
-        body: body.to_json
+        body: body.to_json,
+        status: status
       )
   end
 end
