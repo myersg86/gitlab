@@ -18,6 +18,8 @@ import {
   getMarkdown,
 } from './editor_service';
 
+import { getUrl } from './services/image_service';
+
 export default {
   components: {
     ToastEditor: () =>
@@ -113,6 +115,12 @@ export default {
     onAddImage(image) {
       addImage(this.editorInstance, image);
     },
+    onUploadImage({ file, altText }) {
+      const imageUrl = getUrl(file);
+      addImage(this.editorInstance, { imageUrl, altText }); // add the image with a temporary URL
+      // TODO - ensure temp URL is used in WYSIWYG mode but the actual URL is used in Markdown mode (custom renderer)
+      // TODO - emit image to parent for further processing/uploading
+    },
     onChangeMode(newMode) {
       this.$emit('modeChange', newMode);
     },
@@ -131,6 +139,6 @@ export default {
       @change="onContentChanged"
       @load="onLoad"
     />
-    <add-image-modal ref="addImageModal" @addImage="onAddImage" />
+    <add-image-modal ref="addImageModal" @addImage="onAddImage" @uploadImage="onUploadImage" />
   </div>
 </template>
