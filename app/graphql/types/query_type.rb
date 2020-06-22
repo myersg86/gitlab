@@ -61,6 +61,11 @@ module Types
           description: 'Text to echo back',
           resolver: Resolvers::EchoResolver
 
+    field :issue, Types::IssueType,
+          null: true,
+          description: 'Find an issue',
+          resolver: Resolvers::IssueResolver
+
     def design_management
       DesignManagementObject.new(nil)
     end
