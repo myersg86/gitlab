@@ -113,7 +113,7 @@ module API
         present issues, options
       end
 
-      desc "Get specified issue" do
+      desc "Get specified issue (admin only)" do
         success Entities::Issue
       end
       params do

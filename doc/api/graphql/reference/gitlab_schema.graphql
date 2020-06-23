@@ -10486,6 +10486,16 @@ type Query {
   instanceSecurityDashboard: InstanceSecurityDashboard
 
   """
+  Find an issue
+  """
+  issue(
+    """
+    ID of the Issue
+    """
+    id: ID!
+  ): Issue
+
+  """
   Metadata about GitLab
   """
   metadata: Metadata

@@ -111,7 +111,6 @@ RSpec.describe API::Issues do
           expect(response).to have_gitlab_http_status(:not_found)
         end
       end
-
     end
   end
 
@@ -158,7 +157,7 @@ RSpec.describe API::Issues do
 
       it 'responds with a 401 instead of the specified issue' do
         get api("/issues/#{issue.id}")
-        expect(response).to have_http_status(401)
+        expect(response).to have_gitlab_http_status(:unauthorized)
       end
 
       context 'issues_statistics' do
@@ -390,14 +389,14 @@ RSpec.describe API::Issues do
 
       it 'returns the user\'s specified issue' do
         get api("/issues/#{issue.id}", user)
-        expect(response).to have_http_status(200)
+        expect(response).to have_gitlab_http_status(:ok)
         expect(json_response.empty?).to be false
         expect(json_response["title"]).to eq issue.title
       end
 
       it 'returns another user\'s specified issue' do
         get api("/issues/#{issue.id}", user2)
-        expect(response).to have_http_status(200)
+        expect(response).to have_gitlab_http_status(:ok)
         expect(json_response.empty?).to be false
         expect(json_response["title"]).to eq issue.title
       end
