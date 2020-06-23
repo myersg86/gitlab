@@ -5,6 +5,8 @@ module Vulnerabilities
     include ShaAttribute
     include ::Gitlab::Utils::StrongMemoize
     include Presentable
+    include IgnorableColumns
+    ignore_column :uuid, remove_with: '13.4', remove_after: '2020-09-22'
 
     self.table_name = "vulnerability_occurrences"
 
