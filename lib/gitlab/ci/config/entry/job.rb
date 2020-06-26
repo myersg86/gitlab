@@ -22,7 +22,7 @@ module Gitlab
           validations do
             validates :config, allowed_keys: ALLOWED_KEYS + PROCESSABLE_ALLOWED_KEYS
             validates :config, required_keys: REQUIRED_BY_NEEDS, if: :has_needs?
-            validates :script, presence: true
+            validates :script, presence: true, unless: release_job?
             validates :config,
               disallowed_keys: {
                 in: %i[release],
@@ -157,6 +157,10 @@ module Gitlab
 
           def ignored?
             allow_failure.nil? ? manual_action? : allow_failure
+          end
+          
+          def release_job?
+            config.key?(:release)
           end
 
           def value
