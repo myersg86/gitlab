@@ -2,6 +2,7 @@
 import { mapState, mapActions } from 'vuex';
 import {
   GlDeprecatedBadge as GlBadge,
+  GlIcon,
   GlLink,
   GlLoadingIcon,
   GlPagination,
@@ -18,6 +19,7 @@ export default {
   nodeCpuText: __('%{totalCpu} (%{freeSpacePercentage}%{percentSymbol} free)'),
   components: {
     GlBadge,
+    GlIcon,
     GlLink,
     GlLoadingIcon,
     GlPagination,
@@ -227,9 +229,13 @@ export default {
 
         <gl-skeleton-loading v-else-if="loadingNodes" :lines="1" :class="contentAlignClasses" />
 
-        <small v-else class="gl-font-sm gl-font-style-italic gl-text-gray-400">{{
-          __('Unknown')
-        }}</small>
+        <div v-else class="gl-display-flex gl-align-items-center">
+          <small class="gl-font-sm gl-font-style-italic gl-text-gray-400">
+            {{ __('Unknown') }}
+          </small>
+
+          <gl-icon name="status_warning" :size="24" class="gl-p-2"/>
+        </div>
       </template>
 
       <template #cell(total_cpu)="{ item }">
