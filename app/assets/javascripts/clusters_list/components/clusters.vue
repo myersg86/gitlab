@@ -251,7 +251,10 @@ export default {
               triggers="hover focus"
             >
               <div>
-                Hello!!
+                <p class="gl-border-b-solid gl-border-1">
+                  <strong>Unable to fetch cluster resource data</strong>
+                </p>
+                <p>Here is more information about the error</p>
               </div>
             </gl-popover>
           </div>
