@@ -9,8 +9,8 @@ import {
   GlSkeletonLoading,
   GlSprintf,
   GlTable,
+  GlTooltipDirective,
 } from '@gitlab/ui';
-import tooltip from '~/vue_shared/directives/tooltip';
 import { CLUSTER_TYPES, STATUSES } from '../constants';
 import { __, sprintf } from '~/locale';
 
@@ -28,7 +28,7 @@ export default {
     GlTable,
   },
   directives: {
-    tooltip,
+    GlTooltip: GlTooltipDirective
   },
   computed: {
     ...mapState([
@@ -217,7 +217,7 @@ export default {
 
           <gl-loading-icon
             v-if="item.status === 'deleting' || item.status === 'creating'"
-            v-tooltip
+            v-gl-tooltip.hover
             :title="statusTitle(item.status)"
             size="sm"
           />
