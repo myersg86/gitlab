@@ -6,6 +6,7 @@ import {
   GlLink,
   GlLoadingIcon,
   GlPagination,
+  GlPopover,
   GlSkeletonLoading,
   GlSprintf,
   GlTable,
@@ -23,6 +24,7 @@ export default {
     GlLink,
     GlLoadingIcon,
     GlPagination,
+    GlPopover,
     GlSkeletonLoading,
     GlSprintf,
     GlTable,
@@ -234,7 +236,25 @@ export default {
             {{ __('Unknown') }}
           </small>
 
-          <gl-icon name="status_warning" :size="24" class="gl-p-2"/>
+          <div id="statusErrorIconPopoverPontainer">
+            <gl-icon
+              name="status_warning"
+              :size="24"
+              class="gl-p-2"
+              id="statusErrorIcon"
+            />
+
+            <gl-popover
+              target="statusErrorIcon"
+              container="statusErrorIconPopoverPontainer"
+              placement="top"
+              triggers="hover focus"
+            >
+              <div>
+                Hello!!
+              </div>
+            </gl-popover>
+          </div>
         </div>
       </template>
 
