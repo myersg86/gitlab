@@ -236,16 +236,16 @@ export default {
             {{ __('Unknown') }}
           </small>
 
-          <div id="statusErrorIconPopoverPontainer">
+          <div :id="'statusErrorIconPopoverPontainer' + item.id">
             <gl-icon
               name="status_warning"
               :size="24"
               class="gl-p-2"
-              id="statusErrorIcon"
+              :id="'statusErrorIcon' + item.id"
             />
 
             <gl-popover
-              target="statusErrorIcon"
+              :target="'statusErrorIcon' + item.id"
               container="statusErrorIconPopoverPontainer"
               placement="top"
               triggers="hover focus"

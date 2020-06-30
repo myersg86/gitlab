@@ -10,6 +10,7 @@ class ClusterSerializer < BaseSerializer
         :cluster_type,
         :enabled,
         :environment_scope,
+        :id,
         :name,
         :nodes,
         :path,
