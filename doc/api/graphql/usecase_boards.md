@@ -37,8 +37,6 @@ existing issue boards in the `gitlab-docs` documentation repository.
 
 ![GraphiQL explorer search for boards](img/graphql_usecase_boards_v13_2.png)
 
-<!-- Some attributes appear to be missing -->
-
 You can append the identifier of each board (`boards`) to the following URL:
   `https://gitlab.com/gitlab-org/gitlab-docs/-/boards/`.
 
