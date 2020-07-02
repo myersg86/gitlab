@@ -27,11 +27,13 @@ module Gitlab
           parent_batch_relation = relation_scoped_to_range(source_table, source_column, start_id, stop_id)
 
           parent_batch_relation.each_batch(of: SUB_BATCH_SIZE) do |sub_batch|
-            start_id, stop_id = sub_batch.pluck(Arel.sql("MIN(#{source_column}), MAX(#{source_column})")).first
+            sub_start_id, sub_stop_id = sub_batch.pluck(Arel.sql("MIN(#{source_column}), MAX(#{source_column})")).first
 
-            bulk_copy.copy_between(start_id, stop_id)
+            bulk_copy.copy_between(sub_start_id, sub_stop_id)
             sleep(PAUSE_SECONDS)
           end
+
+          mark_jobs_complete(start_id, stop_id, source_table)
         end
 
         private
@@ -54,6 +56,10 @@ module Gitlab
 
         def relation_scoped_to_range(source_table, source_key_column, start_id, stop_id)
           define_batchable_model(source_table).where(source_key_column => start_id..stop_id)
+        end
+
+        def mark_jobs_complete(start_id, stop_id, source_table)
+          ::Gitlab::BackgroundMigrationJob.complete_all(self.class.name, start_id, stop_id, arguments: [source_table])
         end
 
         # Helper class to copy data between two tables via upserts

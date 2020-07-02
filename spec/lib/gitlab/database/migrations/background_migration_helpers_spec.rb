@@ -156,6 +156,40 @@ RSpec.describe Gitlab::Database::Migrations::BackgroundMigrationHelpers do
           end
         end
       end
+
+      context 'with track_jobs option' do
+        it 'creates a record for each job in the database' do
+          Sidekiq::Testing.fake! do
+            expect(Gitlab::BackgroundMigrationJob.count).to eq(0)
+
+            model.queue_background_migration_jobs_by_range_at_intervals(User, 'FooJob', 10.minutes, other_job_arguments: [1, 2], track_jobs: true)
+
+            expect(BackgroundMigrationWorker.jobs.size).to eq(1)
+            expect(Gitlab::BackgroundMigrationJob.count).to eq(1)
+
+            tracked_job = Gitlab::BackgroundMigrationJob.first
+
+            expect(tracked_job.name).to eq('FooJob')
+            expect(tracked_job.start_id).to eq(id1)
+            expect(tracked_job.end_id).to eq(id3)
+            expect(tracked_job).to be_pending
+            expect(tracked_job.arguments).to match_array([1, 2])
+          end
+        end
+      end
+
+      context 'without track_jobs option' do
+        it 'does not create records in the database' do
+          Sidekiq::Testing.fake! do
+            expect(Gitlab::BackgroundMigrationJob.count).to eq(0)
+
+            model.queue_background_migration_jobs_by_range_at_intervals(User, 'FooJob', 10.minutes, other_job_arguments: [1, 2])
+
+            expect(BackgroundMigrationWorker.jobs.size).to eq(1)
+            expect(Gitlab::BackgroundMigrationJob.count).to eq(0)
+          end
+        end
+      end
     end
 
     context "when the model doesn't have an ID column" do

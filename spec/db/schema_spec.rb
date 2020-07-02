@@ -21,6 +21,7 @@ RSpec.describe 'Database schema' do
     audit_events: %w[author_id entity_id],
     award_emoji: %w[awardable_id user_id],
     aws_roles: %w[role_external_id],
+    background_migration_jobs: %w[start_id end_id],
     boards: %w[milestone_id],
     chat_names: %w[chat_id team_id user_id],
     chat_teams: %w[team_id],

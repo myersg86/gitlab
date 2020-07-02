@@ -9405,6 +9405,27 @@ CREATE TABLE public.aws_roles (
     role_external_id character varying(64) NOT NULL
 );
 
+CREATE TABLE public.background_migration_jobs (
+    id bigint NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    start_id integer NOT NULL,
+    end_id integer NOT NULL,
+    status smallint DEFAULT 0 NOT NULL,
+    name text NOT NULL,
+    arguments jsonb NOT NULL,
+    CONSTRAINT check_5d122009b3 CHECK ((char_length(name) <= 200))
+);
+
+CREATE SEQUENCE public.background_migration_jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.background_migration_jobs_id_seq OWNED BY public.background_migration_jobs.id;
+
 CREATE TABLE public.badges (
     id integer NOT NULL,
     link_url character varying NOT NULL,
@@ -16338,6 +16359,8 @@ ALTER TABLE ONLY public.audit_events ALTER COLUMN id SET DEFAULT nextval('public
 
 ALTER TABLE ONLY public.award_emoji ALTER COLUMN id SET DEFAULT nextval('public.award_emoji_id_seq'::regclass);
 
+ALTER TABLE ONLY public.background_migration_jobs ALTER COLUMN id SET DEFAULT nextval('public.background_migration_jobs_id_seq'::regclass);
+
 ALTER TABLE ONLY public.badges ALTER COLUMN id SET DEFAULT nextval('public.badges_id_seq'::regclass);
 
 ALTER TABLE ONLY public.board_assignees ALTER COLUMN id SET DEFAULT nextval('public.board_assignees_id_seq'::regclass);
@@ -17222,6 +17245,9 @@ ALTER TABLE ONLY public.award_emoji
 
 ALTER TABLE ONLY public.aws_roles
     ADD CONSTRAINT aws_roles_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.background_migration_jobs
+    ADD CONSTRAINT background_migration_jobs_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.badges
     ADD CONSTRAINT badges_pkey PRIMARY KEY (id);
@@ -18570,6 +18596,10 @@ CREATE INDEX index_award_emoji_on_user_id_and_name ON public.award_emoji USING b
 CREATE UNIQUE INDEX index_aws_roles_on_role_external_id ON public.aws_roles USING btree (role_external_id);
 
 CREATE UNIQUE INDEX index_aws_roles_on_user_id ON public.aws_roles USING btree (user_id);
+
+CREATE INDEX index_background_migration_jobs_on_name_and_start_id_and_end_id ON public.background_migration_jobs USING btree (name, start_id, end_id);
+
+CREATE INDEX index_background_migration_jobs_on_name_and_status_and_id ON public.background_migration_jobs USING btree (name, status, id);
 
 CREATE INDEX index_badges_on_group_id ON public.badges USING btree (group_id);
 
@@ -23569,6 +23599,7 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200625190458
 20200626060151
 20200626130220
+20200701205710
 20200702123805
 20200703154822
 20200706005325
