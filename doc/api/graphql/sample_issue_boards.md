@@ -6,7 +6,7 @@ instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer).
 ## Set up the GraphiQL explorer
 
 The following procedure describes how you can use the GraphiQL explorer to identify
-existing issue boards in the `gitlab-docs` documentation repository.
+existing issue boards in the `gitlab-docs` documentation repository:
 
 1. Copy the following code excerpt:
 
@@ -37,7 +37,10 @@ existing issue boards in the `gitlab-docs` documentation repository.
 
 ![GraphiQL explorer search for boards](img/graphql_usecase_boards_v13_2.png)
 
-You can append the identifier of each board (`boards`) to the following URL:
-  `https://gitlab.com/gitlab-org/gitlab-docs/-/boards/`.
+If you want to view one of these boards, take one of the numeric identifiers shown in the output. From the screenshot, the first identifier is `105011`. Navigate to the following URL, which includes the identifier:
+
+```markdown
+https://gitlab.com/gitlab-org/gitlab-docs/-/boards/105011
+```
 
 For more information on each attribute, see the [GraphQL API Resources](reference/index.md).
