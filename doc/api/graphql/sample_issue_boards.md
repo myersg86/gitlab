@@ -1,7 +1,7 @@
 # Identify issue boards with GraphQL
 
-Given the advantages of GraphQL as described in the [GraphQL API](index.md), this page presents
-a substantive example that you can copy and paste into your own instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer).
+This page presents a substantive example that you can copy and paste into your own
+instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer).
 
 ## Set up the GraphiQL explorer
 
