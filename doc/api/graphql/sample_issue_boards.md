@@ -35,7 +35,7 @@ existing issue boards in the `gitlab-docs` documentation repository:
 1. Paste the `query` listed above into the left window of your GraphiQL explorer tool.
 1. Click Play <should include SVG of the play icon> to get the result shown here:
 
-![GraphiQL explorer search for boards](img/graphql_usecase_boards_v13_2.png)
+![GraphiQL explorer search for boards](img/sample_image_boards.png)
 
 If you want to view one of these boards, take one of the numeric identifiers shown in the output. From the screenshot, the first identifier is `105011`. Navigate to the following URL, which includes the identifier:
 
