@@ -423,6 +423,114 @@ RSpec.describe Gitlab::Database::PartitioningMigrationHelpers::TableManagementHe
     end
   end
 
+  describe '#finalize_partitioned_table_transition' do
+    context 'when the table is not allowed' do
+      let(:source_table) { :this_table_is_not_allowed }
+
+      it 'raises an error' do
+        expect(migration).to receive(:assert_table_is_allowed).with(source_table).and_call_original
+
+        expect do
+          migration.finalize_partitioned_table_transition source_table
+        end.to raise_error(/#{source_table} is not allowed for use/)
+      end
+    end
+
+    context 'when the partitioned table does not exist' do
+      it 'raises an error' do
+        expect(migration).to receive(:table_exists?).with(partitioned_table).and_return(false)
+
+        expect do
+          migration.finalize_partitioned_table_transition source_table
+        end.to raise_error(/could not find partitioned table for #{source_table}/)
+      end
+    end
+
+    context 'finishing pending background migration jobs' do
+      let(:mock_first_arg) { double(:first_arg) }
+      let(:mock_args) { [mock_first_arg] }
+
+      it 'finishes remaining jobs for the correct table' do
+        allow(migration).to receive(:table_exists?).with(partitioned_table).and_return(true)
+        allow(migration).to receive(:copy_missed_records)
+
+        expect(mock_first_arg).to receive(:==).with(source_table.to_s)
+        expect(Gitlab::BackgroundMigration).to receive(:steal)
+          .with(described_class::MIGRATION_CLASS_NAME)
+          .and_yield(mock_args)
+
+        migration.finalize_partitioned_table_transition source_table
+      end
+    end
+
+    describe 'cleaning up missed data' do
+      let(:source_table) { 'todos' }
+      let(:partitioned_model) { Class.new(ActiveRecord::Base) }
+      let(:timestamp) { Time.utc(2019, 12, 1, 12).round }
+      let!(:todo1) { create(:todo, created_at: timestamp, updated_at: timestamp) }
+      let!(:todo2) { create(:todo, created_at: timestamp, updated_at: timestamp) }
+      let!(:todo3) { create(:todo, created_at: timestamp, updated_at: timestamp) }
+      let!(:todo4) { create(:todo, created_at: timestamp, updated_at: timestamp) }
+      let!(:pending_job1) do
+        create(:background_migration_job,
+               name: described_class::MIGRATION_CLASS_NAME,
+               start_id: todo1.id,
+               end_id: todo2.id,
+               arguments: [source_table, partitioned_table, 'id'])
+      end
+      let!(:pending_job2) do
+        create(:background_migration_job,
+               name: described_class::MIGRATION_CLASS_NAME,
+               start_id: todo3.id,
+               end_id: todo3.id,
+               arguments: [source_table, partitioned_table, 'id'])
+      end
+      let!(:completed_job) do
+        create(:background_migration_job, :completed,
+               name: described_class::MIGRATION_CLASS_NAME,
+               start_id: todo4.id,
+               end_id: todo4.id,
+               arguments: [source_table, partitioned_table, 'id'])
+      end
+
+      before do
+        partitioned_model.primary_key = :id
+        partitioned_model.table_name = partitioned_table
+
+        allow(migration).to receive(:queue_background_migration_jobs_by_range_at_intervals)
+        allow(Gitlab::BackgroundMigration).to receive(:steal)
+      end
+
+      it 'idempotently cleans up after failed background migrations' do
+        migration.partition_table_by_date source_table, partition_column, min_date: min_date, max_date: max_date
+
+        expect(partitioned_model.count).to eq(0)
+
+        partitioned_model.insert!(todo2.attributes)
+
+        expect_next_instance_of(::Gitlab::BulkCopy) do |bulk_copy|
+          expect(bulk_copy).to receive(:copy_between).with(todo1.id, todo2.id).and_call_original
+          expect(bulk_copy).to receive(:copy_between).with(todo3.id, todo3.id).and_call_original
+        end
+
+        migration.finalize_partitioned_table_transition source_table
+
+        expect(partitioned_model.count).to eq(3)
+
+        [todo1, todo2, todo3].each do |original|
+          copy = partitioned_model.find(original.id)
+          expect(copy.attributes).to eq(original.attributes)
+        end
+
+        expect(partitioned_model.find_by_id(todo4.id)).to be_nil
+
+        [pending_job1, pending_job2].each do |job|
+          expect(job.reload).to be_completed
+        end
+      end
+    end
+  end
+
   def filter_columns_by_name(columns, names)
     columns.reject { |c| names.include?(c.name) }
   end

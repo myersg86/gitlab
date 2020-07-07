@@ -82,7 +82,7 @@ RSpec.describe Gitlab::Database::PartitioningMigrationHelpers::BackfillPartition
     end
 
     it 'breaks the assigned batch into smaller batches' do
-      expect_next_instance_of(described_class::BulkCopy) do |bulk_copy|
+      expect_next_instance_of(::Gitlab::BulkCopy) do |bulk_copy|
         expect(bulk_copy).to receive(:copy_between).with(source1.id, source2.id)
         expect(bulk_copy).to receive(:copy_between).with(source3.id, source3.id)
       end

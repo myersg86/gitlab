@@ -2,6 +2,8 @@
 
 module Gitlab
   class BackgroundMigrationJob < ActiveRecord::Base # rubocop:disable Rails/ApplicationRecord
+    include EachBatch
+
     self.table_name = :background_migration_jobs
 
     scope :for_batch, -> (start_id, end_id) { where(start_id: start_id, end_id: end_id) }

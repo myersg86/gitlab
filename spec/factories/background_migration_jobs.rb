@@ -8,4 +8,8 @@ FactoryBot.define do
     status { :pending }
     arguments { [] }
   end
+
+  trait :completed do
+    status { :completed }
+  end
 end

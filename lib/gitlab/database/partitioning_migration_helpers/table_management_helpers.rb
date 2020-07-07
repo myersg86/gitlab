@@ -98,6 +98,31 @@ module Gitlab
           end
         end
 
+        # Complete a previous migration to a partitioned table by performing a cleanup and final data synchronization.
+        # This performs two steps:
+        #   1. Wait to finish any pending BackgroundMigration jobs that have not completed
+        #   2. Inline copy any missed rows from the original table to the partitioned table
+        #
+        # Example:
+        #
+        #   finalize_partitioned_table_transition :audit_events
+        #
+        def finalize_partitioned_table_transition(table_name)
+          assert_table_is_allowed(table_name)
+          assert_not_in_transaction_block(scope: ERROR_SCOPE)
+
+          partitioned_table_name = make_partitioned_table_name(table_name)
+          unless table_exists?(partitioned_table_name)
+            raise "could not find partitioned table for #{table_name}, " \
+              "this could indicate the previous partitioning migration has been rolled back."
+          end
+
+          Gitlab::BackgroundMigration.steal(MIGRATION_CLASS_NAME) { |args| args.first == table_name.to_s }
+
+          primary_key = connection.primary_key(table_name)
+          copy_missed_records(table_name, partitioned_table_name, primary_key)
+        end
+
         private
 
         def assert_table_is_allowed(table_name)
@@ -250,7 +275,7 @@ module Gitlab
           create_trigger(table_name, trigger_name, function_name, fires: 'AFTER INSERT OR UPDATE OR DELETE')
         end
 
-        def enqueue_background_migration(source_table_name, partitioned_table_name, source_key)
+        def enqueue_background_migration(source_table_name, partitioned_table_name, source_column)
           source_model = define_batchable_model(source_table_name)
 
           queue_background_migration_jobs_by_range_at_intervals(
@@ -258,8 +283,22 @@ module Gitlab
             MIGRATION_CLASS_NAME,
             BATCH_INTERVAL,
             batch_size: BATCH_SIZE,
-            other_job_arguments: [source_table_name.to_s, partitioned_table_name, source_key],
+            other_job_arguments: [source_table_name.to_s, partitioned_table_name, source_column],
             track_jobs: true)
+        end
+
+        def copy_missed_records(source_table_name, partitioned_table_name, source_column)
+          bulk_copy = ::Gitlab::BulkCopy.new(source_table_name, partitioned_table_name, source_column)
+          relation = ::Gitlab::BackgroundMigrationJob.pending
+            .for_migration(MIGRATION_CLASS_NAME, arguments: [source_table_name])
+
+          relation.each_batch do |batch|
+            batch.each do |pending_migration_job|
+              bulk_copy.copy_between(pending_migration_job.start_id, pending_migration_job.end_id)
+
+              pending_migration_job.completed!
+            end
+          end
         end
       end
     end
