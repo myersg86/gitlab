@@ -33,7 +33,7 @@ existing issue boards in the `gitlab-docs` documentation repository:
 
 1. Open the GraphiQL explorer tool in the following URL: `https://gitlab.com/-/graphql-explorer`.
 1. Paste the `query` listed above into the left window of your GraphiQL explorer tool.
-1. Click Play <should include SVG of the play icon> to get the result shown here:
+1. Click Play to get the result shown here:
 
 ![GraphiQL explorer search for boards](img/sample_image_boards.png)
 
