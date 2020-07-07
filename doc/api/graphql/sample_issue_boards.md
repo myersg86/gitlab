@@ -35,7 +35,7 @@ instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer):
 1. Paste the `query` listed above into the left window of your GraphiQL explorer tool.
 1. Click Play to get the result shown here:
 
-![GraphiQL explorer search for boards](img/sample_image_boards_v13_2.png)
+![GraphiQL explorer search for boards](img/sample_issue_boards_v13_2.png)
 
 If you want to view one of these boards, take one of the numeric identifiers shown in the output. From the screenshot, the first identifier is `105011`. Navigate to the following URL, which includes the identifier:
 
