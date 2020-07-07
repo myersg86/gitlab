@@ -9473,7 +9473,9 @@ CREATE TABLE public.audit_events (
     author_name text,
     entity_path text,
     target_details text,
+    target_type text,
     CONSTRAINT check_492aaa021d CHECK ((char_length(entity_path) <= 5500)),
+    CONSTRAINT check_82294106dd CHECK ((char_length(target_type) <= 255)),
     CONSTRAINT check_83ff8406e2 CHECK ((char_length(author_name) <= 255)),
     CONSTRAINT check_d493ec90b5 CHECK ((char_length(target_details) <= 5500))
 );
