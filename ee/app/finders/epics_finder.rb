@@ -29,7 +29,7 @@ class EpicsFinder < IssuableFinder
 
   def self.scalar_params
     @scalar_params ||= %i[
-      board_id
+      board
       parent_id
       author_id
       author_username
@@ -154,13 +154,11 @@ class EpicsFinder < IssuableFinder
   end
 
   def in_board(items)
-    board_id = params[:board_id]
-    return items unless board_id.present?
-
-    board = Board.find(board_id)
+    board = params[:board]
+    return items unless board.present?
 
     list_service = Boards::Issues::ListService.new(board.resource_parent, current_user, { board_id: board.id })
-    issues = list_service.execute.pluck_primary_key
+    issues = list_service.execute.except(:order).pluck_primary_key
     epics_in_boards = EpicIssue.where(issue: issues)
     items.id_in(epics_in_boards.select("epic_id as id"))
   end
