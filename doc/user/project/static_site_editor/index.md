@@ -53,7 +53,7 @@ When clicking it, GitLab will open up an editor window from which the content
 can be directly edited. When you're ready, you can submit your changes in a
 click of a button:
 
-![Static Site Editor](img/wysiwyg_editor_v13_0.png)
+![Static Site Editor](img/wysiwyg_editor_v13_2.png)
 
 When an editor submits their changes, in the background, GitLab automatically
 creates a new branch, commits their changes, and opens a merge request. The
