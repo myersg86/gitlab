@@ -4,7 +4,7 @@ require 'spec_helper'
 
 RSpec.describe Projects::ContainerRepository::DeleteTagsService do
   let_it_be(:user) { create(:user) }
-  let_it_be(:project) { create(:project, :private) }
+  let_it_be(:project, reload: true) { create(:project, :private) }
   let_it_be(:repository) { create(:container_repository, :root, project: project) }
 
   let(:params) { { tags: tags } }
@@ -20,236 +20,89 @@ RSpec.describe Projects::ContainerRepository::DeleteTagsService do
       tags: %w(latest A Ba Bb C D E))
   end
 
-  RSpec.shared_examples 'logging a success response' do
-    it 'logs an info message' do
-      expect(service).to receive(:log_info).with(
-        service_class: 'Projects::ContainerRepository::DeleteTagsService',
-        message: 'deleted tags',
-        container_repository_id: repository.id,
-        deleted_tags_count: tags.size
-      )
-
-      subject
-    end
-  end
-
-  RSpec.shared_examples 'logging an error response' do |message: 'could not delete tags'|
-    it 'logs an error message' do
-      expect(service).to receive(:log_error).with(
-        service_class: 'Projects::ContainerRepository::DeleteTagsService',
-        message: message,
-        container_repository_id: repository.id
-      )
-
-      subject
-    end
-  end
-
   describe '#execute' do
     let(:tags) { %w[A] }
 
     subject { service.execute(repository) }
 
-    context 'without permissions' do
-      it { is_expected.to include(status: :error) }
-    end
-
-    context 'with permissions' do
+    context 'without throttling' do
       before do
-        project.add_developer(user)
+        stub_application_setting(container_registry_expiration_policies_throttling: false)
       end
 
-      context 'when the registry supports fast delete' do
-        context 'and the feature is enabled' do
-          let_it_be(:project) { create(:project, :private) }
-          let_it_be(:repository) { create(:container_repository, :root, project: project) }
+      it_behaves_like 'deleting container tags'
+    end
+
+    context 'with throttling enabled' do
+      let(:service_timeout) { 60 }
+
+      before do
+        stub_application_setting(container_registry_expiration_policies_throttling: true)
+        stub_application_setting(container_registry_delete_tags_service_timeout: service_timeout)
+      end
+
+      it_behaves_like 'deleting container tags'
+
+      context 'with permissions' do
+        before do
+          project.add_developer(user)
+        end
+
+        context 'hitting the service timeout' do
+          let(:service_timeout) { 0.5 }
 
           before do
+            allow(repository).to receive(:delete_tag_by_name).with('A').and_wrap_original do |m, *args|
+              sleep(1.second)
+              m.call(*args)
+            end
+          end
+
+          context 'with fast delete' do
+            before do
+              allow(repository.client).to receive(:supports_tag_delete?).and_return(true)
+            end
+
+            it { is_expected.to include(status: :error, message: 'Timeout while deleting tags') }
+
+            it 'tracks the error' do
+              expect(Gitlab::ErrorTracking).to receive(:track_exception).with(
+                instance_of(Timeout::Error),
+                container_repository_id: repository.id, tags_count: tags.size
+              )
+
+              subject
+            end
+          end
+
+          context 'with slow delete' do
+            before do
+              allow(repository.client).to receive(:supports_tag_delete?).and_return(false)
+            end
+
+            it_behaves_like 'deleting with slow delete container tags', %w[A]
+          end
+        end
+
+        context 'with service timeout set to' do
+          before do
+            allow(repository).to receive(:delete_tag_by_name).with('A').and_wrap_original do |m, *args|
+              sleep(1.second)
+              m.call(*args)
+            end
             allow(repository.client).to receive(:supports_tag_delete?).and_return(true)
           end
 
-          context 'with tags to delete' do
-            let_it_be(:tags) { %w[A Ba] }
+          context '0' do
+            let(:service_timeout) { 0 }
 
-            it 'deletes the tags by name' do
-              stub_delete_reference_request('A')
-              stub_delete_reference_request('Ba')
-
-              expect_delete_tag_by_name('A')
-              expect_delete_tag_by_name('Ba')
-
-              is_expected.to include(status: :success)
-            end
-
-            it 'succeeds when tag delete returns 404' do
-              stub_delete_reference_request('A')
-              stub_delete_reference_request('Ba', 404)
-
-              is_expected.to include(status: :success)
-            end
-
-            it_behaves_like 'logging a success response' do
-              before do
-                stub_delete_reference_request('A')
-                stub_delete_reference_request('Ba')
-              end
-            end
-
-            context 'with failures' do
-              context 'when the delete request fails' do
-                before do
-                  stub_delete_reference_request('A', 500)
-                  stub_delete_reference_request('Ba', 500)
-                end
-
-                it { is_expected.to include(status: :error) }
-
-                it_behaves_like 'logging an error response'
-              end
-            end
+            it_behaves_like 'deleting with fast delete container tags', %w[A]
           end
 
-          context 'when no params are specified' do
-            let_it_be(:params) { {} }
+          context 'nil' do
+            let(:service_timeout) { 0 }
 
-            it 'does not remove anything' do
-              expect_any_instance_of(ContainerRegistry::Client).not_to receive(:delete_repository_tag_by_name)
-
-              is_expected.to include(status: :error)
-            end
-          end
-
-          context 'with empty tags' do
-            let_it_be(:tags) { [] }
-
-            it 'does not remove anything' do
-              expect_any_instance_of(ContainerRegistry::Client).not_to receive(:delete_repository_tag_by_name)
-
-              is_expected.to include(status: :error)
-            end
-          end
-        end
-
-        context 'and the feature is disabled' do
-          let_it_be(:tags) { %w[A Ba] }
-
-          before do
-            stub_feature_flags(container_registry_fast_tag_delete: false)
-            stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3')
-            stub_put_manifest_request('A')
-            stub_put_manifest_request('Ba')
-          end
-
-          it 'fallbacks to slow delete' do
-            expect(service).not_to receive(:fast_delete)
-            expect(service).to receive(:slow_delete).with(repository, tags).and_call_original
-
-            expect_delete_tag_by_digest('sha256:dummy')
-
-            subject
-          end
-
-          it_behaves_like 'logging a success response' do
-            before do
-              allow(service).to receive(:slow_delete).and_call_original
-              expect_delete_tag_by_digest('sha256:dummy')
-            end
-          end
-        end
-      end
-
-      context 'when the registry does not support fast delete' do
-        let_it_be(:project) { create(:project, :private) }
-        let_it_be(:repository) { create(:container_repository, :root, project: project) }
-
-        before do
-          stub_tag_digest('latest', 'sha256:configA')
-          stub_tag_digest('A', 'sha256:configA')
-          stub_tag_digest('Ba', 'sha256:configB')
-
-          allow(repository.client).to receive(:supports_tag_delete?).and_return(false)
-        end
-
-        context 'when no params are specified' do
-          let_it_be(:params) { {} }
-
-          it 'does not remove anything' do
-            expect_any_instance_of(ContainerRegistry::Client).not_to receive(:delete_repository_tag_by_digest)
-
-            is_expected.to include(status: :error)
-          end
-        end
-
-        context 'with empty tags' do
-          let_it_be(:tags) { [] }
-
-          it 'does not remove anything' do
-            expect_any_instance_of(ContainerRegistry::Client).not_to receive(:delete_repository_tag_by_digest)
-
-            is_expected.to include(status: :error)
-          end
-        end
-
-        context 'with tags to delete' do
-          let_it_be(:tags) { %w[A Ba] }
-
-          it 'deletes the tags using a dummy image' do
-            stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3')
-
-            stub_put_manifest_request('A')
-            stub_put_manifest_request('Ba')
-
-            expect_delete_tag_by_digest('sha256:dummy')
-
-            is_expected.to include(status: :success)
-          end
-
-          it 'succeeds when tag delete returns 404' do
-            stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3')
-
-            stub_put_manifest_request('A')
-            stub_put_manifest_request('Ba')
-
-            stub_request(:delete, "http://registry.gitlab/v2/#{repository.path}/manifests/sha256:dummy")
-              .to_return(status: 404, body: "", headers: {})
-
-            is_expected.to include(status: :success)
-          end
-
-          it_behaves_like 'logging a success response' do
-            before do
-              stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3')
-              stub_put_manifest_request('A')
-              stub_put_manifest_request('Ba')
-              expect_delete_tag_by_digest('sha256:dummy')
-            end
-          end
-
-          context 'with failures' do
-            context 'when the dummy manifest generation fails' do
-              before do
-                stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3', success: false)
-              end
-
-              it { is_expected.to include(status: :error) }
-
-              it_behaves_like 'logging an error response', message: 'could not generate manifest'
-            end
-
-            context 'when updating the tags fails' do
-              before do
-                stub_upload("{\n  \"config\": {\n  }\n}", 'sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3')
-
-                stub_put_manifest_request('A', 500)
-                stub_put_manifest_request('Ba', 500)
-
-                stub_request(:delete, "http://registry.gitlab/v2/#{repository.path}/manifests/sha256:4435000728ee66e6a80e55637fc22725c256b61de344a2ecdeaac6bdb36e8bc3")
-                  .to_return(status: 200, body: "", headers: {})
-              end
-
-              it { is_expected.to include(status: :error) }
-              it_behaves_like 'logging an error response'
-            end
+            it_behaves_like 'deleting with fast delete container tags', %w[A]
           end
         end
       end

@@ -12,6 +12,9 @@ module Projects
         return error('not tags specified') if tag_names.blank?
 
         smart_delete(container_repository, tag_names)
+      rescue Timeout::Error => e
+        Gitlab::ErrorTracking.track_exception(e, tags_count: tag_names&.size, container_repository_id: container_repository&.id)
+        error('Timeout while deleting tags')
       end
 
       private
@@ -20,18 +23,36 @@ module Projects
       # by the GitLab Container Registry fork. See
       # https://gitlab.com/gitlab-org/gitlab/-/merge_requests/23325 for details.
       def fast_delete(container_repository, tag_names)
-        deleted_tags = tag_names.select do |name|
-          container_repository.delete_tag_by_name(name)
+        deleted_tags = with_timeout_if_enabled do
+          tag_names.select do |name|
+            container_repository.delete_tag_by_name(name)
+          end
         end
 
         deleted_tags.any? ? success(deleted: deleted_tags) : error('could not delete tags')
+      end
+
+      def with_timeout_if_enabled
+        if throttling_enabled?
+          Timeout.timeout(service_timeout) { yield }
+        else
+          yield
+        end
+      end
+
+      def throttling_enabled?
+        ::Gitlab::CurrentSettings.current_application_settings.container_registry_expiration_policies_throttling
+      end
+
+      def service_timeout
+        ::Gitlab::CurrentSettings.current_application_settings.container_registry_delete_tags_service_timeout
       end
 
       # Replace a tag on the registry with a dummy tag.
       # This is a hack as the registry doesn't support deleting individual
       # tags. This code effectively pushes a dummy image and assigns the tag to it.
       # This way when the tag is deleted only the dummy image is affected.
-      # This is used to preverse compatibility with third-party registries that
+      # This is used to preserve compatibility with third-party registries that
       # don't support fast delete.
       # See https://gitlab.com/gitlab-org/gitlab/issues/15737 for a discussion
       def slow_delete(container_repository, tag_names)
