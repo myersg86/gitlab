@@ -27,7 +27,7 @@ RSpec.describe Projects::ContainerRepository::DeleteTagsService do
 
     context 'without throttling' do
       before do
-        stub_application_setting(container_registry_expiration_policies_throttling: false)
+        stub_feature_flags(container_registry_expiration_policies_throttling: false)
       end
 
       it_behaves_like 'deleting container tags'
@@ -37,7 +37,7 @@ RSpec.describe Projects::ContainerRepository::DeleteTagsService do
       let(:service_timeout) { 60 }
 
       before do
-        stub_application_setting(container_registry_expiration_policies_throttling: true)
+        stub_feature_flags(container_registry_expiration_policies_throttling: true)
         stub_application_setting(container_registry_delete_tags_service_timeout: service_timeout)
       end
 

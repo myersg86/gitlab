@@ -41,7 +41,7 @@ module Projects
       end
 
       def throttling_enabled?
-        ::Gitlab::CurrentSettings.current_application_settings.container_registry_expiration_policies_throttling
+        Feature.enabled?(:container_registry_expiration_policies_throttling)
       end
 
       def service_timeout
