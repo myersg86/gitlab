@@ -9,7 +9,7 @@ module EE
 
       override :access_level_attributes
       def access_level_attributes
-        super + %i[user_id _destroy group_id]
+        super + %i[user_id _destroy group_id deploy_key_id]
       end
     end
   end
