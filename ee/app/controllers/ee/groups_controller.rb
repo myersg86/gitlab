@@ -71,6 +71,7 @@ module EE
         params_ee << :max_pages_size if can?(current_user, :update_max_pages_size)
         params_ee << :max_personal_access_token_lifetime if current_group&.personal_access_token_expiration_policy_available?
         params_ee << :delayed_project_removal if current_group&.feature_available?(:adjourned_deletion_for_projects_and_groups)
+        params_ee << :prevent_forking_outside_group if can?(current_user, :change_prevent_group_forking, current_group)
       end
     end
 

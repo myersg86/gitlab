@@ -1,0 +1,9 @@
+- return unless can?(current_user, :change_prevent_group_forking, group)
+%h5= _('Prevent project forking outside current group')
+
+.form-group.gl-mb-3
+  .form-check
+    = f.check_box :prevent_forking_outside_group, checked: group.prevent_forking_outside_group?, class: 'form-check-input'
+    = f.label :prevent_forking_outside_group, class: 'form-check-label' do
+      %span.d-block= s_('GroupSettings|Prevent forking outside of the group')
+      %span.text-muted= s_('GroupSettings|This setting will prevent group members from forking projects outside of the group.')

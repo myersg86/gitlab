@@ -78,6 +78,7 @@ class License < ApplicationRecord
     generic_alert_fingerprinting
     group_allowed_email_domains
     group_coverage_reports
+    group_forking_protection
     group_ip_restriction
     group_project_templates
     group_saml

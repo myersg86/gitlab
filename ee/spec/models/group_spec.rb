@@ -534,6 +534,53 @@ RSpec.describe Group do
     end
   end
 
+  describe '#prevent_forking_outside_group?' do
+    context 'with feature available' do
+      before do
+        stub_licensed_features(group_forking_protection: true)
+      end
+
+      context 'group with no associated saml provider' do
+        # TODO when namespace setting is migrated
+        it 'returns true' do
+          expect(group.prevent_forking_outside_group?).to eq(true)
+        end
+      end
+
+      context 'group with associated saml provider' do
+        before do
+          stub_licensed_features(group_saml: true, group_forking_protection: true)
+        end
+
+        context 'when it is configured to true on saml level' do
+          before do
+            create(:saml_provider, :enforced_group_managed_accounts, prohibited_outer_forks: true, group: group)
+          end
+
+          it 'returns true' do
+            expect(group.prevent_forking_outside_group?).to eq(true)
+          end
+        end
+
+        context 'when it is configured to false on saml level' do
+          before do
+            create(:saml_provider, :enforced_group_managed_accounts, prohibited_outer_forks: false, group: group)
+          end
+
+          it 'returns true' do
+            expect(group.prevent_forking_outside_group?).to eq(false)
+          end
+        end
+      end
+    end
+
+    context 'without feature available' do
+      it 'returns false' do
+        expect(group.prevent_forking_outside_group?).to be_falsey
+      end
+    end
+  end
+
   describe '#checked_file_template_project' do
     let(:valid_project) { create(:project, namespace: group) }
 

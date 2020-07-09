@@ -230,6 +230,18 @@ module EE
       feature_available?(:group_project_templates)
     end
 
+    def prevent_forking_outside_group?
+      return false unless feature_available?(:group_forking_protection)
+
+      # we need to temorarly honour settings from saml provider, as we migrate this data
+      # using background migration
+      return root_ancestor.saml_provider.prohibited_outer_forks? if root_ancestor.saml_provider
+
+      # waiting for the namespace_setting mr to be merged
+      # root_ancestor.namespace_settings.prevent_forking_outside_group
+      true
+    end
+
     def actual_size_limit
       return ::Gitlab::CurrentSettings.repository_size_limit if repository_size_limit.nil?
 
