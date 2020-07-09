@@ -130,10 +130,6 @@ module EE
       ::License.feature_available?(:ci_cd_projects) && import_sources_enabled?
     end
 
-    def first_class_vulnerabilities_available?(project)
-      ::Feature.enabled?(:first_class_vulnerabilities, project, default_enabled: true)
-    end
-
     def merge_pipelines_available?
       return false unless @project.builds_enabled?
 
@@ -149,11 +145,19 @@ module EE
     def sidebar_security_paths
       %w[
         projects/security/configuration#show
+        projects/security/sast_configuration#show
+        projects/security/vulnerabilities#show
         projects/security/dashboard#index
         projects/on_demand_scans#index
         projects/dependencies#index
         projects/licenses#index
         projects/threat_monitoring#show
+      ]
+    end
+
+    def sidebar_external_tracker_paths
+      %w[
+        projects/integrations/jira/issues#index
       ]
     end
 
@@ -178,44 +182,30 @@ module EE
       ::Project.in_namespace(allowed_subgroups).count
     end
 
-    def project_security_dashboard_config(project, pipeline)
-      if pipeline.nil?
+    def project_security_dashboard_config(project)
+      if project.vulnerabilities.none?
         {
+          has_vulnerabilities: 'false',
           empty_state_svg_path: image_path('illustrations/security-dashboard_empty.svg'),
           security_dashboard_help_path: help_page_path('user/application_security/security_dashboard/index')
         }
       else
         {
+          has_vulnerabilities: 'true',
           project: { id: project.id, name: project.name },
           project_full_path: project.full_path,
           vulnerabilities_endpoint: project_security_vulnerability_findings_path(project),
           vulnerabilities_summary_endpoint: summary_project_security_vulnerability_findings_path(project),
+          vulnerabilities_export_endpoint: api_v4_security_projects_vulnerability_exports_path(id: project.id),
           vulnerability_feedback_help_path: help_page_path("user/application_security/index", anchor: "interacting-with-the-vulnerabilities"),
           empty_state_svg_path: image_path('illustrations/security-dashboard-empty-state.svg'),
           dashboard_documentation: help_page_path('user/application_security/security_dashboard/index'),
           security_dashboard_help_path: help_page_path('user/application_security/security_dashboard/index'),
-          pipeline_id: pipeline.id,
-          user_path: user_url(pipeline.user),
-          user_avatar_path: pipeline.user.avatar_url,
-          user_name: pipeline.user.name,
-          commit_id: pipeline.commit.short_id,
-          commit_path: project_commit_url(project, pipeline.commit),
-          ref_id: pipeline.ref,
-          ref_path: project_commits_url(project, pipeline.ref),
-          pipeline_path: pipeline_url(pipeline),
-          pipeline_created: pipeline.created_at.to_s(:iso8601),
-          has_pipeline_data: "true",
           user_callouts_path: user_callouts_path,
           user_callout_id: UserCalloutsHelper::STANDALONE_VULNERABILITIES_INTRODUCTION_BANNER,
           show_introduction_banner: show_standalone_vulnerabilities_introduction_banner?.to_s
-        }.merge(project_vulnerabilities_config(project))
+        }
       end
-    end
-
-    def project_vulnerabilities_config(project)
-      return {} unless first_class_vulnerabilities_available?(project)
-
-      { vulnerabilities_export_endpoint: api_v4_security_projects_vulnerability_exports_path(id: project.id) }
     end
 
     def can_create_feedback?(project, feedback_type)
@@ -269,6 +259,11 @@ module EE
 
     def show_compliance_framework_badge?(project)
       project&.compliance_framework_setting&.present?
+    end
+
+    override :render_service_desk_menu?
+    def render_service_desk_menu?
+      true
     end
 
     private

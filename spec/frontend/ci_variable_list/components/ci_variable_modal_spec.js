@@ -105,6 +105,46 @@ describe('Ci variable modal', () => {
     });
   });
 
+  describe('Adding a new non-AWS variable', () => {
+    beforeEach(() => {
+      const [variable] = mockData.mockVariables;
+      const invalidKeyVariable = {
+        ...variable,
+        key: 'key',
+        value: 'value',
+        secret_value: 'secret_value',
+      };
+      createComponent(mount);
+      store.state.variable = invalidKeyVariable;
+    });
+
+    it('does not show AWS guidance tip', () => {
+      const tip = wrapper.find(`div[data-testid='aws-guidance-tip']`);
+      expect(tip.exists()).toBe(true);
+      expect(tip.isVisible()).toBe(false);
+    });
+  });
+
+  describe('Adding a new AWS variable', () => {
+    beforeEach(() => {
+      const [variable] = mockData.mockVariables;
+      const invalidKeyVariable = {
+        ...variable,
+        key: AWS_ACCESS_KEY_ID,
+        value: 'AKIAIOSFODNN7EXAMPLEjdhy',
+        secret_value: 'AKIAIOSFODNN7EXAMPLEjdhy',
+      };
+      createComponent(mount);
+      store.state.variable = invalidKeyVariable;
+    });
+
+    it('shows AWS guidance tip', () => {
+      const tip = wrapper.find(`[data-testid='aws-guidance-tip']`);
+      expect(tip.exists()).toBe(true);
+      expect(tip.isVisible()).toBe(true);
+    });
+  });
+
   describe('Editing a variable', () => {
     beforeEach(() => {
       const [variable] = mockData.mockVariables;
@@ -119,10 +159,7 @@ describe('Ci variable modal', () => {
 
     it('Update variable button dispatches updateVariable with correct variable', () => {
       addOrUpdateButton(2).vm.$emit('click');
-      expect(store.dispatch).toHaveBeenCalledWith(
-        'updateVariable',
-        store.state.variableBeingEdited,
-      );
+      expect(store.dispatch).toHaveBeenCalledWith('updateVariable');
     });
 
     it('Resets the editing state once modal is hidden', () => {
@@ -132,7 +169,7 @@ describe('Ci variable modal', () => {
 
     it('dispatches deleteVariable with correct variable to delete', () => {
       deleteVariableButton().vm.$emit('click');
-      expect(store.dispatch).toHaveBeenCalledWith('deleteVariable', mockData.mockVariables[0]);
+      expect(store.dispatch).toHaveBeenCalledWith('deleteVariable');
     });
   });
 

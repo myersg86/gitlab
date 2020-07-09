@@ -23,7 +23,7 @@ RSpec.describe Security::StoreReportService, '#execute' do
 
     using RSpec::Parameterized::TableSyntax
 
-    where(:case_name, :report_type, :scanners, :identifiers, :occurrences, :occurrence_identifiers, :occurrence_pipelines) do
+    where(:case_name, :report_type, :scanners, :identifiers, :occurrences, :finding_identifiers, :finding_pipelines) do
       'with SAST report'                | :sast                | 3 | 17 | 33 | 39 | 33
       'with Dependency Scanning report' | :dependency_scanning | 2 | 7  | 4  | 7  | 4
       'with Container Scanning report'  | :container_scanning  | 1 | 8  | 8  | 8  | 8
@@ -43,11 +43,11 @@ RSpec.describe Security::StoreReportService, '#execute' do
       end
 
       it 'inserts all occurrence identifiers (join model)' do
-        expect { subject }.to change { Vulnerabilities::OccurrenceIdentifier.count }.by(occurrence_identifiers)
+        expect { subject }.to change { Vulnerabilities::FindingIdentifier.count }.by(finding_identifiers)
       end
 
-      it 'inserts all occurrence pipelines (join model)' do
-        expect { subject }.to change { Vulnerabilities::OccurrencePipeline.count }.by(occurrence_pipelines)
+      it 'inserts all finding pipelines (join model)' do
+        expect { subject }.to change { Vulnerabilities::FindingPipeline.count }.by(finding_pipelines)
       end
 
       it 'inserts all vulnerabilties' do
@@ -97,6 +97,8 @@ RSpec.describe Security::StoreReportService, '#execute' do
         location_fingerprint: 'd869ba3f0b3347eb2749135a437dc07c8ae0f420')
     end
 
+    let!(:vulnerability) { create(:vulnerability, findings: [occurrence], project: project) }
+
     before do
       project.add_developer(user)
       allow(new_pipeline).to receive(:user).and_return(user)
@@ -117,7 +119,21 @@ RSpec.describe Security::StoreReportService, '#execute' do
     end
 
     it 'inserts all occurrence pipelines (join model) for this new pipeline' do
-      expect { subject }.to change { Vulnerabilities::OccurrencePipeline.where(pipeline: new_pipeline).count }.by(33)
+      expect { subject }.to change { Vulnerabilities::FindingPipeline.where(pipeline: new_pipeline).count }.by(33)
+    end
+
+    it 'inserts new vulnerabilities with data from findings from this new pipeline' do
+      expect { subject }.to change { Vulnerability.count }.by(32)
+    end
+
+    it 'updates existing occurrences with new data' do
+      subject
+      expect(occurrence.reload).to have_attributes(severity: 'medium', name: 'Probable insecure usage of temp file/directory.')
+    end
+
+    it 'updates existing vulnerability with new data' do
+      subject
+      expect(vulnerability.reload).to have_attributes(severity: 'medium', title: 'Probable insecure usage of temp file/directory.', title_html: 'Probable insecure usage of temp file/directory.')
     end
   end
 

@@ -6,7 +6,7 @@ exports[`Expiration Policy Form renders 1`] = `
 >
   <gl-form-group-stub
     id="expiration-policy-toggle-group"
-    label="Expiration policy:"
+    label="Cleanup policy:"
     label-align="right"
     label-cols="3"
     label-for="expiration-policy-toggle"
@@ -16,18 +16,16 @@ exports[`Expiration Policy Form renders 1`] = `
     >
       <gl-toggle-stub
         id="expiration-policy-toggle"
-        labeloff="Toggle Status: OFF"
-        labelon="Toggle Status: ON"
-        labelposition="hidden"
+        labelposition="top"
       />
        
       <span
-        class="mb-2 ml-1 lh-2"
+        class="mb-2 ml-2 lh-2"
       >
-        Docker tag expiration policy is 
         <strong>
-          disabled
+          Disabled
         </strong>
+         - Tags matching the patterns defined below will be scheduled for deletion
       </span>
     </div>
   </gl-form-group-stub>
@@ -125,6 +123,7 @@ exports[`Expiration Policy Form renders 1`] = `
     <gl-form-textarea-stub
       disabled="true"
       id="expiration-policy-name-matching"
+      noresize="true"
       placeholder=".*"
       trim=""
       value=""
@@ -141,6 +140,7 @@ exports[`Expiration Policy Form renders 1`] = `
     <gl-form-textarea-stub
       disabled="true"
       id="expiration-policy-keep-name"
+      noresize="true"
       placeholder=""
       trim=""
       value=""

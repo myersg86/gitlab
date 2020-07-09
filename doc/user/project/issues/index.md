@@ -157,7 +157,7 @@ context, such as past work, dependencies, or duplicates.
 
 ### Crosslinking issues
 
-You can [crosslink issues](crosslinking_issues.md) by referencing an issue from another
+You can [cross-link issues](crosslinking_issues.md) by referencing an issue from another
 issue or merge request by including its URL or ID. The referenced issue displays a
 message in the Activity stream about the reference, with a link to the other issue or MR.
 
@@ -174,8 +174,6 @@ sorted by most recently updated, are displayed below the title box. Note that th
 requires [GraphQL](../../../api/graphql/index.md) to be enabled.
 
 ![Similar issues](img/similar_issues.png)
-
----
 
 ### Health status **(ULTIMATE)**
 

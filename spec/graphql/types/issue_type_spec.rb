@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe GitlabSchema.types['Issue'] do
+RSpec.describe GitlabSchema.types['Issue'] do
   specify { expect(described_class).to expose_permissions_using(Types::PermissionTypes::Issue) }
 
   specify { expect(described_class.graphql_name).to eq('Issue') }
@@ -12,7 +12,7 @@ describe GitlabSchema.types['Issue'] do
   specify { expect(described_class.interfaces).to include(Types::Notes::NoteableType) }
 
   it 'has specific fields' do
-    fields = %i[iid title description state reference author assignees participants labels milestone due_date
+    fields = %i[id iid title description state reference author assignees participants labels milestone due_date
                 confidential discussion_locked upvotes downvotes user_notes_count web_path web_url relative_position
                 subscribed time_estimate total_time_spent closed_at created_at updated_at task_completion_status
                 designs design_collection]

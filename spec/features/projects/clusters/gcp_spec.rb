@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Gcp Cluster', :js, :do_not_mock_admin_mode do
+RSpec.describe 'Gcp Cluster', :js, :do_not_mock_admin_mode do
   include GoogleApi::CloudPlatformHelpers
 
   let(:project) { create(:project) }
@@ -139,6 +139,19 @@ describe 'Gcp Cluster', :js, :do_not_mock_admin_mode do
         end
       end
 
+      context 'when a user adds an existing cluster' do
+        before do
+          visit project_clusters_path(project)
+
+          click_link 'Add Kubernetes cluster'
+          click_link 'Add existing cluster'
+        end
+
+        it 'user sees the "Environment scope" field' do
+          expect(page).to have_css('#cluster_environment_scope')
+        end
+      end
+
       context 'when user destroys the cluster' do
         before do
           click_link 'Advanced Settings'
@@ -152,19 +165,6 @@ describe 'Gcp Cluster', :js, :do_not_mock_admin_mode do
           expect(page).to have_link('Add Kubernetes cluster')
         end
       end
-    end
-  end
-
-  context 'when a user cannot edit the environment scope' do
-    before do
-      visit project_clusters_path(project)
-
-      click_link 'Add Kubernetes cluster'
-      click_link 'Add existing cluster'
-    end
-
-    it 'user does not see the "Environment scope" field' do
-      expect(page).not_to have_css('#cluster_environment_scope')
     end
   end
 

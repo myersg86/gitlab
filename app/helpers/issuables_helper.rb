@@ -276,6 +276,7 @@ module IssuablesHelper
       canUpdate: can?(current_user, :"update_#{issuable.to_ability_name}", issuable),
       canDestroy: can?(current_user, :"destroy_#{issuable.to_ability_name}", issuable),
       issuableRef: issuable.to_reference,
+      issuableStatus: issuable.state,
       markdownPreviewPath: preview_markdown_path(parent),
       markdownDocsPath: help_page_path('user/markdown'),
       lockVersion: issuable.lock_version,
@@ -366,15 +367,6 @@ module IssuablesHelper
     end
   end
 
-  def issuable_close_reopen_button_method(issuable)
-    case issuable
-    when Issue
-      ''
-    when MergeRequest
-      'put'
-    end
-  end
-
   def issuable_author_is_current_user(issuable)
     issuable.author == current_user
   end
@@ -390,6 +382,14 @@ module IssuablesHelper
   def assignee_sidebar_data(assignee, merge_request: nil)
     { avatar_url: assignee.avatar_url, name: assignee.name, username: assignee.username }.tap do |data|
       data[:can_merge] = merge_request.can_be_merged_by?(assignee) if merge_request
+    end
+  end
+
+  def issuable_squash_option?(issuable, project)
+    if issuable.persisted?
+      issuable.squash
+    else
+      project.squash_enabled_by_default?
     end
   end
 

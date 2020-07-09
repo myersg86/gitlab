@@ -73,16 +73,16 @@ module Gitlab
       # @return [Hash<String,Array<String>>]
       def changes_by_category
         all_changed_files.each_with_object(Hash.new { |h, k| h[k] = [] }) do |file, hash|
-          hash[category_for_file(file)] << file
+          categories_for_file(file).each { |category| hash[category] << file }
         end
       end
 
-      # Determines the category a file is in, e.g., `:frontend` or `:backend`
-      # @return[Symbol]
-      def category_for_file(file)
-        _, category = CATEGORIES.find { |regexp, _| regexp.match?(file) }
+      # Determines the categories a file is in, e.g., `[:frontend]`, `[:backend]`, or  `%i[frontend engineering_productivity]`.
+      # @return Array<Symbol>
+      def categories_for_file(file)
+        _, categories = CATEGORIES.find { |regexp, _| regexp.match?(file) }
 
-        category || :unknown
+        Array(categories || :unknown)
       end
 
       # Returns the GFM for a category label, making its best guess if it's not
@@ -102,8 +102,8 @@ module Gitlab
       }.freeze
       # First-match win, so be sure to put more specific regex at the top...
       CATEGORIES = {
-        %r{\Adoc/} => :none, # To reinstate roulette for documentation, set to `:docs`.
-        %r{\A(CONTRIBUTING|LICENSE|MAINTENANCE|PHILOSOPHY|PROCESS|README)(\.md)?\z} => :none, # To reinstate roulette for documentation, set to `:docs`.
+        %r{\Adoc/} => :docs,
+        %r{\A(CONTRIBUTING|LICENSE|MAINTENANCE|PHILOSOPHY|PROCESS|README)(\.md)?\z} => :docs,
 
         %r{\A(ee/)?app/(assets|views)/} => :frontend,
         %r{\A(ee/)?public/} => :frontend,
@@ -125,9 +125,12 @@ module Gitlab
           jest\.config\.js |
           package\.json |
           yarn\.lock |
-          config/.+\.js |
-          \.gitlab/ci/frontend\.gitlab-ci\.yml
+          config/.+\.js
         )\z}x => :frontend,
+
+        %r{(\A|/)(
+          \.gitlab/ci/frontend\.gitlab-ci\.yml
+        )\z}x => %i[frontend engineering_productivity],
 
         %r{\A(ee/)?db/(?!fixtures)[^/]+} => :database,
         %r{\A(ee/)?lib/gitlab/(database|background_migration|sql|github_import)(/|\.rb)} => :database,
@@ -136,13 +139,13 @@ module Gitlab
         %r{\Arubocop/cop/migration(/|\.rb)} => :database,
 
         %r{\A(\.gitlab-ci\.yml\z|\.gitlab\/ci)} => :engineering_productivity,
+        %r{\A\.codeclimate\.yml\z} => :engineering_productivity,
         %r{\A\.overcommit\.yml\.example\z} => :engineering_productivity,
-        %r{\Atooling/overcommit/} => :engineering_productivity,
-        %r{\A.editorconfig\z} => :engineering_productivity,
+        %r{\A\.editorconfig\z} => :engineering_productivity,
         %r{Dangerfile\z} => :engineering_productivity,
         %r{\A(ee/)?(danger/|lib/gitlab/danger/)} => :engineering_productivity,
         %r{\A(ee/)?scripts/} => :engineering_productivity,
-        %r{\A\.codeclimate\.yml\z} => :engineering_productivity,
+        %r{\Atooling/} => :engineering_productivity,
 
         %r{\A(ee/)?app/(?!assets|views)[^/]+} => :backend,
         %r{\A(ee/)?(bin|config|generator_templates|lib|rubocop)/} => :backend,
@@ -191,6 +194,18 @@ module Gitlab
         return false unless gitlab_helper
 
         gitlab_helper.mr_json['web_url'].include?('/gitlab-org/security/')
+      end
+
+      def cherry_pick_mr?
+        return false unless gitlab_helper
+
+        /cherry[\s-]*pick/i.match?(gitlab_helper.mr_json['title'])
+      end
+
+      def stable_branch?
+        return false unless gitlab_helper
+
+        /\A\d+-\d+-stable-ee/i.match?(gitlab_helper.mr_json['target_branch'])
       end
 
       def mr_has_labels?(*labels)

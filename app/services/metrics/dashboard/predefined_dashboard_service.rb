@@ -10,7 +10,8 @@ module Metrics
       DASHBOARD_NAME = nil
 
       SEQUENCE = [
-        STAGES::EndpointInserter,
+        STAGES::MetricEndpointInserter,
+        STAGES::VariableEndpointInserter,
         STAGES::PanelIdsInserter,
         STAGES::Sorter
       ].freeze
@@ -22,6 +23,10 @@ module Metrics
 
         def matching_dashboard?(filepath)
           filepath == self::DASHBOARD_PATH
+        end
+
+        def out_of_the_box_dashboard?
+          true
         end
       end
 
@@ -39,7 +44,7 @@ module Metrics
       def get_raw_dashboard
         yml = File.read(Rails.root.join(dashboard_path))
 
-        YAML.safe_load(yml)
+        load_yaml(yml)
       end
 
       def sequence

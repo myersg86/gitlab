@@ -14,6 +14,7 @@ module EE
     USERS_OVER_LICENSE_BANNER = 'users_over_license_banner'
     STANDALONE_VULNERABILITIES_INTRODUCTION_BANNER = 'standalone_vulnerabilities_introduction_banner'
     ACTIVE_USER_COUNT_THRESHOLD = 'active_user_count_threshold'
+    PERSONAL_ACCESS_TOKEN_EXPIRY = 'personal_access_token_expiry'
 
     def show_canary_deployment_callout?(project)
       !user_dismissed?(CANARY_DEPLOYMENT) &&
@@ -87,6 +88,12 @@ module EE
       !user_dismissed?(STANDALONE_VULNERABILITIES_INTRODUCTION_BANNER)
     end
 
+    def show_token_expiry_notification?
+      !token_expiration_enforced? &&
+        current_user.active? &&
+        !user_dismissed?(PERSONAL_ACCESS_TOKEN_EXPIRY, 1.week.ago)
+    end
+
     private
 
     def hashed_storage_enabled?
@@ -110,7 +117,7 @@ module EE
     end
 
     def add_migrate_to_hashed_storage_link(message)
-      migrate_link = link_to(_('For more info, read the documentation.'), help_page_path('administration/repository_storage_types.md', anchor: 'how-to-migrate-to-hashed-storage'), target: '_blank')
+      migrate_link = link_to(_('For more info, read the documentation.'), help_page_path('administration/raketasks/storage.md', anchor: 'migrate-to-hashed-storage'), target: '_blank')
       linked_message = message % { migrate_link: migrate_link }
       linked_message.html_safe
     end
@@ -125,6 +132,10 @@ module EE
 
     def show_gold_trial_suitable_env?
       ::Gitlab.com? && !::Gitlab::Database.read_only?
+    end
+
+    def token_expiration_enforced?
+      ::PersonalAccessToken.expiration_enforced?
     end
   end
 end

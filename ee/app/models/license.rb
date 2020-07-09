@@ -37,7 +37,6 @@ class License < ApplicationRecord
     repository_size_limit
     seat_link
     send_emails_from_admin_area
-    service_desk
     scoped_issue_board
     usage_quotas
     visual_review_app
@@ -52,9 +51,11 @@ class License < ApplicationRecord
     board_assignee_lists
     board_milestone_lists
     ci_cd_projects
+    ci_secrets_management
     cluster_deployments
     code_owner_approval_required
     commit_committer_check
+    compliance_framework
     cross_project_pipelines
     custom_file_templates
     custom_file_templates_for_namespace
@@ -74,6 +75,7 @@ class License < ApplicationRecord
     file_locks
     geo
     github_project_service_integration
+    generic_alert_fingerprinting
     group_allowed_email_domains
     group_ip_restriction
     group_project_templates
@@ -87,7 +89,6 @@ class License < ApplicationRecord
     merge_trains
     metrics_reports
     multiple_approval_rules
-    multiple_clusters
     multiple_group_issue_boards
     object_storage
     operations_dashboard
@@ -108,9 +109,8 @@ class License < ApplicationRecord
   EEP_FEATURES.freeze
 
   EEU_FEATURES = EEP_FEATURES + %i[
-    cluster_health
-    compliance_framework
     container_scanning
+    coverage_fuzzing
     credentials_inventory
     dast
     dependency_scanning
@@ -121,8 +121,10 @@ class License < ApplicationRecord
     issuable_health_status
     license_scanning
     personal_access_token_expiration_policy
+    enforce_pat_expiration
     prometheus_alerts
     pseudonymizer
+    release_evidence_test_artifacts
     report_approver_rules
     requirements
     sast
@@ -161,7 +163,6 @@ class License < ApplicationRecord
     related_issues
     repository_mirrors
     scoped_issue_board
-    service_desk
   ].freeze
 
   FEATURES_BY_PLAN = {
@@ -183,8 +184,7 @@ class License < ApplicationRecord
     'GitLab_Auditor_User' => :auditor_user,
     'GitLab_DeployBoard' => :deploy_board,
     'GitLab_FileLocks' => :file_locks,
-    'GitLab_Geo' => :geo,
-    'GitLab_ServiceDesk' => :service_desk
+    'GitLab_Geo' => :geo
   }.freeze
 
   # Global features that cannot be restricted to only a subset of projects or namespaces.
@@ -485,6 +485,10 @@ class License < ApplicationRecord
 
   def future_dated?
     starts_at > Date.current
+  end
+
+  def auto_renew?
+    false
   end
 
   private

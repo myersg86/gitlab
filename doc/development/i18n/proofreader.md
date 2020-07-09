@@ -42,7 +42,7 @@ are very appreciative of the work done by translators and proofreaders!
 - Estonian
   - Proofreaders needed.
 - Filipino
-  - Proofreaders needed.
+  - Andrei Jiroh Halili - [GitLab](https://gitlab.com/AJHalili2006DevPH), [Crowdin](https://crowdin.com/profile/AndreiJirohHaliliDev2006)
 - French
   - Davy Defaud - [GitLab](https://gitlab.com/DevDef), [CrowdIn](https://crowdin.com/profile/DevDef)
 - Galician
@@ -105,6 +105,7 @@ are very appreciative of the work done by translators and proofreaders!
   - Proofreaders needed.
 - Turkish
   - Ali Demirtaş - [GitLab](https://gitlab.com/alidemirtas), [CrowdIn](https://crowdin.com/profile/alidemirtas)
+  - Rıfat Ünalmış (Rifat Unalmis) - [GitLab](https://gitlab.com/runalmis), [CrowdIn](https://crowdin.com/profile/runalmis)
 - Ukrainian
   - Volodymyr Sobotovych - [GitLab](https://gitlab.com/wheleph), [CrowdIn](https://crowdin.com/profile/wheleph)
   - Andrew Vityuk - [GitLab](https://gitlab.com/3_1_3_u), [CrowdIn](https://crowdin.com/profile/andruwa13)

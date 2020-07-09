@@ -12,6 +12,8 @@ module QA
     end
 
     module Page
+      autoload :OperationsDashboard, 'qa/ee/page/operations_dashboard'
+
       module Component
         autoload :LicenseManagement, 'qa/ee/page/component/license_management'
         autoload :SecureReport, 'qa/ee/page/component/secure_report'
@@ -49,6 +51,7 @@ module QA
 
       module Main
         autoload :Banner, 'qa/ee/page/main/banner'
+        autoload :Menu, 'qa/ee/page/main/menu'
       end
 
       module Admin
@@ -118,6 +121,7 @@ module QA
           autoload :ProtectedBranches, 'qa/ee/page/project/settings/protected_branches'
           autoload :Main, 'qa/ee/page/project/settings/main'
           autoload :MirroringRepositories, 'qa/ee/page/project/settings/mirroring_repositories'
+          autoload :ProtectedTags, 'qa/ee/page/project/settings/protected_tags'
           autoload :MergeRequest, 'qa/ee/page/project/settings/merge_request'
           autoload :MergeRequestApprovals, 'qa/ee/page/project/settings/merge_request_approvals'
           autoload :Integrations, 'qa/ee/page/project/settings/integrations'
@@ -131,10 +135,6 @@ module QA
         end
 
         module Operations
-          module Kubernetes
-            autoload :Show, 'qa/ee/page/project/operations/kubernetes/show'
-          end
-
           module Metrics
             autoload :Show, 'qa/ee/page/project/operations/metrics/show'
           end
@@ -152,6 +152,8 @@ module QA
         module Secure
           autoload :Show, 'qa/ee/page/project/secure/show'
           autoload :DependencyList, 'qa/ee/page/project/secure/dependency_list'
+          autoload :SecurityDashboard, 'qa/ee/page/project/secure/security_dashboard'
+          autoload :VulnerabilityDetails, 'qa/ee/page/project/secure/vulnerability_details'
         end
 
         module PathLocks

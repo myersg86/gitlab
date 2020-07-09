@@ -41,12 +41,12 @@ module EE
       has_one :github_service
       has_one :gitlab_slack_application_service
 
-      has_one :service_desk_setting, class_name: 'ServiceDeskSetting'
       has_one :tracing_setting, class_name: 'ProjectTracingSetting'
       has_one :feature_usage, class_name: 'ProjectFeatureUsage'
       has_one :status_page_setting, inverse_of: :project, class_name: 'StatusPage::ProjectSetting'
       has_one :compliance_framework_setting, class_name: 'ComplianceManagement::ComplianceFramework::ProjectSettings', inverse_of: :project
       has_one :security_setting, class_name: 'ProjectSecuritySetting'
+      has_one :vulnerability_statistic, class_name: 'Vulnerabilities::Statistic'
 
       has_many :approvers, as: :target, dependent: :destroy # rubocop:disable Cop/ActiveRecordDependent
       has_many :approver_users, through: :approvers, source: :user
@@ -72,9 +72,8 @@ module EE
 
       has_many :protected_environments
       has_many :software_license_policies, inverse_of: :project, class_name: 'SoftwareLicensePolicy'
+      has_many :software_licenses, through: :software_license_policies
       accepts_nested_attributes_for :software_license_policies, allow_destroy: true
-      has_many :packages, class_name: 'Packages::Package'
-      has_many :package_files, through: :packages, class_name: 'Packages::PackageFile'
       has_many :merge_trains, foreign_key: 'target_project_id', inverse_of: :target_project
 
       has_many :operations_feature_flags, class_name: 'Operations::FeatureFlag'
@@ -121,7 +120,6 @@ module EE
       scope :with_active_jira_services, -> { joins(:services).merge(::JiraService.active) }
       scope :with_jira_dvcs_cloud, -> { joins(:feature_usage).merge(ProjectFeatureUsage.with_jira_dvcs_integration_enabled(cloud: true)) }
       scope :with_jira_dvcs_server, -> { joins(:feature_usage).merge(ProjectFeatureUsage.with_jira_dvcs_integration_enabled(cloud: false)) }
-      scope :service_desk_enabled, -> { where(service_desk_enabled: true) }
       scope :github_imported, -> { where(import_type: 'github') }
       scope :with_protected_branches, -> { joins(:protected_branches) }
       scope :with_repositories_enabled, -> { joins(:project_feature).where(project_features: { repository_access_level: ::ProjectFeature::ENABLED }) }
@@ -202,16 +200,17 @@ module EE
           .where('services.id IS NULL')
       end
 
-      def find_by_service_desk_project_key(key)
-        # project_key is not indexed for now
-        # see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/24063#note_282435524 for details
-        joins(:service_desk_setting).find_by('service_desk_settings.project_key' => key)
-      end
-
       override :with_web_entity_associations
       def with_web_entity_associations
         super.preload(:compliance_framework_setting)
       end
+    end
+
+    def has_regulated_settings?
+      return unless compliance_framework_setting
+
+      compliance_framework_id = ::ComplianceManagement::ComplianceFramework::FRAMEWORKS[compliance_framework_setting.framework.to_sym]
+      ::Gitlab::CurrentSettings.current_application_settings.compliance_frameworks.include?(compliance_framework_id)
     end
 
     def can_store_security_reports?
@@ -303,10 +302,7 @@ module EE
       ::Feature.enabled?(:repository_push_audit_event, self)
     end
 
-    def first_class_vulnerabilities_enabled?
-      ::Feature.enabled?(:first_class_vulnerabilities, self, default_enabled: true)
-    end
-
+    override :feature_available?
     def feature_available?(feature, user = nil)
       if ::ProjectFeature::FEATURES.include?(feature)
         super
@@ -327,20 +323,6 @@ module EE
       mirror? &&
         feature_available?(:ci_cd_projects) &&
         feature_available?(:github_project_service_integration)
-    end
-
-    def service_desk_enabled
-      ::EE::Gitlab::ServiceDesk.enabled?(project: self) && super
-    end
-    alias_method :service_desk_enabled?, :service_desk_enabled
-
-    def service_desk_address
-      return unless service_desk_enabled?
-
-      config = ::Gitlab.config.incoming_email
-      wildcard = ::Gitlab::IncomingEmail::WILDCARD_PLACEHOLDER
-
-      config.address&.gsub(wildcard, "#{full_path_slug}-#{id}-issue-")
     end
 
     override :add_import_job
@@ -623,14 +605,6 @@ module EE
       instance.token
     end
 
-    def root_namespace
-      if namespace.has_parent?
-        namespace.root_ancestor
-      else
-        namespace
-      end
-    end
-
     override :lfs_http_url_to_repo
     def lfs_http_url_to_repo(operation)
       return super unless ::Gitlab::Geo.secondary_with_primary?
@@ -641,14 +615,6 @@ module EE
 
     def feature_usage
       super.presence || build_feature_usage
-    end
-
-    def package_already_taken?(package_name)
-      namespace.root_ancestor.all_projects
-        .joins(:packages)
-        .where.not(id: id)
-        .merge(Packages::Package.with_name(package_name))
-        .exists?
     end
 
     def adjourned_deletion?
@@ -676,31 +642,38 @@ module EE
 
     def disable_overriding_approvers_per_merge_request
       return super unless License.feature_available?(:admin_merge_request_approvers_rules)
+      return (::Gitlab::CurrentSettings.disable_overriding_approvers_per_merge_request? || super) unless project_compliance_mr_approval_settings?
+      return super unless has_regulated_settings?
 
-      ::Gitlab::CurrentSettings.disable_overriding_approvers_per_merge_request? ||
-        super
+      ::Gitlab::CurrentSettings.disable_overriding_approvers_per_merge_request?
     end
     alias_method :disable_overriding_approvers_per_merge_request?, :disable_overriding_approvers_per_merge_request
 
     def merge_requests_author_approval
       return super unless License.feature_available?(:admin_merge_request_approvers_rules)
+      return false if !project_compliance_mr_approval_settings? && ::Gitlab::CurrentSettings.prevent_merge_requests_author_approval?
+      return super if !project_compliance_mr_approval_settings? && !::Gitlab::CurrentSettings.prevent_merge_requests_author_approval?
+      return super unless has_regulated_settings?
 
-      return false if ::Gitlab::CurrentSettings.prevent_merge_requests_author_approval?
-
-      super
+      !::Gitlab::CurrentSettings.prevent_merge_requests_author_approval?
     end
     alias_method :merge_requests_author_approval?, :merge_requests_author_approval
 
     def merge_requests_disable_committers_approval
       return super unless License.feature_available?(:admin_merge_request_approvers_rules)
+      return (::Gitlab::CurrentSettings.prevent_merge_requests_committers_approval? || super) unless project_compliance_mr_approval_settings?
+      return super unless has_regulated_settings?
 
-      ::Gitlab::CurrentSettings.prevent_merge_requests_committers_approval? ||
-        super
+      ::Gitlab::CurrentSettings.prevent_merge_requests_committers_approval?
     end
     alias_method :merge_requests_disable_committers_approval?, :merge_requests_disable_committers_approval
 
-    def license_compliance
-      strong_memoize(:license_compliance) { SCA::LicenseCompliance.new(self) }
+    def project_compliance_mr_approval_settings?
+      ::Feature.enabled?(:project_compliance_merge_request_approval_settings, self)
+    end
+
+    def license_compliance(pipeline = latest_pipeline_with_reports(::Ci::JobArtifact.license_scanning_reports))
+      SCA::LicenseCompliance.new(self, pipeline)
     end
 
     override :template_source?
@@ -712,6 +685,11 @@ module EE
 
     def jira_subscription_exists?
       feature_available?(:jira_dev_panel_integration) && JiraConnectSubscription.for_project(self).exists?
+    end
+
+    override :predefined_variables
+    def predefined_variables
+      super.concat(requirements_ci_variables)
     end
 
     private
@@ -767,8 +745,15 @@ module EE
         approval_rules.regular_or_any_approver.order(rule_type: :desc, id: :asc)
       end
     end
+
+    def requirements_ci_variables
+      ::Gitlab::Ci::Variables::Collection.new.tap do |variables|
+        if requirements.opened.any?
+          variables.append(key: 'CI_HAS_OPEN_REQUIREMENTS', value: 'true')
+        end
+      end
+    end
   end
 end
 
 EE::Project.include_if_ee('::EE::GitlabRoutingHelper')
-EE::Project.include_if_ee('::EE::DeploymentPlatform')

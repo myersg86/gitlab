@@ -137,6 +137,23 @@ RSpec.describe Ci::Build do
         end
       end
     end
+
+    describe 'variable CI_HAS_OPEN_REQUIREMENTS' do
+      it "is included with value 'true' if there are open requirements" do
+        create(:requirement, project: project)
+
+        expect(subject).to include({ key: 'CI_HAS_OPEN_REQUIREMENTS',
+                                     value: 'true', public: true, masked: false })
+      end
+
+      it 'is not included if there are no open requirements' do
+        create(:requirement, project: project, state: :archived)
+
+        requirement_variable = subject.find { |var| var[:key] == 'CI_HAS_OPEN_REQUIREMENTS' }
+
+        expect(requirement_variable).to be_nil
+      end
+    end
   end
 
   describe '#collect_security_reports!' do
@@ -415,7 +432,7 @@ RSpec.describe Ci::Build do
 
     context 'when there is a requirements report' do
       before do
-        create(:ee_ci_job_artifact, :requirements, job: job, project: job.project)
+        create(:ee_ci_job_artifact, :all_passing_requirements, job: job, project: job.project)
       end
 
       context 'when requirements are available' do
@@ -467,6 +484,79 @@ RSpec.describe Ci::Build do
       build_with_license_scan = create(:ci_build, job_artifacts: [create(:ci_job_artifact, file_type: :license_scanning, file_format: :raw)])
 
       expect(described_class.license_scan).to contain_exactly(build_with_license_scan)
+    end
+  end
+
+  describe 'ci_secrets_management_available?' do
+    subject(:build) { job.ci_secrets_management_available? }
+
+    context 'when secrets management feature is available' do
+      before do
+        stub_licensed_features(ci_secrets_management: true)
+      end
+
+      it { is_expected.to be true }
+    end
+
+    context 'when secrets management feature is not available' do
+      before do
+        stub_licensed_features(ci_secrets_management: false)
+      end
+
+      it { is_expected.to be false }
+    end
+  end
+
+  describe '#runner_required_feature_names' do
+    let(:valid_secrets) do
+      {
+        DATABASE_PASSWORD: {
+          vault: {
+            engine: { name: 'kv-v2', path: 'kv-v2' },
+            path: 'production/db',
+            field: 'password'
+          }
+        }
+      }
+    end
+    let(:build) { create(:ci_build, secrets: secrets) }
+
+    subject { build.runner_required_feature_names }
+
+    context 'when secrets management feature is available' do
+      before do
+        stub_licensed_features(ci_secrets_management: true)
+      end
+
+      context 'when there are secrets defined' do
+        let(:secrets) { valid_secrets }
+
+        it { is_expected.to include(:secrets) }
+      end
+
+      context 'when there are no secrets defined' do
+        let(:secrets) { {} }
+
+        it { is_expected.not_to include(:secrets) }
+      end
+    end
+
+    context 'when secrets management feature is not available' do
+      before do
+        stub_licensed_features(ci_secrets_management: false)
+      end
+
+      context 'when there are secrets defined' do
+        let(:secrets) { valid_secrets }
+
+        it { is_expected.not_to include(:secrets) }
+      end
+
+      context 'when there are no secrets defined' do
+        let(:secrets) { {} }
+
+        it { is_expected.not_to include(:secrets) }
+      end
     end
   end
 end

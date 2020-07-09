@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-shared_examples 'Signup' do
+RSpec.shared_examples 'Signup' do
   include TermsHelper
 
   let(:new_user) { build_stubbed(:user) }
@@ -70,6 +70,13 @@ shared_examples 'Signup' do
       expect(page).to have_content("Username is too long (maximum is 255 characters).")
     end
 
+    it 'shows an error message if the username is less than 2 characters' do
+      fill_in 'new_user_username', with: 'u'
+      wait_for_requests
+
+      expect(page).to have_content("Username is too short (minimum is 2 characters).")
+    end
+
     it 'shows an error message on submit if the username contains special characters' do
       fill_in 'new_user_username', with: 'new$user!username'
       wait_for_requests
@@ -91,7 +98,7 @@ shared_examples 'Signup' do
       expect(page).to have_content("Invalid input, please avoid emojis")
     end
 
-    it 'shows a pending message if the username availability is being fetched', :quarantine do
+    it 'shows a pending message if the username availability is being fetched', quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/31484' do
       fill_in 'new_user_username', with: 'new-user'
 
       expect(find('.username > .validation-pending')).not_to have_css '.hide'
@@ -420,7 +427,7 @@ shared_examples 'Signup' do
   end
 end
 
-shared_examples 'Signup name validation' do |field, max_length|
+RSpec.shared_examples 'Signup name validation' do |field, max_length|
   before do
     visit new_user_registration_path
   end
@@ -458,7 +465,7 @@ shared_examples 'Signup name validation' do |field, max_length|
   end
 end
 
-describe 'With original flow' do
+RSpec.describe 'With original flow' do
   before do
     stub_experiment(signup_flow: false)
     stub_experiment_for_user(signup_flow: false)
@@ -468,7 +475,7 @@ describe 'With original flow' do
   it_behaves_like 'Signup name validation', 'new_user_name', 255
 end
 
-describe 'With experimental flow' do
+RSpec.describe 'With experimental flow' do
   before do
     stub_experiment(signup_flow: true)
     stub_experiment_for_user(signup_flow: true)

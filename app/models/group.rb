@@ -18,6 +18,8 @@ class Group < Namespace
 
   ACCESS_REQUEST_APPROVERS_TO_BE_NOTIFIED_LIMIT = 10
 
+  UpdateSharedRunnersError = Class.new(StandardError)
+
   has_many :group_members, -> { where(requested_at: nil) }, dependent: :destroy, as: :source # rubocop:disable Cop/ActiveRecordDependent
   alias_method :members, :group_members
   has_many :users, through: :group_members
@@ -73,9 +75,12 @@ class Group < Namespace
   validates :variables, variable_duplicates: true
 
   validates :two_factor_grace_period, presence: true, numericality: { greater_than_or_equal_to: 0 }
+
   validates :name,
-    format: { with: Gitlab::Regex.group_name_regex,
-              message: Gitlab::Regex.group_name_regex_message }, if: :name_changed?
+            html_safety: true,
+            format: { with: Gitlab::Regex.group_name_regex,
+                      message: Gitlab::Regex.group_name_regex_message },
+            if: :name_changed?
 
   add_authentication_token_field :runners_token, encrypted: -> { Feature.enabled?(:groups_tokens_optional_encryption, default_enabled: true) ? :optional : :required }
 
@@ -85,6 +90,8 @@ class Group < Namespace
   after_update :path_changed_hook, if: :saved_change_to_path?
 
   scope :with_users, -> { includes(:users) }
+
+  scope :by_id, ->(groups) { where(id: groups) }
 
   class << self
     def sort_by_attribute(method)
@@ -499,6 +506,55 @@ class Group < Namespace
   def preload_shared_group_links
     preloader = ActiveRecord::Associations::Preloader.new
     preloader.preload(self, shared_with_group_links: [shared_with_group: :route])
+  end
+
+  def shared_runners_allowed?
+    shared_runners_enabled? || allow_descendants_override_disabled_shared_runners?
+  end
+
+  def parent_allows_shared_runners?
+    return true unless has_parent?
+
+    parent.shared_runners_allowed?
+  end
+
+  def parent_enabled_shared_runners?
+    return true unless has_parent?
+
+    parent.shared_runners_enabled?
+  end
+
+  def enable_shared_runners!
+    raise UpdateSharedRunnersError, 'Shared Runners disabled for the parent group' unless parent_enabled_shared_runners?
+
+    update_column(:shared_runners_enabled, true)
+  end
+
+  def disable_shared_runners!
+    group_ids = self_and_descendants
+    return if group_ids.empty?
+
+    Group.by_id(group_ids).update_all(shared_runners_enabled: false)
+
+    all_projects.update_all(shared_runners_enabled: false)
+  end
+
+  def allow_descendants_override_disabled_shared_runners!
+    raise UpdateSharedRunnersError, 'Shared Runners enabled' if shared_runners_enabled?
+    raise UpdateSharedRunnersError, 'Group level shared Runners not allowed' unless parent_allows_shared_runners?
+
+    update_column(:allow_descendants_override_disabled_shared_runners, true)
+  end
+
+  def disallow_descendants_override_disabled_shared_runners!
+    raise UpdateSharedRunnersError, 'Shared Runners enabled' if shared_runners_enabled?
+
+    group_ids = self_and_descendants
+    return if group_ids.empty?
+
+    Group.by_id(group_ids).update_all(allow_descendants_override_disabled_shared_runners: false)
+
+    all_projects.update_all(shared_runners_enabled: false)
   end
 
   private

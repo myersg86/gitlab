@@ -1,4 +1,4 @@
-# Backing up and restoring GitLab **(CORE ONLY)**
+# Back up and restore GitLab **(CORE ONLY)**
 
 GitLab provides Rake tasks for backing up and restoring GitLab instances.
 
@@ -25,14 +25,6 @@ installed on your system.
     # RHEL/CentOS
     sudo yum install rsync
     ```
-
-- **Tar**: Backup and restore tasks use `tar` under the hood to create and extract
-  archives. Ensure you have version 1.30 or above of `tar` available in your
-  system. To check the version, run:
-
-  ```shell
-  tar --version
-  ```
 
 ## Backup timestamp
 
@@ -466,7 +458,13 @@ For Omnibus GitLab packages:
    gitlab_rails['backup_upload_connection'] = {
      'provider' => 'Google',
      'google_storage_access_key_id' => 'Access Key',
-     'google_storage_secret_access_key' => 'Secret'
+     'google_storage_secret_access_key' => 'Secret',
+
+     ## If you have CNAME buckets (foo.example.com), you might run into SSL issues
+     ## when uploading backups ("hostname foo.example.com.storage.googleapis.com
+     ## does not match the server certificate"). In that case, uncomnent the following
+     ## setting. See: https://github.com/fog/fog/issues/2834
+     #'path_style' => true
    }
    gitlab_rails['backup_upload_remote_directory'] = 'my.google.bucket'
    ```
@@ -679,7 +677,7 @@ You can only restore a backup to **exactly the same version and type (CE/EE)** o
 GitLab that you created it on, for example CE 9.1.0.
 
 If your backup is a different version than the current installation, you will
-need to [downgrade your GitLab installation](https://docs.gitlab.com/omnibus/update/README.html#downgrading)
+need to [downgrade your GitLab installation](https://docs.gitlab.com/omnibus/update/README.html#downgrade)
 before restoring the backup.
 
 ### Restore prerequisites
@@ -828,6 +826,12 @@ If there is a GitLab version mismatch between your backup tar file and the insta
 version of GitLab, the restore command will abort with an error. Install the
 [correct GitLab version](https://packages.gitlab.com/gitlab/) and try again.
 
+NOTE: **Note**
+There is currently a [known issue](https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/3470) for restore not working
+with `pgbouncer`. In order to workaround the issue, the Rails node will need to bypass `pgbouncer` and connect
+directly to the primary database node. This can be done by setting `gitlab_rails['db_host']` and `gitlab_rails['port']`
+to connect to the primary database node and [reconfiguring GitLab](../administration/restart_gitlab.md#omnibus-gitlab-reconfigure).
+
 ### Restore for Docker image and GitLab Helm chart installations
 
 For GitLab installations using the Docker image or the GitLab Helm chart on
@@ -858,6 +862,28 @@ use `gitlab-backup restore` to avoid this issue.
 
 The GitLab Helm chart uses a different process, documented in
 [restoring a GitLab Helm chart installation](https://gitlab.com/gitlab-org/charts/gitlab/blob/master/doc/backup-restore/restore.md).
+
+### Restoring only one or a few project(s) or group(s) from a backup
+
+While the Rake task used to restore a GitLab instance doesn't support
+restoring a single project or group, you can use a workaround by
+restoring your backup to a separate, temporary GitLab instance, and
+export your project or group from there:
+
+1. [Install a new GitLab](../install/README.md) instance at the same version as
+   the backed-up instance from which you want to restore.
+1. [Restore the backup](#restore-gitlab) into this new instance and
+   export your [project](../user/project/settings/import_export.md)
+   or [group](../user/group/settings/import_export.md). Make sure to
+   read the **Important Notes** on either export feature's documentation
+   to understand what will be exported and what not.
+1. Once the export is complete, go to the old instance and import it.
+1. After importing only the project(s) or group(s) that you wanted is complete,
+   you may delete the new, temporary GitLab instance.
+
+NOTE: **Note**
+A feature request to provide direct restore of individual projects or groups
+is being discussed in [issue #17517](https://gitlab.com/gitlab-org/gitlab/-/issues/17517).
 
 ## Alternative backup strategies
 
@@ -914,7 +940,7 @@ Be advised that, backup is successfully restored in spite of these warnings.
 The Rake task runs this as the `gitlab` user which does not have the superuser access to the database. When restore is initiated it will also run as `gitlab` user but it will also try to alter the objects it does not have access to.
 Those objects have no influence on the database backup/restore but they give this annoying warning.
 
-For more information see similar questions on PostgreSQL issue tracker[here](https://www.postgresql.org/message-id/201110220712.30886.adrian.klaver@gmail.com) and [here](https://www.postgresql.org/message-id/2039.1177339749@sss.pgh.pa.us) as well as [stack overflow](https://stackoverflow.com/questions/4368789/error-must-be-owner-of-language-plpgsql).
+For more information see similar questions on PostgreSQL issue tracker [here](https://www.postgresql.org/message-id/201110220712.30886.adrian.klaver@gmail.com) and [here](https://www.postgresql.org/message-id/2039.1177339749@sss.pgh.pa.us) as well as [stack overflow](https://stackoverflow.com/questions/4368789/error-must-be-owner-of-language-plpgsql).
 
 ### When the secrets file is lost
 
@@ -940,6 +966,9 @@ experience some unexpected behavior such as:
 
 - Stuck jobs.
 - 500 errors.
+
+You can check whether you have undecryptable values in the database using
+the [Secrets Doctor Rake task](../administration/raketasks/doctor.md).
 
 In this case, you are required to reset all the tokens for CI/CD variables
 and Runner Authentication, which is described in more detail below. After

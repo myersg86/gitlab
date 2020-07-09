@@ -6,6 +6,8 @@ import Icon from '~/vue_shared/components/icon.vue';
 import VulnerabilityActionButtons from './vulnerability_action_buttons.vue';
 import VulnerabilityIssueLink from './vulnerability_issue_link.vue';
 import { DASHBOARD_TYPES } from '../store/constants';
+import convertReportType from 'ee/vue_shared/security_reports/store/utils/convert_report_type';
+import getPrimaryIdentifier from 'ee/vue_shared/security_reports/store/utils/get_primary_identifier';
 
 export default {
   name: 'SecurityDashboardTableRow',
@@ -36,6 +38,9 @@ export default {
     severity() {
       return this.vulnerability.severity || ' ';
     },
+    vulnerabilityIdentifier() {
+      return getPrimaryIdentifier(this.vulnerability.identifiers, 'external_type');
+    },
     vulnerabilityNamespace() {
       const { project, location } = this.vulnerability;
       if (this.dashboardType === DASHBOARD_TYPES.GROUP) {
@@ -61,6 +66,9 @@ export default {
     },
     isSelected() {
       return Boolean(this.selectedVulnerabilities[this.vulnerability.id]);
+    },
+    useConvertReportType() {
+      return convertReportType(this.vulnerability.report_type);
     },
   },
   methods: {
@@ -132,6 +140,20 @@ export default {
             {{ vulnerabilityNamespace }}
           </small>
         </template>
+      </div>
+    </div>
+
+    <div class="table-section gl-white-space-normal section-15">
+      <div class="table-mobile-header" role="rowheader">{{ s__('Reports|Identifier') }}</div>
+      <div class="table-mobile-content">
+        {{ vulnerabilityIdentifier }}
+      </div>
+    </div>
+
+    <div class="table-section section-15">
+      <div class="table-mobile-header" role="rowheader">{{ s__('Reports|Scanner') }}</div>
+      <div class="table-mobile-content text-capitalize">
+        {{ useConvertReportType }}
       </div>
     </div>
 

@@ -2,11 +2,13 @@
 
 require 'spec_helper'
 
-describe 'Group empty states' do
+RSpec.describe 'Group empty states' do
   let(:group) { create(:group) }
   let(:user) { create(:group_member, :developer, user: create(:user), group: group ).user }
 
   before do
+    stub_feature_flags(vue_issuables_list: false)
+
     sign_in(user)
   end
 

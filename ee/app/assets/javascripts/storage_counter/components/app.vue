@@ -1,5 +1,5 @@
 <script>
-import { GlLink } from '@gitlab/ui';
+import { GlLink, GlSprintf } from '@gitlab/ui';
 import Project from './project.vue';
 import UsageGraph from './usage_graph.vue';
 import query from '../queries/storage.graphql';
@@ -10,6 +10,7 @@ export default {
   components: {
     Project,
     GlLink,
+    GlSprintf,
     Icon,
     UsageGraph,
   },
@@ -21,6 +22,11 @@ export default {
     helpPagePath: {
       type: String,
       required: true,
+    },
+    purchaseStorageUrl: {
+      type: String,
+      required: false,
+      default: null,
     },
   },
   apollo: {
@@ -44,6 +50,7 @@ export default {
             ? numberToHumanSize(data.namespace.rootStorageStatistics.storageSize)
             : 'N/A',
         rootStorageStatistics: data.namespace.rootStorageStatistics,
+        limit: data.namespace.storageSizeLimit,
       }),
     },
   },
@@ -52,24 +59,51 @@ export default {
       namespace: {},
     };
   },
+  methods: {
+    formatSize(size) {
+      return numberToHumanSize(size);
+    },
+  },
 };
 </script>
 <template>
   <div>
     <div class="pipeline-quota container-fluid py-4 px-2 m-0">
-      <div class="row py-0">
-        <div class="col-sm-12">
-          <strong>{{ s__('UsageQuota|Storage usage:') }}</strong>
-          <span data-testid="total-usage">
-            {{ namespace.totalUsage }}
-            <gl-link
-              :href="helpPagePath"
-              target="_blank"
-              :aria-label="s__('UsageQuota|Usage quotas help link')"
-            >
-              <icon name="question" :size="12" />
-            </gl-link>
-          </span>
+      <div class="row py-0 d-flex align-items-center">
+        <div class="col-sm-8">
+          <gl-sprintf :message="s__('UsageQuota|You used: %{usage} %{limit}')">
+            <template #usage>
+              <span class="gl-font-weight-bold" data-testid="total-usage">
+                {{ namespace.totalUsage }}
+              </span>
+            </template>
+            <template #limit>
+              <gl-sprintf
+                v-if="namespace.limit"
+                :message="s__('UsageQuota|out of %{formattedLimit} of your namespace storage')"
+              >
+                <template #formattedLimit>
+                  <span class="gl-font-weight-bold">{{ formatSize(namespace.limit) }}</span>
+                </template>
+              </gl-sprintf>
+            </template>
+          </gl-sprintf>
+          <gl-link
+            :href="helpPagePath"
+            target="_blank"
+            :aria-label="s__('UsageQuota|Usage quotas help link')"
+          >
+            <icon name="question" :size="12" />
+          </gl-link>
+        </div>
+        <div v-if="purchaseStorageUrl" class="col-sm-4 text-right">
+          <gl-link
+            :href="purchaseStorageUrl"
+            class="btn btn-success"
+            target="_blank"
+            data-testid="purchase-storage-link"
+            >{{ s__('UsageQuota|Purchase more storage') }}</gl-link
+          >
         </div>
       </div>
       <div class="row py-0">
@@ -77,6 +111,7 @@ export default {
           <usage-graph
             v-if="namespace.rootStorageStatistics"
             :root-storage-statistics="namespace.rootStorageStatistics"
+            :limit="namespace.limit"
           />
         </div>
       </div>

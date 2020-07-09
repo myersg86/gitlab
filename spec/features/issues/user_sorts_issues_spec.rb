@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-describe "User sorts issues" do
+RSpec.describe "User sorts issues" do
   include SortingHelper
   include IssueHelpers
 
@@ -16,6 +16,8 @@ describe "User sorts issues" do
   let_it_be(:later_due_milestone) { create(:milestone, project: project, due_date: '2013-12-12') }
 
   before do
+    stub_feature_flags(vue_issuables_list: false)
+
     create_list(:award_emoji, 2, :upvote, awardable: issue1)
     create_list(:award_emoji, 2, :downvote, awardable: issue2)
     create(:award_emoji, :downvote, awardable: issue1)

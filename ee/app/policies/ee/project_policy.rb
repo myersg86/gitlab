@@ -19,9 +19,6 @@ module EE
 
     prepended do
       with_scope :subject
-      condition(:service_desk_enabled) { @subject.service_desk_enabled? }
-
-      with_scope :subject
       condition(:related_issues_disabled) { !@subject.feature_available?(:related_issues) }
 
       with_scope :subject
@@ -75,9 +72,34 @@ module EE
             .prevent_merge_requests_committers_approval
       end
 
-      with_scope :global
-      condition(:cluster_health_available) do
-        License.feature_available?(:cluster_health)
+      with_scope :subject
+      condition(:regulated_merge_request_approval_settings) do
+        License.feature_available?(:admin_merge_request_approvers_rules) &&
+          @subject.has_regulated_settings?
+      end
+
+      condition(:cannot_modify_approvers_rules) do
+        if @subject.project_compliance_mr_approval_settings?
+          regulated_merge_request_approval_settings?
+        else
+          owner_cannot_modify_approvers_rules? && !admin?
+        end
+      end
+
+      condition(:cannot_modify_merge_request_author_setting) do
+        if @subject.project_compliance_mr_approval_settings?
+          regulated_merge_request_approval_settings?
+        else
+          owner_cannot_modify_merge_request_author_setting? && !admin?
+        end
+      end
+
+      condition(:cannot_modify_merge_request_committer_setting) do
+        if @subject.project_compliance_mr_approval_settings?
+          regulated_merge_request_approval_settings?
+        else
+          owner_cannot_modify_merge_request_committer_setting? && !admin?
+        end
       end
 
       with_scope :subject
@@ -175,12 +197,6 @@ module EE
         @subject.feature_available?(:group_timelogs)
       end
 
-      rule { support_bot }.enable :guest_access
-      rule { support_bot & ~service_desk_enabled }.policy do
-        prevent :create_note
-        prevent :read_project
-      end
-
       rule { visual_review_bot }.policy do
         prevent :read_note
         enable :create_note
@@ -229,6 +245,7 @@ module EE
         enable :admin_feature_flag
         enable :admin_feature_flags_user_lists
         enable :read_ci_minutes_quota
+        enable :run_ondemand_dast_scan
       end
 
       rule { can?(:developer_access) & iterations_available }.policy do
@@ -240,7 +257,10 @@ module EE
 
       rule { can?(:read_project) & iterations_available }.enable :read_iteration
 
-      rule { security_dashboard_enabled & can?(:developer_access) }.enable :read_vulnerability
+      rule { security_dashboard_enabled & can?(:developer_access) }.policy do
+        enable :read_vulnerability
+        enable :read_vulnerability_scanner
+      end
 
       rule { on_demand_scans_enabled & can?(:developer_access) }.enable :read_on_demand_scans
 
@@ -306,6 +326,7 @@ module EE
 
       rule { auditor & security_dashboard_enabled }.policy do
         enable :read_vulnerability
+        enable :read_vulnerability_scanner
       end
 
       rule { auditor & ~developer }.policy do
@@ -372,22 +393,17 @@ module EE
         prevent :read_project
       end
 
-      rule { owner_cannot_modify_approvers_rules & ~admin }.policy do
+      rule { cannot_modify_approvers_rules }.policy do
         prevent :modify_approvers_rules
+        prevent :modify_approvers_list
       end
 
-      rule { owner_cannot_modify_merge_request_author_setting & ~admin }.policy do
+      rule { cannot_modify_merge_request_author_setting }.policy do
         prevent :modify_merge_request_author_setting
       end
 
-      rule { owner_cannot_modify_merge_request_committer_setting & ~admin }.policy do
+      rule { cannot_modify_merge_request_committer_setting }.policy do
         prevent :modify_merge_request_committer_setting
-      end
-
-      rule { can?(:read_cluster) & cluster_health_available }.enable :read_cluster_health
-
-      rule { owner_cannot_modify_approvers_rules & ~admin }.policy do
-        prevent :modify_approvers_list
       end
 
       rule { can?(:read_merge_request) & code_review_analytics_enabled }.enable :read_code_review_analytics
@@ -407,12 +423,13 @@ module EE
 
       rule { status_page_available & can?(:owner_access) }.enable :mark_issue_for_publication
       rule { status_page_available & can?(:developer_access) }.enable :publish_status_page
+
+      rule { public_project }.enable :view_embedded_analytics_report
     end
 
     override :lookup_access_level!
     def lookup_access_level!
       return ::Gitlab::Access::NO_ACCESS if needs_new_sso_session?
-      return ::Gitlab::Access::REPORTER if support_bot? && service_desk_enabled?
       return ::Gitlab::Access::NO_ACCESS if visual_review_bot?
 
       super

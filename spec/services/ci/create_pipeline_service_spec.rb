@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Ci::CreatePipelineService do
+RSpec.describe Ci::CreatePipelineService do
   include ProjectForksHelper
 
   let_it_be(:project, reload: true) { create(:project, :repository) }
@@ -194,6 +194,7 @@ describe Ci::CreatePipelineService do
 
             expect(head_pipeline).to be_persisted
             expect(head_pipeline.yaml_errors).to be_present
+            expect(head_pipeline.messages).to be_present
             expect(merge_request.reload.head_pipeline).to eq head_pipeline
           end
         end
@@ -1695,6 +1696,7 @@ describe Ci::CreatePipelineService do
             expect(pipeline).to be_persisted
             expect(pipeline.builds).to be_empty
             expect(pipeline.yaml_errors).to eq("test_a: needs 'build_a'")
+            expect(pipeline.messages.pluck(:content)).to contain_exactly("test_a: needs 'build_a'")
             expect(pipeline.errors[:base]).to contain_exactly("test_a: needs 'build_a'")
           end
         end
@@ -1706,6 +1708,7 @@ describe Ci::CreatePipelineService do
             expect(pipeline).not_to be_persisted
             expect(pipeline.builds).to be_empty
             expect(pipeline.yaml_errors).to be_nil
+            expect(pipeline.messages).not_to be_empty
             expect(pipeline.errors[:base]).to contain_exactly("test_a: needs 'build_a'")
           end
         end
@@ -2203,6 +2206,83 @@ describe Ci::CreatePipelineService do
           expect(find_job('job-5').when).to eq('always')
           expect(find_job('job-6').when).to eq('manual')
           expect(find_job('job-7').when).to eq('on_failure')
+        end
+      end
+
+      context 'with deploy freeze period `if:` clause' do
+        # '0 23 * * 5' == "At 23:00 on Friday."", '0 7 * * 1' == "At 07:00 on Monday.""
+        let!(:freeze_period) { create(:ci_freeze_period, project: project, freeze_start: '0 23 * * 5', freeze_end: '0 7 * * 1') }
+
+        context 'with 2 jobs' do
+          let(:config) do
+            <<-EOY
+            stages:
+              - test
+              - deploy
+
+            test-job:
+              script:
+                - echo 'running TEST stage'
+
+            deploy-job:
+              stage: deploy
+              script:
+                - echo 'running DEPLOY stage'
+              rules:
+                - if: $CI_DEPLOY_FREEZE == null
+            EOY
+          end
+
+          context 'when outside freeze period' do
+            it 'creates two jobs' do
+              Timecop.freeze(2020, 4, 10, 22, 59) do
+                expect(pipeline).to be_persisted
+                expect(build_names).to contain_exactly('test-job', 'deploy-job')
+              end
+            end
+          end
+
+          context 'when inside freeze period' do
+            it 'creates one job' do
+              Timecop.freeze(2020, 4, 10, 23, 1) do
+                expect(pipeline).to be_persisted
+                expect(build_names).to contain_exactly('test-job')
+              end
+            end
+          end
+        end
+
+        context 'with 1 job' do
+          let(:config) do
+            <<-EOY
+            stages:
+              - deploy
+
+            deploy-job:
+              stage: deploy
+              script:
+                - echo 'running DEPLOY stage'
+              rules:
+                - if: $CI_DEPLOY_FREEZE == null
+            EOY
+          end
+
+          context 'when outside freeze period' do
+            it 'creates two jobs' do
+              Timecop.freeze(2020, 4, 10, 22, 59) do
+                expect(pipeline).to be_persisted
+                expect(build_names).to contain_exactly('deploy-job')
+              end
+            end
+          end
+
+          context 'when inside freeze period' do
+            it 'does not create the pipeline' do
+              Timecop.freeze(2020, 4, 10, 23, 1) do
+                expect(pipeline).not_to be_persisted
+              end
+            end
+          end
         end
       end
     end

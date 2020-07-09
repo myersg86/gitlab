@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Banzai::Filter::ExternalIssueReferenceFilter do
+RSpec.describe Banzai::Filter::ExternalIssueReferenceFilter do
   include FilterSpecHelper
 
   shared_examples_for "external issue tracker" do
@@ -52,7 +52,7 @@ describe Banzai::Filter::ExternalIssueReferenceFilter do
 
     it 'includes a title attribute' do
       doc = filter("Issue #{reference}")
-      expect(doc.css('a').first.attr('title')).to include("Issue in #{project.issues_tracker.title}")
+      expect(doc.css('a').first.attr('title')).to include("Issue in #{project.external_issue_tracker.title}")
     end
 
     it 'escapes the title attribute' do

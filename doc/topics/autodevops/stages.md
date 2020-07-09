@@ -144,6 +144,22 @@ warnings.
 To learn more about [how SAST works](../../user/application_security/sast/index.md),
 see the documentation.
 
+## Auto Secret Detection **(ULTIMATE)**
+
+> Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 13.1.
+
+Secret Detection uses the
+[Secret Detection Docker image](https://gitlab.com/gitlab-org/security-products/analyzers/secrets) to run Secret Detection on the current code, and checks for leaked secrets. The
+Auto Secret Detection stage runs only on the
+[Ultimate](https://about.gitlab.com/pricing/) tier, and requires
+[GitLab Runner](https://docs.gitlab.com/runner/) 11.5 or above.
+
+After creating the report, it's uploaded as an artifact which you can later
+download and evaluate. The merge request widget also displays any security
+warnings.
+
+To learn more, see [Secret Detection](../../user/application_security/secret_detection/index.md).
+
 ## Auto Dependency Scanning **(ULTIMATE)**
 
 > Introduced in [GitLab Ultimate](https://about.gitlab.com/pricing/) 10.7.
@@ -453,16 +469,16 @@ workers:
   sidekiq:
     replicaCount: 1
     command:
-    - /bin/herokuish
-    - procfile
-    - exec
-    - sidekiq
+      - /bin/herokuish
+      - procfile
+      - exec
+      - sidekiq
     preStopCommand:
-    - /bin/herokuish
-    - procfile
-    - exec
-    - sidekiqctl
-    - quiet
+      - /bin/herokuish
+      - procfile
+      - exec
+      - sidekiqctl
+      - quiet
     terminationGracePeriodSeconds: 60
 ```
 
@@ -508,12 +524,12 @@ networkPolicy:
       matchLabels:
         app.gitlab.com/env: staging
     ingress:
-    - from:
-      - podSelector:
-          matchLabels: {}
-      - namespaceSelector:
-          matchLabels:
-            app.gitlab.com/managed_by: gitlab
+      - from:
+        - podSelector:
+            matchLabels: {}
+        - namespaceSelector:
+            matchLabels:
+              app.gitlab.com/managed_by: gitlab
 ```
 
 For more information on installing Network Policies, see

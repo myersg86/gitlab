@@ -16,7 +16,9 @@ RSpec.describe AuditEventPresenter do
     }
   end
 
-  let(:audit_event) { create(:audit_event, details: details) }
+  let(:audit_event) do
+    create(:audit_event, ip_address: '10.2.1.1', details: details)
+  end
 
   subject(:presenter) do
     described_class.new(audit_event)
@@ -59,9 +61,19 @@ RSpec.describe AuditEventPresenter do
         end
       end
 
-      context 'when `author_name` is included in the details' do
+      context 'when author_name is set in the author_name column' do
+        it 'shows the author name as provided in the database column' do
+          expect(presenter.author_name).to eq('Jane Doe')
+        end
+      end
+
+      context 'when `author_name` is included in the details and not in the author_name column' do
+        before do
+          audit_event.update!(author_name: nil)
+        end
+
         it 'shows the author name as provided in the details' do
-          expect(presenter.author_name).to eq('author')
+          expect(presenter.author_name).to eq(details[:author_name])
         end
       end
     end
@@ -71,7 +83,11 @@ RSpec.describe AuditEventPresenter do
         audit_event.author_id = -1
       end
 
-      context 'when `author_name` is not included in details' do
+      context 'when `author_name` is not included in details and not in the author_name column' do
+        before do
+          audit_event.update!(author_name: nil)
+        end
+
         let(:details) do
           {
             author_name: nil,
@@ -88,7 +104,11 @@ RSpec.describe AuditEventPresenter do
         end
       end
 
-      context 'when `author_name` is included in details' do
+      context 'when `author_name` is included in details and not in the author_name column' do
+        before do
+          audit_event.update!(author_name: nil)
+        end
+
         it 'shows the author name as provided in the details' do
           expect(presenter.author_name).to eq('author')
         end
@@ -100,8 +120,20 @@ RSpec.describe AuditEventPresenter do
     expect(presenter.target).to eq(details[:target_details])
   end
 
-  it 'exposes the ip address' do
-    expect(presenter.ip_address).to eq(details[:ip_address])
+  context 'exposes the ip address' do
+    it 'exposes the database value by default' do
+      expect(presenter.ip_address).to eq('10.2.1.1')
+    end
+
+    it 'survives a round trip from JSON' do
+      expect(Gitlab::Json.parse(presenter.ip_address.to_json)).to eq(presenter.ip_address)
+    end
+
+    it 'falls back to the details hash' do
+      audit_event.update(ip_address:  nil)
+
+      expect(presenter.ip_address).to eq('127.0.0.1')
+    end
   end
 
   context 'exposes the object' do

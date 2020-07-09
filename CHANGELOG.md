@@ -2,6 +2,101 @@
 documentation](doc/development/changelog.md) for instructions on adding your own
 entry.
 
+## 13.1.3 (2020-07-06)
+
+- No changes.
+
+## 13.1.2 (2020-07-01)
+
+### Security (18 changes)
+
+- Update xterm js dependency to latest stable 3.x version.
+- Do not show activity for users with private profiles.
+- Fix stored XSS in markdown renderer.
+- Upgrade swagger-ui to solve XSS issues.
+- Fix group deploy token API authorizations.
+- Check access when sending TODOs related to merge requests.
+- Change from hybrid to JSON cookies serializer.
+- Prevent XSS in group name validations.
+- Disable caching for wiki attachments.
+- Disable Github Importer API by settings.
+- Fix null byte error in upload path.
+- Update permissions for time tracking endpoints.
+- Add snippet repository validation after bundle import.
+- Update Kaminari gem.
+- Fix note author name rendering.
+- Sanitize bitbucket repo urls to mitigate XSS.
+- Stored XSS on the Error Tracking page.
+- Fix security issue when rendering issuable.
+
+
+## 13.1.1 (2020-06-23)
+
+### Fixed (4 changes)
+
+- Fix missing templating vars set from URL in metrics dashboard. !34668
+- Fix edit status dropdown overflow. !34847
+- Load user before logging git http-requests. !34923
+- Do not mask key comments for DeployKeys. !35014
+
+### Added (1 change)
+
+- Periodically recompute project authorizations. !34071
+
+
+## 13.0.10 (2020-07-09)
+
+### Fixed (1 change)
+
+- Fix gitlab:*:check Rake tasks. !35944
+
+
+## 13.0.9 (2020-07-06)
+
+- No changes.
+
+## 13.0.8 (2020-07-01)
+
+### Security (18 changes)
+
+- Update xterm js dependency to latest stable 3.x version.
+- Do not show activity for users with private profiles.
+- Fix stored XSS in markdown renderer.
+- Upgrade swagger-ui to solve XSS issues.
+- Fix group deploy token API authorizations.
+- Check access when sending TODOs related to merge requests.
+- Change from hybrid to JSON cookies serializer.
+- Prevent XSS in group name validations.
+- Disable caching for wiki attachments.
+- Disable Github Importer API by settings.
+- Fix null byte error in upload path.
+- Update permissions for time tracking endpoints.
+- Add snippet repository validation after bundle import.
+- Update Kaminari gem.
+- Fix note author name rendering.
+- Sanitize bitbucket repo urls to mitigate XSS.
+- Stored XSS on the Error Tracking page.
+- Fix security issue when rendering issuable.
+
+
+## 13.0.7 (2020-06-25)
+
+### Fixed (7 changes)
+
+- Group authorization refresh to consider shared groups. !31204
+- Fix Value Stream Analytics summary when using non-english locale. !33717
+- Fix bug with variable substitution in alerts. !33772
+- Fix relative URL root in wiki_base_path. !33841
+- Adjust wrong column reference for ResetMergeStatus (background job). !33899
+- Updated Auto DevOps with a fix to delete PostgreSQL PVC on environment cleanup. !34657
+- Load user before logging git http-requests. !34923
+
+### Added (2 changes)
+
+- Provide `__range` variable for Prometheus queries. !33521
+- Periodically recompute project authorizations. !34071
+
+
 ## 13.0.6 (2020-06-10)
 
 - No changes.
@@ -612,6 +707,38 @@ entry.
 - Update GitLab Elasticsearch Indexer to v2.3.0. !32199
 - Update asciidoctor-plantuml gem to v0.0.12. !32376
 - Use visitUrl in Alert management. !32414
+
+
+## 12.10.14 (2020-07-06)
+
+- No changes.
+
+## 12.10.13 (2020-07-01)
+
+### Security (15 changes)
+
+- Do not show activity for users with private profiles.
+- Fix stored XSS in markdown renderer.
+- Upgrade swagger-ui to solve XSS issues.
+- Fix group deploy token API authorizations.
+- Check access when sending TODOs related to merge requests.
+- Change from hybrid to JSON cookies serializer.
+- Prevent XSS in group name validations.
+- Disable caching for wiki attachments.
+- Fix null byte error in upload path.
+- Update permissions for time tracking endpoints.
+- Update Kaminari gem.
+- Fix note author name rendering.
+- Sanitize bitbucket repo urls to mitigate XSS.
+- Stored XSS on the Error Tracking page.
+- Fix security issue when rendering issuable.
+
+
+## 12.10.12 (2020-06-24)
+
+### Fixed (1 change)
+
+- Correctly count wiki pages in sidebar. !30508
 
 
 ## 12.10.11 (2020-06-10)

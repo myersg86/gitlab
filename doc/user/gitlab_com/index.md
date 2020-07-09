@@ -78,31 +78,34 @@ Below are the current settings regarding [GitLab CI/CD](../../ci/README.md).
 | Setting                 | GitLab.com        | Default       |
 | -----------             | ----------------- | ------------- |
 | Artifacts maximum size (uncompressed) | 1G                | 100M          |
-| Artifacts [expiry time](../../ci/yaml/README.md#artifactsexpire_in)   | kept forever           | deleted after 30 days unless otherwise specified    |
+| Artifacts [expiry time](../../ci/yaml/README.md#artifactsexpire_in)   | From June 22, 2020, deleted after 30 days unless otherwise specified (artifacts created before that date have no expiry).           | deleted after 30 days unless otherwise specified    |
 | Scheduled Pipeline Cron | `*/5 * * * *` | `19 * * * *` |
 | [Max jobs in active pipelines](../../administration/instance_limits.md#number-of-jobs-in-active-pipelines) | `500` for Free tier, unlimited otherwise | Unlimited
 | [Max pipeline schedules in projects](../../administration/instance_limits.md#number-of-pipeline-schedules) | `10` for Free tier, `50` for all paid tiers | Unlimited |
 | [Max number of instance level variables](../../administration/instance_limits.md#number-of-instance-level-variables) | `25` | `25` |
+| [Scheduled Job Archival](../../user/admin_area/settings/continuous_integration.md#archive-jobs-core-only) | 3 months | Never |
 
 ## Repository size limit
 
-The maximum size your Git repository is allowed to be, including LFS. If you are near
-or over the size limit, you can [reduce your repository size with Git](../project/repository/reducing_the_repo_size_using_git.md).
+GitLab.com has the following [account limits](../admin_area/settings/account_and_limit_settings.md) enabled. If a setting is not listed, it is set to the default value.
 
-| Setting                 | GitLab.com        | Default       |
-| -----------             | ----------------- | ------------- |
-| Repository size including LFS | 10G         | Unlimited     |
+If you are near
+or over the repository size limit, you can [reduce your repository size with Git](../project/repository/reducing_the_repo_size_using_git.md).
+
+| Setting                       | GitLab.com  | Default       |
+| -----------                   | ----------- | ------------- |
+| Repository size including LFS | 10 GB       | Unlimited     |
 
 NOTE: **Note:**
-`git push` and GitLab project imports are limited to 5GB per request. Git LFS and imports other than a file upload are not affected by this limit.
+`git push` and GitLab project imports are limited to 5 GB per request through Cloudflare. Git LFS and imports other than a file upload are not affected by this limit.
 
 ## IP range
 
 GitLab.com is using the IP range `34.74.90.64/28` for traffic from its Web/API
 fleet. This whole range is solely allocated to GitLab. You can expect connections from webhooks or repository mirroring to come
-from those IPs and whitelist them.
+from those IPs and allow them.
 
-GitLab.com is fronted by Cloudflare. For incoming connections to GitLab.com you might need to whitelist CIDR blocks of Cloudflare ([IPv4](https://www.cloudflare.com/ips-v4) and [IPv6](https://www.cloudflare.com/ips-v6))
+GitLab.com is fronted by Cloudflare. For incoming connections to GitLab.com you might need to allow CIDR blocks of Cloudflare ([IPv4](https://www.cloudflare.com/ips-v4) and [IPv6](https://www.cloudflare.com/ips-v6)).
 
 For outgoing connections from CI/CD runners we are not providing static IP addresses.
 All our runners are deployed into Google Cloud Platform (GCP) - any IP based
@@ -157,7 +160,7 @@ Below are the shared Runners settings.
 Linux Shared Runners on GitLab.com provide a way to run commands in a CI
 job before the Runner attempts to run `git init` and `git fetch` to
 download a GitLab repository. The
-[pre_clone_script](https://docs.gitlab.com/runner/configuration/advanced-configuration.html#the-runners-section)
+[`pre_clone_script`](https://docs.gitlab.com/runner/configuration/advanced-configuration.html#the-runners-section)
 can be used for:
 
 - Seeding the build directory with repository data
@@ -334,9 +337,9 @@ Windows Shared Runners:
 ```yaml
 .shared_windows_runners:
   tags:
-  - shared-windows
-  - windows
-  - windows-1809
+    - shared-windows
+    - windows
+    - windows-1809
 
 stages:
   - build
@@ -349,17 +352,17 @@ before_script:
 
 build:
   extends:
-  - .shared_windows_runners
+    - .shared_windows_runners
   stage: build
   script:
-  - echo "running scripts in the build job"
+    - echo "running scripts in the build job"
 
 test:
   extends:
-  - .shared_windows_runners
+    - .shared_windows_runners
   stage: test
   script:
-  - echo "running scripts in the test job"
+    - echo "running scripts in the test job"
 ```
 
 #### Limitations and known issues
@@ -420,37 +423,37 @@ different database servers.
 
 The list of GitLab.com specific settings (and their defaults) is as follows:
 
-| Setting                             | GitLab.com                                                          | Default                               |
-|:------------------------------------|:--------------------------------------------------------------------|:--------------------------------------|
-| archive_command                     | `/usr/bin/envdir /etc/wal-e.d/env /opt/wal-e/bin/wal-e wal-push %p` | empty                                 |
-| archive_mode                        | on                                                                  | off                                   |
-| autovacuum_analyze_scale_factor     | 0.01                                                                | 0.01                                  |
-| autovacuum_max_workers              | 6                                                                   | 3                                     |
-| autovacuum_vacuum_cost_limit        | 1000                                                                | -1                                    |
-| autovacuum_vacuum_scale_factor      | 0.01                                                                | 0.02                                  |
-| checkpoint_completion_target        | 0.7                                                                 | 0.9                                   |
-| checkpoint_segments                 | 32                                                                  | 10                                    |
-| effective_cache_size                | 338688MB                                                            | Based on how much memory is available |
-| hot_standby                         | on                                                                  | off                                   |
-| hot_standby_feedback                | on                                                                  | off                                   |
-| log_autovacuum_min_duration         | 0                                                                   | -1                                    |
-| log_checkpoints                     | on                                                                  | off                                   |
-| log_line_prefix                     | `%t [%p]: [%l-1]`                                                   | empty                                 |
-| log_min_duration_statement          | 1000                                                                | -1                                    |
-| log_temp_files                      | 0                                                                   | -1                                    |
-| maintenance_work_mem                | 2048MB                                                              | 16 MB                                 |
-| max_replication_slots               | 5                                                                   | 0                                     |
-| max_wal_senders                     | 32                                                                  | 0                                     |
-| max_wal_size                        | 5GB                                                                 | 1GB                                   |
-| shared_buffers                      | 112896MB                                                            | Based on how much memory is available |
-| shared_preload_libraries            | pg_stat_statements                                                  | empty                                 |
-| shmall                              | 30146560                                                            | Based on the server's capabilities    |
-| shmmax                              | 123480309760                                                        | Based on the server's capabilities    |
-| wal_buffers                         | 16MB                                                                | -1                                    |
-| wal_keep_segments                   | 512                                                                 | 10                                    |
-| wal_level                           | replica                                                             | minimal                               |
-| statement_timeout                   | 15s                                                                 | 60s                                   |
-| idle_in_transaction_session_timeout | 60s                                                                 | 60s                                   |
+| Setting                               | GitLab.com                                                          | Default                               |
+|:--------------------------------------|:--------------------------------------------------------------------|:--------------------------------------|
+| `archive_command`                     | `/usr/bin/envdir /etc/wal-e.d/env /opt/wal-e/bin/wal-e wal-push %p` | empty                                 |
+| `archive_mode`                        | on                                                                  | off                                   |
+| `autovacuum_analyze_scale_factor`     | 0.01                                                                | 0.01                                  |
+| `autovacuum_max_workers`              | 6                                                                   | 3                                     |
+| `autovacuum_vacuum_cost_limit`        | 1000                                                                | -1                                    |
+| `autovacuum_vacuum_scale_factor`      | 0.01                                                                | 0.02                                  |
+| `checkpoint_completion_target`        | 0.7                                                                 | 0.9                                   |
+| `checkpoint_segments`                 | 32                                                                  | 10                                    |
+| `effective_cache_size`                | 338688MB                                                            | Based on how much memory is available |
+| `hot_standby`                         | on                                                                  | off                                   |
+| `hot_standby_feedback`                | on                                                                  | off                                   |
+| `log_autovacuum_min_duration`         | 0                                                                   | -1                                    |
+| `log_checkpoints`                     | on                                                                  | off                                   |
+| `log_line_prefix`                     | `%t [%p]: [%l-1]`                                                   | empty                                 |
+| `log_min_duration_statement`          | 1000                                                                | -1                                    |
+| `log_temp_files`                      | 0                                                                   | -1                                    |
+| `maintenance_work_mem`                | 2048MB                                                              | 16 MB                                 |
+| `max_replication_slots`               | 5                                                                   | 0                                     |
+| `max_wal_senders`                     | 32                                                                  | 0                                     |
+| `max_wal_size`                        | 5GB                                                                 | 1GB                                   |
+| `shared_buffers`                      | 112896MB                                                            | Based on how much memory is available |
+| `shared_preload_libraries`            | pg_stat_statements                                                  | empty                                 |
+| `shmall`                              | 30146560                                                            | Based on the server's capabilities    |
+| `shmmax`                              | 123480309760                                                        | Based on the server's capabilities    |
+| `wal_buffers`                         | 16MB                                                                | -1                                    |
+| `wal_keep_segments`                   | 512                                                                 | 10                                    |
+| `wal_level`                           | replica                                                             | minimal                               |
+| `statement_timeout`                   | 15s                                                                 | 60s                                   |
+| `idle_in_transaction_session_timeout` | 60s                                                                 | 60s                                   |
 
 Some of these settings are in the process being adjusted. For example, the value
 for `shared_buffers` is quite high and as such we are looking into adjusting it.

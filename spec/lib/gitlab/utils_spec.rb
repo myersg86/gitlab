@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Gitlab::Utils do
+RSpec.describe Gitlab::Utils do
   delegate :to_boolean, :boolean_to_yes_no, :slugify, :random_string, :which,
            :ensure_array_from_string, :to_exclusive_sentence, :bytes_to_megabytes,
            :append_path, :check_path_traversal!, :ms_to_round_sec, to: :described_class
@@ -343,6 +343,19 @@ describe Gitlab::Utils do
 
     it 'returns nil with invalid parameter' do
       expect(described_class.parse_url(1)).to be nil
+    end
+  end
+
+  describe 'multiple_key_invert' do
+    it 'invert keys with array values' do
+      hash = {
+        dast: [:vulnerabilities_count, :scanned_resources_count],
+        sast: [:vulnerabilities_count]
+      }
+      expect(described_class.multiple_key_invert(hash)).to eq({
+        vulnerabilities_count: [:dast, :sast],
+        scanned_resources_count: [:dast]
+      })
     end
   end
 end

@@ -16,6 +16,8 @@ RSpec.describe MergeRequest do
   subject(:merge_request) { create(:merge_request, source_project: project, target_project: project) }
 
   describe 'associations' do
+    subject { build_stubbed(:merge_request) }
+
     it { is_expected.to have_many(:approvals).dependent(:delete_all) }
     it { is_expected.to have_many(:approvers).dependent(:delete_all) }
     it { is_expected.to have_many(:approver_users).through(:approvers) }
@@ -60,6 +62,63 @@ RSpec.describe MergeRequest do
 
       it 'returns only the author as a participant' do
         expect(subject.participants).to contain_exactly(subject.author)
+      end
+    end
+  end
+
+  describe '#has_denied_policies?' do
+    subject { merge_request.has_denied_policies? }
+
+    context 'without existing pipeline' do
+      it { is_expected.to be_falsey }
+    end
+
+    context 'with existing pipeline' do
+      before do
+        stub_licensed_features(license_scanning: true)
+      end
+
+      context 'without license_scanning report' do
+        let(:merge_request) { create(:ee_merge_request, :with_dependency_scanning_reports, source_project: project) }
+
+        it { is_expected.to be_falsey }
+      end
+
+      context 'with license_scanning report' do
+        let(:merge_request) { create(:ee_merge_request, :with_license_scanning_reports, source_project: project) }
+        let(:mit_license) { build(:software_license, :mit, spdx_identifier: nil) }
+
+        context 'without denied policy' do
+          it { is_expected.to be_falsey }
+        end
+
+        context 'with allowed policy' do
+          let(:allowed_policy) { build(:software_license_policy, :allowed, software_license: mit_license) }
+
+          before do
+            project.software_license_policies << allowed_policy
+          end
+
+          it { is_expected.to be_falsey }
+        end
+
+        context 'with denied policy' do
+          let(:denied_policy) { build(:software_license_policy, :denied, software_license: mit_license) }
+
+          before do
+            project.software_license_policies << denied_policy
+          end
+
+          it { is_expected.to be_truthy }
+
+          context 'with disabled licensed feature' do
+            before do
+              stub_licensed_features(license_scanning: false)
+            end
+
+            it { is_expected.to be_falsey }
+          end
+        end
       end
     end
   end
@@ -288,7 +347,7 @@ RSpec.describe MergeRequest do
     subject { merge_request.calculate_reactive_cache(service_class_name, current_user&.id) }
 
     context 'when given a known service class name' do
-      let(:service_class_name) { 'Ci::CompareDependencyScanningReportsService' }
+      let(:service_class_name) { 'Ci::CompareSecurityReportsService' }
 
       it 'does not raises a NameError exception' do
         allow_any_instance_of(service_class_name.constantize).to receive(:execute).and_return(nil)
@@ -338,7 +397,7 @@ RSpec.describe MergeRequest do
         end
 
         it 'returns status and data' do
-          expect_any_instance_of(Ci::CompareContainerScanningReportsService)
+          expect_any_instance_of(Ci::CompareSecurityReportsService)
               .to receive(:execute).with(base_pipeline, head_pipeline).and_call_original
 
           subject
@@ -346,7 +405,7 @@ RSpec.describe MergeRequest do
 
         context 'when cached results is not latest' do
           before do
-            allow_any_instance_of(Ci::CompareContainerScanningReportsService)
+            allow_any_instance_of(Ci::CompareSecurityReportsService)
                 .to receive(:latest?).and_return(false)
           end
 
@@ -398,7 +457,7 @@ RSpec.describe MergeRequest do
         end
 
         it 'returns status and data' do
-          expect_any_instance_of(Ci::CompareSecretDetectionReportsService)
+          expect_any_instance_of(Ci::CompareSecurityReportsService)
               .to receive(:execute).with(base_pipeline, head_pipeline).and_call_original
 
           subject
@@ -406,7 +465,7 @@ RSpec.describe MergeRequest do
 
         context 'when cached results is not latest' do
           before do
-            allow_any_instance_of(Ci::CompareSecretDetectionReportsService)
+            allow_any_instance_of(Ci::CompareSecurityReportsService)
                 .to receive(:latest?).and_return(false)
           end
 
@@ -458,7 +517,7 @@ RSpec.describe MergeRequest do
         end
 
         it 'returns status and data' do
-          expect_any_instance_of(Ci::CompareSastReportsService)
+          expect_any_instance_of(Ci::CompareSecurityReportsService)
               .to receive(:execute).with(base_pipeline, head_pipeline).and_call_original
 
           subject
@@ -466,7 +525,7 @@ RSpec.describe MergeRequest do
 
         context 'when cached results is not latest' do
           before do
-            allow_any_instance_of(Ci::CompareSastReportsService)
+            allow_any_instance_of(Ci::CompareSecurityReportsService)
                 .to receive(:latest?).and_return(false)
           end
 
@@ -693,28 +752,64 @@ RSpec.describe MergeRequest do
   end
 
   describe '#mergeable?' do
-    let(:project) { create(:project) }
-
-    subject { create(:merge_request, source_project: project) }
+    subject { merge_request.mergeable? }
 
     context 'when using approvals' do
       let(:user) { create(:user) }
 
       before do
-        allow(subject).to receive(:mergeable_state?).and_return(true)
+        allow(merge_request).to receive(:mergeable_state?).and_return(true)
 
-        subject.target_project.update(approvals_before_merge: 1)
+        merge_request.target_project.update(approvals_before_merge: 1)
         project.add_developer(user)
       end
 
       it 'return false if not approved' do
-        expect(subject.mergeable?).to be_falsey
+        is_expected.to be_falsey
       end
 
       it 'return true if approved' do
-        subject.approvals.create(user: user)
+        merge_request.approvals.create(user: user)
 
-        expect(subject.mergeable?).to be_truthy
+        is_expected.to be_truthy
+      end
+    end
+
+    context 'when running license_scanning ci job' do
+      context 'when merge request has denied policies' do
+        before do
+          allow(merge_request).to receive(:has_denied_policies?).and_return(true)
+        end
+
+        context 'when approval is required and granted' do
+          before do
+            allow(merge_request).to receive(:approved?).and_return(true)
+          end
+
+          it 'is not mergeable' do
+            is_expected.to be_falsey
+          end
+        end
+
+        context 'when is not approved' do
+          before do
+            allow(merge_request).to receive(:approved?).and_return(false)
+          end
+
+          it 'is not mergeable' do
+            is_expected.to be_falsey
+          end
+        end
+      end
+
+      context 'when merge request has no denied policies' do
+        before do
+          allow(merge_request).to receive(:has_denied_policies?).and_return(false)
+        end
+
+        it 'is mergeable' do
+          is_expected.to be_truthy
+        end
       end
     end
   end

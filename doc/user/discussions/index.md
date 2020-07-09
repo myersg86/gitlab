@@ -487,11 +487,14 @@ For example, to customize the commit message to output
 
 NOTE: **Note:**
 Custom commit messages for each applied Suggestion (and for batch Suggestions) will be
-introduced by [#25381](https://gitlab.com/gitlab-org/gitlab/issues/25381).
+introduced by [#25381](https://gitlab.com/gitlab-org/gitlab/-/issues/25381).
 
 ### Batch Suggestions
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/issues/25486) in GitLab 13.1.
+> - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/25486) in GitLab 13.1 as an [alpha feature](https://about.gitlab.com/handbook/product/#alpha).
+> - It's deployed behind a feature flag, disabled by default.
+> - It's disabled on GitLab.com.
+> - To use it in GitLab self-managed instances, ask a GitLab administrator to [enable it](#enable-or-disable-batch-suggestions).
 
 You can apply multiple suggestions at once to reduce the number of commits added
 to your branch to address your reviewers' requests.
@@ -511,6 +514,27 @@ to your branch to address your reviewers' requests.
 1. Having added all the suggestions to your liking, when ready, click **Apply suggestions**:
 
    ![A code change suggestion displayed, with the button to apply the batch of suggestions highlighted.](img/apply_batch_of_suggestions_v13_1.jpg "Apply a batch of suggestions")
+
+#### Enable or disable Batch Suggestions
+
+Batch Suggestions is
+deployed behind a feature flag that is **disabled by default**.
+[GitLab administrators with access to the GitLab Rails console](../../administration/feature_flags.md)
+can enable it for your instance.
+
+To enable it:
+
+```ruby
+# Instance-wide
+Feature.enable(:batch_suggestions)
+```
+
+To disable it:
+
+```ruby
+# Instance-wide
+Feature.disable(:batch_suggestions)
+```
 
 ## Start a thread by replying to a standard comment
 
@@ -532,3 +556,15 @@ to the original comment, so a note about when it was last edited will appear und
 
 This feature only exists for Issues, Merge requests, and Epics. Commits, Snippets and Merge request diff threads are
 not supported yet.
+
+## Assign an issue to the commenting user
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/191455) in GitLab 13.1.
+
+You can assign an issue to a user who made a comment.
+
+In the comment, click the **More Actions** menu and click **Assign to commenting user**.
+
+Click the button again to unassign the commenter.
+
+![Assign to commenting user](img/quickly_assign_commenter_v13_1.png)

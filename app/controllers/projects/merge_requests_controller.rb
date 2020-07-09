@@ -29,19 +29,28 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
     push_frontend_feature_flag(:deploy_from_footer, @project, default_enabled: true)
     push_frontend_feature_flag(:single_mr_diff_view, @project, default_enabled: true)
     push_frontend_feature_flag(:suggest_pipeline) if experiment_enabled?(:suggest_pipeline)
-    push_frontend_feature_flag(:code_navigation, @project)
+    push_frontend_feature_flag(:code_navigation, @project, default_enabled: true)
     push_frontend_feature_flag(:widget_visibility_polling, @project, default_enabled: true)
     push_frontend_feature_flag(:merge_ref_head_comments, @project)
     push_frontend_feature_flag(:mr_commit_neighbor_nav, @project, default_enabled: true)
     push_frontend_feature_flag(:multiline_comments, @project)
     push_frontend_feature_flag(:file_identifier_hash)
+    push_frontend_feature_flag(:batch_suggestions, @project)
   end
 
   before_action do
     push_frontend_feature_flag(:vue_issuable_sidebar, @project.group)
+    push_frontend_feature_flag(:junit_pipeline_view, @project.group)
   end
 
   around_action :allow_gitaly_ref_name_caching, only: [:index, :show, :discussions]
+
+  feature_category :source_code_management,
+                   unless: -> (action) { action.ends_with?("_reports") }
+  feature_category :code_testing,
+                   only: [:test_reports, :coverage_reports, :terraform_reports]
+  feature_category :accessibility_testing,
+                   only: [:accessibility_reports]
 
   def index
     @merge_requests = @issuables
@@ -107,8 +116,8 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
     # or from cache if already merged
     @commits =
       set_commits_for_rendering(
-        @merge_request.recent_commits.with_latest_pipeline(@merge_request.source_branch),
-          commits_count: @merge_request.commits_count
+        @merge_request.recent_commits.with_latest_pipeline(@merge_request.source_branch).with_markdown_cache,
+        commits_count: @merge_request.commits_count
       )
 
     render json: { html: view_to_html_string('projects/merge_requests/_commits') }
@@ -177,7 +186,7 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
   end
 
   def update
-    @merge_request = ::MergeRequests::UpdateService.new(project, current_user, merge_request_params).execute(@merge_request)
+    @merge_request = ::MergeRequests::UpdateService.new(project, current_user, merge_request_update_params).execute(@merge_request)
 
     respond_to do |format|
       format.html do
@@ -310,6 +319,10 @@ class Projects::MergeRequestsController < Projects::MergeRequests::ApplicationCo
   end
 
   private
+
+  def merge_request_update_params
+    merge_request_params.merge!(params.permit(:merge_request_diff_head_sha))
+  end
 
   def head_pipeline
     strong_memoize(:head_pipeline) do

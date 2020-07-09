@@ -12,6 +12,9 @@ import { trimText } from 'helpers/text_helper';
 import axios from '~/lib/utils/axios_utils';
 import { mrStates } from '~/mr_popover/constants';
 import { TEST_HOST } from 'helpers/test_constants';
+import { mockTracking, unmockTracking } from 'helpers/tracking_helper';
+import { trackMrSecurityReportDetails } from 'ee/vue_shared/security_reports/store/constants';
+import ReportSection from '~/reports/components/report_section.vue';
 
 import {
   sastDiffSuccessMock,
@@ -31,6 +34,8 @@ const SECRET_SCANNING_DIFF_ENDPOINT = 'secret_scanning.json';
 describe('Grouped security reports app', () => {
   let wrapper;
   let mock;
+
+  const findReportSection = () => wrapper.find(ReportSection);
 
   const props = {
     headBlobPath: 'path',
@@ -187,7 +192,7 @@ describe('Grouped security reports app', () => {
 
         // Renders the summary text
         expect(wrapper.vm.$el.querySelector('.js-code-text').textContent.trim()).toEqual(
-          'Security scanning detected 8 new, and 7 fixed vulnerabilities',
+          'Security scanning detected 8 vulnerabilities.',
         );
 
         // Renders the expand button
@@ -196,24 +201,20 @@ describe('Grouped security reports app', () => {
         );
 
         // Renders Sast result
-        expect(trimText(wrapper.vm.$el.textContent)).toContain(
-          'SAST detected 1 new, and 2 fixed vulnerabilities',
-        );
+        expect(trimText(wrapper.vm.$el.textContent)).toContain('SAST detected 1 vulnerability');
 
         // Renders DSS result
         expect(trimText(wrapper.vm.$el.textContent)).toContain(
-          'Dependency scanning detected 2 new, and 1 fixed vulnerabilities',
+          'Dependency scanning detected 2 vulnerabilities.',
         );
 
         // Renders container scanning result
         expect(wrapper.vm.$el.textContent).toContain(
-          'Container scanning detected 2 new, and 1 fixed vulnerabilities',
+          'Container scanning detected 2 vulnerabilities.',
         );
 
         // Renders DAST result
-        expect(wrapper.vm.$el.textContent).toContain(
-          'DAST detected 1 new, and 2 fixed vulnerabilities',
-        );
+        expect(wrapper.vm.$el.textContent).toContain('DAST detected 1 vulnerability.');
       });
 
       it('opens modal with more information', () => {
@@ -293,9 +294,7 @@ describe('Grouped security reports app', () => {
     });
 
     it('should display the correct numbers of vulnerabilities', () => {
-      expect(wrapper.text()).toContain(
-        'Container scanning detected 2 new, and 1 fixed vulnerabilities',
-      );
+      expect(wrapper.text()).toContain('Container scanning detected 2 vulnerabilities.');
     });
   });
 
@@ -324,7 +323,7 @@ describe('Grouped security reports app', () => {
 
     it('should display the correct numbers of vulnerabilities', () => {
       expect(wrapper.vm.$el.textContent).toContain(
-        'Dependency scanning detected 2 new, and 1 fixed vulnerabilities',
+        'Dependency scanning detected 2 vulnerabilities.',
       );
     });
   });
@@ -362,9 +361,7 @@ describe('Grouped security reports app', () => {
     });
 
     it('should display the correct numbers of vulnerabilities', () => {
-      expect(wrapper.vm.$el.textContent).toContain(
-        'DAST detected 1 new, and 2 fixed vulnerabilities',
-      );
+      expect(wrapper.vm.$el.textContent).toContain('DAST detected 1 vulnerability');
     });
 
     it('shows the scanned URLs count and a link to the CI job if available', () => {
@@ -431,9 +428,7 @@ describe('Grouped security reports app', () => {
       });
 
       it('should display the correct numbers of vulnerabilities', () => {
-        expect(wrapper.text()).toContain(
-          'Secret scanning detected 2 new, and 1 fixed vulnerabilities',
-        );
+        expect(wrapper.text()).toContain('Secret scanning detected 2 vulnerabilities.');
       });
     });
 
@@ -470,9 +465,7 @@ describe('Grouped security reports app', () => {
     });
 
     it('should display the correct numbers of vulnerabilities', () => {
-      expect(wrapper.vm.$el.textContent).toContain(
-        'SAST detected 1 new, and 2 fixed vulnerabilities',
-      );
+      expect(wrapper.vm.$el.textContent).toContain('SAST detected 1 vulnerability.');
     });
   });
 
@@ -541,6 +534,46 @@ describe('Grouped security reports app', () => {
       it('should not display out of date message', () => {
         expect(wrapper.vm.$el.textContent).not.toContain('Security report is out of date.');
       });
+    });
+  });
+
+  describe('track report section expansion using Snowplow', () => {
+    let trackingSpy;
+    const { category, action } = trackMrSecurityReportDetails;
+
+    beforeEach(() => {
+      createWrapper(props);
+      trackingSpy = mockTracking(category, wrapper.vm.$el, jest.spyOn);
+    });
+
+    afterEach(() => {
+      unmockTracking();
+    });
+
+    it('tracks an event when toggled', () => {
+      expect(trackingSpy).not.toHaveBeenCalled();
+      findReportSection().vm.$emit('toggleEvent');
+      return wrapper.vm.$nextTick().then(() => {
+        expect(trackingSpy).toHaveBeenCalledWith(category, action);
+      });
+    });
+
+    it('tracks an event only the first time it is toggled', () => {
+      const report = findReportSection();
+
+      expect(trackingSpy).not.toHaveBeenCalled();
+      report.vm.$emit('toggleEvent');
+      return wrapper.vm
+        .$nextTick()
+        .then(() => {
+          expect(trackingSpy).toHaveBeenCalledWith(category, action);
+          expect(trackingSpy).toHaveBeenCalledTimes(1);
+          report.vm.$emit('toggleEvent');
+        })
+        .then(wrapper.vm.$nextTick())
+        .then(() => {
+          expect(trackingSpy).toHaveBeenCalledTimes(1);
+        });
     });
   });
 });

@@ -69,16 +69,6 @@ RSpec.describe Issue do
   end
 
   context 'scopes' do
-    describe '.service_desk' do
-      it 'returns the service desk issue' do
-        service_desk_issue = create(:issue, author: ::User.support_bot)
-        regular_issue = create(:issue)
-
-        expect(described_class.service_desk).to include(service_desk_issue)
-        expect(described_class.service_desk).not_to include(regular_issue)
-      end
-    end
-
     describe '.counts_by_health_status' do
       it 'returns counts grouped by health_status' do
         create(:issue, health_status: :on_track)
@@ -98,6 +88,14 @@ RSpec.describe Issue do
 
       it { expect(Issue.on_status_page.count).to eq(1) }
       it { expect(Issue.on_status_page.first).to eq(published_issue) }
+
+      context 'with status page disabled' do
+        before do
+          status_page_setting.update!(enabled: false)
+        end
+
+        it { expect(Issue.on_status_page.count).to eq(0) }
+      end
     end
 
     context 'epics' do
@@ -662,22 +660,6 @@ RSpec.describe Issue do
   end
 
   it_behaves_like 'having health status'
-
-  describe '#service_desk?' do
-    subject { issue.from_service_desk? }
-
-    context 'when issue author is support bot' do
-      let(:issue) { create(:issue, author: ::User.support_bot) }
-
-      it { is_expected.to be_truthy }
-    end
-
-    context 'when issue author is not support bot' do
-      let(:issue) { create(:issue) }
-
-      it { is_expected.to be_falsey }
-    end
-  end
 
   describe '#can_assign_epic?' do
     let(:user)    { create(:user) }

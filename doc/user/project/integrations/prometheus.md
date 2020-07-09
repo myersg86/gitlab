@@ -32,11 +32,10 @@ GitLab can seamlessly deploy and manage Prometheus on a [connected Kubernetes cl
 #### Requirements
 
 - A [connected Kubernetes cluster](../clusters/index.md)
-- Helm Tiller [installed by GitLab](../clusters/index.md#installing-applications)
 
 #### Getting started
 
-Once you have a connected Kubernetes cluster with Helm installed, deploying a managed Prometheus is as easy as a single click.
+Once you have a connected Kubernetes cluster, deploying a managed Prometheus is as easy as a single click.
 
 1. Go to the **Operations > Kubernetes** page to view your connected clusters
 1. Select the cluster you would like to deploy Prometheus to
@@ -51,7 +50,7 @@ After completing the steps above, you will also need deployments in order to vie
 will help you to quickly create a deployment:
 
 1. Navigate to your project's **Operations > Kubernetes** page, and ensure that,
-   in addition to "Prometheus" and "Helm Tiller", you also have "Runner" and "Ingress"
+   in addition to "Prometheus", you also have "Runner" and "Ingress"
    installed. Once "Ingress" is installed, copy its endpoint.
 1. Navigate to your project's **Settings > CI/CD** page. In the Auto DevOps section,
    select a deployment strategy and save your changes.
@@ -61,7 +60,7 @@ will help you to quickly create a deployment:
 1. Navigate to your project's **CI/CD > Pipelines** page, and run a pipeline on any branch.
 1. When the pipeline has run successfully, graphs will be available on the **Operations > Metrics** page.
 
-![Monitoring Dashboard](img/prometheus_monitoring_dashboard_v12_8.png)
+![Monitoring Dashboard](img/prometheus_monitoring_dashboard_v13_1.png)
 
 #### Using the Metrics Dashboard
 
@@ -90,6 +89,19 @@ and appear at the top of the dashboard select list.
 To remove dashboard from the favorites list, click the solid **Unstar Dashboard** **{star}** button.
 
 ![Monitoring Dashboard favorite state toggle](img/toggle_metrics_user_starred_dashboard_v13_0.png)
+
+##### Manage the metrics dashboard settings
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/223204) in GitLab 13.2.
+
+To manage the settings for your metrics dashboard:
+
+1. Sign in as a user with project Maintainer or Admin
+   [permissions](../../permissions.md#project-members-permissions).
+1. Navigate to your dashboard at **{cloud-gear}** **Operations > Metrics**.
+1. In the top-right corner of your dashboard, click **{settings}** **Metrics Settings**:
+
+   ![Monitoring Dashboard actions menu with create new item](img/metrics_settings_button_v13_2.png)
 
 #### About managed Prometheus deployments
 
@@ -275,37 +287,48 @@ The metrics as defined below do not support alerts, unlike
 
 #### Adding a new dashboard to your project
 
+> UI option [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/223204) in GitLab 13.2.
+
 You can configure a custom dashboard by adding a new YAML file into your project's
 `.gitlab/dashboards/` directory. In order for the dashboards to be displayed on
-the project's **Operations > Metrics** page, the files must have a `.yml`
+the project's **{cloud-gear}** **Operations > Metrics** page, the files must have a `.yml`
 extension and should be present in the project's **default** branch.
 
-For example:
+To create a new dashboard from the GitLab user interface:
+
+1. Sign in to GitLab as a user with Maintainer or Owner
+   [permissions](../../permissions.md#project-members-permissions).
+1. Navigate to your dashboard at **{cloud-gear}** **Operations > Metrics**.
+1. In the top-right corner of your dashboard, click the **{file-addition-solid}** **Actions** menu,
+   and select **Create new**:
+   ![Monitoring Dashboard actions menu with create new item](img/actions_menu_create_new_dashboard_v13_2.png)
+1. In the modal window, click **Open Repository**, then follow the instructions
+   for creating a new dashboard from the command line.
+
+To create a new dashboard from the command line:
 
 1. Create `.gitlab/dashboards/prom_alerts.yml` under your repository's root
-   directory with the following contents:
+   directory. Each YAML file should define the layout of the dashboard and the
+   Prometheus queries used to populate data. This example dashboard displays a
+   single area chart:
 
    ```yaml
    dashboard: 'Dashboard Title'
    panel_groups:
      - group: 'Group Title'
        panels:
-       - type: area-chart
-         title: "Chart Title"
-         y_label: "Y-Axis"
-         y_axis:
-           format: number
-           precision: 0
-         metrics:
-         - id: my_metric_id
-           query_range: 'http_requests_total'
-           label: "Instance: {{instance}}, method: {{method}}"
-           unit: "count"
+         - type: area-chart
+           title: "Chart Title"
+           y_label: "Y-Axis"
+           y_axis:
+             format: number
+             precision: 0
+           metrics:
+             - id: my_metric_id
+               query_range: 'http_requests_total'
+               label: "Instance: {{instance}}, method: {{method}}"
+               unit: "count"
    ```
-
-   The above sample dashboard would display a single area chart. Each file should
-   define the layout of the dashboard and the Prometheus queries used to populate
-   data.
 
 1. Save the file, commit, and push to your repository. The file must be present in your **default** branch.
 1. Navigate to your project's **Operations > Metrics** and choose the custom
@@ -325,7 +348,7 @@ Resulting `.yml` file can be customized and adapted to your project.
 You can decide to save the dashboard `.yml` file in the project's **default** branch or in a
 new branch.
 
-1. Click **Duplicate dashboard** in the dashboard dropdown.
+1. Click **Duplicate dashboard** in the dashboard dropdown or in the actions menu.
 
    NOTE: **Note:**
    You can duplicate only GitLab-defined dashboards.
@@ -353,14 +376,21 @@ and files with invalid syntax display **Metrics Dashboard YAML definition is inv
 When **Metrics Dashboard YAML definition is invalid** at least one of the following messages is displayed:
 
 1. `dashboard: can't be blank` [learn more](#dashboard-top-level-properties)
-1. `panel_groups: can't be blank` [learn more](#dashboard-top-level-properties)
+1. `panel_groups: should be an array of panel_groups objects` [learn more](#dashboard-top-level-properties)
 1. `group: can't be blank` [learn more](#panel-group-panel_groups-properties)
-1. `panels: can't be blank` [learn more](#panel-group-panel_groups-properties)
-1. `metrics: can't be blank` [learn more](#panel-panels-properties)
+1. `panels: should be an array of panels objects` [learn more](#panel-group-panel_groups-properties)
 1. `title: can't be blank` [learn more](#panel-panels-properties)
+1. `metrics: should be an array of metrics objects` [learn more](#panel-panels-properties)
 1. `query: can't be blank` [learn more](#metrics-metrics-properties)
 1. `query_range: can't be blank` [learn more](#metrics-metrics-properties)
 1. `unit: can't be blank` [learn more](#metrics-metrics-properties)
+1. `YAML syntax: The parsed YAML is too big`
+
+   This is displayed when the YAML file is larger than 1 MB.
+
+1. `YAML syntax: Invalid configuration format`
+
+   This is displayed when the YAML file is empty or does not contain valid YAML.
 
 Metrics Dashboard YAML definition validation information is also available as a [GraphQL API field](../../../api/graphql/reference/index.md#metricsdashboard)
 
@@ -397,6 +427,7 @@ Read the documentation on [templating](#templating-variables-for-metrics-dashboa
 | -------- | ---- | -------- | ----------- |
 | `url` | string | yes | The address of the link. |
 | `title` | string | no | Display title for the link. |
+| `type` | string | no | Type of the link. Specifies the link type, can be: `grafana` |
 
 Read the documentation on [links](#add-related-links-to-custom-dashboards).
 
@@ -407,6 +438,8 @@ Read the documentation on [links](#add-related-links-to-custom-dashboards).
 | `group` | string | required | Heading for the panel group. |
 | `priority` | number | optional, defaults to order in file | Order to appear on the dashboard. Higher number means higher priority, which will be higher on the page. Numbers do not need to be consecutive. |
 | `panels` | array | required | The panels which should be in the panel group. |
+
+Panels in a panel group are laid out in rows consisting of two panels per row. An exception to this rule are single panels on a row: these panels will take the full width of their containing row.
 
 ##### **Panel (`panels`) properties**
 
@@ -419,6 +452,7 @@ Read the documentation on [links](#add-related-links-to-custom-dashboards).
 | `max_value` | number | no | Denominator value used for calculating [percentile based results](#percentile-based-results) |
 | `weight` | number | no, defaults to order in file | Order to appear within the grouping. Lower number means higher priority, which will be higher on the page. Numbers do not need to be consecutive. |
 | `metrics` | array | yes | The metrics which should be displayed in the panel. Any number of metrics can be displayed when `type` is `area-chart` or `line-chart`, whereas only 3 can be displayed when `type` is `anomaly-chart`. |
+| `links` | array | no | Add links to display on the chart's [context menu](#chart-context-menu). |
 
 ##### **Axis (`panels[].y_axis`) properties**
 
@@ -630,25 +664,24 @@ To add a stacked column panel type to a dashboard, look at the following sample 
 dashboard: 'Dashboard title'
 priority: 1
 panel_groups:
-- group: 'Group Title'
-  priority: 5
-  panels:
-  - type: 'stacked-column'
-    title: "Stacked column"
-    y_label: "y label"
-    x_label: 'x label'
-    metrics:
-      - id: memory_1
-        query_range: 'memory_query'
-        label: "memory query 1"
-        unit: "count"
-        series_name: 'group 1'
-      - id: memory_2
-        query_range: 'memory_query_2'
-        label: "memory query 2"
-        unit: "count"
-        series_name: 'group 2'
-
+  - group: 'Group Title'
+    priority: 5
+    panels:
+      - type: 'stacked-column'
+        title: "Stacked column"
+        y_label: "y label"
+        x_label: 'x label'
+        metrics:
+          - id: memory_1
+            query_range: 'memory_query'
+            label: "memory query 1"
+            unit: "count"
+            series_name: 'group 1'
+          - id: memory_2
+            query_range: 'memory_query_2'
+            label: "memory query 2"
+            unit: "count"
+            series_name: 'group 2'
 ```
 
 ![stacked column panel type](img/prometheus_dashboard_stacked_column_panel_type_v12_8.png)
@@ -670,10 +703,10 @@ panel_groups:
       - title: "Single Stat"
         type: "single-stat"
         metrics:
-        - id: 10
-          query: 'max(go_memstats_alloc_bytes{job="prometheus"})'
-          unit: MB
-          label: "Total"
+          - id: 10
+            query: 'max(go_memstats_alloc_bytes{job="prometheus"})'
+            unit: MB
+            label: "Total"
 ```
 
 Note the following properties:
@@ -700,10 +733,10 @@ panel_groups:
         type: "single-stat"
         max_value: 100
         metrics:
-        - id: 10
-          query: 'max(go_memstats_alloc_bytes{job="prometheus"})'
-          unit: '%'
-          label: "Total"
+          - id: 10
+            query: 'max(go_memstats_alloc_bytes{job="prometheus"})'
+            unit: '%'
+            label: "Total"
 ```
 
 For example, if you have a query value of `53.6`, adding `%` as the unit results in a single stat value of `53.6%`, but if the maximum expected value of the query is `120`, the value would be `44.6%`. Adding the `max_value` causes the correct percentage value to display.
@@ -722,10 +755,10 @@ panel_groups:
       - title: "Heatmap"
         type: "heatmap"
         metrics:
-        - id: 10
-          query: 'sum(rate(nginx_upstream_responses_total{upstream=~"%{kube_namespace}-%{ci_environment_slug}-.*"}[60m])) by (status_code)'
-          unit: req/sec
-          label: "Status code"
+          - id: 10
+            query: 'sum(rate(nginx_upstream_responses_total{upstream=~"%{kube_namespace}-%{ci_environment_slug}-.*"}[60m])) by (status_code)'
+            unit: req/sec
+            label: "Status code"
 ```
 
 Note the following properties:
@@ -737,7 +770,14 @@ Note the following properties:
 
 ![heatmap panel type](img/heatmap_panel_type.png)
 
+CAUTION: **Warning:**
+When a query returns too many data points, the heatmap data bucket dimensions tend downwards to 0, making the chart's data invisible, as shown in the image below. To fix this problem, limit the amount of data returned by changing the time range filter on the metrics dashboard UI, or adding the **step** property to your dashboard's YAML file.
+
+![heatmap chart_too_much_data](img/heatmap_chart_too_much_data_v_13_2.png)
+
 ### Templating variables for metrics dashboards
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/214539) in GitLab 13.0.
 
 Templating variables can be used to make your metrics dashboard more versatile.
 
@@ -830,22 +870,61 @@ templating:
       type: custom
       options:
         values:
-        - value: 'value option 1'        # The value that will replace the variable in queries.
-          text: 'Option 1'               # (Optional) Text that will appear in the UI dropdown.
-        - value: 'value_option_2'
-          text: 'Option 2'
-          default: true                  # (Optional) This option should be the default value of this variable.
+          - value: 'value option 1'        # The value that will replace the variable in queries.
+            text: 'Option 1'               # (Optional) Text that will appear in the UI dropdown.
+          - value: 'value_option_2'
+            text: 'Option 2'
+            default: true                  # (Optional) This option should be the default value of this variable.
+```
+
+##### `metric_label_values` variable type
+
+CAUTION: **Warning:**
+This variable type is an _alpha_ feature, and is subject to change at any time
+without prior notice!
+
+###### Full syntax
+
+This example creates a variable called `variable2`. The values of the dropdown will
+be all the different values of the `backend` label in the Prometheus series described by
+`up{env="production"}`.
+
+```yaml
+templating:
+  variables:
+    variable2:                           # The variable name that can be interpolated in queries.
+      label: 'Variable 2'                # (Optional) label that will appear in the UI for this dropdown.
+      type: metric_label_values
+      options:
+        series_selector: 'up{env="production"}'
+        label: 'backend'
 ```
 
 ### Add related links to custom dashboards
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/216385) in GitLab 13.1.
 
-Related links can be added to the top of your metrics dashboard, which can be used for quickly
-navigating between dashboards or external services. The links will open in the same tab.
+You can embed links to other dashboards or external services in your custom
+dashboard by adding **Related links** to your dashboard's YAML file. Related links
+open in the same tab as the dashboard. Related links can be displayed in the
+following locations on your dashboard:
 
-The `url` attribute is required for the link but the `title` attribute is optional; if the `title`
-is missing then the full address of the URL will be displayed.
+- At the top of your dashboard as the top level [`links` dashboard property](#dashboard-top-level-properties).
+- In charts context menus as the [`links` property of a panel](#panel-panels-properties).
+
+Related links can contain the following attributes:
+
+- `url`: The full URL to the link. Required.
+- `title`: A phrase describing the link. Optional. If this attribute is not set,
+  the full URL is used for the link title.
+- `type`: A string declaring the type of link. Optional. If set to `grafana`, the
+  dashboard's time range values are converted to Grafana's time range format and
+  appended to the `url`.
+
+The dashboard's time range is appended to the `url` as URL parameters.
+
+The following example shows two related links (`GitLab.com` and `GitLab Documentation`)
+added to a dashboard:
 
 ![Links UI](img/related_links_v13_1.png)
 
@@ -857,6 +936,9 @@ links:
     url: https://gitlab.com
   - title: GitLab Documentation
     url: https://docs.gitlab.com
+  - title: Public Grafana playground dashboard
+    url: https://play.grafana.org/d/000000012/grafana-play-home?orgId=1
+    type: grafana
 ```
 
 ### View and edit the source file of a custom dashboard
@@ -966,16 +1048,16 @@ For manually configured Prometheus servers, a notify endpoint is provided to use
 
 ![Prometheus service configuration of Alerts](img/prometheus_service_alerts.png)
 
-To send GitLab alert notifications, copy the *URL* and *Authorization Key* into the [`webhook_configs`](https://prometheus.io/docs/alerting/configuration/#webhook_config) section of your Prometheus Alertmanager configuration:
+To send GitLab alert notifications, copy the *URL* and *Authorization Key* into the [`webhook_configs`](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config) section of your Prometheus Alertmanager configuration:
 
 ```yaml
 receivers:
   name: gitlab
   webhook_configs:
-  - http_config:
-      bearer_token: 9e1cbfcd546896a9ea8be557caf13a76
-    send_resolved: true
-    url: http://192.168.178.31:3001/root/manual_prometheus/prometheus/alerts/notify.json
+    - http_config:
+        bearer_token: 9e1cbfcd546896a9ea8be557caf13a76
+      send_resolved: true
+      url: http://192.168.178.31:3001/root/manual_prometheus/prometheus/alerts/notify.json
   ...
 ```
 
@@ -989,7 +1071,7 @@ In GitLab versions 13.1 and greater, you can configure your manually configured 
 >- [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/4925) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.11.
 >- [From GitLab Ultimate 12.5](https://gitlab.com/gitlab-org/gitlab/-/issues/13401), when GitLab receives a recovery alert, it will automatically close the associated issue.
 
-Alerts can be used to trigger actions, like opening an issue automatically (enabled by default since `12.1`). To configure the actions:
+Alerts can be used to trigger actions, like opening an issue automatically (disabled by default since `13.1`). To configure the actions:
 
 1. Navigate to your project's **Settings > Operations > Incidents**.
 1. Enable the option to create issues.
@@ -997,8 +1079,7 @@ Alerts can be used to trigger actions, like opening an issue automatically (enab
 1. Optionally, select whether to send an email notification to the developers of the project.
 1. Click **Save changes**.
 
-Once enabled, an issue will be opened automatically when an alert is triggered which contains values extracted from [alert's payload](https://prometheus.io/docs/alerting/configuration/#webhook_config
-):
+Once enabled, an issue will be opened automatically when an alert is triggered which contains values extracted from [alert's payload](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config):
 
 - Issue author: `GitLab Alert Bot`
 - Issue title: Extract from `annotations/title`, `annotations/summary` or `labels/alertname`
@@ -1114,16 +1195,16 @@ For [manually configured Prometheus instances](#manual-configuration-of-promethe
 
 > [Introduced](<https://gitlab.com/gitlab-org/gitlab/-/issues/40997>) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 12.9.
 
-[Cluster Health Metrics](../clusters/index.md#monitoring-your-kubernetes-cluster-ultimate) can also be embedded in [GitLab-flavored Markdown](../../markdown.md).
+[Cluster Health Metrics](../clusters/index.md#visualizing-cluster-health-ultimate) can also be embedded in [GitLab-flavored Markdown](../../markdown.md).
 
-To embed a metric chart, include a link to that chart in the form `https://<root_url>/<project>/-/cluster/<cluster_id>?<query_params>` anywhere that GitLab-flavored Markdown is supported. To generate and copy a link to the chart, follow the instructions in the [Cluster Health Metric documentation](../clusters/index.md#monitoring-your-kubernetes-cluster-ultimate).
+To embed a metric chart, include a link to that chart in the form `https://<root_url>/<project>/-/cluster/<cluster_id>?<query_params>` anywhere that GitLab-flavored Markdown is supported. To generate and copy a link to the chart, follow the instructions in the [Cluster Health Metric documentation](../clusters/index.md#visualizing-cluster-health-ultimate).
 
 The following requirements must be met for the metric to unfurl:
 
 - The `<cluster_id>` must correspond to a real cluster.
 - Prometheus must be monitoring the cluster.
 - The user must be allowed access to the project cluster metrics.
-- The dashboards must be reporting data on the [Cluster Health Page](../clusters/index.md#monitoring-your-kubernetes-cluster-ultimate)
+- The dashboards must be reporting data on the [Cluster Health Page](../clusters/index.md#visualizing-cluster-health-ultimate)
 
  If the above requirements are met, then the metric will unfurl as seen below.
 
@@ -1188,14 +1269,6 @@ Prerequisites for embedding from a Grafana instance:
 1. Click **Copy** to copy the URL to the clipboard.
 1. In GitLab, paste the URL into a Markdown field and save. The chart will take a few moments to render.
    ![GitLab Rendered Grafana Panel](img/rendered_grafana_embed_v12_5.png)
-
-## Metrics dashboard visibility
-
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/201924) in GitLab 13.0.
-
-You can set the visibility of the metrics dashboard to **Only Project Members**
-or **Everyone With Access**. When set to **Everyone with Access**, the metrics
-dashboard is visible to authenticated and non-authenticated users.
 
 ## Troubleshooting
 

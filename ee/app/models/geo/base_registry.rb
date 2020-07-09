@@ -11,6 +11,10 @@ class Geo::BaseRegistry < Geo::TrackingBase
     where(self::MODEL_FOREIGN_KEY => range).pluck(self::MODEL_FOREIGN_KEY)
   end
 
+  def self.pluck_model_foreign_key
+    where(nil).pluck(self::MODEL_FOREIGN_KEY)
+  end
+
   def self.model_id_in(ids)
     where(self::MODEL_FOREIGN_KEY => ids)
   end
@@ -32,7 +36,13 @@ class Geo::BaseRegistry < Geo::TrackingBase
   end
 
   def self.delete_for_model_ids(ids)
-    raise NotImplementedError, "#{self.class} does not implement #{__method__}"
+    ids.map do |id|
+      delete_worker_class.perform_async(replicator_class.replicable_name, id)
+    end
+  end
+
+  def self.replicator_class
+    self::MODEL_CLASS.replicator_class
   end
 
   def self.find_unsynced_registries(batch_size:, except_ids: [])
@@ -46,6 +56,28 @@ class Geo::BaseRegistry < Geo::TrackingBase
       .retry_due
       .model_id_not_in(except_ids)
       .limit(batch_size)
+  end
+
+  def self.has_create_events?
+    true
+  end
+
+  def self.delete_worker_class
+    ::Geo::FileRegistryRemovalWorker
+  end
+
+  def self.find_registry_differences(range)
+    source_ids = self::MODEL_CLASS
+                  .replicables_for_geo_node
+                  .id_in(range)
+                  .pluck(self::MODEL_CLASS.arel_table[:id])
+
+    tracked_ids = self.pluck_model_ids_in_range(range)
+
+    untracked_ids = source_ids - tracked_ids
+    unused_tracked_ids = tracked_ids - source_ids
+
+    [untracked_ids, unused_tracked_ids]
   end
 
   def model_record_id

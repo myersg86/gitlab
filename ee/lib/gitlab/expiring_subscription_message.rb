@@ -36,9 +36,9 @@ module Gitlab
     def expired_subject
       if subscribable.block_changes?
         if auto_renew?
-          _('Something went wrong with your automatic subscription renewal')
+          _('Something went wrong with your automatic subscription renewal.')
         else
-          _('Your subscription has been downgraded')
+          _('Your subscription has been downgraded.')
         end
       else
         _('Your subscription expired!')
@@ -49,9 +49,9 @@ module Gitlab
       remaining_days = pluralize(subscribable.remaining_days, 'day')
 
       if auto_renew?
-        _('Your subscription will automatically renew in %{remaining_days}') % { remaining_days: remaining_days }
+        _('Your subscription will automatically renew in %{remaining_days}.') % { remaining_days: remaining_days }
       else
-        _('Your subscription will expire in %{remaining_days}') % { remaining_days: remaining_days }
+        _('Your subscription will expire in %{remaining_days}.') % { remaining_days: remaining_days }
       end
     end
 
@@ -119,10 +119,19 @@ module Gitlab
     end
 
     def notifiable?
-      subscribable &&
-        signed_in &&
-        ((is_admin && subscribable.notify_admins?) || subscribable.notify_users?) &&
-        expired_subscribable_within_notification_window?
+      signed_in && with_enabled_notifications? && require_notification?
+    end
+
+    def with_enabled_notifications?
+      subscribable && ((is_admin && subscribable.notify_admins?) || subscribable.notify_users?)
+    end
+
+    def require_notification?
+      auto_renew_choice_exists? && expired_subscribable_within_notification_window?
+    end
+
+    def auto_renew_choice_exists?
+      auto_renew? != nil
     end
 
     def expired_subscribable_within_notification_window?
@@ -145,7 +154,7 @@ module Gitlab
     end
 
     def auto_renew?
-      subscribable.try(:auto_renew?)
+      subscribable.auto_renew?
     end
   end
 end

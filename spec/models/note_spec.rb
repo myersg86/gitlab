@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Note do
+RSpec.describe Note do
   include RepoHelpers
 
   describe 'associations' do
@@ -828,6 +828,10 @@ describe Note do
 
     it 'returns commit for a commit note' do
       expect(build(:note_on_commit).noteable_ability_name).to eq('commit')
+    end
+
+    it 'returns alert_management_alert for an alert note' do
+      expect(build(:note_on_alert).noteable_ability_name).to eq('alert_management_alert')
     end
   end
 

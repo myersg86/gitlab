@@ -196,7 +196,7 @@ GitLab can be considered to have two layers from a process perspective:
 - Process: `alertmanager`
 - GitLab.com: [Monitoring of GitLab.com](https://about.gitlab.com/handbook/engineering/monitoring/)
 
-[Alert manager](https://prometheus.io/docs/alerting/alertmanager/) is a tool provided by Prometheus that _"handles alerts sent by client applications such as the Prometheus server. It takes care of deduplicating, grouping, and routing them to the correct receiver integration such as email, PagerDuty, or OpsGenie. It also takes care of silencing and inhibition of alerts."_ You can read more in [issue #45740](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/45740) about what we will be alerting on.
+[Alert manager](https://prometheus.io/docs/alerting/latest/alertmanager/) is a tool provided by Prometheus that _"handles alerts sent by client applications such as the Prometheus server. It takes care of deduplicating, grouping, and routing them to the correct receiver integration such as email, PagerDuty, or Opsgenie. It also takes care of silencing and inhibition of alerts."_ You can read more in [issue #45740](https://gitlab.com/gitlab-org/gitlab-foss/-/issues/45740) about what we will be alerting on.
 
 #### Certificate management
 
@@ -227,7 +227,7 @@ Consul is a tool for service discovery and configuration. Consul is distributed,
 - Configuration:
   - [Omnibus](https://docs.gitlab.com/omnibus/settings/database.html#disabling-automatic-database-migration)
   - [Charts](https://docs.gitlab.com/charts/charts/gitlab/migrations/)
-  - [Source](../update/upgrading_from_source.md#13-install-libs-migrations-etc)
+  - [Source](../update/upgrading_from_source.md#13-install-libraries-migrations-etc)
 - Layer: Core Service (Data)
 
 #### Elasticsearch
@@ -523,7 +523,7 @@ Redis is packaged to provide a place to store:
 
 - [Project page](https://github.com/docker/distribution/blob/master/README.md)
 - Configuration:
-  - [Omnibus](../update/upgrading_from_source.md#13-install-libs-migrations-etc)
+  - [Omnibus](../update/upgrading_from_source.md#13-install-libraries-migrations-etc)
   - [Charts](https://docs.gitlab.com/charts/charts/registry/)
   - [Source](../administration/packages/container_registry.md#enable-the-container-registry)
   - [GDK](https://gitlab.com/gitlab-org/gitlab-development-kit/blob/master/doc/howto/registry.md)
@@ -567,7 +567,7 @@ For monitoring deployed apps, see the [Sentry integration docs](../user/project/
   - [GDK](https://gitlab.com/gitlab-org/gitlab/blob/master/config/gitlab.yml.example)
 - Layer: Core Service (Processor)
 - Process: `sidekiq`
-- GitLab.com: [Sidekiq](../user/gitlab_com/index.md#Sidekiq)
+- GitLab.com: [Sidekiq](../user/gitlab_com/index.md#sidekiq)
 
 Sidekiq is a Ruby background job processor that pulls jobs from the Redis queue and processes them. Background jobs allow GitLab to provide a faster request/response cycle by moving work into the background.
 
@@ -773,7 +773,7 @@ response back to the user directly.
 
 When referring to `~git` in the pictures it means the home directory of the Git user which is typically `/home/git`.
 
-GitLab is primarily installed within the `/home/git` user home directory as `git` user. Within the home directory is where the gitlabhq server software resides as well as the repositories (though the repository location is configurable).
+GitLab is primarily installed within the `/home/git` user home directory as `git` user. Within the home directory is where the GitLab server software resides as well as the repositories (though the repository location is configurable).
 
 The bare repositories are located in `/home/git/repositories`. GitLab is a Ruby on rails application so the particulars of the inner workings can be learned by studying how a Ruby on rails application works.
 
@@ -849,7 +849,7 @@ Usage: /etc/init.d/postgresql {start|stop|restart|reload|force-reload|status} [v
 
 ### Log locations of the services
 
-gitlabhq (includes Unicorn and Sidekiq logs):
+GitLab (includes Unicorn and Sidekiq logs):
 
 - `/home/git/gitlab/log/` contains `application.log`, `production.log`, `sidekiq.log`, `unicorn.stdout.log`, `git_json.log` and `unicorn.stderr.log` normally.
 

@@ -22,11 +22,11 @@
 
     - if release
       .text-secondary
-        = icon('rocket')
+        = sprite_icon("rocket", size: 12)
         = _("Release")
         = link_to release.name, project_releases_path(@project, anchor: release.tag), class: 'tag-release-link'
       - if release.description.present?
-        .md.prepend-top-default
+        .md.gl-mt-3
           = markdown_field(release, :description)
 
   .row-fixed-content.controls.flex-row

@@ -77,6 +77,11 @@ export default {
       type: String,
       required: true,
     },
+    isLinkedIssueBlock: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
   },
   computed: {
     hasRelatedIssues() {
@@ -135,7 +140,7 @@ export default {
           </a>
           <div class="d-inline-flex lh-100 align-middle">
             <div
-              class="js-related-issues-header-issue-count related-issues-header-issue-count issue-count-badge mx-1 border-width-1px border-style-solid border-color-default"
+              class="js-related-issues-header-issue-count related-issues-header-issue-count issue-count-badge gl-display-inline-flex gl-mx-2"
             >
               <span class="issue-count-badge-count">
                 <icon :name="issuableTypeIcon" class="mr-1 text-secondary" />
@@ -169,7 +174,7 @@ export default {
           class="js-add-related-issues-form-area card-body bordered-box bg-white"
         >
           <add-issuable-form
-            :is-linked-issue-block="true"
+            :is-linked-issue-block="isLinkedIssueBlock"
             :is-submitting="isSubmitting"
             :issuable-type="issuableType"
             :input-value="inputValue"

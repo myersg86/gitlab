@@ -1,5 +1,6 @@
 import mutations from 'ee/boards/stores/mutations';
 import { inactiveListId } from '~/boards/constants';
+import { mockLists, mockEpics } from '../mock_data';
 
 const expectNotImplemented = action => {
   it('is not implemented', () => {
@@ -7,25 +8,15 @@ const expectNotImplemented = action => {
   });
 };
 
-describe('TOGGLE_LABELS', () => {
-  it('toggles isShowingLabels from true to false', () => {
+describe('SET_SHOW_LABELS', () => {
+  it('updates isShowingLabels', () => {
     const state = {
       isShowingLabels: true,
     };
 
-    mutations.TOGGLE_LABELS(state);
+    mutations.SET_SHOW_LABELS(state, false);
 
     expect(state.isShowingLabels).toBe(false);
-  });
-
-  it('toggles isShowingLabels from false to true', () => {
-    const state = {
-      isShowingLabels: false,
-    };
-
-    mutations.TOGGLE_LABELS(state);
-
-    expect(state.isShowingLabels).toBe(true);
   });
 });
 
@@ -113,5 +104,55 @@ describe('TOGGLE_EPICS_SWIMLANES', () => {
     mutations.TOGGLE_EPICS_SWIMLANES(state);
 
     expect(state.isShowingEpicsSwimlanes).toBe(true);
+  });
+
+  it('sets epicsSwimlanesFetchInProgress to true', () => {
+    const state = {
+      epicsSwimlanesFetchInProgress: false,
+    };
+
+    mutations.TOGGLE_EPICS_SWIMLANES(state);
+
+    expect(state.epicsSwimlanesFetchInProgress).toBe(true);
+  });
+});
+
+describe('RECEIVE_SWIMLANES_SUCCESS', () => {
+  it('sets epicsSwimlanesFetchInProgress to false and populates epicsSwimlanes with payload', () => {
+    const state = {
+      epicsSwimlanesFetchInProgress: true,
+      epicsSwimlanes: {},
+    };
+
+    mutations.RECEIVE_SWIMLANES_SUCCESS(state, mockLists);
+
+    expect(state.epicsSwimlanesFetchInProgress).toBe(false);
+    expect(state.epicsSwimlanes).toEqual(mockLists);
+  });
+});
+
+describe('RECEIVE_SWIMLANES_FAILURE', () => {
+  it('sets epicsSwimlanesFetchInProgress to false and epicsSwimlanesFetchFailure to true', () => {
+    const state = {
+      epicsSwimlanesFetchInProgress: true,
+      epicsSwimlanesFetchFailure: false,
+    };
+
+    mutations.RECEIVE_SWIMLANES_FAILURE(state);
+
+    expect(state.epicsSwimlanesFetchInProgress).toBe(false);
+    expect(state.epicsSwimlanesFetchFailure).toBe(true);
+  });
+});
+
+describe('RECEIVE_EPICS_SUCCESS', () => {
+  it('populates epics with payload', () => {
+    const state = {
+      epics: {},
+    };
+
+    mutations.RECEIVE_EPICS_SUCCESS(state, mockEpics);
+
+    expect(state.epics).toEqual(mockEpics);
   });
 });

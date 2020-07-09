@@ -3,7 +3,7 @@
 import { GlTooltipDirective, GlLink } from '@gitlab/ui';
 import mrWidgetPipelineMixin from 'ee_else_ce/vue_merge_request_widget/mixins/mr_widget_pipeline';
 import { sprintf, s__ } from '~/locale';
-import PipelineStage from '~/pipelines/components/stage.vue';
+import PipelineStage from '~/pipelines/components/pipelines_list/stage.vue';
 import CiIcon from '~/vue_shared/components/ci_icon.vue';
 import Icon from '~/vue_shared/components/icon.vue';
 import TooltipOnTruncate from '~/vue_shared/components/tooltip_on_truncate.vue';
@@ -126,10 +126,10 @@ export default {
       <div class="add-border ci-status-icon ci-status-icon-failed ci-error js-ci-error">
         <icon :size="24" name="status_failed_borderless" />
       </div>
-      <div class="media-body prepend-left-default" v-html="errorText"></div>
+      <div class="media-body gl-ml-3" v-html="errorText"></div>
     </template>
     <template v-else-if="hasPipeline">
-      <a :href="status.details_path" class="align-self-start append-right-default">
+      <a :href="status.details_path" class="align-self-start gl-mr-3">
         <ci-icon :status="status" :size="24" :borderless="true" class="add-border" />
       </a>
       <div class="ci-widget-container d-flex">

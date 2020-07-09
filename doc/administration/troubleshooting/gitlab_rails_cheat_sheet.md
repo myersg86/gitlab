@@ -201,6 +201,20 @@ project.repository_read_only = true; project.save
 project.update!(repository_read_only: true)
 ```
 
+### Transfer project from one namespace to another
+
+```ruby
+ p= Project.find_by_full_path('')
+
+ # To set the owner of the project
+ current_user= p.creator
+
+# Namespace where you want this to be moved.
+namespace = Namespace.find_by_full_path("")
+
+::Projects::TransferService.new(p, current_user).execute(namespace)
+```
+
 ### Bulk update service integration password for _all_ projects
 
 For example, change the Jira user's password for all projects that have the Jira
@@ -320,23 +334,7 @@ end
 
 ### Find mirrors with "bad decrypt" errors
 
-```ruby
-total = 0
-bad = []
-ProjectImportData.find_each do |data|
-  begin
-    total += 1
-    data.credentials
-  rescue => e
-    bad << data
-  end
-end
-
-puts "Bad count: #{bad.count} / #{total}"
-bad.each do |repo|
-  puts Project.find(repo.project_id).full_path
-end; bad.count
-```
+This content has been converted to a Rake task, see the [Doctor Rake tasks docs](../raketasks/doctor.md).
 
 ### Transfer mirror users and tokens to a single service account
 
@@ -463,7 +461,7 @@ group = Group.find_by_path_or_name("groupname")
 # Count users from subgroup and up (inherited)
 group.members_with_parents.count
 
-# Count users from parent group and down (specific grants)
+# Count users from the parent group and down (specific grants)
 parent.members_with_descendants.count
 ```
 
@@ -755,18 +753,9 @@ area on disk. It remains to be seen exactly how or whether the deletion is usefu
 
 ### Bad Decrypt Script (for encrypted variables)
 
-See <https://gitlab.com/snippets/1730735/raw>.
+This content has been converted to a Rake task, see the [Doctor Rake tasks docs](../raketasks/doctor.md).
 
-This script will go through all the encrypted variables and count how many are not able
-to be decrypted. Might be helpful to run on multiple nodes to see which `gitlab-secrets.json`
-file is most up to date:
-
-```shell
-wget -O /tmp/bad-decrypt.rb https://gitlab.com/snippets/1730735/raw
-gitlab-rails runner /tmp/bad-decrypt.rb
-```
-
-If `ProjectImportData Bad count:` is detected and the decision is made to delete the
+As an example of repairing, if `ProjectImportData Bad count:` is detected and the decision is made to delete the
 encrypted credentials to allow manual reentry:
 
 ```ruby
@@ -797,15 +786,17 @@ encrypted credentials to allow manual reentry:
 If `User OTP Secret Bad count:` is detected. For each user listed disable/enable
 two-factor authentication.
 
-### Decrypt Script for encrypted tokens
-
-This script will search for all encrypted tokens that are causing decryption errors,
-and update or reset as needed:
+The following script will search in some of the tables for encrypted tokens that are
+causing decryption errors, and update or reset as needed:
 
 ```shell
 wget -O /tmp/encrypted-tokens.rb https://gitlab.com/snippets/1876342/raw
 gitlab-rails runner /tmp/encrypted-tokens.rb
 ```
+
+### Decrypt Script for encrypted tokens
+
+This content has been converted to a Rake task, see the [Doctor Rake tasks docs](../raketasks/doctor.md).
 
 ## Geo
 

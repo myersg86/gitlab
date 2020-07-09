@@ -3,7 +3,7 @@
 require 'pathname'
 
 module QA
-  context 'Secure', :docker, :runner, quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/219519', type: :investigating } do
+  RSpec.describe 'Secure', :docker, :runner, quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/219519', type: :investigating } do
     describe 'Security Reports in a Merge Request' do
       let(:sast_vuln_count) { 5 }
       let(:dependency_scan_vuln_count) { 4 }
@@ -13,8 +13,6 @@ module QA
 
       after do
         @runner.remove_via_api! if @runner
-
-        Runtime::Feature.enable('job_log_json') if @job_log_json_flag_enabled
       end
 
       before do

@@ -26,8 +26,9 @@ The following resources will help you get started with Git:
 - [Git Basics](https://git-scm.com/book/en/v2/Getting-Started-Git-Basics)
 - [Git on the Server - GitLab](https://git-scm.com/book/en/v2/Git-on-the-Server-GitLab)
 - [How to install Git](how_to_install_git/index.md)
+- [Git terminology](../../gitlab-basics/start-using-git.md#git-terminology)
 - [Start using Git on the command line](../../gitlab-basics/start-using-git.md)
-- [Command line file editing basic commands](../../gitlab-basics/command-line-commands.md)
+- [Edit files through the command line](../../gitlab-basics/command-line-commands.md)
 - [GitLab Git Cheat Sheet (download)](https://about.gitlab.com/images/press/git-cheat-sheet.pdf)
 - Commits:
   - [Revert a commit](../../user/project/merge_requests/revert_changes.md#reverting-a-commit)
@@ -92,7 +93,7 @@ Git-related queries from GitLab.
 The following relate to Git Large File Storage:
 
 - [Getting Started with Git LFS](https://about.gitlab.com/blog/2017/01/30/getting-started-with-git-lfs-tutorial/)
-- [Migrate an existing Git repo with Git LFS](lfs/migrate_to_git_lfs.md)
+- [Migrate an existing Git repository with Git LFS](lfs/migrate_to_git_lfs.md)
 - [Removing objects from LFS](lfs/index.md#removing-objects-from-lfs)
 - [GitLab Git LFS user documentation](lfs/index.md)
 - [GitLab Git LFS admin documentation](../../administration/lfs/index.md)

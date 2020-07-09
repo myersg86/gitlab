@@ -80,7 +80,7 @@ export default {
                 >
                   <span class="d-flex">
                     <icon
-                      class="flex-shrink-0 append-right-4"
+                      class="flex-shrink-0 gl-mr-2"
                       :class="{
                         invisible: !isSelectedMetric(option.key),
                       }"
@@ -109,7 +109,7 @@ export default {
       v-if="showPagination"
       :change="onPageChange"
       :page-info="pageInfo"
-      class="justify-content-center prepend-top-default"
+      class="justify-content-center gl-mt-3"
     />
   </div>
 </template>

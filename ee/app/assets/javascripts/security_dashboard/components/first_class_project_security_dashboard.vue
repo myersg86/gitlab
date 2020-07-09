@@ -41,7 +41,7 @@ export default {
       required: false,
       default: '',
     },
-    hasPipelineData: {
+    hasVulnerabilities: {
       type: Boolean,
       required: false,
       default: false,
@@ -57,11 +57,13 @@ export default {
     },
     userCalloutId: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
     },
     userCalloutsPath: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
     },
   },
   data() {
@@ -87,7 +89,7 @@ export default {
 
 <template>
   <div>
-    <template v-if="hasPipelineData">
+    <template v-if="hasVulnerabilities">
       <security-dashboard-layout>
         <template #header>
           <gl-banner
@@ -95,7 +97,7 @@ export default {
             class="mt-4"
             variant="introduction"
             :title="s__('SecurityReports|Introducing standalone vulnerabilities')"
-            :button-text="s__('SecurityReports|Learn More')"
+            :button-text="s__('SecurityReports|Learn more')"
             :button-link="dashboardDocumentation"
             @close="handleBannerClose"
           >
@@ -112,6 +114,8 @@ export default {
             <csv-export-button :vulnerabilities-export-endpoint="vulnerabilitiesExportEndpoint" />
           </div>
           <vulnerabilities-count-list :project-full-path="projectFullPath" />
+        </template>
+        <template #sticky>
           <filters @filterChange="handleFilterChange" />
         </template>
         <project-vulnerabilities-app

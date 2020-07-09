@@ -30,7 +30,7 @@ subgraph "2. gitlab `review-prepare` stage"
   end
 
 subgraph "3. gitlab `review` stage"
-  C["review-deploy<br><br>Helm deploys the Review App using the Cloud<br/>Native images built by the CNG-mirror pipeline.<br><br>Cloud Native images are deployed to the `review-apps-ce` or `review-apps-ee`<br>Kubernetes (GKE) cluster, in the GCP `gitlab-review-apps` project."]
+  C["review-deploy<br><br>Helm deploys the Review App using the Cloud<br/>Native images built by the CNG-mirror pipeline.<br><br>Cloud Native images are deployed to the `review-apps`<br>Kubernetes (GKE) cluster, in the GCP `gitlab-review-apps` project."]
   end
 
 subgraph "4. gitlab `qa` stage"
@@ -55,14 +55,14 @@ subgraph "CNG-mirror pipeline"
      each component (e.g. `gitlab-rails-ee`, `gitlab-shell`, `gitaly` etc.)
      based on the commit from the [GitLab pipeline](https://gitlab.com/gitlab-org/gitlab/pipelines/125315730) and stores
      them in its [registry](https://gitlab.com/gitlab-org/build/CNG-mirror/container_registry).
-   - We use the [`CNG-mirror`](https://gitlab.com/gitlab-org/build/CNG-mirror) project so that the `CNG`, (**C**loud
-     **N**ative **G**itLab), project's registry is not overloaded with a
+   - We use the [`CNG-mirror`](https://gitlab.com/gitlab-org/build/CNG-mirror) project so that the `CNG`, (Cloud
+     Native GitLab), project's registry is not overloaded with a
      lot of transient Docker images.
    - Note that the official CNG images are built by the `cloud-native-image`
      job, which runs only for tags, and triggers itself a [`CNG`](https://gitlab.com/gitlab-org/build/CNG) pipeline.
 1. Once the `test` stage is done, the [`review-deploy`](https://gitlab.com/gitlab-org/gitlab/-/jobs/467724810) job
    deploys the Review App using [the official GitLab Helm chart](https://gitlab.com/gitlab-org/charts/gitlab/) to
-   the [`review-apps-ce`](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-a/review-apps-ce?project=gitlab-review-apps) / [`review-apps-ee`](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-b/review-apps-ee?project=gitlab-review-apps)
+   the [`review-apps`](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-b/review-apps?project=gitlab-review-apps)
    Kubernetes cluster on GCP.
    - The actual scripts used to deploy the Review App can be found at
      [`scripts/review_apps/review-apps.sh`](https://gitlab.com/gitlab-org/gitlab/-/blob/master/scripts/review_apps/review-apps.sh).
@@ -136,11 +136,10 @@ browser performance testing using a
 
 ### Node pools
 
-The `review-apps-ee` and `review-apps-ce` clusters are currently set up with
+The `review-apps` cluster is currently set up with
 the following node pools:
 
-- `review-apps-ee` of preemptible `e2-highcpu-16` (16 vCPU, 16 GB memory) nodes with autoscaling
-- `review-apps-ce` of preemptible `n1-standard-8` (8 vCPU, 16 GB memory) nodes with autoscaling
+- `e2-highcpu-16` (16 vCPU, 16 GB memory) pre-emptible nodes with autoscaling
 
 ### Helm
 
@@ -189,9 +188,7 @@ secure note named `gitlab-{ce,ee} Review App's root password`.
 1. Click on the `KUBECTL` dropdown, then `Exec` -> `task-runner`.
 1. Replace `-c task-runner -- ls` with `-it -- gitlab-rails console` from the
    default command or
-   - Run `kubectl exec --namespace review-apps-ce review-qa-raise-e-12chm0-task-runner-d5455cc8-2lsvz -it -- gitlab-rails console` and
-     - Replace `review-apps-ce` with `review-apps-ee` if the Review App
-       is running EE, and
+   - Run `kubectl exec --namespace review-apps review-qa-raise-e-12chm0-task-runner-d5455cc8-2lsvz -it -- gitlab-rails console` and
      - Replace `review-qa-raise-e-12chm0-task-runner-d5455cc8-2lsvz`
        with your Pod's name.
 
@@ -278,14 +275,14 @@ kubectl top pods | sort --key 2 --numeric
 
 **Potential cause:**
 
-This could be a sign that there are too many stale secrets and/or config maps.
+This could be a sign that there are too many stale secrets and/or configuration maps.
 
 **Where to look for further debugging:**
 
 Look at [the list of Configurations](https://console.cloud.google.com/kubernetes/config?project=gitlab-review-apps)
 or `kubectl get secret,cm --sort-by='{.metadata.creationTimestamp}' | grep 'review-'`.
 
-Any secrets or config maps older than 5 days are suspect and should be deleted.
+Any secrets or configuration maps older than 5 days are suspect and should be deleted.
 
 **Useful commands:**
 
@@ -354,7 +351,7 @@ For the record, the debugging steps to find out this issue were:
 1. Web search for exact error message, following rabbit hole to [a relevant Kubernetes bug report](https://github.com/kubernetes/kubernetes/issues/57345)
 1. Access the node over SSH via the GCP console (**Computer Engine > VM
    instances** then click the "SSH" button for the node where the `dns-gitlab-review-app-external-dns` pod runs)
-1. In the node: `systemctl --version` => systemd 232
+1. In the node: `systemctl --version` => `systemd 232`
 1. Gather some more information:
    - `mount | grep kube | wc -l` => e.g. 290
    - `systemctl list-units --all | grep -i var-lib-kube | wc -l` => e.g. 142

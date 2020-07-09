@@ -79,6 +79,7 @@ module QA
     autoload :PersonalAccessToken, 'qa/resource/personal_access_token'
     autoload :User, 'qa/resource/user'
     autoload :ProjectMilestone, 'qa/resource/project_milestone'
+    autoload :GroupMilestone, 'qa/resource/group_milestone'
     autoload :Members, 'qa/resource/members'
     autoload :File, 'qa/resource/file'
     autoload :Fork, 'qa/resource/fork'
@@ -137,6 +138,7 @@ module QA
       module Instance
         autoload :All, 'qa/scenario/test/instance/all'
         autoload :Smoke, 'qa/scenario/test/instance/smoke'
+        autoload :Airgapped, 'qa/scenario/test/instance/airgapped'
       end
 
       module Integration
@@ -180,6 +182,7 @@ module QA
       autoload :Login, 'qa/page/main/login'
       autoload :Menu, 'qa/page/main/menu'
       autoload :OAuth, 'qa/page/main/oauth'
+      autoload :TwoFactorAuth, 'qa/page/main/two_factor_auth'
       autoload :SignUp, 'qa/page/main/sign_up'
       autoload :Terms, 'qa/page/main/terms'
     end
@@ -230,6 +233,7 @@ module QA
 
     module Project
       autoload :New, 'qa/page/project/new'
+      autoload :NewExperiment, 'qa/page/project/new_experiment'
       autoload :Show, 'qa/page/project/show'
       autoload :Activity, 'qa/page/project/activity'
       autoload :Menu, 'qa/page/project/menu'
@@ -252,6 +256,12 @@ module QA
         autoload :Show, 'qa/page/project/pipeline/show'
       end
 
+      module Tag
+        autoload :Index, 'qa/page/project/tag/index'
+        autoload :New, 'qa/page/project/tag/new'
+        autoload :Show, 'qa/page/project/tag/show'
+      end
+
       module Job
         autoload :Show, 'qa/page/project/job/show'
       end
@@ -271,6 +281,7 @@ module QA
         autoload :Runners, 'qa/page/project/settings/runners'
         autoload :MergeRequest, 'qa/page/project/settings/merge_request'
         autoload :MirroringRepositories, 'qa/page/project/settings/mirroring_repositories'
+        autoload :ProtectedTags, 'qa/page/project/settings/protected_tags'
         autoload :VisibilityFeaturesPermissions, 'qa/page/project/settings/visibility_features_permissions'
 
         module Services
@@ -299,6 +310,7 @@ module QA
         autoload :New, 'qa/page/project/issue/new'
         autoload :Show, 'qa/page/project/issue/show'
         autoload :Index, 'qa/page/project/issue/index'
+        autoload :JiraImport, 'qa/page/project/issue/jira_import'
       end
 
       module Fork
@@ -308,6 +320,7 @@ module QA
       module Milestone
         autoload :New, 'qa/page/project/milestone/new'
         autoload :Index, 'qa/page/project/milestone/index'
+        autoload :Show, 'qa/page/project/milestone/show'
       end
 
       module Operations
@@ -332,6 +345,8 @@ module QA
         autoload :Edit, 'qa/page/project/wiki/edit'
         autoload :Show, 'qa/page/project/wiki/show'
         autoload :GitAccess, 'qa/page/project/wiki/git_access'
+        autoload :Sidebar, 'qa/page/project/wiki/sidebar'
+        autoload :List, 'qa/page/project/wiki/list'
       end
 
       module WebIDE
@@ -353,7 +368,7 @@ module QA
     end
 
     module Issuable
-      autoload :Sidebar, 'qa/page/issuable/sidebar'
+      autoload :New, 'qa/page/issuable/new'
     end
 
     module Alert
@@ -436,9 +451,11 @@ module QA
       autoload :ConfirmModal, 'qa/page/component/confirm_modal'
       autoload :CustomMetric, 'qa/page/component/custom_metric'
       autoload :DesignManagement, 'qa/page/component/design_management'
+      autoload :ProjectSelector, 'qa/page/component/project_selector'
 
       module Issuable
         autoload :Common, 'qa/page/component/issuable/common'
+        autoload :Sidebar, 'qa/page/component/issuable/sidebar'
       end
 
       module IssueBoard
@@ -552,6 +569,7 @@ module QA
     autoload :Retrier, 'qa/support/retrier'
     autoload :Waiter, 'qa/support/waiter'
     autoload :WaitForRequests, 'qa/support/wait_for_requests'
+    autoload :OTP, 'qa/support/otp'
   end
 end
 

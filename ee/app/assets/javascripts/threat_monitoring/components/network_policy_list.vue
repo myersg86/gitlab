@@ -177,7 +177,7 @@ export default {
             :title="s__('NetworkPolicies|No policies detected')"
             :description="$options.emptyStateDescription"
             :primary-button-link="documentationFullPath"
-            :primary-button-text="__('Learn More')"
+            :primary-button-text="__('Learn more')"
           />
         </slot>
       </template>
@@ -215,13 +215,7 @@ export default {
 
           <h5 class="mt-4">{{ s__('NetworkPolicies|Enforcement status') }}</h5>
           <p>{{ s__('NetworkPolicies|Choose whether to enforce this policy.') }}</p>
-          <gl-toggle
-            v-model="selectedPolicy.isEnabled"
-            :label-on="__('Enabled')"
-            :label-off="__('Disabled')"
-            label-position="right"
-            data-testid="policyToggle"
-          />
+          <gl-toggle v-model="selectedPolicy.isEnabled" data-testid="policyToggle" />
         </div>
       </template>
     </gl-drawer>

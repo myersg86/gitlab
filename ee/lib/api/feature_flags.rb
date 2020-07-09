@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module API
-  class FeatureFlags < Grape::API
+  class FeatureFlags < Grape::API::Instance
     include PaginationParams
 
     FEATURE_FLAG_ENDPOINT_REQUIREMENTS = API::NAMESPACE_OR_PROJECT_REQUIREMENTS
@@ -246,7 +246,7 @@ module API
       end
 
       def feature_flags_new_version_enabled?
-        Feature.enabled?(:feature_flags_new_version, user_project)
+        Feature.enabled?(:feature_flags_new_version, user_project, default_enabled: true)
       end
 
       def rename_key(hash, old_key, new_key)

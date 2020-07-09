@@ -9,24 +9,15 @@ class Geo::JobArtifactRegistry < Geo::BaseRegistry
   scope :never, -> { where(success: false, retry_count: nil) }
 
   def self.failed
-    if registry_consistency_worker_enabled?
-      where(success: false).where.not(retry_count: nil)
-    else
-      # Would do `super` except it doesn't work with an included scope
-      where(success: false)
-    end
-  end
-
-  def self.registry_consistency_worker_enabled?
-    Feature.enabled?(:geo_job_artifact_registry_ssot_sync, default_enabled: true)
+    where(success: false).where.not(retry_count: nil)
   end
 
   def self.finder_class
     ::Geo::JobArtifactRegistryFinder
   end
 
-  def self.delete_worker_class
-    ::Geo::FileRegistryRemovalWorker
+  def self.find_registry_differences(range)
+    finder_class.new(current_node_id: Gitlab::Geo.current_node.id).find_registry_differences(range)
   end
 
   # When false, RegistryConsistencyService will frequently check the end of the

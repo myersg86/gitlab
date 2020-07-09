@@ -10,7 +10,7 @@ module Gitlab
           :trigger_request, :schedule, :merge_request, :external_pull_request,
           :ignore_skip_ci, :save_incompleted,
           :seeds_block, :variables_attributes, :push_options,
-          :chat_data, :allow_mirror_update, :bridge,
+          :chat_data, :allow_mirror_update, :bridge, :content,
           # These attributes are set by Chains during processing:
           :config_content, :config_processor, :stage_seeds
         ) do
@@ -89,6 +89,10 @@ module Gitlab
           def observe_pipeline_size(pipeline)
             metrics.pipeline_size_histogram
               .observe({ source: pipeline.source.to_s }, pipeline.total_size)
+          end
+
+          def dangling_build?
+            %i[ondemand_dast_scan webide].include?(source)
           end
         end
       end

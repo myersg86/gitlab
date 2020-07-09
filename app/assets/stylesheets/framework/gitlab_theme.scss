@@ -74,19 +74,6 @@
             }
           }
 
-          &:focus:hover,
-          &:focus {
-            &.header-user-dropdown-toggle .header-user-notification-dot {
-              border-color: $white;
-            }
-          }
-
-          &:hover {
-            &.header-user-dropdown-toggle .header-user-notification-dot {
-              border-color: $nav-svg-color + 33;
-            }
-          }
-
           &:hover,
           &:focus {
             @include media-breakpoint-up(sm) {
@@ -95,6 +82,10 @@
 
             svg {
               fill: currentColor;
+            }
+
+            &.header-user-dropdown-toggle .header-user-notification-dot {
+              border-color: $nav-svg-color + 33;
             }
           }
         }
@@ -108,6 +99,10 @@
             svg {
               fill: $nav-svg-color;
             }
+          }
+
+          &.header-user-dropdown-toggle .header-user-notification-dot {
+            border-color: $white;
           }
         }
 
@@ -171,7 +166,7 @@
       color: $sidebar-text;
     }
 
-    svg {
+    .nav-icon-container svg {
       fill: $sidebar-text;
     }
   }
@@ -308,7 +303,6 @@ body {
     );
   }
 
-  &.gl-dark,
   &.ui-light {
     @include gitlab-theme(
       $gray-700,
@@ -391,13 +385,47 @@ body {
   }
 
   &.gl-dark {
-    @include gitlab-theme(
-      $gray-900,
-      $gray-500,
-      $gray-700,
-      $gray-800,
-      $gray-50,
-      $gray-100
-    );
+    .logo-text svg {
+      fill: $gl-text-color;
+    }
+
+    .navbar-gitlab {
+      background-color: $gray-50;
+
+      .navbar-sub-nav,
+      .navbar-nav {
+        li {
+          > a:hover,
+          > a:focus,
+          > button:hover,
+          > button:focus {
+            color: $gl-text-color;
+            background-color: $gray-200;
+          }
+        }
+
+        li.active,
+        li.dropdown.show {
+          > a,
+          > button {
+            color: $gl-text-color;
+            background-color: $gray-200;
+          }
+        }
+      }
+
+      .search {
+        form {
+          background-color: $gray-100;
+          box-shadow: inset 0 0 0 1px $border-color;
+
+          &:active,
+          &:hover {
+            background-color: $gray-100;
+            box-shadow: inset 0 0 0 1px $blue-200;
+          }
+        }
+      }
+    }
   }
 }

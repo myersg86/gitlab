@@ -56,6 +56,7 @@ export default {
       blob: {},
       fileName: '',
       content: '',
+      originalContent: '',
       isContentLoading: true,
       isUpdating: false,
       newSnippet: false,
@@ -97,7 +98,24 @@ export default {
       return `${this.isProjectSnippet ? 'project' : 'personal'}_snippet_description`;
     },
   },
+  created() {
+    window.addEventListener('beforeunload', this.onBeforeUnload);
+  },
+  destroyed() {
+    window.removeEventListener('beforeunload', this.onBeforeUnload);
+  },
   methods: {
+    onBeforeUnload(e = {}) {
+      const returnValue = __('Are you sure you want to lose unsaved changes?');
+
+      if (!this.hasChanges()) return undefined;
+
+      Object.assign(e, { returnValue });
+      return returnValue;
+    },
+    hasChanges() {
+      return this.content !== this.originalContent;
+    },
     updateFileName(newName) {
       this.fileName = newName;
     },
@@ -125,7 +143,9 @@ export default {
       axios
         .get(url)
         .then(res => {
+          this.originalContent = res.data;
           this.content = res.data;
+
           this.isContentLoading = false;
         })
         .catch(e => this.flashAPIFailure(e));
@@ -137,18 +157,34 @@ export default {
         this.onExistingSnippetFetched();
       }
     },
+    getAttachedFiles() {
+      const fileInputs = Array.from(this.$el.querySelectorAll('[name="files[]"]'));
+      return fileInputs.map(node => node.value);
+    },
+    createMutation() {
+      return {
+        mutation: CreateSnippetMutation,
+        variables: {
+          input: {
+            ...this.apiData,
+            uploadedFiles: this.getAttachedFiles(),
+            projectPath: this.projectPath,
+          },
+        },
+      };
+    },
+    updateMutation() {
+      return {
+        mutation: UpdateSnippetMutation,
+        variables: {
+          input: this.apiData,
+        },
+      };
+    },
     handleFormSubmit() {
       this.isUpdating = true;
       this.$apollo
-        .mutate({
-          mutation: this.newSnippet ? CreateSnippetMutation : UpdateSnippetMutation,
-          variables: {
-            input: {
-              ...this.apiData,
-              projectPath: this.newSnippet ? this.projectPath : undefined,
-            },
-          },
-        })
+        .mutate(this.newSnippet ? this.createMutation() : this.updateMutation())
         .then(({ data }) => {
           const baseObj = this.newSnippet ? data?.createSnippet : data?.updateSnippet;
 
@@ -156,6 +192,7 @@ export default {
           if (errors.length) {
             this.flashAPIFailure(errors[0]);
           } else {
+            this.originalContent = this.content;
             redirectTo(baseObj.snippet.webUrl);
           }
         })
@@ -176,6 +213,8 @@ export default {
   <form
     class="snippet-form js-requires-input js-quick-submit common-note-form"
     :data-snippet-type="isProjectSnippet ? 'project' : 'personal'"
+    data-testid="snippet-edit-form"
+    @submit.prevent="handleFormSubmit"
   >
     <gl-loading-icon
       v-if="isLoading"
@@ -211,17 +250,17 @@ export default {
       <form-footer-actions>
         <template #prepend>
           <gl-button
-            type="submit"
             category="primary"
+            type="submit"
             variant="success"
             :disabled="updatePrevented"
             data-qa-selector="submit_button"
-            @click.prevent="handleFormSubmit"
+            data-testid="snippet-submit-btn"
             >{{ saveButtonLabel }}</gl-button
           >
         </template>
         <template #append>
-          <gl-button data-testid="snippet-cancel-btn" :href="cancelButtonHref">{{
+          <gl-button type="cancel" data-testid="snippet-cancel-btn" :href="cancelButtonHref">{{
             __('Cancel')
           }}</gl-button>
         </template>

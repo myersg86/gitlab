@@ -34,13 +34,14 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
 
   describe '#update_cache!' do
     it 'writes a cache' do
+      status = described_class.new
+
       rails_cache = double
       allow(Rails).to receive(:cache).and_return(rails_cache)
-      allow(rails_cache).to receive(:fetch).with('flipper:persisted_names', expires_in: 1.minute).and_return([described_class.cache_key])
 
       expect(rails_cache).to receive(:write).with(described_class.cache_key, kind_of(Hash))
 
-      described_class.new.update_cache!
+      status.update_cache!
     end
   end
 
@@ -124,7 +125,7 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
   describe '#attachments_synced_count' do
     it 'only counts successful syncs' do
       create_list(:user, 3, avatar: fixture_file_upload('spec/fixtures/dk.png', 'image/png'))
-      uploads = Upload.all.pluck(:id)
+      uploads = Upload.pluck(:id)
 
       create(:geo_upload_registry, :avatar, file_id: uploads[0])
       create(:geo_upload_registry, :avatar, file_id: uploads[1])
@@ -132,42 +133,12 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
 
       expect(subject.attachments_synced_count).to eq(2)
     end
-
-    it 'does not count synced files that were replaced' do
-      user = create(:user, avatar: fixture_file_upload('spec/fixtures/dk.png', 'image/png'))
-
-      expect(subject.attachments_count).to eq(1)
-      expect(subject.attachments_synced_count).to eq(0)
-
-      upload = Upload.find_by(model: user, uploader: 'AvatarUploader')
-      create(:geo_upload_registry, :avatar, file_id: upload.id)
-
-      subject = described_class.current_node_status
-
-      expect(subject.attachments_count).to eq(1)
-      expect(subject.attachments_synced_count).to eq(1)
-
-      user.update(avatar: fixture_file_upload('spec/fixtures/rails_sample.jpg', 'image/jpeg'))
-
-      subject = described_class.current_node_status
-
-      expect(subject.attachments_count).to eq(1)
-      expect(subject.attachments_synced_count).to eq(0)
-
-      upload = Upload.find_by(model: user, uploader: 'AvatarUploader')
-      create(:geo_upload_registry, :avatar, file_id: upload.id)
-
-      subject = described_class.current_node_status
-
-      expect(subject.attachments_count).to eq(1)
-      expect(subject.attachments_synced_count).to eq(1)
-    end
   end
 
   describe '#attachments_synced_missing_on_primary_count' do
     it 'only counts successful syncs' do
       create_list(:user, 3, avatar: fixture_file_upload('spec/fixtures/dk.png', 'image/png'))
-      uploads = Upload.all.pluck(:id)
+      uploads = Upload.pluck(:id)
 
       create(:geo_upload_registry, :avatar, file_id: uploads[0], missing_on_primary: true)
       create(:geo_upload_registry, :avatar, file_id: uploads[1])
@@ -193,32 +164,20 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
   end
 
   describe '#attachments_synced_in_percentage' do
-    let(:avatar) { fixture_file_upload('spec/fixtures/dk.png') }
-    let(:upload_1) { create(:upload, model: group, path: avatar) }
-    let(:upload_2) { create(:upload, model: project_1, path: avatar) }
-
-    before do
-      create(:upload, model: create(:group), path: avatar)
-      create(:upload, model: project_3, path: avatar)
-    end
-
-    it 'returns 0 when no objects are available' do
+    it 'returns 0 when no registries are available' do
       expect(subject.attachments_synced_in_percentage).to eq(0)
     end
 
-    it 'returns the right percentage with no group restrictions' do
-      create(:geo_upload_registry, :avatar, file_id: upload_1.id)
-      create(:geo_upload_registry, :avatar, file_id: upload_2.id)
+    it 'returns the right percentage' do
+      create_list(:user, 4, avatar: fixture_file_upload('spec/fixtures/dk.png', 'image/png'))
+      uploads = Upload.pluck(:id)
+
+      create(:geo_upload_registry, :avatar, file_id: uploads[0])
+      create(:geo_upload_registry, :avatar, file_id: uploads[1])
+      create(:geo_upload_registry, :avatar, :failed, file_id: uploads[2])
+      create(:geo_upload_registry, :avatar, :never_synced, file_id: uploads[3])
 
       expect(subject.attachments_synced_in_percentage).to be_within(0.0001).of(50)
-    end
-
-    it 'returns the right percentage with group restrictions' do
-      secondary.update!(selective_sync_type: 'namespaces', namespaces: [group])
-      create(:geo_upload_registry, :avatar, file_id: upload_1.id)
-      create(:geo_upload_registry, :avatar, file_id: upload_2.id)
-
-      expect(subject.attachments_synced_in_percentage).to be_within(0.0001).of(100)
     end
   end
 
@@ -320,40 +279,16 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
   end
 
   describe '#job_artifacts_failed_count' do
-    context 'when geo_job_artifact_registry_ssot_sync is disabled' do
-      before do
-        stub_feature_flags(geo_job_artifact_registry_ssot_sync: false)
-      end
+    it 'counts failed job artifacts' do
+      # These should be ignored
+      create(:geo_upload_registry, :failed)
+      create(:geo_upload_registry, :avatar, :failed)
+      create(:geo_upload_registry, :attachment, :failed)
+      create(:geo_job_artifact_registry, :with_artifact, success: true)
 
-      it 'counts failed job artifacts' do
-        # These should be ignored
-        create(:geo_upload_registry, :failed)
-        create(:geo_upload_registry, :avatar, :failed)
-        create(:geo_upload_registry, :attachment, :failed)
-        create(:geo_job_artifact_registry, :with_artifact, success: true)
+      create(:geo_job_artifact_registry, :with_artifact, :failed)
 
-        create(:geo_job_artifact_registry, :with_artifact, success: false)
-
-        expect(subject.job_artifacts_failed_count).to eq(1)
-      end
-    end
-
-    context 'when geo_job_artifact_registry_ssot_sync is enabled' do
-      before do
-        stub_feature_flags(geo_job_artifact_registry_ssot_sync: true)
-      end
-
-      it 'counts failed job artifacts' do
-        # These should be ignored
-        create(:geo_upload_registry, :failed)
-        create(:geo_upload_registry, :avatar, :failed)
-        create(:geo_upload_registry, :attachment, :failed)
-        create(:geo_job_artifact_registry, :with_artifact, success: true)
-
-        create(:geo_job_artifact_registry, :with_artifact, :failed)
-
-        expect(subject.job_artifacts_failed_count).to eq(1)
-      end
+      expect(subject.job_artifacts_failed_count).to eq(1)
     end
   end
 
@@ -1252,9 +1187,13 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
   describe 'package files secondary counters' do
     context 'when package registries available' do
       before do
-        create(:package_file_registry, :failed)
-        create(:package_file_registry, :failed)
-        create(:package_file_registry, :synced)
+        create(:geo_package_file_registry, :failed)
+        create(:geo_package_file_registry, :failed)
+        create(:geo_package_file_registry, :synced)
+      end
+
+      it 'returns the right number of repos in registry' do
+        expect(subject.package_files_registry_count).to eq(3)
       end
 
       it 'returns the right number of failed and synced repos' do
@@ -1269,6 +1208,7 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
 
     context 'when no package registries available' do
       it 'returns 0' do
+        expect(subject.package_files_registry_count).to eq(0)
         expect(subject.package_files_failed_count).to eq(0)
         expect(subject.package_files_synced_count).to eq(0)
       end
@@ -1326,18 +1266,17 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
 
     context 'backward compatibility when counters stored in separate columns' do
       describe '#projects_count' do
-        it 'counts the number of projects' do
+        it 'returns data from the deprecated field if it is not defined in the status field' do
           subject.write_attribute(:projects_count, 10)
           subject.status = {}
 
           expect(subject.projects_count).to eq 10
         end
 
-        it 'sets data in both ways, deprecated and the new one' do
+        it 'sets data in the new status field' do
           subject.projects_count = 10
 
           expect(subject.projects_count).to eq 10
-          expect(subject.read_attribute(:projects_count)).to eq 10
         end
 
         it 'uses column counters when calculates percents using attr_in_percentage' do
@@ -1355,6 +1294,14 @@ RSpec.describe GeoNodeStatus, :geo, :geo_fdw do
         subject.status = { "projects_count" => "10" }
 
         expect(subject.projects_count).to eq 10
+      end
+    end
+
+    context 'status booleans are converted into booleans' do
+      it 'returns boolean value' do
+        subject.status = { "repositories_replication_enabled" => "true" }
+
+        expect(subject.repositories_replication_enabled).to eq true
       end
     end
   end

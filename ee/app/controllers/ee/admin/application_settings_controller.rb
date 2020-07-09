@@ -4,6 +4,17 @@ module EE
   module Admin
     module ApplicationSettingsController
       extend ::Gitlab::Utils::Override
+      extend ActiveSupport::Concern
+
+      include ::Admin::MergeRequestApprovalSettingsHelper
+
+      prepended do
+        before_action :elasticsearch_reindexing_task, only: [:integrations]
+
+        def elasticsearch_reindexing_task
+          @elasticsearch_reindexing_task = Elastic::ReindexingTask.last
+        end
+      end
 
       EE_VALID_SETTING_PANELS = %w(templates).freeze
 
@@ -11,6 +22,7 @@ module EE
         define_method(action) { perform_update if submitted? }
       end
 
+      # rubocop:disable Metrics/CyclomaticComplexity
       def visible_application_setting_attributes
         attrs = super
 
@@ -54,6 +66,10 @@ module EE
           attrs += EE::ApplicationSettingsHelper.merge_request_appovers_rules_attributes
         end
 
+        if show_compliance_merge_request_approval_settings?
+          attrs << { compliance_frameworks: [] }
+        end
+
         if License.feature_available?(:packages)
           attrs << :npm_package_requests_forwarding
         end
@@ -64,6 +80,7 @@ module EE
 
         attrs
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
 
       def seat_link_payload
         data = ::Gitlab::SeatLinkData.new

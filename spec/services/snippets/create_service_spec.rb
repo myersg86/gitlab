@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Snippets::CreateService do
+RSpec.describe Snippets::CreateService do
   describe '#execute' do
     let_it_be(:user) { create(:user) }
     let_it_be(:admin) { create(:user, :admin) }
@@ -273,6 +273,19 @@ describe Snippets::CreateService do
 
       context 'when snippet_files param is invalid' do
         let(:snippet_files) { [{ action: 'invalid_action', file_path: 'snippet_file_path.rb', content: 'snippet_content' }] }
+
+        it 'a validation error is raised' do
+          response = subject
+          snippet = response.payload[:snippet]
+
+          expect(response).to be_error
+          expect(snippet.errors.full_messages_for(:snippet_files)).to eq ['Snippet files have invalid data']
+          expect(snippet.repository.exists?).to be_falsey
+        end
+      end
+
+      context 'when snippet_files contain an action different from "create"' do
+        let(:snippet_files) { [{ action: 'delete', file_path: 'snippet_file_path.rb' }] }
 
         it 'a validation error is raised' do
           response = subject

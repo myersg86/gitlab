@@ -302,6 +302,12 @@ FactoryBot.define do
       end
     end
 
+    trait :report_results do
+      after(:build) do |build|
+        build.report_results << build(:ci_build_report_result)
+      end
+    end
+
     trait :test_reports do
       after(:build) do |build|
         build.job_artifacts << create(:ci_job_artifact, :junit, job: build)
@@ -373,6 +379,21 @@ FactoryBot.define do
             untracked: false,
             paths: ['vendor/*'],
             policy: 'pull-push'
+          }
+        }
+      end
+    end
+
+    trait :release_options do
+      options do
+        {
+          only: 'tags',
+          script: ['make changelog | tee release_changelog.txt'],
+          release: {
+            name: 'Release $CI_COMMIT_SHA',
+            description: 'Created using the release-cli $EXTRA_DESCRIPTION',
+            tag_name: 'release-$CI_COMMIT_SHA',
+            ref: '$CI_COMMIT_SHA'
           }
         }
       end

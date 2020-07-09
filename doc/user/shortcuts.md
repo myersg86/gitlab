@@ -8,7 +8,7 @@ disqus_identifier: 'https://docs.gitlab.com/ee/workflow/shortcuts.html'
 GitLab has many useful keyboard shortcuts to make it easier to access different features.
 You can see a modal listing keyboard shortcuts within GitLab itself by pressing <kbd>?</kbd>,
 or clicking **Keyboard shortcuts** in the Help menu at the top right.
-From [GitLab 12.8 onwards](https://gitlab.com/gitlab-org/gitlab/-/issues/22113),
+In [GitLab 12.8 and later](https://gitlab.com/gitlab-org/gitlab/-/issues/22113),
 keyboard shortcuts can be disabled using the **Enable**/**Disable** toggle in this modal window.
 
 The [Global Shortcuts](#global-shortcuts) work from any area of GitLab, but you must
@@ -78,10 +78,11 @@ These shortcuts are available when viewing issues and merge requests.
 | <kbd>m</kbd>                 | Change milestone. |
 | <kbd>l</kbd>                 | Change label. |
 | <kbd>r</kbd>                 | Start writing a comment. If any text is selected, it will be quoted in the comment. Can't be used to reply within a thread. |
-| <kbd>n</kbd>                 | Move to next unresolved discussion (Merge requests only). |
-| <kbd>p</kbd>                 | Move to previous unresolved discussion (Merge requests only). |
-| <kbd>]</kbd> or <kbd>j</kbd> | Move to next file (Merge requests only). |
-| <kbd>[</kbd> or <kbd>k</kbd> | Move to previous file (Merge requests only). |
+| <kbd>n</kbd>                 | Move to next unresolved discussion (merge requests only). |
+| <kbd>p</kbd>                 | Move to previous unresolved discussion (merge requests only). |
+| <kbd>]</kbd> or <kbd>j</kbd> | Move to next file (merge requests only). |
+| <kbd>[</kbd> or <kbd>k</kbd> | Move to previous file (merge requests only). |
+| <kbd>b</kbd>                 | Copy source branch name (merge requests only). |
 
 ### Project Files
 

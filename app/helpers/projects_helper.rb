@@ -180,7 +180,7 @@ module ProjectsHelper
   end
 
   def link_to_autodeploy_doc
-    link_to _('About auto deploy'), help_page_path('autodevops/index.md#auto-deploy'), target: '_blank'
+    link_to _('About auto deploy'), help_page_path('topics/autodevops/stages.md', anchor: 'auto-deploy'), target: '_blank'
   end
 
   def autodeploy_flash_notice(branch_name)
@@ -384,9 +384,12 @@ module ProjectsHelper
   end
 
   def project_license_name(project)
-    project.repository.license&.name
+    key = "project:#{project.id}:license_name"
+
+    Gitlab::SafeRequestStore.fetch(key) { project.repository.license&.name }
   rescue GRPC::Unavailable, GRPC::DeadlineExceeded, Gitlab::Git::CommandError => e
     Gitlab::ErrorTracking.track_exception(e)
+    Gitlab::SafeRequestStore[key] = nil
 
     nil
   end
@@ -565,7 +568,7 @@ module ProjectsHelper
   end
 
   def project_child_container_class(view_path)
-    view_path == "projects/issues/issues" ? "prepend-top-default" : "project-show-#{view_path}"
+    view_path == "projects/issues/issues" ? "gl-mt-3" : "project-show-#{view_path}"
   end
 
   def project_issues(project)
@@ -729,12 +732,8 @@ module ProjectsHelper
       !project.repository.gitlab_ci_yml
   end
 
-  def vue_file_list_enabled?
-    Feature.enabled?(:vue_file_list, @project, default_enabled: true)
-  end
-
   def native_code_navigation_enabled?(project)
-    Feature.enabled?(:code_navigation, project)
+    Feature.enabled?(:code_navigation, project, default_enabled: true)
   end
 
   def show_visibility_confirm_modal?(project)
@@ -750,6 +749,10 @@ module ProjectsHelper
     return false if ::Gitlab.com?
 
     ::Feature.enabled?(:resource_access_token, project)
+  end
+
+  def render_service_desk_menu?
+    false
   end
 end
 

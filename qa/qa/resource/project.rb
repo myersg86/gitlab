@@ -71,11 +71,13 @@ module QA
         end
 
         if @template_name
+          QA::Flow::Project.go_to_create_project_from_template
           Page::Project::New.perform do |new_page|
-            new_page.click_create_from_template_tab
             new_page.use_template_for_project(@template_name)
           end
         end
+
+        Page::Project::NewExperiment.perform(&:click_blank_project_link) if Page::Project::NewExperiment.perform(&:shown?)
 
         Page::Project::New.perform do |new_page|
           new_page.choose_test_namespace
@@ -94,7 +96,11 @@ module QA
       end
 
       def has_file?(file_path)
-        repository_tree.any? { |file| file[:path] == file_path }
+        response = repository_tree
+
+        raise ResourceNotFoundError, "#{response[:message]}" if response.is_a?(Hash) && response.has_key?(:message)
+
+        response.any? { |file| file[:path] == file_path }
       end
 
       def api_get_path

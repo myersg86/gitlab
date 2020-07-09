@@ -6,18 +6,21 @@ import {
   GlTable,
   GlAlert,
   GlIcon,
-  GlDropdown,
-  GlDropdownItem,
+  GlLink,
   GlTabs,
   GlTab,
   GlBadge,
   GlPagination,
+  GlSearchBoxByType,
+  GlSprintf,
 } from '@gitlab/ui';
-import createFlash from '~/flash';
-import { s__ } from '~/locale';
+import { __, s__ } from '~/locale';
+import { debounce, trim } from 'lodash';
 import { joinPaths, visitUrl } from '~/lib/utils/url_utility';
 import { fetchPolicies } from '~/lib/graphql';
 import TimeAgo from '~/vue_shared/components/time_ago_tooltip.vue';
+import { convertToSnakeCase } from '~/lib/utils/text_utility';
+import Tracking from '~/tracking';
 import getAlerts from '../graphql/queries/get_alerts.query.graphql';
 import getAlertsCountByStatus from '../graphql/queries/get_count_by_status.query.graphql';
 import {
@@ -27,11 +30,11 @@ import {
   trackAlertListViewsOptions,
   trackAlertStatusUpdateOptions,
 } from '../constants';
-import updateAlertStatus from '../graphql/mutations/update_alert_status.graphql';
-import { convertToSnakeCase } from '~/lib/utils/text_utility';
-import Tracking from '~/tracking';
+import AlertStatus from './alert_status.vue';
 
-const tdClass = 'table-col d-flex d-md-table-cell align-items-center';
+const tdClass =
+  'table-col gl-display-flex d-md-table-cell gl-align-items-center gl-white-space-nowrap';
+const thClass = 'gl-hover-bg-blue-50';
 const bodyTrClass =
   'gl-border-1 gl-border-t-solid gl-border-gray-100 gl-hover-bg-blue-50 gl-hover-cursor-pointer gl-hover-border-b-solid gl-hover-border-blue-200';
 
@@ -46,64 +49,62 @@ const initialPaginationState = {
 export default {
   i18n: {
     noAlertsMsg: s__(
-      "AlertManagement|No alerts available to display. If you think you're seeing this message in error, refresh the page.",
+      'AlertManagement|No alerts available to display. See %{linkStart}enabling alert management%{linkEnd} for more information on adding alerts to the list.',
     ),
     errorMsg: s__(
       "AlertManagement|There was an error displaying the alerts. Confirm your endpoint's configuration details to ensure alerts appear.",
     ),
+    searchPlaceholder: __('Search or filter results...'),
   },
   fields: [
     {
       key: 'severity',
       label: s__('AlertManagement|Severity'),
       tdClass: `${tdClass} rounded-top text-capitalize`,
+      thClass: `${thClass} gl-w-eighth`,
       sortable: true,
     },
     {
       key: 'startedAt',
       label: s__('AlertManagement|Start time'),
-      thClass: 'js-started-at',
-      tdClass,
-      sortable: true,
-    },
-    {
-      key: 'endedAt',
-      label: s__('AlertManagement|End time'),
+      thClass: `${thClass} js-started-at w-15p`,
       tdClass,
       sortable: true,
     },
     {
       key: 'title',
       label: s__('AlertManagement|Alert'),
-      thClass: 'w-30p alert-title',
+      thClass: `gl-pointer-events-none`,
       tdClass,
-      sortable: false,
     },
     {
       key: 'eventCount',
       label: s__('AlertManagement|Events'),
-      thClass: 'text-right gl-pr-9 w-3rem',
+      thClass: `${thClass} text-right gl-w-12`,
       tdClass: `${tdClass} text-md-right`,
       sortable: true,
     },
     {
+      key: 'issue',
+      label: s__('AlertManagement|Issue'),
+      thClass: 'gl-w-12 gl-pointer-events-none',
+      tdClass,
+      sortable: false,
+    },
+    {
       key: 'assignees',
       label: s__('AlertManagement|Assignees'),
+      thClass: 'gl-w-eighth gl-pointer-events-none',
       tdClass,
     },
     {
       key: 'status',
-      thClass: 'w-15p',
+      thClass: `${thClass} w-15p`,
       label: s__('AlertManagement|Status'),
       tdClass: `${tdClass} rounded-bottom`,
       sortable: true,
     },
   ],
-  statuses: {
-    TRIGGERED: s__('AlertManagement|Triggered'),
-    ACKNOWLEDGED: s__('AlertManagement|Acknowledged'),
-    RESOLVED: s__('AlertManagement|Resolved'),
-  },
   severityLabels: ALERTS_SEVERITY_LABELS,
   statusTabs: ALERTS_STATUS_TABS,
   components: {
@@ -113,13 +114,15 @@ export default {
     GlAlert,
     GlDeprecatedButton,
     TimeAgo,
-    GlDropdown,
-    GlDropdownItem,
     GlIcon,
+    GlLink,
     GlTabs,
     GlTab,
     GlBadge,
     GlPagination,
+    GlSearchBoxByType,
+    GlSprintf,
+    AlertStatus,
   },
   props: {
     projectPath: {
@@ -131,6 +134,10 @@ export default {
       required: true,
     },
     enableAlertManagementPath: {
+      type: String,
+      required: true,
+    },
+    populatingAlertsHelpUrl: {
       type: String,
       required: true,
     },
@@ -149,6 +156,7 @@ export default {
       query: getAlerts,
       variables() {
         return {
+          searchTerm: this.searchTerm,
           projectPath: this.projectPath,
           statuses: this.statusFilter,
           sort: this.sort,
@@ -175,6 +183,7 @@ export default {
       query: getAlertsCountByStatus,
       variables() {
         return {
+          searchTerm: this.searchTerm,
           projectPath: this.projectPath,
         };
       },
@@ -185,7 +194,9 @@ export default {
   },
   data() {
     return {
+      searchTerm: '',
       errored: false,
+      errorMessage: '',
       isAlertDismissed: false,
       isErrorAlertDismissed: false,
       sort: 'STARTED_AT_DESC',
@@ -194,12 +205,17 @@ export default {
       pagination: initialPaginationState,
       sortBy: 'startedAt',
       sortDesc: true,
+      sortDirection: 'desc',
     };
   },
   computed: {
     showNoAlertsMsg() {
       return (
-        !this.errored && !this.loading && this.alertsCount?.all === 0 && !this.isAlertDismissed
+        !this.errored &&
+        !this.loading &&
+        this.alertsCount?.all === 0 &&
+        !this.searchTerm &&
+        !this.isAlertDismissed
       );
     },
     showErrorMsg() {
@@ -239,36 +255,19 @@ export default {
       this.filteredByStatus = status;
     },
     fetchSortedData({ sortBy, sortDesc }) {
-      const sortDirection = sortDesc ? 'DESC' : 'ASC';
-      const sortColumn = convertToSnakeCase(sortBy).toUpperCase();
+      const sortingDirection = sortDesc ? 'DESC' : 'ASC';
+      const sortingColumn = convertToSnakeCase(sortBy).toUpperCase();
 
       this.resetPagination();
-      this.sort = `${sortColumn}_${sortDirection}`;
+      this.sort = `${sortingColumn}_${sortingDirection}`;
     },
-    updateAlertStatus(status, iid) {
-      this.$apollo
-        .mutate({
-          mutation: updateAlertStatus,
-          variables: {
-            iid,
-            status: status.toUpperCase(),
-            projectPath: this.projectPath,
-          },
-        })
-        .then(() => {
-          this.trackStatusUpdate(status);
-          this.$apollo.queries.alerts.refetch();
-          this.$apollo.queries.alertsCount.refetch();
-          this.resetPagination();
-        })
-        .catch(() => {
-          createFlash(
-            s__(
-              'AlertManagement|There was an error while updating the status of the alert. Please try again.',
-            ),
-          );
-        });
-    },
+    onInputChange: debounce(function debounceSearch(input) {
+      const trimmedInput = trim(input);
+      if (trimmedInput !== this.searchTerm) {
+        this.resetPagination();
+        this.searchTerm = trimmedInput;
+      }
+    }, 500),
     navigateToAlertDetails({ iid }) {
       return visitUrl(joinPaths(window.location.pathname, iid, 'details'));
     },
@@ -285,6 +284,9 @@ export default {
       return assignees.nodes?.length > 0
         ? assignees.nodes[0]?.username
         : s__('AlertManagement|Unassigned');
+    },
+    getIssueLink(item) {
+      return joinPaths('/', this.projectPath, '-', 'issues', item.issueIid);
     },
     handlePageChange(page) {
       const { startCursor, endCursor } = this.alerts.pageInfo;
@@ -308,6 +310,14 @@ export default {
     resetPagination() {
       this.pagination = initialPaginationState;
     },
+    handleAlertError(errorMessage) {
+      this.errored = true;
+      this.errorMessage = errorMessage;
+    },
+    dismissError() {
+      this.isErrorAlertDismissed = true;
+      this.errorMessage = '';
+    },
   },
 };
 </script>
@@ -315,13 +325,28 @@ export default {
   <div>
     <div v-if="alertManagementEnabled" class="alert-management-list">
       <gl-alert v-if="showNoAlertsMsg" @dismiss="isAlertDismissed = true">
-        {{ $options.i18n.noAlertsMsg }}
+        <gl-sprintf :message="$options.i18n.noAlertsMsg">
+          <template #link="{ content }">
+            <gl-link
+              class="gl-display-inline-block"
+              :href="populatingAlertsHelpUrl"
+              target="_blank"
+            >
+              {{ content }}
+            </gl-link>
+          </template>
+        </gl-sprintf>
       </gl-alert>
-      <gl-alert v-if="showErrorMsg" variant="danger" @dismiss="isErrorAlertDismissed = true">
-        {{ $options.i18n.errorMsg }}
+      <gl-alert
+        v-if="showErrorMsg"
+        variant="danger"
+        data-testid="alert-error"
+        @dismiss="dismissError"
+      >
+        {{ errorMessage || $options.i18n.errorMsg }}
       </gl-alert>
 
-      <gl-tabs @input="filterAlertsByStatus">
+      <gl-tabs content-class="gl-p-0" @input="filterAlertsByStatus">
         <gl-tab v-for="tab in $options.statusTabs" :key="tab.status">
           <template slot="title">
             <span>{{ tab.title }}</span>
@@ -332,11 +357,19 @@ export default {
         </gl-tab>
       </gl-tabs>
 
+      <div class="gl-bg-gray-10 gl-p-5 gl-border-b-solid gl-border-b-1 gl-border-gray-100">
+        <gl-search-box-by-type
+          class="gl-bg-white"
+          :placeholder="$options.i18n.searchPlaceholder"
+          @input="onInputChange"
+        />
+      </div>
+
       <h4 class="d-block d-md-none my-3">
         {{ s__('AlertManagement|Alerts') }}
       </h4>
       <gl-table
-        class="alert-management-table mt-3"
+        class="alert-management-table"
         :items="alerts ? alerts.list : []"
         :fields="$options.fields"
         :show-empty="true"
@@ -344,9 +377,11 @@ export default {
         stacked="md"
         :tbody-tr-class="tbodyTrClass"
         :no-local-sorting="true"
+        :sort-direction="sortDirection"
         :sort-desc.sync="sortDesc"
         :sort-by.sync="sortBy"
         sort-icon-left
+        fixed
         @row-clicked="navigateToAlertDetails"
         @sort-changed="fetchSortedData"
       >
@@ -369,16 +404,19 @@ export default {
           <time-ago v-if="item.startedAt" :time="item.startedAt" />
         </template>
 
-        <template #cell(endedAt)="{ item }">
-          <time-ago v-if="item.endedAt" :time="item.endedAt" />
-        </template>
-
         <template #cell(eventCount)="{ item }">
           {{ item.eventCount }}
         </template>
 
         <template #cell(title)="{ item }">
-          <div class="gl-max-w-full text-truncate">{{ item.title }}</div>
+          <div class="gl-max-w-full text-truncate" :title="item.title">{{ item.title }}</div>
+        </template>
+
+        <template #cell(issue)="{ item }">
+          <gl-link v-if="item.issueIid" data-testid="issueField" :href="getIssueLink(item)">
+            #{{ item.issueIid }}
+          </gl-link>
+          <div v-else data-testid="issueField">{{ s__('AlertManagement|None') }}</div>
         </template>
 
         <template #cell(assignees)="{ item }">
@@ -388,22 +426,12 @@ export default {
         </template>
 
         <template #cell(status)="{ item }">
-          <gl-dropdown :text="$options.statuses[item.status]" class="w-100" right>
-            <gl-dropdown-item
-              v-for="(label, field) in $options.statuses"
-              :key="field"
-              @click="updateAlertStatus(label, item.iid)"
-            >
-              <span class="d-flex">
-                <gl-icon
-                  class="flex-shrink-0 append-right-4"
-                  :class="{ invisible: label.toUpperCase() !== item.status }"
-                  name="mobile-issue-close"
-                />
-                {{ label }}
-              </span>
-            </gl-dropdown-item>
-          </gl-dropdown>
+          <alert-status
+            :alert="item"
+            :project-path="projectPath"
+            :is-sidebar="false"
+            @alert-error="handleAlertError"
+          />
         </template>
 
         <template #empty>
@@ -421,7 +449,7 @@ export default {
         :prev-page="prevPage"
         :next-page="nextPage"
         align="center"
-        class="gl-pagination prepend-top-default"
+        class="gl-pagination gl-mt-3"
         @input="handlePageChange"
       />
     </div>

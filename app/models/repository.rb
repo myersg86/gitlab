@@ -149,7 +149,8 @@ class Repository
       before: opts[:before],
       all: !!opts[:all],
       first_parent: !!opts[:first_parent],
-      order: opts[:order]
+      order: opts[:order],
+      literal_pathspec: opts.fetch(:literal_pathspec, true)
     }
 
     commits = Gitlab::Git::Commit.where(options)
@@ -676,24 +677,24 @@ class Repository
     end
   end
 
-  def list_last_commits_for_tree(sha, path, offset: 0, limit: 25)
-    commits = raw_repository.list_last_commits_for_tree(sha, path, offset: offset, limit: limit)
+  def list_last_commits_for_tree(sha, path, offset: 0, limit: 25, literal_pathspec: false)
+    commits = raw_repository.list_last_commits_for_tree(sha, path, offset: offset, limit: limit, literal_pathspec: literal_pathspec)
 
     commits.each do |path, commit|
       commits[path] = ::Commit.new(commit, container)
     end
   end
 
-  def last_commit_for_path(sha, path)
-    commit = raw_repository.last_commit_for_path(sha, path)
+  def last_commit_for_path(sha, path, literal_pathspec: false)
+    commit = raw_repository.last_commit_for_path(sha, path, literal_pathspec: literal_pathspec)
     ::Commit.new(commit, container) if commit
   end
 
-  def last_commit_id_for_path(sha, path)
+  def last_commit_id_for_path(sha, path, literal_pathspec: false)
     key = path.blank? ? "last_commit_id_for_path:#{sha}" : "last_commit_id_for_path:#{sha}:#{Digest::SHA1.hexdigest(path)}"
 
     cache.fetch(key) do
-      last_commit_for_path(sha, path)&.id
+      last_commit_for_path(sha, path, literal_pathspec: literal_pathspec)&.id
     end
   end
 
@@ -1113,7 +1114,7 @@ class Repository
   def project
     if repo_type.snippet?
       container.project
-    else
+    elsif container.is_a?(Project)
       container
     end
   end

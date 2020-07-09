@@ -3,7 +3,7 @@
 module Ci
   class Pipeline < ApplicationRecord
     extend Gitlab::Ci::Model
-    include HasStatus
+    include Ci::HasStatus
     include Importable
     include AfterCommitQueue
     include Presentable
@@ -41,6 +41,7 @@ module Ci
     has_many :statuses, class_name: 'CommitStatus', foreign_key: :commit_id, inverse_of: :pipeline
     has_many :latest_statuses_ordered_by_stage, -> { latest.order(:stage_idx, :stage) }, class_name: 'CommitStatus', foreign_key: :commit_id, inverse_of: :pipeline
     has_many :processables, class_name: 'Ci::Processable', foreign_key: :commit_id, inverse_of: :pipeline
+    has_many :bridges, class_name: 'Ci::Bridge', foreign_key: :commit_id, inverse_of: :pipeline
     has_many :builds, foreign_key: :commit_id, inverse_of: :pipeline
     has_many :job_artifacts, through: :builds
     has_many :trigger_requests, dependent: :destroy, foreign_key: :commit_id # rubocop:disable Cop/ActiveRecordDependent
@@ -49,6 +50,8 @@ module Ci
     has_many :environments, -> { distinct }, through: :deployments
     has_many :latest_builds, -> { latest }, foreign_key: :commit_id, inverse_of: :pipeline, class_name: 'Ci::Build'
     has_many :downloadable_artifacts, -> { not_expired.downloadable }, through: :latest_builds, source: :job_artifacts
+
+    has_many :messages, class_name: 'Ci::PipelineMessage', inverse_of: :pipeline
 
     # Merge requests for which the current pipeline is running against
     # the merge request's latest commit.
@@ -79,6 +82,7 @@ module Ci
     has_one :pipeline_config, class_name: 'Ci::PipelineConfig', inverse_of: :pipeline
 
     has_many :daily_build_group_report_results, class_name: 'Ci::DailyBuildGroupReportResult', foreign_key: :last_pipeline_id
+    has_many :latest_builds_report_results, through: :latest_builds, source: :report_results
 
     accepts_nested_attributes_for :variables, reject_if: :persisted?
 
@@ -254,6 +258,7 @@ module Ci
     scope :for_sha_or_source_sha, -> (sha) { for_sha(sha).or(for_source_sha(sha)) }
     scope :for_ref, -> (ref) { where(ref: ref) }
     scope :for_id, -> (id) { where(id: id) }
+    scope :for_iid, -> (iid) { where(iid: iid) }
     scope :created_after, -> (time) { where('ci_pipelines.created_at > ?', time) }
 
     scope :with_reports, -> (reports_scope) do
@@ -346,6 +351,10 @@ module Ci
       success.group(:project_id).select('max(id) as id')
     end
 
+    def self.last_finished_for_ref_id(ci_ref_id)
+      where(ci_ref_id: ci_ref_id).ci_sources.finished.order(id: :desc).select(:id).take
+    end
+
     def self.truncate_sha(sha)
       sha[0...8]
     end
@@ -391,7 +400,7 @@ module Ci
     end
 
     def ordered_stages
-      if Feature.enabled?(:ci_atomic_processing, project, default_enabled: false)
+      if ::Gitlab::Ci::Features.atomic_processing?(project)
         # The `Ci::Stage` contains all up-to date data
         # as atomic processing updates all data in-bulk
         stages
@@ -439,7 +448,7 @@ module Ci
     end
 
     def legacy_stages
-      if Feature.enabled?(:ci_composite_status, project, default_enabled: false)
+      if ::Gitlab::Ci::Features.composite_status?(project)
         legacy_stages_using_composite_status
       else
         legacy_stages_using_sql
@@ -550,10 +559,28 @@ module Ci
       end
     end
 
+    def lazy_ref_commit
+      return unless ::Gitlab::Ci::Features.pipeline_latest?
+
+      BatchLoader.for(ref).batch do |refs, loader|
+        next unless project.repository_exists?
+
+        project.repository.list_commits_by_ref_name(refs).then do |commits|
+          commits.each { |key, commit| loader.call(key, commits[key]) }
+        end
+      end
+    end
+
     def latest?
       return false unless git_ref && commit.present?
 
-      project.commit(git_ref) == commit
+      unless ::Gitlab::Ci::Features.pipeline_latest?
+        return project.commit(git_ref) == commit
+      end
+
+      return false if lazy_ref_commit.nil?
+
+      lazy_ref_commit.id == commit.id
     end
 
     def retried
@@ -569,6 +596,10 @@ module Ci
 
     def has_kubernetes_active?
       project.deployment_platform&.active?
+    end
+
+    def freeze_period?
+      Ci::FreezePeriodStatus.new(project: project).execute
     end
 
     def has_warnings?
@@ -605,6 +636,12 @@ module Ci
       yaml_errors.present?
     end
 
+    def add_error_message(content)
+      return unless Gitlab::Ci::Features.store_pipeline_messages?(project)
+
+      messages.error.build(content: content)
+    end
+
     # Manually set the notes for a Ci::Pipeline
     # There is no ActiveRecord relation between Ci::Pipeline and notes
     # as they are related to a commit sha. This method helps importing
@@ -637,7 +674,7 @@ module Ci
         when 'manual' then block
         when 'scheduled' then delay
         else
-          raise HasStatus::UnknownStatusError,
+          raise Ci::HasStatus::UnknownStatusError,
                 "Unknown status `#{new_status}`"
         end
       end
@@ -681,6 +718,7 @@ module Ci
         end
 
         variables.append(key: 'CI_KUBERNETES_ACTIVE', value: 'true') if has_kubernetes_active?
+        variables.append(key: 'CI_DEPLOY_FREEZE', value: 'true') if freeze_period?
 
         if external_pull_request_event? && external_pull_request
           variables.concat(external_pull_request.predefined_variables)
@@ -798,6 +836,10 @@ module Ci
 
     def has_reports?(reports_scope)
       complete? && latest_report_builds(reports_scope).exists?
+    end
+
+    def test_report_summary
+      Gitlab::Ci::Reports::TestReportSummary.new(latest_builds_report_results)
     end
 
     def test_reports
@@ -923,7 +965,7 @@ module Ci
       stages.find_by!(name: name)
     end
 
-    def error_messages
+    def full_error_messages
       errors ? errors.full_messages.to_sentence : ""
     end
 

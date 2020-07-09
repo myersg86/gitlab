@@ -6,17 +6,17 @@ module EE
       extend ActiveSupport::Concern
 
       prepended do
-        field :service_desk_enabled, GraphQL::BOOLEAN_TYPE, null: true,
-              description: 'Indicates if the project has service desk enabled.'
-
-        field :service_desk_address, GraphQL::STRING_TYPE, null: true,
-              description: 'E-mail address of the service desk.'
-
         field :vulnerabilities,
               ::Types::VulnerabilityType.connection_type,
               null: true,
               description: 'Vulnerabilities reported on the project',
               resolver: ::Resolvers::VulnerabilitiesResolver
+
+        field :vulnerability_scanners,
+              ::Types::VulnerabilityScannerType.connection_type,
+              null: true,
+              description: 'Vulnerability scanners reported on the project vulnerabilties',
+              resolver: ::Resolvers::Vulnerabilities::ScannersResolver
 
         field :vulnerability_severities_count, ::Types::VulnerabilitySeveritiesCountType, null: true,
                description: 'Counts for each severity of vulnerability of the project',
@@ -45,6 +45,11 @@ module EE
         field :packages, ::Types::PackageType.connection_type, null: true,
               description: 'Packages of the project',
               resolver: ::Resolvers::PackagesResolver
+
+        field :compliance_frameworks, ::Types::ComplianceManagement::ComplianceFrameworkType.connection_type,
+              description: 'Compliance frameworks associated with the project',
+              resolver: ::Resolvers::ComplianceFrameworksResolver,
+              null: true
 
         def self.requirements_available?(project, user)
           ::Feature.enabled?(:requirements_management, project, default_enabled: true) && Ability.allowed?(user, :read_requirement, project)

@@ -26,20 +26,15 @@ module EE
       attr_writer :root_ancestor
 
       has_one :namespace_statistics
+      has_one :namespace_limit, inverse_of: :namespace
       has_one :gitlab_subscription, dependent: :destroy # rubocop:disable Cop/ActiveRecordDependent
       has_one :elasticsearch_indexed_namespace
 
       accepts_nested_attributes_for :gitlab_subscription
+      accepts_nested_attributes_for :namespace_limit
 
       scope :include_gitlab_subscription, -> { includes(:gitlab_subscription) }
       scope :join_gitlab_subscription, -> { joins("LEFT OUTER JOIN gitlab_subscriptions ON gitlab_subscriptions.namespace_id=namespaces.id") }
-
-      scope :requiring_ci_extra_minutes_recalculation, -> do
-        joins(:namespace_statistics)
-          .where('namespaces.shared_runners_minutes_limit > 0')
-          .where('namespaces.extra_shared_runners_minutes_limit > 0')
-          .where('namespace_statistics.shared_runners_seconds > (namespaces.shared_runners_minutes_limit * 60)')
-      end
 
       scope :with_feature_available_in_plan, -> (feature) do
         plans = plans_with_feature(feature)
@@ -52,6 +47,10 @@ module EE
 
       delegate :shared_runners_minutes, :shared_runners_seconds, :shared_runners_seconds_last_reset,
         :extra_shared_runners_minutes, to: :namespace_statistics, allow_nil: true
+
+      delegate :additional_purchased_storage_size, :additional_purchased_storage_size=,
+        :additional_purchased_storage_ends_on, :additional_purchased_storage_ends_on=,
+        to: :namespace_limit, allow_nil: true
 
       delegate :email, to: :owner, allow_nil: true, prefix: true
 
@@ -70,6 +69,10 @@ module EE
 
       # Changing the plan or other details may invalidate this cache
       before_save :clear_feature_available_cache
+    end
+
+    def namespace_limit
+      super.presence || build_namespace_limit
     end
 
     class_methods do
@@ -202,7 +205,7 @@ module EE
 
     def shared_runners_minutes_limit_enabled?
       shared_runner_minutes_supported? &&
-        shared_runners_enabled? &&
+        any_project_with_shared_runners_enabled? &&
         actual_shared_runners_minutes_limit.nonzero?
     end
 
@@ -228,7 +231,7 @@ module EE
         extra_shared_runners_minutes.to_i >= extra_shared_runners_minutes_limit
     end
 
-    def shared_runners_enabled?
+    def any_project_with_shared_runners_enabled?
       all_projects.with_shared_runners.any?
     end
 
@@ -297,7 +300,8 @@ module EE
       feature_available?(:secret_detection) ||
       feature_available?(:dependency_scanning) ||
       feature_available?(:container_scanning) ||
-      feature_available?(:dast)
+      feature_available?(:dast) ||
+      feature_available?(:coverage_fuzzing)
     end
 
     def free_plan?

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Ci::RetryBuildService do
+RSpec.describe Ci::RetryBuildService do
   let_it_be(:user) { create(:user) }
   let_it_be(:project) { create(:project, :repository) }
   let_it_be(:pipeline) do
@@ -33,13 +33,13 @@ describe Ci::RetryBuildService do
        job_artifacts_sast job_artifacts_secret_detection job_artifacts_dependency_scanning
        job_artifacts_container_scanning job_artifacts_dast
        job_artifacts_license_management job_artifacts_license_scanning
-       job_artifacts_performance job_artifacts_lsif
-       job_artifacts_terraform job_artifacts_cluster_applications
+       job_artifacts_performance job_artifacts_browser_performance
+       job_artifacts_lsif job_artifacts_terraform job_artifacts_cluster_applications
        job_artifacts_codequality job_artifacts_metrics scheduled_at
        job_variables waiting_for_resource_at job_artifacts_metrics_referee
        job_artifacts_network_referee job_artifacts_dotenv
        job_artifacts_cobertura needs job_artifacts_accessibility
-       job_artifacts_requirements].freeze
+       job_artifacts_requirements job_artifacts_coverage_fuzzing].freeze
 
   ignore_accessors =
     %i[type lock_version target_url base_tags trace_sections

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Issues > Labels bulk assignment' do
+RSpec.describe 'Issues > Labels bulk assignment' do
   let(:user)      { create(:user) }
   let!(:project)  { create(:project) }
   let!(:issue1)   { create(:issue, project: project, title: "Issue 1") }
@@ -13,6 +13,9 @@ describe 'Issues > Labels bulk assignment' do
 
   context 'as an allowed user', :js do
     before do
+      # Make sure that issuables list FF is not turned on.
+      stub_feature_flags(vue_issuables_list: false)
+
       project.add_maintainer(user)
 
       sign_in user

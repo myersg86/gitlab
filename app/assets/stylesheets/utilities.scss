@@ -43,6 +43,7 @@
 
 @for $i from 1 through 12 {
   #{'.tab-width-#{$i}'} {
+    /* stylelint-disable-next-line property-no-vendor-prefix */
     -moz-tab-size: $i;
     tab-size: $i;
   }
@@ -89,3 +90,22 @@
 
 .gl-text-purple { color: $purple; }
 .gl-bg-purple-light { background-color: $purple-light; }
+
+// move this to GitLab UI once onboarding experiment is considered a success
+.gl-py-8 {
+  padding-top: $gl-spacing-scale-8;
+  padding-bottom: $gl-spacing-scale-8;
+}
+
+// move this to GitLab UI once onboarding experiment is considered a success
+.gl-pl-7 {
+  padding-left: $gl-spacing-scale-7;
+}
+
+.gl-transition-property-stroke-opacity {
+  transition-property: stroke-opacity;
+}
+
+.gl-transition-property-stroke {
+  transition-property: stroke;
+}

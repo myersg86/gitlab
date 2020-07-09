@@ -1,6 +1,12 @@
+---
+stage: Package
+group: Package
+info: To determine the technical writer assigned to the Stage/Group associated with this page, see https://about.gitlab.com/handbook/engineering/ux/technical-writing/#designated-technical-writers
+---
+
 # GitLab Composer Repository **(PREMIUM)**
 
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/15886) in [GitLab Premium](https://about.gitlab.com/pricing/) 13.1.
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/15886) in [GitLab Premium](https://about.gitlab.com/pricing/) 13.2.
 
 With the GitLab Composer Repository, every project can have its own space to store [Composer](https://getcomposer.org/) packages.
 
@@ -141,3 +147,9 @@ composer update
 ```
 
 If successful, you should be able to see the output indicating that the package has been successfully installed.
+
+CAUTION: **Important:**
+Make sure to never commit the `auth.json` file to your repository. To install packages from a CI job,
+consider using the [`composer config`](https://getcomposer.org/doc/articles/handling-private-packages-with-satis.md#authentication) tool with your personal access token
+stored in a [GitLab CI/CD environment variable](../../../ci/variables/README.md) or in
+[Hashicorp Vault](../../../ci/examples/authenticating-with-hashicorp-vault/index.md).

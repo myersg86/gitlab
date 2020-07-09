@@ -55,6 +55,7 @@ RSpec.describe Gitlab::UsageData do
       # 1 published issue on 1 projects with status page enabled
       create(:issue, project: projects[0])
       create(:issue, :published, project: projects[0])
+      create(:issue, :published, project: projects[1])
     end
 
     subject { described_class.data }
@@ -111,8 +112,10 @@ RSpec.describe Gitlab::UsageData do
         projects_with_tracing_enabled
         sast_jobs
         secret_detection_jobs
-        status_page_projects
+        status_page_incident_publishes
+        status_page_incident_unpublishes
         status_page_issues
+        status_page_projects
         user_preferences_group_overview_details
         user_preferences_group_overview_security_dashboard
         template_repositories
@@ -153,6 +156,10 @@ RSpec.describe Gitlab::UsageData do
     it 'gathers group overview preferences usage data', :aggregate_failures do
       expect(subject[:counts][:user_preferences_group_overview_details]).to eq(User.active.count - 2) # we have exactly 2 active users with security dashboard set
       expect(subject[:counts][:user_preferences_group_overview_security_dashboard]).to eq 2
+    end
+
+    it 'includes a recording_ee_finished_at timestamp' do
+      expect(subject[:recording_ee_finished_at]).to be_a(Time)
     end
   end
 
@@ -209,34 +216,13 @@ RSpec.describe Gitlab::UsageData do
   describe '.service_desk_counts' do
     subject { described_class.service_desk_counts }
 
-    context 'when Service Desk is disabled' do
-      it 'returns an empty hash' do
-        stub_licensed_features(service_desk: false)
+    let(:project) { create(:project, :service_desk_enabled) }
 
-        expect(subject).to eq({})
-      end
-    end
+    it 'gathers Service Desk data' do
+      create_list(:issue, 2, confidential: true, author: User.support_bot, project: project)
 
-    context 'when there is no license' do
-      it 'returns an empty hash' do
-        allow(License).to receive(:current).and_return(nil)
-
-        expect(subject).to eq({})
-      end
-    end
-
-    context 'when Service Desk is enabled' do
-      let(:project) { create(:project, :service_desk_enabled) }
-
-      it 'gathers Service Desk data' do
-        create_list(:issue, 2, confidential: true, author: User.support_bot, project: project)
-
-        stub_licensed_features(service_desk: true)
-        allow(::EE::Gitlab::ServiceDesk).to receive(:enabled?).with(anything).and_return(true)
-
-        expect(subject).to eq(service_desk_enabled_projects: 1,
-                              service_desk_issues: 2)
-      end
+      expect(subject).to eq(service_desk_enabled_projects: 1,
+                            service_desk_issues: 2)
     end
   end
 
@@ -258,7 +244,7 @@ RSpec.describe Gitlab::UsageData do
     end
   end
 
-  describe '#operations_dashboard_usage' do
+  describe '.operations_dashboard_usage' do
     subject { described_class.operations_dashboard_usage }
 
     before_all do
@@ -295,64 +281,18 @@ RSpec.describe Gitlab::UsageData do
         it 'includes accurate usage_activity_by_stage data' do
           for_defined_days_back do
             user = create(:user)
-            cluster = create(:cluster, user: user)
             project = create(:project, creator: user)
-            create(:clusters_applications_cert_manager, :installed, cluster: cluster)
-            create(:clusters_applications_helm, :installed, cluster: cluster)
-            create(:clusters_applications_ingress, :installed, cluster: cluster)
-            create(:clusters_applications_knative, :installed, cluster: cluster)
-            create(:cluster, :disabled, user: user)
-            create(:cluster_provider_gcp, :created)
-            create(:cluster_provider_aws, :created)
-            create(:cluster_platform_kubernetes)
-            create(:cluster, :group, :disabled, user: user)
-            create(:cluster, :group, user: user)
-            create(:cluster, :instance, :disabled, :production_environment)
-            create(:cluster, :instance, :production_environment)
-            create(:cluster, :management_project)
             create(:slack_service, project: project)
             create(:slack_slash_commands_service, project: project)
             create(:prometheus_service, project: project)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:configure]).to eq(
-            clusters_applications_cert_managers: 2,
-            clusters_applications_helm: 2,
-            clusters_applications_ingress: 2,
-            clusters_applications_knative: 2,
-            clusters_management_project: 2,
-            clusters_disabled: 4,
-            clusters_enabled: 12,
-            clusters_platforms_gke: 2,
-            clusters_platforms_eks: 2,
-            clusters_platforms_user: 2,
-            instance_clusters_disabled: 2,
-            instance_clusters_enabled: 2,
-            group_clusters_disabled: 2,
-            group_clusters_enabled: 2,
-            project_clusters_disabled: 2,
-            project_clusters_enabled: 10,
+          expect(described_class.uncached_data[:usage_activity_by_stage][:configure]).to include(
             projects_slack_notifications_active: 2,
             projects_slack_slash_active: 2,
             projects_with_prometheus_alerts: 2
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:configure]).to eq(
-            clusters_applications_cert_managers: 1,
-            clusters_applications_helm: 1,
-            clusters_applications_ingress: 1,
-            clusters_applications_knative: 1,
-            clusters_management_project: 1,
-            clusters_disabled: 2,
-            clusters_enabled: 6,
-            clusters_platforms_gke: 1,
-            clusters_platforms_eks: 1,
-            clusters_platforms_user: 1,
-            instance_clusters_disabled: 1,
-            instance_clusters_enabled: 1,
-            group_clusters_disabled: 1,
-            group_clusters_enabled: 1,
-            project_clusters_disabled: 1,
-            project_clusters_enabled: 5,
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:configure]).to include(
             projects_slack_notifications_active: 1,
             projects_slack_slash_active: 1,
             projects_with_prometheus_alerts: 1
@@ -365,14 +305,12 @@ RSpec.describe Gitlab::UsageData do
           for_defined_days_back do
             user = create(:user)
             project = create(:project, :repository_private, :github_imported,
-                              :test_repo, :remote_mirror, creator: user)
+                              :test_repo, creator: user)
             merge_request = create(:merge_request, source_project: project)
-            create(:deploy_key, user: user)
-            create(:key, user: user)
             create(:project, creator: user)
+            create(:project, creator: user, disable_overriding_approvers_per_merge_request: true)
+            create(:project, creator: user, disable_overriding_approvers_per_merge_request: false)
             create(:protected_branch, project: project)
-            create(:remote_mirror, project: project)
-            create(:snippet, author: user)
             create(:suggestion, note: create(:note, project: project))
             create(:code_owner_rule, merge_request: merge_request, approvals_required: 3)
             create(:code_owner_rule, merge_request: merge_request, approvals_required: 7)
@@ -380,32 +318,22 @@ RSpec.describe Gitlab::UsageData do
             create_list(:code_owner_rule, 2)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:create]).to eq(
-            deploy_keys: 2,
-            keys: 2,
-            merge_requests: 12,
+          expect(described_class.uncached_data[:usage_activity_by_stage][:create]).to include(
             projects_enforcing_code_owner_approval: 0,
             merge_requests_with_optional_codeowners: 4,
             merge_requests_with_required_codeowners: 8,
             projects_imported_from_github: 2,
             projects_with_repositories_enabled: 12,
             protected_branches: 2,
-            remote_mirrors: 2,
-            snippets: 2,
             suggestions: 2
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:create]).to eq(
-            deploy_keys: 1,
-            keys: 1,
-            merge_requests: 6,
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:create]).to include(
             projects_enforcing_code_owner_approval: 0,
             merge_requests_with_optional_codeowners: 2,
             merge_requests_with_required_codeowners: 4,
             projects_imported_from_github: 1,
             projects_with_repositories_enabled: 6,
             protected_branches: 1,
-            remote_mirrors: 1,
-            snippets: 1,
             suggestions: 1
           )
         end
@@ -415,73 +343,53 @@ RSpec.describe Gitlab::UsageData do
         it 'includes accurate usage_activity_by_stage data' do
           stub_config(
             ldap:
-              { enabled: true, servers: ldap_server_config },
-            omniauth:
-              { providers: omniauth_providers }
+              { enabled: true, servers: ldap_server_config }
           )
 
           for_defined_days_back do
             user = create(:user)
-            create(:event, author: user)
-            create(:group_member, user: user)
             create(:key, type: 'LDAPKey', user: user)
             create(:group_member, ldap: true, user: user)
             create(:cycle_analytics_group_stage)
             create(:compliance_framework_project_setting)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:manage]).to eq(
-            events: 2,
-            groups: 2,
+          expect(described_class.uncached_data[:usage_activity_by_stage][:manage]).to include(
             ldap_keys: 2,
             ldap_users: 2,
-            users_created: 8,
             value_stream_management_customized_group_stages: 2,
             projects_with_compliance_framework: 2,
             ldap_servers: 2,
             ldap_group_sync_enabled: true,
             ldap_admin_sync_enabled: true,
-            omniauth_providers: ['google_oauth2'],
             group_saml_enabled: true
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:manage]).to eq(
-            events: 1,
-            groups: 1,
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:manage]).to include(
             ldap_keys: 1,
             ldap_users: 1,
-            users_created: 5,
             value_stream_management_customized_group_stages: 2,
             projects_with_compliance_framework: 2,
             ldap_servers: 2,
             ldap_group_sync_enabled: true,
             ldap_admin_sync_enabled: true,
-            omniauth_providers: ['google_oauth2'],
             group_saml_enabled: true
           )
-        end
-
-        def omniauth_providers
-          [
-            OpenStruct.new(name: 'google_oauth2'),
-            OpenStruct.new(name: 'ldapmain'),
-            OpenStruct.new(name: 'group_saml')
-          ]
         end
 
         def ldap_server_config
           {
             'main' =>
-              {
-                'provider_name' => 'ldapmain',
-                'group_base'    => 'ou=groups',
-                'admin_group'   => 'my_group'
-              },
+            {
+              'provider_name' => 'ldapmain',
+              'group_base'    => 'ou=groups',
+              'admin_group'   => 'my_group'
+            },
             'secondary' =>
-              {
-                'provider_name' => 'ldapsecondary',
-                'group_base'    => nil,
-                'admin_group'   => nil
-              }
+            {
+              'provider_name' => 'ldapsecondary',
+              'group_base'    => nil,
+              'admin_group'   => nil
+            }
           }
         end
       end
@@ -490,29 +398,20 @@ RSpec.describe Gitlab::UsageData do
         it 'includes accurate usage_activity_by_stage data' do
           for_defined_days_back do
             user    = create(:user, dashboard: 'operations')
-            cluster = create(:cluster, user: user)
             project = create(:project, creator: user)
-
-            create(:clusters_applications_prometheus, :installed, cluster: cluster)
             create(:users_ops_dashboard_project, user: user)
             create(:prometheus_service, project: project)
             create(:project_error_tracking_setting, project: project)
             create(:project_tracing_setting, project: project)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:monitor]).to eq(
-            clusters: 2,
-            clusters_applications_prometheus: 2,
-            operations_dashboard_default_dashboard: 2,
+          expect(described_class.uncached_data[:usage_activity_by_stage][:monitor]).to include(
             operations_dashboard_users_with_projects_added: 2,
             projects_prometheus_active: 2,
             projects_with_error_tracking_enabled: 2,
             projects_with_tracing_enabled: 2
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:monitor]).to eq(
-            clusters: 1,
-            clusters_applications_prometheus: 1,
-            operations_dashboard_default_dashboard: 1,
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:monitor]).to include(
             operations_dashboard_users_with_projects_added: 1,
             projects_prometheus_active: 1,
             projects_with_error_tracking_enabled: 1,
@@ -592,32 +491,22 @@ RSpec.describe Gitlab::UsageData do
       context 'for release' do
         it 'includes accurate usage_activity_by_stage data' do
           for_defined_days_back do
-            user = create(:user)
-            create(:deployment, :failed, user: user)
             create(:project, :mirror, mirror_trigger_builds: true)
-            create(:release, author: user)
-            create(:deployment, :success, user: user)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:release]).to eq(
-            deployments: 2,
-            failed_deployments: 2,
-            projects_mirrored_with_pipelines_enabled: 2,
-            releases: 2,
-            successful_deployments: 2
+          expect(described_class.uncached_data[:usage_activity_by_stage][:release]).to include(
+            projects_mirrored_with_pipelines_enabled: 2
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:release]).to eq(
-            deployments: 1,
-            failed_deployments: 1,
-            projects_mirrored_with_pipelines_enabled: 1,
-            releases: 1,
-            successful_deployments: 1
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:release]).to include(
+            projects_mirrored_with_pipelines_enabled: 1
           )
         end
       end
 
       context 'for secure' do
         let_it_be(:user) { create(:user, group_view: :security_dashboard) }
+        let_it_be(:user2) { create(:user, group_view: :security_dashboard) }
+        let_it_be(:user3) { create(:user, group_view: :security_dashboard) }
 
         before do
           for_defined_days_back do
@@ -632,13 +521,33 @@ RSpec.describe Gitlab::UsageData do
 
         it 'includes accurate usage_activity_by_stage data' do
           expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:secure]).to eq(
-            user_preferences_group_overview_security_dashboard: 1,
+            user_preferences_group_overview_security_dashboard: 3,
             user_container_scanning_jobs: 1,
             user_dast_jobs: 1,
             user_dependency_scanning_jobs: 1,
             user_license_management_jobs: 1,
             user_sast_jobs: 1,
-            user_secret_detection_jobs: 1
+            user_secret_detection_jobs: 1,
+            user_unique_users_all_secure_scanners: 1
+          )
+        end
+
+        it 'counts unique users correctly across multiple scanners' do
+          for_defined_days_back do
+            create(:ci_build, name: 'sast', user: user2)
+            create(:ci_build, name: 'dast', user: user2)
+            create(:ci_build, name: 'dast', user: user3)
+          end
+
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:secure]).to eq(
+            user_preferences_group_overview_security_dashboard: 3,
+            user_container_scanning_jobs: 1,
+            user_dast_jobs: 3,
+            user_dependency_scanning_jobs: 1,
+            user_license_management_jobs: 1,
+            user_sast_jobs: 2,
+            user_secret_detection_jobs: 1,
+            user_unique_users_all_secure_scanners: 3
           )
         end
 
@@ -648,13 +557,14 @@ RSpec.describe Gitlab::UsageData do
           end
 
           expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:secure]).to eq(
-            user_preferences_group_overview_security_dashboard: 1,
+            user_preferences_group_overview_security_dashboard: 3,
             user_container_scanning_jobs: 1,
             user_dast_jobs: 1,
             user_dependency_scanning_jobs: 1,
             user_license_management_jobs: 2,
             user_sast_jobs: 1,
-            user_secret_detection_jobs: 1
+            user_secret_detection_jobs: 1,
+            user_unique_users_all_secure_scanners: 1
           )
         end
 
@@ -663,13 +573,14 @@ RSpec.describe Gitlab::UsageData do
           allow(::Ci::Build).to receive(:distinct_count_by).and_raise(ActiveRecord::StatementInvalid)
 
           expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:secure]).to eq(
-            user_preferences_group_overview_security_dashboard: 1,
+            user_preferences_group_overview_security_dashboard: 3,
             user_container_scanning_jobs: -1,
             user_dast_jobs: -1,
             user_dependency_scanning_jobs: -1,
             user_license_management_jobs: -1,
             user_sast_jobs: -1,
-            user_secret_detection_jobs: -1
+            user_secret_detection_jobs: -1,
+            user_unique_users_all_secure_scanners: -1
           )
         end
       end
@@ -677,59 +588,16 @@ RSpec.describe Gitlab::UsageData do
       context 'for verify' do
         it 'includes accurate usage_activity_by_stage data' do
           for_defined_days_back do
-            user = create(:user)
-            create(:ci_build, user: user)
-            create(:ci_empty_pipeline, source: :external, user: user)
-            create(:ci_empty_pipeline, user: user)
-            create(:ci_pipeline, :auto_devops_source, user: user)
-            create(:ci_pipeline, :repository_source, user: user)
-            create(:ci_pipeline_schedule, owner: user)
-            create(:ci_trigger, owner: user)
-            create(:clusters_applications_runner, :installed)
             create(:github_service)
           end
 
-          expect(described_class.uncached_data[:usage_activity_by_stage][:verify]).to eq(
-            ci_builds: 2,
-            ci_external_pipelines: 2,
-            ci_internal_pipelines: 2,
-            ci_pipeline_config_auto_devops: 2,
-            ci_pipeline_config_repository: 2,
-            ci_pipeline_schedules: 2,
-            ci_pipelines: 2,
-            ci_triggers: 2,
-            clusters_applications_runner: 2,
+          expect(described_class.uncached_data[:usage_activity_by_stage][:verify]).to include(
             projects_reporting_ci_cd_back_to_github: 2
           )
-          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:verify]).to eq(
-            ci_builds: 1,
-            ci_external_pipelines: 1,
-            ci_internal_pipelines: 1,
-            ci_pipeline_config_auto_devops: 1,
-            ci_pipeline_config_repository: 1,
-            ci_pipeline_schedules: 1,
-            ci_pipelines: 1,
-            ci_triggers: 1,
-            clusters_applications_runner: 1,
+          expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:verify]).to include(
             projects_reporting_ci_cd_back_to_github: 1
           )
         end
-      end
-    end
-  end
-
-  describe '.recording_ee_finished_at' do
-    subject { described_class.recording_ee_finish_data }
-
-    it 'gathers time ee recording finishes at' do
-      expect(subject[:recording_ee_finished_at]).to be_a(Time)
-    end
-  end
-
-  def for_defined_days_back(days: [29, 2])
-    days.each do |n|
-      Timecop.travel(n.days.ago) do
-        yield
       end
     end
   end

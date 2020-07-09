@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'User interacts with awards' do
+RSpec.describe 'User interacts with awards' do
   let(:user) { create(:user) }
 
   describe 'User interacts with awards in an issue', :js do
@@ -16,7 +16,7 @@ describe 'User interacts with awards' do
       visit(project_issue_path(project, issue))
     end
 
-    it 'toggles the thumbsup award emoji', :quarantine do
+    it 'toggles the thumbsup award emoji', quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/27959' do
       page.within('.awards') do
         thumbsup = page.first('.award-control')
         thumbsup.click
@@ -77,7 +77,7 @@ describe 'User interacts with awards' do
       end
     end
 
-    it 'shows the list of award emoji categories', :quarantine do
+    it 'shows the list of award emoji categories', quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/27991' do
       page.within('.awards') do
         page.find('.js-add-award').click
       end

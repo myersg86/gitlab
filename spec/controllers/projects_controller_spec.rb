@@ -86,11 +86,13 @@ RSpec.describe ProjectsController do
   end
 
   describe "GET #activity as JSON" do
+    include DesignManagementTestHelpers
     render_views
 
     let(:project) { create(:project, :public, issues_access_level: ProjectFeature::PRIVATE) }
 
     before do
+      enable_design_management
       create(:event, :created, project: project, target: create(:issue))
 
       sign_in(user)
@@ -103,10 +105,43 @@ RSpec.describe ProjectsController do
         project.add_developer(user)
       end
 
-      it 'returns count' do
+      def get_activity(project)
         get :activity, params: { namespace_id: project.namespace, id: project, format: :json }
+      end
+
+      it 'returns count' do
+        get_activity(project)
 
         expect(json_response['count']).to eq(1)
+      end
+
+      context 'design events are visible' do
+        include DesignManagementTestHelpers
+        let(:other_project) { create(:project, namespace: user.namespace) }
+
+        before do
+          enable_design_management
+          create(:design_event, project: project)
+          request.cookies[:event_filter] = EventFilter::DESIGNS
+        end
+
+        it 'returns correct count' do
+          get_activity(project)
+
+          expect(json_response['count']).to eq(1)
+        end
+
+        context 'the feature flag is disabled' do
+          before do
+            stub_feature_flags(design_activity_events: false)
+          end
+
+          it 'returns correct count' do
+            get_activity(project)
+
+            expect(json_response['count']).to eq(0)
+          end
+        end
       end
     end
 
@@ -349,45 +384,6 @@ RSpec.describe ProjectsController do
         expect { get(:show, params: { namespace_id: public_project.namespace, id: public_project }) }
           .not_to exceed_query_limit(2).for_query(expected_query)
       end
-    end
-
-    context 'lfs_blob_ids instance variable' do
-      let(:project) { create(:project, :public, :repository) }
-
-      before do
-        sign_in(user)
-      end
-
-      context 'with vue tree view enabled' do
-        before do
-          get :show, params: { namespace_id: project.namespace, id: project }
-        end
-
-        it 'is not set' do
-          expect(assigns[:lfs_blob_ids]).to be_nil
-        end
-      end
-
-      context 'with vue tree view disabled' do
-        before do
-          stub_feature_flags(vue_file_list: false)
-
-          get :show, params: { namespace_id: project.namespace, id: project }
-        end
-
-        it 'is set' do
-          expect(assigns[:lfs_blob_ids]).not_to be_nil
-        end
-      end
-    end
-
-    context 'namespace storage limit' do
-      let_it_be(:project) { create(:project, :public, :repository ) }
-      let(:namespace) { project.namespace }
-
-      subject { get :show, params: { namespace_id: namespace, id: project } }
-
-      it_behaves_like 'namespace storage limit alert'
     end
   end
 
@@ -1192,7 +1188,7 @@ RSpec.describe ProjectsController do
       before do
         allow(Gitlab::ApplicationRateLimiter)
           .to receive(:increment)
-          .and_return(Gitlab::ApplicationRateLimiter.rate_limits["project_#{action}".to_sym][:threshold] + 1)
+          .and_return(Gitlab::ApplicationRateLimiter.rate_limits["project_#{action}".to_sym][:threshold].call + 1)
       end
 
       it 'prevents requesting project export' do
@@ -1259,7 +1255,7 @@ RSpec.describe ProjectsController do
           before do
             allow(Gitlab::ApplicationRateLimiter)
               .to receive(:increment)
-              .and_return(Gitlab::ApplicationRateLimiter.rate_limits[:project_download_export][:threshold] + 1)
+              .and_return(Gitlab::ApplicationRateLimiter.rate_limits[:project_download_export][:threshold].call + 1)
           end
 
           it 'prevents requesting project export' do

@@ -153,7 +153,7 @@ export default {
           v-gl-tooltip
           name="issue-block"
           :title="__('Blocked issue')"
-          class="issue-blocked-icon append-right-4"
+          class="issue-blocked-icon gl-mr-2"
           :aria-label="__('Blocked issue')"
         />
         <icon
@@ -161,7 +161,7 @@ export default {
           v-gl-tooltip
           name="eye-slash"
           :title="__('Confidential')"
-          class="confidential-icon append-right-4"
+          class="confidential-icon gl-mr-2"
           :aria-label="__('Confidential')"
         />
         <a :href="issue.path" :title="issue.title" class="js-no-trigger" @mousemove.stop>{{
@@ -169,7 +169,7 @@ export default {
         }}</a>
       </h4>
     </div>
-    <div v-if="showLabelFooter" class="board-card-labels prepend-top-4 d-flex flex-wrap">
+    <div v-if="showLabelFooter" class="board-card-labels gl-mt-2 d-flex flex-wrap">
       <template v-for="label in orderedLabels">
         <gl-label
           :key="label.id"

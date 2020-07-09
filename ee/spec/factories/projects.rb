@@ -68,14 +68,6 @@ FactoryBot.modify do
       end
     end
 
-    trait :service_desk_disabled do
-      service_desk_enabled { nil }
-    end
-
-    trait(:service_desk_enabled) do
-      service_desk_enabled { true }
-    end
-
     trait :github_imported do
       import_type { 'github' }
     end
@@ -94,6 +86,10 @@ FactoryBot.modify do
 
     trait :with_compliance_framework do
       association :compliance_framework_setting, factory: :compliance_framework_project_setting
+    end
+
+    trait :with_sox_compliance_framework do
+      association :compliance_framework_setting, factory: :compliance_framework_project_setting, framework: 'sox'
     end
   end
 end

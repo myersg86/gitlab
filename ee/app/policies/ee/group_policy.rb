@@ -66,11 +66,6 @@ module EE
       end
 
       with_scope :global
-      condition(:cluster_health_available) do
-        License.feature_available?(:cluster_health)
-      end
-
-      with_scope :global
       condition(:commit_committer_check_disabled_globally) do
         !PushRule.global&.commit_committer_check
       end
@@ -102,7 +97,6 @@ module EE
       rule { reporter }.policy do
         enable :admin_list
         enable :admin_board
-        enable :read_prometheus
         enable :view_productivity_analytics
         enable :view_type_of_work_charts
         enable :read_group_timelogs
@@ -223,8 +217,6 @@ module EE
 
       rule { ~group_timelogs_available }.prevent :read_group_timelogs
 
-      rule { can?(:read_cluster) & cluster_health_available }.enable :read_cluster_health
-
       rule { ~(admin | allow_to_manage_default_branch_protection) }.policy do
         prevent :update_default_branch_protection
       end
@@ -256,6 +248,10 @@ module EE
       rule { ~reject_unsigned_commits_available }.prevent :change_reject_unsigned_commits
 
       rule { can?(:maintainer_access) & push_rules_available }.enable :change_push_rules
+
+      rule { admin & is_gitlab_com }.enable :update_subscription_limit
+
+      rule { public_group }.enable :view_embedded_analytics_report
     end
 
     override :lookup_access_level!

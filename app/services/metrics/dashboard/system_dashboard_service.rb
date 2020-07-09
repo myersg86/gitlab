@@ -12,7 +12,8 @@ module Metrics
         STAGES::CommonMetricsInserter,
         STAGES::CustomMetricsInserter,
         STAGES::CustomMetricsDetailsInserter,
-        STAGES::EndpointInserter,
+        STAGES::MetricEndpointInserter,
+        STAGES::VariableEndpointInserter,
         STAGES::PanelIdsInserter,
         STAGES::Sorter,
         STAGES::AlertsInserter
@@ -24,7 +25,8 @@ module Metrics
             path: DASHBOARD_PATH,
             display_name: _(DASHBOARD_NAME),
             default: true,
-            system_dashboard: true
+            system_dashboard: true,
+            out_of_the_box_dashboard: out_of_the_box_dashboard?
           }]
         end
       end

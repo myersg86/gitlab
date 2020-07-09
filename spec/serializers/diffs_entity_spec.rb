@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe DiffsEntity do
+RSpec.describe DiffsEntity do
   let(:user) { create(:user) }
   let(:project) { create(:project, :repository) }
   let(:request) { EntityRequest.new(project: project, current_user: user) }
@@ -66,6 +66,16 @@ describe DiffsEntity do
           expect(subject[:commit][:next_commit_id]).to eq(commits[-2].id)
           expect(subject[:commit][:prev_commit_id]).to be_nil
         end
+      end
+    end
+
+    context 'when code_navigation feature flag is disabled' do
+      it 'does not include code navigation properties' do
+        stub_feature_flags(code_navigation: false)
+
+        expect(Gitlab::CodeNavigationPath).not_to receive(:new)
+
+        expect(subject).not_to include(:definition_path_prefix)
       end
     end
   end

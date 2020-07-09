@@ -27,6 +27,14 @@
   :weight: 1
   :idempotent: 
   :tags: []
+- :name: cronjob:elastic_cluster_reindexing_cron
+  :feature_category: :global_search
+  :has_external_dependencies: 
+  :urgency: :throttled
+  :resource_boundary: :unknown
+  :weight: 1
+  :idempotent: true
+  :tags: []
 - :name: cronjob:elastic_index_bulk_cron
   :feature_category: :global_search
   :has_external_dependencies: 
@@ -60,14 +68,6 @@
   :idempotent: 
   :tags: []
 - :name: cronjob:geo_metrics_update
-  :feature_category: :geo_replication
-  :has_external_dependencies: 
-  :urgency: :low
-  :resource_boundary: :unknown
-  :weight: 1
-  :idempotent: 
-  :tags: []
-- :name: cronjob:geo_migrated_local_files_clean_up
   :feature_category: :geo_replication
   :has_external_dependencies: 
   :urgency: :low
@@ -153,7 +153,7 @@
   :urgency: :low
   :resource_boundary: :unknown
   :weight: 1
-  :idempotent: 
+  :idempotent: true
   :tags: []
 - :name: cronjob:geo_sidekiq_cron_config
   :feature_category: :geo_replication
@@ -174,6 +174,14 @@
 - :name: cronjob:import_software_licenses
   :feature_category: :license_compliance
   :has_external_dependencies: 
+  :urgency: :low
+  :resource_boundary: :unknown
+  :weight: 1
+  :idempotent: 
+  :tags: []
+- :name: cronjob:ingress_modsecurity_counter_metrics
+  :feature_category: :web_firewall
+  :has_external_dependencies: true
   :urgency: :low
   :resource_boundary: :unknown
   :weight: 1
@@ -553,14 +561,6 @@
   :urgency: :low
   :resource_boundary: :cpu
   :weight: 2
-  :idempotent: 
-  :tags: []
-- :name: elastic_batch_project_indexer
-  :feature_category: :global_search
-  :has_external_dependencies: 
-  :urgency: :low
-  :resource_boundary: :unknown
-  :weight: 1
   :idempotent: 
   :tags: []
 - :name: elastic_commit_indexer

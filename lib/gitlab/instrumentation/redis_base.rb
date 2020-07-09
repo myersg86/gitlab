@@ -7,11 +7,12 @@ module Gitlab
     class RedisBase
       class << self
         include ::Gitlab::Utils::StrongMemoize
+        include ::Gitlab::Instrumentation::RedisPayload
 
         # TODO: To be used by https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/395
         # as a 'label' alias.
         def storage_key
-          self.name.underscore
+          self.name.demodulize.underscore
         end
 
         def add_duration(duration)
@@ -68,6 +69,29 @@ module Gitlab
         def query_time
           query_time = ::RequestStore[call_duration_key] || 0
           query_time.round(::Gitlab::InstrumentationHelper::DURATION_PRECISION)
+        end
+
+        def redis_cluster_validate!(command)
+          ::Gitlab::Instrumentation::RedisClusterValidator.validate!(command) if @redis_cluster_validation
+        end
+
+        def enable_redis_cluster_validation
+          @redis_cluster_validation = true
+
+          self
+        end
+
+        def count_request
+          @request_counter ||= Gitlab::Metrics.counter(:gitlab_redis_client_requests_total, 'Client side Redis request count, per Redis server')
+          @request_counter.increment({ storage: storage_key })
+        end
+
+        def count_exception(ex)
+          # This metric is meant to give a client side view of how the Redis
+          # server is doing. Redis itself does not expose error counts. This
+          # metric can be used for Redis alerting and service health monitoring.
+          @exception_counter ||= Gitlab::Metrics.counter(:gitlab_redis_client_exceptions_total, 'Client side Redis exception count, per Redis server, per exception class')
+          @exception_counter.increment({ storage: storage_key, exception: ex.class.to_s })
         end
 
         private

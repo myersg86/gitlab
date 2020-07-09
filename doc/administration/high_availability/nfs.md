@@ -17,6 +17,23 @@ performance, especially for actions that read or write to Git repositories. See
 [Filesystem Performance Benchmarking](../operations/filesystem_benchmarking.md)
 for steps to test filesystem performance.
 
+## Known kernel version incompatibilities
+
+RedHat Enterprise Linux (RHEL) and CentOS v7.7 and v7.8 ship with kernel
+version `3.10.0-1127`, which [contains a
+bug](https://bugzilla.redhat.com/show_bug.cgi?id=1783554) that causes
+[uploads to fail to copy over NFS](https://gitlab.com/gitlab-org/gitlab/-/issues/218999). The
+following GitLab versions include a fix to work properly with that
+kernel version:
+
+1. [12.10.12](https://about.gitlab.com/releases/2020/06/25/gitlab-12-10-12-released/)
+1. [13.0.7](https://about.gitlab.com/releases/2020/06/25/gitlab-13-0-7-released/)
+1. [13.1.1](https://about.gitlab.com/releases/2020/06/24/gitlab-13-1-1-released/)
+1. 13.2 and up
+
+If you are using that kernel version, be sure to upgrade GitLab to avoid
+errors.
+
 ## NFS Server features
 
 ### Required features

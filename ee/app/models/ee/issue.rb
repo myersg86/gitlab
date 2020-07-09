@@ -19,14 +19,18 @@ module EE
 
       scope :order_weight_desc, -> { reorder ::Gitlab::Database.nulls_last_order('weight', 'DESC') }
       scope :order_weight_asc, -> { reorder ::Gitlab::Database.nulls_last_order('weight') }
-      scope :service_desk, -> { where(author: ::User.support_bot) }
       scope :no_epic, -> { left_outer_joins(:epic_issue).where(epic_issues: { epic_id: nil }) }
       scope :any_epic, -> { joins(:epic_issue) }
       scope :in_epics, ->(epics) do
         issue_ids = EpicIssue.where(epic_id: epics).select(:issue_id)
         id_in(issue_ids)
       end
-      scope :on_status_page, -> { joins(:status_page_published_incident).public_only }
+      scope :on_status_page, -> do
+        joins(project: :status_page_setting)
+        .where(status_page_settings: { enabled: true })
+        .joins(:status_page_published_incident)
+        .public_only
+      end
       scope :counts_by_health_status, -> { reorder(nil).group(:health_status).count }
       scope :with_health_status, -> { where.not(health_status: nil) }
 
@@ -38,6 +42,9 @@ module EE
 
       has_many :vulnerability_links, class_name: 'Vulnerabilities::IssueLink', inverse_of: :issue
       has_many :related_vulnerabilities, through: :vulnerability_links, source: :vulnerability
+
+      has_many :feature_flag_issues
+      has_many :feature_flags, through: :feature_flag_issues, class_name: '::Operations::FeatureFlag'
 
       validates :weight, allow_nil: true, numericality: { greater_than_or_equal_to: 0 }
       validate :validate_confidential_epic
@@ -169,10 +176,6 @@ module EE
       return type if issue_link_source_id == id
 
       IssueLink.inverse_link_type(type)
-    end
-
-    def from_service_desk?
-      author.id == ::User.support_bot.id
     end
 
     class_methods do

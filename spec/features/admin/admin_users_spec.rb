@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe "Admin::Users" do
+RSpec.describe "Admin::Users" do
   include Spec::Support::Helpers::Features::ResponsiveTableHelpers
 
   let!(:user) do
@@ -38,7 +38,7 @@ describe "Admin::Users" do
     end
 
     describe "view extra user information" do
-      it 'shows the user popover on hover', :js, :quarantine do
+      it 'shows the user popover on hover', :js, quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/11290' do
         expect(page).not_to have_selector('#__BV_popover_1__')
 
         first_user_link = page.first('.js-user-link')
@@ -512,14 +512,14 @@ describe "Admin::Users" do
     end
 
     it "lists group projects" do
-      within(:css, '.append-bottom-default + .card') do
+      within(:css, '.gl-mb-3 + .card') do
         expect(page).to have_content 'Group projects'
         expect(page).to have_link group.name, href: admin_group_path(group)
       end
     end
 
     it 'allows navigation to the group details' do
-      within(:css, '.append-bottom-default + .card') do
+      within(:css, '.gl-mb-3 + .card') do
         click_link group.name
       end
       within(:css, 'h3.page-title') do
@@ -529,7 +529,7 @@ describe "Admin::Users" do
     end
 
     it 'shows the group access level' do
-      within(:css, '.append-bottom-default + .card') do
+      within(:css, '.gl-mb-3 + .card') do
         expect(page).to have_content 'Developer'
       end
     end

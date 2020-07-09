@@ -432,7 +432,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareDependencyScanningReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareSecurityReportsService, viewer, 'dependency_scanning').and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -502,7 +502,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareContainerScanningReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareSecurityReportsService, viewer, 'container_scanning').and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -572,7 +572,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareSastReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareSecurityReportsService, viewer, 'sast').and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -643,7 +643,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareSecretDetectionReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareSecurityReportsService, viewer, 'secret_detection').and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -713,7 +713,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareDastReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareSecurityReportsService, viewer, 'dast').and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -784,7 +784,7 @@ RSpec.describe Projects::MergeRequestsController do
 
     before do
       allow_any_instance_of(::MergeRequest).to receive(:compare_reports)
-        .with(::Ci::CompareLicenseScanningReportsService, project.users.first).and_return(comparison_status)
+        .with(::Ci::CompareLicenseScanningReportsService, viewer).and_return(comparison_status)
     end
 
     context 'when comparison is being processed' do
@@ -835,6 +835,10 @@ RSpec.describe Projects::MergeRequestsController do
         expect(response).to have_gitlab_http_status(:bad_request)
         expect(json_response).to eq({ 'status_reason' => 'Failed to parse license scanning reports' })
       end
+    end
+
+    context "when authorizing access to license scan reports" do
+      it_behaves_like 'authorize read pipeline'
     end
   end
 

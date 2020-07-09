@@ -20,6 +20,7 @@ FactoryBot.define do
       job_artifacts_synced_count { 577 }
       job_artifacts_synced_missing_on_primary_count { 91 }
       container_repositories_count { 400 }
+      container_repositories_registry_count { 203 }
       container_repositories_failed_count { 3 }
       container_repositories_synced_count { 200 }
       design_repositories_count { 400 }
@@ -36,8 +37,9 @@ FactoryBot.define do
       wikis_checksum_failed_count { 55 }
       package_files_count { 585 }
       package_files_checksummed_count { 585 }
+      package_files_registry_count { 585 }
       package_files_failed_count { 3 }
-      package_files_synced_count { 585 }
+      package_files_synced_count { 580 }
       package_files_checksum_failed_count { 585 }
       repositories_verified_count { 501 }
       repositories_verification_failed_count { 100 }
@@ -55,6 +57,26 @@ FactoryBot.define do
       last_successful_status_check_timestamp { 2.minutes.ago }
       version { Gitlab::VERSION }
       revision { Gitlab.revision }
+      attachments_replication_enabled { true }
+      container_repositories_replication_enabled { false }
+      design_repositories_replication_enabled { true }
+      job_artifacts_replication_enabled { false }
+      lfs_objects_replication_enabled { true }
+      repositories_replication_enabled { true }
+      repository_verification_enabled { true }
+    end
+
+    trait :replicated_and_verified do
+      attachments_failed_count { 0 }
+      lfs_objects_failed_count { 0 }
+      job_artifacts_failed_count { 0 }
+      container_repositories_failed_count { 0 }
+      design_repositories_failed_count { 0 }
+      repositories_failed_count { 0 }
+      wikis_failed_count { 0 }
+      repositories_verification_failed_count { 0 }
+      wikis_verification_failed_count { 0 }
+      repositories_checked_failed_count { 0 }
     end
 
     trait :unhealthy do

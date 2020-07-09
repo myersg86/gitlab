@@ -196,4 +196,95 @@ RSpec.describe PersonalAccessToken do
       expect(subject).not_to include(expired_token)
     end
   end
+
+  shared_examples 'enforcement of personal access token expiry' do
+    using RSpec::Parameterized::TableSyntax
+
+    where(:licensed, :application_setting, :result) do
+      true  | true   | true
+      true  | false  | false
+      false | true   | true
+      false | false  | true
+    end
+
+    with_them do
+      before do
+        stub_licensed_features(enforce_pat_expiration: licensed)
+        stub_application_setting(enforce_pat_expiration: application_setting)
+      end
+
+      it { expect(subject).to be result }
+    end
+  end
+
+  describe '.expiration_enforced??' do
+    subject { described_class.expiration_enforced? }
+
+    it_behaves_like 'enforcement of personal access token expiry'
+  end
+
+  describe '#expired?' do
+    let_it_be(:expired_token) { create(:personal_access_token, expires_at: 1.week.ago) }
+
+    subject { expired_token.expired? }
+
+    it_behaves_like 'enforcement of personal access token expiry'
+  end
+
+  describe '.enforce_pat_expiration_feature_available?' do
+    using RSpec::Parameterized::TableSyntax
+
+    subject { described_class.enforce_pat_expiration_feature_available? }
+
+    where(:feature_flag, :licensed, :result) do
+      true  | true   | true
+      true  | false  | false
+      false | true   | false
+      false | false  | false
+    end
+
+    with_them do
+      before do
+        stub_feature_flags(enforce_pat_expiration: feature_flag)
+        stub_licensed_features(enforce_pat_expiration: licensed)
+      end
+
+      it { expect(subject).to be result }
+    end
+  end
+
+  shared_context 'write to cache' do
+    let_it_be(:pat) { create(:personal_access_token) }
+    let_it_be(:cache_keys) { %w(token_expired_rotation token_expiring_rotation) }
+
+    before do
+      cache_keys.each do |key|
+        Rails.cache.write(['users', pat.user.id, key], double)
+      end
+    end
+  end
+
+  describe '#revoke', :use_clean_rails_memory_store_caching do
+    include_context 'write to cache'
+
+    it 'clears cache on revoke access' do
+      pat.revoke!
+
+      cache_keys.each do |key|
+        expect(Rails.cache.read(['users', pat.user.id, key])).to be_nil
+      end
+    end
+  end
+
+  describe 'after create callback', :use_clean_rails_memory_store_caching do
+    include_context 'write to cache'
+
+    it 'clears cache for the user' do
+      create(:personal_access_token, user_id: pat.user_id)
+
+      cache_keys.each do |key|
+        expect(Rails.cache.read(['users', pat.user.id, key])).to be_nil
+      end
+    end
+  end
 end

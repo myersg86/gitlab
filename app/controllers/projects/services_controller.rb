@@ -12,7 +12,7 @@ class Projects::ServicesController < Projects::ApplicationController
   before_action :set_deprecation_notice_for_prometheus_service, only: [:edit, :update]
   before_action :redirect_deprecated_prometheus_service, only: [:update]
   before_action only: :edit do
-    push_frontend_feature_flag(:integration_form_refactor)
+    push_frontend_feature_flag(:integration_form_refactor, default_enabled: true)
   end
 
   respond_to :html
@@ -30,7 +30,7 @@ class Projects::ServicesController < Projects::ApplicationController
     respond_to do |format|
       format.html do
         if saved
-          target_url = safe_redirect_path(params[:redirect_to]).presence || project_settings_integrations_path(@project)
+          target_url = safe_redirect_path(params[:redirect_to]).presence || edit_project_service_path(@project, @service)
           redirect_to target_url, notice: success_message
         else
           render 'edit'

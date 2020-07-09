@@ -2,20 +2,29 @@
 
 require 'spec_helper'
 
-describe Metrics::Dashboard::SelfMonitoringDashboardService, :use_clean_rails_memory_store_caching do
+RSpec.describe Metrics::Dashboard::SelfMonitoringDashboardService, :use_clean_rails_memory_store_caching do
   include MetricsDashboardHelpers
 
   let_it_be(:user) { create(:user) }
   let_it_be(:project) { create(:project) }
   let_it_be(:environment) { create(:environment, project: project) }
 
+  let(:service_params) { [project, user, { environment: environment }] }
+
   before do
     project.add_maintainer(user)
     stub_application_setting(self_monitoring_project_id: project.id)
   end
 
+  subject do
+    described_class.new(service_params)
+  end
+
+  describe '#raw_dashboard' do
+    it_behaves_like '#raw_dashboard raises error if dashboard loading fails'
+  end
+
   describe '#get_dashboard' do
-    let(:service_params) { [project, user, { environment: environment }] }
     let(:service_call) { subject.get_dashboard }
 
     subject { described_class.new(*service_params) }
@@ -35,7 +44,8 @@ describe Metrics::Dashboard::SelfMonitoringDashboardService, :use_clean_rails_me
           path: described_class::DASHBOARD_PATH,
           display_name: described_class::DASHBOARD_NAME,
           default: true,
-          system_dashboard: false
+          system_dashboard: false,
+          out_of_the_box_dashboard: true
         }]
       )
     end

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Ci::Bridge do
+RSpec.describe Ci::Bridge do
   let_it_be(:project) { create(:project) }
   let_it_be(:target_project) { create(:project, name: 'project', namespace: create(:namespace, name: 'my')) }
   let_it_be(:pipeline) { create(:ci_pipeline, project: project) }
@@ -19,6 +19,11 @@ describe Ci::Bridge do
 
   it 'has many sourced pipelines' do
     expect(bridge).to have_many(:sourced_pipelines)
+  end
+
+  it 'has one downstream pipeline' do
+    expect(bridge).to have_one(:sourced_pipeline)
+    expect(bridge).to have_one(:downstream_pipeline)
   end
 
   describe '#tags' do
@@ -42,8 +47,8 @@ describe Ci::Bridge do
         CI_JOB_NAME CI_JOB_STAGE CI_COMMIT_SHA CI_COMMIT_SHORT_SHA
         CI_COMMIT_BEFORE_SHA CI_COMMIT_REF_NAME CI_COMMIT_REF_SLUG
         CI_PROJECT_ID CI_PROJECT_NAME CI_PROJECT_PATH
-        CI_PROJECT_PATH_SLUG CI_PROJECT_NAMESPACE CI_PIPELINE_IID
-        CI_CONFIG_PATH CI_PIPELINE_SOURCE CI_COMMIT_MESSAGE
+        CI_PROJECT_PATH_SLUG CI_PROJECT_NAMESPACE CI_PROJECT_ROOT_NAMESPACE
+        CI_PIPELINE_IID CI_CONFIG_PATH CI_PIPELINE_SOURCE CI_COMMIT_MESSAGE
         CI_COMMIT_TITLE CI_COMMIT_DESCRIPTION CI_COMMIT_REF_PROTECTED
       ]
 

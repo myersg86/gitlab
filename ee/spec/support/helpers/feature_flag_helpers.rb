@@ -60,6 +60,18 @@ module FeatureFlagHelpers
     find('.js-feature-flag-edit-button')
   end
 
+  def delete_strategy_button
+    find("button[data-testid='delete-strategy-button']")
+  end
+
+  def add_linked_issue_button
+    find('.js-issue-count-badge-add-button')
+  end
+
+  def remove_linked_issue_button
+    find('.js-issue-item-remove-button')
+  end
+
   def status_toggle_button
     find('.js-feature-flag-status button')
   end
@@ -70,8 +82,7 @@ module FeatureFlagHelpers
 
   def expect_user_to_see_feature_flags_index_page
     expect(page).to have_css('h3.page-title', text: 'Feature Flags')
-    expect(page).to have_text('All')
-    expect(page).to have_text('Enabled')
-    expect(page).to have_text('Disabled')
+    expect(page).to have_text('Feature Flags')
+    expect(page).to have_text('Lists')
   end
 end

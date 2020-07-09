@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Triggers', :js do
+RSpec.describe 'Triggers', :js do
   let(:trigger_title) { 'trigger desc' }
   let(:user) { create(:user) }
   let(:user2) { create(:user) }
@@ -85,7 +85,7 @@ describe 'Triggers', :js do
       end
 
       expect(page.find('.flash-notice')).to have_content 'Trigger removed'
-      expect(page).to have_selector('p.settings-message.text-center.append-bottom-default')
+      expect(page).to have_selector('p.settings-message.text-center.gl-mb-3')
     end
   end
 

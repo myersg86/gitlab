@@ -330,7 +330,7 @@ Feature.enabled?(:ci_live_trace) # => false
 If you wish to set up a test where a feature flag is enabled only
 for some actors and not others, you can specify this in options
 passed to the helper. For example, to enable the `ci_live_trace`
-feature flag for a specifc project:
+feature flag for a specific project:
 
 ```ruby
 project1, project2 = build_list(:project, 2)
@@ -347,7 +347,7 @@ This represents an actual behavior of FlipperGate:
 
 1. You can enable an override for a specified actor to be enabled
 1. You can disable (remove) an override for a specified actor,
-   fallbacking to default state
+   falling back to default state
 1. There's no way to model that you explicitly disable a specified actor
 
 ```ruby
@@ -467,7 +467,7 @@ However, if a spec makes direct Redis calls, it should mark itself with the
 #### Background jobs / Sidekiq
 
 By default, Sidekiq jobs are enqueued into a jobs array and aren't processed.
-If a test enqueues Sidekiq jobs and need them to be processed, the
+If a test queues Sidekiq jobs and need them to be processed, the
 `:sidekiq_inline` trait can be used.
 
 The `:sidekiq_might_not_need_inline` trait was added when [Sidekiq inline mode was
@@ -723,7 +723,7 @@ module Spec
 end
 ```
 
-Helpers should not change the RSpec config. For instance, the helpers module
+Helpers should not change the RSpec configuration. For instance, the helpers module
 described above should not include:
 
 ```ruby
@@ -741,7 +741,7 @@ GitLab uses [factory_bot](https://github.com/thoughtbot/factory_bot) as a test f
 - There should be only one top-level factory definition per file.
 - FactoryBot methods are mixed in to all RSpec groups. This means you can (and
   should) call `create(...)` instead of `FactoryBot.create(...)`.
-- Make use of [traits](https://www.rubydoc.info/gems/factory_bot/file/GETTING_STARTED.md#Traits) to clean up definitions and usages.
+- Make use of [traits](https://www.rubydoc.info/gems/factory_bot/file/GETTING_STARTED.md#traits) to clean up definitions and usages.
 - When defining a factory, don't define attributes that are not required for the
   resulting record to pass validation.
 - When instantiating from a factory, don't supply attributes that aren't
@@ -784,9 +784,9 @@ end
 This will create a repository containing two files, with default permissions and
 the specified content.
 
-### Config
+### Configuration
 
-RSpec config files are files that change the RSpec config (i.e.
+RSpec configuration files are files that change the RSpec configuration (i.e.
 `RSpec.configure do |config|` blocks). They should be placed under
 `spec/support/`.
 
@@ -805,13 +805,47 @@ RSpec.configure do |config|
 end
 ```
 
-If a config file only consists of `config.include`, you can add these
+If a configuration file only consists of `config.include`, you can add these
 `config.include` directly in `spec/spec_helper.rb`.
 
 For very generic helpers, consider including them in the `spec/support/rspec.rb`
 file which is used by the `spec/fast_spec_helper.rb` file. See
 [Fast unit tests](#fast-unit-tests) for more details about the
 `spec/fast_spec_helper.rb` file.
+
+### Test environment logging
+
+Services for the test environment are automatically configured and started when
+tests are run, including Gitaly, Workhorse, Elasticsearch, and Capybara. When run in CI, or
+if the service needs to be installed, the test environment will log information
+about set-up time, producing log messages like the following:
+
+```plaintext
+==> Setting up Gitaly...
+    Gitaly set up in 31.459649 seconds...
+
+==> Setting up GitLab Workhorse...
+    GitLab Workhorse set up in 29.695619 seconds...
+fatal: update refs/heads/diff-files-symlink-to-image: invalid <newvalue>: 8cfca84
+From https://gitlab.com/gitlab-org/gitlab-test
+ * [new branch]      diff-files-image-to-symlink -> origin/diff-files-image-to-symlink
+ * [new branch]      diff-files-symlink-to-image -> origin/diff-files-symlink-to-image
+ * [new branch]      diff-files-symlink-to-text -> origin/diff-files-symlink-to-text
+ * [new branch]      diff-files-text-to-symlink -> origin/diff-files-text-to-symlink
+   b80faa8..40232f7  snippet/multiple-files -> origin/snippet/multiple-files
+ * [new branch]      testing/branch-with-#-hash -> origin/testing/branch-with-#-hash
+
+==> Setting up GitLab Elasticsearch Indexer...
+    GitLab Elasticsearch Indexer set up in 26.514623 seconds...
+```
+
+This information is omitted when running locally and when no action needs
+to be performed. If you would always like to see these messages, set the
+following environment variable:
+
+```shell
+GITLAB_TESTING_LOG_LEVEL=debug
+```
 
 ---
 

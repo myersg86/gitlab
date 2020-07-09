@@ -708,19 +708,6 @@ To find objects for a mutation, arguments need to be specified. As with
 [resolvers](#resolvers), prefer using internal ID or, if needed, a
 global ID rather than the database ID.
 
-### Fields
-
-In the most common situations, a mutation would return 2 fields:
-
-- The resource being modified
-- A list of errors explaining why the action could not be
-  performed. If the mutation succeeded, this list would be empty.
-
-By inheriting any new mutations from `Mutations::BaseMutation` the
-`errors` field is automatically added. A `clientMutationId` field is
-also added, this can be used by the client to identify the result of a
-single mutation when multiple are performed within a single request.
-
 ### Building Mutations
 
 Mutations live in `app/graphql/mutations` ideally grouped per
@@ -728,11 +715,52 @@ resources they are mutating, similar to our services. They should
 inherit `Mutations::BaseMutation`. The fields defined on the mutation
 will be returned as the result of the mutation.
 
-Always provide a consistent GraphQL-name to the mutation, this name is
-used to generate the input types and the field the mutation is mounted
-on. The name should look like `<Resource being modified><Mutation
-class name>`, for example the `Mutations::MergeRequests::SetWip`
-mutation has GraphQL name `MergeRequestSetWip`.
+### Naming conventions
+
+Each mutation must define a `graphql_name`, which is the name of the mutation in the GraphQL schema.
+
+Example:
+
+```ruby
+class UserUpdateMutation < BaseMutation
+  graphql_name 'UserUpdate'
+end
+```
+
+Our GraphQL mutation names are historically inconsistent, but new mutation names should follow the
+convention `'{Resource}{Action}'` or `'{Resource}{Action}{Attribute}'`.
+
+Mutations that **create** new resources should use the verb `Create`.
+
+Example:
+
+- `CommitCreate`
+
+Mutations that **update** data should use:
+
+- The verb `Update`.
+- A domain-specific verb like `Set`, `Add`, or `Toggle` if more appropriate.
+
+Examples:
+
+- `EpicTreeReorder`
+- `IssueSetWeight`
+- `IssueUpdate`
+- `TodoMarkDone`
+
+Mutations that **remove** data should use:
+
+- The verb `Delete` rather than `Destroy`.
+- A domain-specific verb like `Remove` if more appropriate.
+
+Examples:
+
+- `AwardEmojiRemove`
+- `NoteDelete`
+
+If you need advice for mutation naming, canvass the Slack `#graphql` channel for feedback.
+
+### Arguments
 
 Arguments required by the mutation can be defined as arguments
 required for a field. These will be wrapped up in an input type for
@@ -762,11 +790,28 @@ This would automatically generate an input type called
 `clientMutationId`.
 
 These arguments are then passed to the `resolve` method of a mutation
-as keyword arguments. From here, we can call the service that will
-modify the resource.
+as keyword arguments.
+
+### Fields
+
+In the most common situations, a mutation would return 2 fields:
+
+- The resource being modified
+- A list of errors explaining why the action could not be
+  performed. If the mutation succeeded, this list would be empty.
+
+By inheriting any new mutations from `Mutations::BaseMutation` the
+`errors` field is automatically added. A `clientMutationId` field is
+also added, this can be used by the client to identify the result of a
+single mutation when multiple are performed within a single request.
+
+### The `resolve` method
+
+The `resolve` method receives the mutation's arguments as keyword arguments.
+From here, we can call the service that will modify the resource.
 
 The `resolve` method should then return a hash with the same field
-names as defined on the mutation and an `errors` array. For example,
+names as defined on the mutation including an `errors` array. For example,
 the `Mutations::MergeRequests::SetWip` defines a `merge_request`
 field:
 
@@ -791,7 +836,9 @@ should look like this:
 }
 ```
 
-To make the mutation available it should be defined on the mutation
+### Mounting the mutation
+
+To make the mutation available it must be defined on the mutation
 type that lives in `graphql/types/mutation_types`. The
 `mount_mutation` helper method will define a field based on the
 GraphQL-name of the mutation:
@@ -964,6 +1011,34 @@ If the user does need to know about it, communicate with frontend developers
 to make sure the error information we are passing back is useful.
 
 See also the [frontend GraphQL guide](../development/fe_guide/graphql.md#handling-errors).
+
+### Aliasing and deprecating mutations
+
+The `#mount_aliased_mutation` helper allows us to alias a mutation as
+another name within `MutationType`.
+
+For example, to alias a mutation called `FooMutation` as `BarMutation`:
+
+```ruby
+mount_aliased_mutation 'BarMutation', Mutations::FooMutation
+```
+
+This allows us to rename a mutation and continue to support the old name,
+when coupled with the [`deprecated`](#deprecating-fields) argument.
+
+Example:
+
+```ruby
+mount_aliased_mutation 'UpdateFoo',
+                        Mutations::Foo::Update,
+                        deprecated: { reason: 'Use fooUpdate', milestone: '13.2' }
+```
+
+Deprecated mutations should be added to `Types::DeprecatedMutations` and
+tested for within the unit test of `Types::MutationType`. The merge request
+[!34798](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/34798)
+can be referred to as an example of this, including the method of testing
+deprecated aliased mutations.
 
 ## Validating arguments
 

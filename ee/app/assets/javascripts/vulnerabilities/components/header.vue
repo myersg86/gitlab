@@ -2,6 +2,7 @@
 import { GlDeprecatedButton, GlLoadingIcon } from '@gitlab/ui';
 import Api from 'ee/api';
 import axios from '~/lib/utils/axios_utils';
+import { CancelToken } from 'axios';
 import download from '~/lib/utils/downloader';
 import { redirectTo } from '~/lib/utils/url_utility';
 import createFlash from '~/flash';
@@ -26,28 +27,8 @@ export default {
   },
 
   props: {
-    createMrUrl: {
-      type: String,
-      required: true,
-    },
     initialVulnerability: {
       type: Object,
-      required: true,
-    },
-    finding: {
-      type: Object,
-      required: true,
-    },
-    pipeline: {
-      type: Object,
-      required: true,
-    },
-    createIssueUrl: {
-      type: String,
-      required: true,
-    },
-    projectFingerprint: {
-      type: String,
       required: true,
     },
   },
@@ -59,6 +40,7 @@ export default {
       isLoadingUser: false,
       vulnerability: this.initialVulnerability,
       user: undefined,
+      refreshVulnerabilitySource: undefined,
     };
   },
 
@@ -88,16 +70,16 @@ export default {
       );
     },
     hasIssue() {
-      return Boolean(this.finding.issue_feedback?.issue_iid);
+      return Boolean(this.vulnerability.issue_feedback?.issue_iid);
     },
     hasRemediation() {
-      const { remediations } = this.finding;
+      const { remediations } = this.vulnerability;
       return Boolean(remediations && remediations[0]?.diff?.length > 0);
     },
     canCreateMergeRequest() {
       return (
-        !this.finding.merge_request_feedback?.merge_request_path &&
-        Boolean(this.createMrUrl) &&
+        !this.vulnerability.merge_request_feedback?.merge_request_path &&
+        Boolean(this.vulnerability.create_mr_url) &&
         this.hasRemediation
       );
     },
@@ -137,6 +119,14 @@ export default {
     },
   },
 
+  created() {
+    VulnerabilitiesEventBus.$on('VULNERABILITY_STATE_CHANGED', this.refreshVulnerability);
+  },
+
+  destroyed() {
+    VulnerabilitiesEventBus.$off('VULNERABILITY_STATE_CHANGED', this.refreshVulnerability);
+  },
+
   methods: {
     triggerClick(action) {
       const fn = this[action];
@@ -163,17 +153,23 @@ export default {
     },
     createIssue() {
       this.isProcessingAction = true;
+
+      const {
+        report_type: category,
+        project_fingerprint: projectFingerprint,
+        id,
+      } = this.vulnerability;
+
       axios
-        .post(this.createIssueUrl, {
+        .post(this.vulnerability.create_issue_url, {
           vulnerability_feedback: {
             feedback_type: FEEDBACK_TYPES.ISSUE,
-            category: this.vulnerability.report_type,
-            project_fingerprint: this.projectFingerprint,
+            category,
+            project_fingerprint: projectFingerprint,
             vulnerability_data: {
               ...this.vulnerability,
-              ...this.finding,
-              category: this.vulnerability.report_type,
-              vulnerability_id: this.vulnerability.id,
+              category,
+              vulnerability_id: id,
             },
           },
         })
@@ -189,17 +185,23 @@ export default {
     },
     createMergeRequest() {
       this.isProcessingAction = true;
+
+      const {
+        report_type: category,
+        pipeline: { sourceBranch },
+        project_fingerprint: projectFingerprint,
+      } = this.vulnerability;
+
       axios
-        .post(this.createMrUrl, {
+        .post(this.vulnerability.create_mr_url, {
           vulnerability_feedback: {
             feedback_type: FEEDBACK_TYPES.MERGE_REQUEST,
-            category: this.vulnerability.report_type,
-            project_fingerprint: this.projectFingerprint,
+            category,
+            project_fingerprint: projectFingerprint,
             vulnerability_data: {
               ...this.vulnerability,
-              ...this.finding,
-              category: this.vulnerability.report_type,
-              target_branch: this.pipeline.sourceBranch,
+              category,
+              target_branch: sourceBranch,
             },
           },
         })
@@ -214,14 +216,48 @@ export default {
         });
     },
     downloadPatch() {
-      download({ fileData: this.finding.remediations[0].diff, fileName: `remediation.patch` });
+      download({
+        fileData: this.vulnerability.remediations[0].diff,
+        fileName: `remediation.patch`,
+      });
+    },
+    refreshVulnerability() {
+      this.isLoadingVulnerability = true;
+
+      // Cancel any pending API requests.
+      if (this.refreshVulnerabilitySource) {
+        this.refreshVulnerabilitySource.cancel();
+      }
+
+      this.refreshVulnerabilitySource = CancelToken.source();
+
+      Api.fetchVulnerability(this.vulnerability.id, {
+        cancelToken: this.refreshVulnerabilitySource.token,
+      })
+        .then(({ data }) => {
+          Object.assign(this.vulnerability, data);
+        })
+        .catch(e => {
+          // Don't show an error message if the request was cancelled through the cancel token.
+          if (!axios.isCancel(e)) {
+            createFlash(
+              s__(
+                'VulnerabilityManagement|Something went wrong while trying to refresh the vulnerability. Please try again later.',
+              ),
+            );
+          }
+        })
+        .finally(() => {
+          this.isLoadingVulnerability = false;
+          this.refreshVulnerabilitySource = undefined;
+        });
     },
   },
 };
 </script>
 
 <template>
-  <div>
+  <div data-qa-selector="vulnerability_header">
     <resolution-alert
       v-if="showResolutionAlert"
       :vulnerability-id="vulnerability.id"
@@ -243,7 +279,6 @@ export default {
         <status-description
           class="issuable-meta"
           :vulnerability="vulnerability"
-          :pipeline="pipeline"
           :user="user"
           :is-loading-vulnerability="isLoadingVulnerability"
           :is-loading-user="isLoadingUser"

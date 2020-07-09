@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Projects::Alerting::NotifyService do
+RSpec.describe Projects::Alerting::NotifyService do
   let_it_be(:project, reload: true) { create(:project) }
 
   before do
@@ -21,7 +21,7 @@ describe Projects::Alerting::NotifyService do
     it 'processes issues' do
       expect(IncidentManagement::ProcessAlertWorker)
         .to receive(:perform_async)
-        .with(project.id, kind_of(Hash), kind_of(Integer))
+        .with(nil, nil, kind_of(Integer))
         .once
 
       Sidekiq::Testing.inline! do
@@ -134,7 +134,9 @@ describe Projects::Alerting::NotifyService do
               monitoring_tool: payload_raw.fetch(:monitoring_tool),
               service: payload_raw.fetch(:service),
               fingerprint: Digest::SHA1.hexdigest(fingerprint),
-              ended_at: nil
+              ended_at: nil,
+              prometheus_alert_id: nil,
+              environment_id: nil
             )
           end
 
@@ -143,18 +145,6 @@ describe Projects::Alerting::NotifyService do
             subject
 
             expect(ProjectServiceWorker).to have_received(:perform_async).with(slack_service.id, an_instance_of(Hash))
-          end
-
-          context 'feature flag disabled' do
-            before do
-              stub_feature_flags(alert_slack_event: false)
-            end
-
-            it 'does not executes the alert service hooks' do
-              subject
-
-              expect(ProjectServiceWorker).not_to have_received(:perform_async)
-            end
           end
 
           context 'existing alert with same fingerprint' do
@@ -205,7 +195,9 @@ describe Projects::Alerting::NotifyService do
                 monitoring_tool: nil,
                 service: nil,
                 fingerprint: nil,
-                ended_at: nil
+                ended_at: nil,
+                prometheus_alert_id: nil,
+                environment_id: nil
               )
             end
           end

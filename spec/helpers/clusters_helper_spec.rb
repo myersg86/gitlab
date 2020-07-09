@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ClustersHelper do
+RSpec.describe ClustersHelper do
   describe '#has_rbac_enabled?' do
     context 'when kubernetes platform has been created' do
       let(:platform_kubernetes) { build_stubbed(:cluster_platform_kubernetes) }
@@ -99,6 +99,12 @@ describe ClustersHelper do
 
       expect(logo).to match(%r(img alt="Kubernetes Cluster" data-src="|/illustrations/logos/kubernetes|svg))
     end
+  end
+
+  describe '#has_multiple_clusters?' do
+    subject { helper.has_multiple_clusters? }
+
+    it { is_expected.to be_truthy }
   end
 
   describe '#cluster_type_label' do

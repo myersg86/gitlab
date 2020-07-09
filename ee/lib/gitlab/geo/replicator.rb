@@ -28,8 +28,8 @@ module Gitlab
       #
       # @example Declaring support for :update and :delete events
       #   class MyReplicator < Gitlab::Geo::Replicator
-      #     event :update
-      #     event :delete
+      #     event :updated
+      #     event :deleted
       #   end
       #
       # @param [Symbol] event_name
@@ -125,6 +125,10 @@ module Gitlab
         model.count
       end
 
+      def self.registry_count
+        registry_class.count
+      end
+
       def self.synced_count
         registry_class.synced.count
       end
@@ -174,7 +178,7 @@ module Gitlab
       # @param [Symbol] event_name
       # @param [Hash] event_data
       def publish(event_name, **event_data)
-        return unless Feature.enabled?(:geo_self_service_framework)
+        return unless Feature.enabled?(:geo_self_service_framework_replication, default_enabled: true)
 
         raise ArgumentError, "Unsupported event: '#{event_name}'" unless self.class.event_supported?(event_name)
 
@@ -224,7 +228,7 @@ module Gitlab
       #
       # @return [Geo::BaseRegistry] registry instance
       def registry
-        registry_class.for_model_record_id(model_record.id)
+        registry_class.for_model_record_id(model_record_id)
       end
 
       # Checksum value from the main database

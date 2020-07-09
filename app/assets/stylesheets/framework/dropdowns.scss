@@ -639,9 +639,12 @@
     display: none;
     cursor: pointer;
     pointer-events: all;
-    right: 22px;
-    top: 9px;
+    top: $gl-padding-8;
     font-size: 14px;
+
+    &:not(.gl-icon) {
+      right: 22px;
+    }
   }
 
   &.has-value {
@@ -1086,6 +1089,14 @@ header.header-content .dropdown-menu.frequent-items-dropdown-menu {
     .dropdown-label-color-preview {
       border: 1px solid $gray-200;
       border-right: 0;
+    }
+  }
+}
+
+.bulk-update {
+  .dropdown-toggle-text {
+    &.is-default {
+      color: $gl-text-color;
     }
   }
 }

@@ -109,6 +109,16 @@ FactoryBot.define do
       end
     end
 
+    trait :dast_large_scanned_resources_field do
+      file_format { :raw }
+      file_type { :dast }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/security_reports/master/gl-dast-large-scanned-resources.json'), 'application/json')
+      end
+    end
+
     trait :low_severity_dast_report do
       file_format { :raw }
       file_type { :dast }
@@ -159,6 +169,16 @@ FactoryBot.define do
       end
     end
 
+    trait :sast_with_missing_scanner do
+      file_type { :sast }
+      file_format { :raw }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/security_reports/master/gl-sast-missing-scanner.json'), 'application/json')
+      end
+    end
+
     trait :license_management do
       to_create { |instance| instance.save(validate: false) }
 
@@ -194,6 +214,16 @@ FactoryBot.define do
     trait :performance do
       file_format { :raw }
       file_type { :performance }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('spec/fixtures/trace/sample_trace'), 'text/plain')
+      end
+    end
+
+    trait :browser_performance do
+      file_format { :raw }
+      file_type { :browser_performance }
 
       after(:build) do |artifact, _|
         artifact.file = fixture_file_upload(
@@ -316,7 +346,7 @@ FactoryBot.define do
       file_format { :raw }
     end
 
-    %w[1 1_1 2].each do |version|
+    %w[1 1_1 2 2_1].each do |version|
       trait :"v#{version}" do
         after(:build) do |artifact, _|
           filename = "gl-#{artifact.file_type.dasherize}-report-v#{version.sub(/_/, '.')}.json"
@@ -333,13 +363,34 @@ FactoryBot.define do
       end
     end
 
-    trait :requirements do
+    trait :all_passing_requirements do
       file_format { :raw }
       file_type { :requirements }
 
       after(:build) do |artifact, _|
         artifact.file = fixture_file_upload(
-          Rails.root.join('ee/spec/fixtures/requirements_management/report.json'), 'application/json')
+          Rails.root.join('ee/spec/fixtures/requirements_management/all_passing_report.json'), 'application/json')
+      end
+    end
+
+    trait :individual_requirements do
+      file_format { :raw }
+      file_type { :requirements }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/requirements_management/report_by_requirement.json'), 'application/json')
+      end
+    end
+
+    trait :coverage_fuzzing do
+      file_format { :raw }
+      file_type { :coverage_fuzzing }
+
+      after(:build) do |artifact, _|
+        artifact.file = fixture_file_upload(
+          Rails.root.join('ee/spec/fixtures/security_reports/master/gl-coverage-fuzzing-report.json'),
+          'application/json')
       end
     end
   end

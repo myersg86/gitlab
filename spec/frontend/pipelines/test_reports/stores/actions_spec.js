@@ -14,12 +14,16 @@ describe('Actions TestReports Store', () => {
   let state;
 
   const testReports = getJSONFixture('pipelines/test_report.json');
+  const summary = { total_count: 1 };
 
-  const endpoint = `${TEST_HOST}/test_reports.json`;
+  const fullReportEndpoint = `${TEST_HOST}/test_reports.json`;
+  const summaryEndpoint = `${TEST_HOST}/test_reports/summary.json`;
   const defaultState = {
-    endpoint,
+    fullReportEndpoint,
+    summaryEndpoint,
     testReports: {},
-    selectedSuite: {},
+    selectedSuite: null,
+    summary: {},
   };
 
   beforeEach(() => {
@@ -31,14 +35,47 @@ describe('Actions TestReports Store', () => {
     mock.restore();
   });
 
-  describe('fetch reports', () => {
+  describe('fetch report summary', () => {
     beforeEach(() => {
-      mock.onGet(`${TEST_HOST}/test_reports.json`).replyOnce(200, testReports, {});
+      mock.onGet(summaryEndpoint).replyOnce(200, summary, {});
     });
 
     it('sets testReports and shows tests', done => {
       testAction(
-        actions.fetchReports,
+        actions.fetchSummary,
+        null,
+        state,
+        [{ type: types.SET_SUMMARY, payload: summary }],
+        [],
+        done,
+      );
+    });
+
+    it('should create flash on API error', done => {
+      testAction(
+        actions.fetchSummary,
+        null,
+        {
+          summaryEndpoint: null,
+        },
+        [],
+        [],
+        () => {
+          expect(createFlash).toHaveBeenCalled();
+          done();
+        },
+      );
+    });
+  });
+
+  describe('fetch full report', () => {
+    beforeEach(() => {
+      mock.onGet(fullReportEndpoint).replyOnce(200, testReports, {});
+    });
+
+    it('sets testReports and shows tests', done => {
+      testAction(
+        actions.fetchFullReport,
         null,
         state,
         [{ type: types.SET_REPORTS, payload: testReports }],
@@ -49,10 +86,10 @@ describe('Actions TestReports Store', () => {
 
     it('should create flash on API error', done => {
       testAction(
-        actions.fetchReports,
+        actions.fetchFullReport,
         null,
         {
-          endpoint: null,
+          fullReportEndpoint: null,
         },
         [],
         [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
@@ -64,28 +101,28 @@ describe('Actions TestReports Store', () => {
     });
   });
 
-  describe('set selected suite', () => {
-    const selectedSuite = testReports.test_suites[0];
+  describe('set selected suite index', () => {
+    const selectedSuiteIndex = 0;
 
-    it('sets selectedSuite', done => {
+    it('sets selectedSuiteIndex', done => {
       testAction(
-        actions.setSelectedSuite,
-        selectedSuite,
+        actions.setSelectedSuiteIndex,
+        selectedSuiteIndex,
         state,
-        [{ type: types.SET_SELECTED_SUITE, payload: selectedSuite }],
+        [{ type: types.SET_SELECTED_SUITE_INDEX, payload: selectedSuiteIndex }],
         [],
         done,
       );
     });
   });
 
-  describe('remove selected suite', () => {
-    it('sets selectedSuite to {}', done => {
+  describe('remove selected suite index', () => {
+    it('sets selectedSuiteIndex to null', done => {
       testAction(
-        actions.removeSelectedSuite,
+        actions.removeSelectedSuiteIndex,
         {},
         state,
-        [{ type: types.SET_SELECTED_SUITE, payload: {} }],
+        [{ type: types.SET_SELECTED_SUITE_INDEX, payload: null }],
         [],
         done,
       );

@@ -14,11 +14,17 @@ const DEFAULT_PROPS = {
 describe('Suggestion Diff component', () => {
   let wrapper;
 
-  const createComponent = props => {
+  const createComponent = (props, glFeatures = {}) => {
     wrapper = shallowMount(SuggestionDiffHeader, {
       propsData: {
         ...DEFAULT_PROPS,
         ...props,
+      },
+      provide: {
+        glFeatures: {
+          batchSuggestions: true,
+          ...glFeatures,
+        },
       },
     });
   };
@@ -63,13 +69,6 @@ describe('Suggestion Diff component', () => {
     expect(addToBatchBtn.html().includes('Add suggestion to batch')).toBe(true);
   });
 
-  it('does not render apply suggestion and add to batch buttons if `canApply` is set to false', () => {
-    createComponent({ canApply: false });
-
-    expect(findApplyButton().exists()).toBe(false);
-    expect(findAddToBatchButton().exists()).toBe(false);
-  });
-
   describe('when apply suggestion is clicked', () => {
     beforeEach(() => {
       createComponent();
@@ -84,7 +83,7 @@ describe('Suggestion Diff component', () => {
       });
     });
 
-    it('hides  apply suggestion and add to batch buttons', () => {
+    it('does not render apply suggestion and add to batch buttons', () => {
       expect(findApplyButton().exists()).toBe(false);
       expect(findAddToBatchButton().exists()).toBe(false);
     });
@@ -203,6 +202,43 @@ describe('Suggestion Diff component', () => {
         expect(findRemoveFromBatchButton().exists()).toBe(false);
         expect(findApplyBatchButton().exists()).toBe(false);
       });
+    });
+  });
+
+  describe('batchSuggestions feature flag is set to false', () => {
+    beforeEach(() => {
+      createComponent({}, { batchSuggestions: false });
+    });
+
+    it('disables add to batch buttons but keeps apply suggestion enabled', () => {
+      expect(findApplyButton().exists()).toBe(true);
+      expect(findAddToBatchButton().exists()).toBe(false);
+      expect(findApplyButton().attributes('disabled')).not.toBe('true');
+    });
+  });
+
+  describe('canApply is set to false', () => {
+    beforeEach(() => {
+      createComponent({ canApply: false });
+    });
+
+    it('disables apply suggestion and hides add to batch button', () => {
+      expect(findApplyButton().exists()).toBe(true);
+      expect(findAddToBatchButton().exists()).toBe(false);
+      expect(findApplyButton().attributes('disabled')).toBe('true');
+    });
+  });
+
+  describe('tooltip message for apply button', () => {
+    it('renders correct tooltip message when button is applicable', () => {
+      createComponent();
+      expect(wrapper.vm.tooltipMessage).toBe('This also resolves this thread');
+    });
+
+    it('renders the inapplicable reason in the tooltip when button is not applicable', () => {
+      const inapplicableReason = 'lorem';
+      createComponent({ canApply: false, inapplicableReason });
+      expect(wrapper.vm.tooltipMessage).toBe(inapplicableReason);
     });
   });
 });

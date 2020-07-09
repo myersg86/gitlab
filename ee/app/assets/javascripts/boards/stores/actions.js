@@ -5,6 +5,7 @@ import * as types from './mutation_types';
 
 import createDefaultClient from '~/lib/graphql';
 import epicsSwimlanes from '../queries/epics_swimlanes.query.graphql';
+import groupEpics from '../queries/group_epics.query.graphql';
 
 const notImplemented = () => {
   /* eslint-disable-next-line @gitlab/require-i18n-strings */
@@ -32,11 +33,38 @@ const fetchEpicsSwimlanes = ({ endpoints }) => {
     });
 };
 
+const fetchEpics = ({ endpoints }) => {
+  const { fullPath } = endpoints;
+
+  const query = groupEpics;
+  const variables = {
+    fullPath,
+  };
+
+  return gqlClient
+    .query({
+      query,
+      variables,
+    })
+    .then(({ data }) => {
+      const { group } = data;
+      const epics = group?.epics.nodes || [];
+      return epics.map(e => ({
+        ...e,
+        issues: (e?.issues?.nodes || []).map(i => ({
+          ...i,
+          labels: i.labels?.nodes || [],
+          assignees: i.assignees?.nodes || [],
+        })),
+      }));
+    });
+};
+
 export default {
   ...actionsCE,
 
-  toggleShowLabels({ commit }) {
-    commit(types.TOGGLE_LABELS);
+  setShowLabels({ commit }, val) {
+    commit(types.SET_SHOW_LABELS, val);
   },
 
   setActiveListId({ commit }, listId) {
@@ -80,9 +108,15 @@ export default {
     commit(types.TOGGLE_EPICS_SWIMLANES);
 
     if (state.isShowingEpicsSwimlanes) {
-      fetchEpicsSwimlanes(state)
-        .then(swimlanes => {
-          dispatch('receiveSwimlanesSuccess', swimlanes);
+      Promise.all([fetchEpicsSwimlanes(state), fetchEpics(state)])
+        .then(([swimlanes, epics]) => {
+          if (swimlanes) {
+            dispatch('receiveSwimlanesSuccess', swimlanes);
+          }
+
+          if (epics) {
+            dispatch('receiveEpicsSuccess', epics);
+          }
         })
         .catch(() => dispatch('receiveSwimlanesFailure'));
     }
@@ -94,5 +128,9 @@ export default {
 
   receiveSwimlanesFailure: ({ commit }) => {
     commit(types.RECEIVE_SWIMLANES_FAILURE);
+  },
+
+  receiveEpicsSuccess: ({ commit }, swimlanes) => {
+    commit(types.RECEIVE_EPICS_SUCCESS, swimlanes);
   },
 };

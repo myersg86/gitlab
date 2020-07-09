@@ -123,6 +123,9 @@ class ProjectPolicy < BasePolicy
     !@subject.design_management_enabled?
   end
 
+  with_scope :subject
+  condition(:service_desk_enabled) { @subject.service_desk_enabled? }
+
   # We aren't checking `:read_issue` or `:read_merge_request` in this case
   # because it could be possible for a user to see an issuable-iid
   # (`:read_issue_iid` or `:read_merge_request_iid`) but then wouldn't be
@@ -173,6 +176,7 @@ class ProjectPolicy < BasePolicy
   rule { guest | admin }.enable :read_project_for_iids
 
   rule { admin }.enable :update_max_artifacts_size
+  rule { can?(:read_all_resources) }.enable :read_confidential_issues
 
   rule { guest }.enable :guest_access
   rule { reporter }.enable :reporter_access
@@ -254,6 +258,7 @@ class ProjectPolicy < BasePolicy
     enable :read_prometheus
     enable :read_metrics_dashboard_annotation
     enable :metrics_dashboard
+    enable :read_confidential_issues
   end
 
   # We define `:public_user_access` separately because there are cases in gitlab-ee
@@ -545,11 +550,13 @@ class ProjectPolicy < BasePolicy
 
   rule { can?(:read_issue) }.policy do
     enable :read_design
+    enable :read_design_activity
   end
 
   # Design abilities could also be prevented in the issue policy.
   rule { design_management_disabled }.policy do
     prevent :read_design
+    prevent :read_design_activity
     prevent :create_design
     prevent :destroy_design
   end
@@ -574,6 +581,12 @@ class ProjectPolicy < BasePolicy
 
   rule { can?(:read_build) & can?(:read_pipeline) }.policy do
     enable :read_build_report_results
+  end
+
+  rule { support_bot }.enable :guest_access
+  rule { support_bot & ~service_desk_enabled }.policy do
+    prevent :create_note
+    prevent :read_project
   end
 
   private
@@ -624,6 +637,7 @@ class ProjectPolicy < BasePolicy
 
   def lookup_access_level!
     return ::Gitlab::Access::REPORTER if alert_bot?
+    return ::Gitlab::Access::REPORTER if support_bot? && service_desk_enabled?
 
     # NOTE: max_member_access has its own cache
     project.team.max_member_access(@user.id)
@@ -636,7 +650,7 @@ class ProjectPolicy < BasePolicy
     when ProjectFeature::DISABLED
       false
     when ProjectFeature::PRIVATE
-      admin? || team_access_level >= ProjectFeature.required_minimum_access_level(feature)
+      can?(:read_all_resources) || team_access_level >= ProjectFeature.required_minimum_access_level(feature)
     else
       true
     end

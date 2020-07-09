@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module QA
-  context 'Manage' do
+  RSpec.describe 'Manage' do
     describe 'Group file templates', :requires_admin do
       include Support::Api
 
@@ -52,14 +52,18 @@ module QA
           group.api_client = @api_client
         end
 
-        @file_template_project = Resource::Project.fabricate_via_api! do |project|
-          project.group = @group
-          project.name = 'group-file-template-project'
-          project.description = 'Add group file templates'
-          project.auto_devops_enabled = false
-          project.initialize_with_readme = true
-          project.user = admin
-          project.api_client = @api_client
+        Support::Retrier.retry_until(retry_on_exception: true) do
+          @file_template_project = Resource::Project.fabricate_via_api! do |project|
+            project.group = @group
+            project.name = 'group-file-template-project'
+            project.description = 'Add group file templates'
+            project.auto_devops_enabled = false
+            project.initialize_with_readme = true
+            project.user = admin
+            project.api_client = @api_client
+          end
+
+          @file_template_project.has_file?("README.md")
         end
 
         Resource::Repository::Commit.fabricate_via_api! do |commit|

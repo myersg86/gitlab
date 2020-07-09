@@ -8,8 +8,8 @@ const notImplemented = () => {
 
 export default {
   ...mutationsCE,
-  [mutationTypes.TOGGLE_LABELS]: state => {
-    state.isShowingLabels = !state.isShowingLabels;
+  [mutationTypes.SET_SHOW_LABELS]: (state, val) => {
+    state.isShowingLabels = val;
   },
   [mutationTypes.SET_ACTIVE_LIST_ID]: (state, id) => {
     state.activeListId = id;
@@ -80,5 +80,9 @@ export default {
   [mutationTypes.RECEIVE_SWIMLANES_FAILURE]: state => {
     state.epicsSwimlanesFetchFailure = true;
     state.epicsSwimlanesFetchInProgress = false;
+  },
+
+  [mutationTypes.RECEIVE_EPICS_SUCCESS]: (state, epics) => {
+    state.epics = epics;
   },
 };

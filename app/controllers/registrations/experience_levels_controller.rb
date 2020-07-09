@@ -13,6 +13,7 @@ module Registrations
       current_user.experience_level = params[:experience_level]
 
       if current_user.save
+        hide_advanced_issues
         flash[:message] = I18n.t('devise.registrations.signed_up')
         redirect_to group_path(params[:namespace_path])
       else
@@ -28,6 +29,17 @@ module Registrations
 
     def ensure_namespace_path_param
       redirect_to root_path unless params[:namespace_path].present?
+    end
+
+    def hide_advanced_issues
+      return unless current_user.user_preference.novice?
+      return unless learn_gitlab.available?
+
+      Boards::UpdateService.new(learn_gitlab.project, current_user, label_ids: [learn_gitlab.label.id]).execute(learn_gitlab.board)
+    end
+
+    def learn_gitlab
+      @learn_gitlab ||= LearnGitlab.new(current_user)
     end
   end
 end

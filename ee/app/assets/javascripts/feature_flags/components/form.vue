@@ -1,6 +1,6 @@
 <script>
 import Vue from 'vue';
-import { memoize, isString, cloneDeep, isNumber } from 'lodash';
+import { memoize, isString, cloneDeep, isNumber, uniqueId } from 'lodash';
 import {
   GlDeprecatedButton,
   GlDeprecatedBadge as GlBadge,
@@ -28,6 +28,7 @@ import {
   LEGACY_FLAG,
 } from '../constants';
 import { createNewEnvironmentScope } from '../store/modules/helpers';
+import RelatedIssuesRoot from 'ee/related_issues/components/related_issues_root.vue';
 
 export default {
   components: {
@@ -41,6 +42,7 @@ export default {
     Icon,
     EnvironmentsDropdown,
     Strategy,
+    RelatedIssuesRoot,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -83,6 +85,11 @@ export default {
       type: String,
       required: true,
     },
+    featureFlagIssuesEndpoint: {
+      type: String,
+      required: false,
+      default: '',
+    },
     strategies: {
       type: Array,
       required: false,
@@ -102,7 +109,7 @@ export default {
     ),
 
     newHelpText: s__(
-      'FeatureFlags|Enable features for specific users and specific environments by defining feature flag strategies. By default, features are available to all users in all environments.',
+      'FeatureFlags|Enable features for specific users and specific environments by defining feature flag strategies.',
     ),
     noStrategiesText: s__('FeatureFlags|Feature Flag has no strategies'),
   },
@@ -143,9 +150,8 @@ export default {
     supportsStrategies() {
       return this.glFeatures.featureFlagsNewVersion && this.version === NEW_VERSION_FLAG;
     },
-
-    canDeleteStrategy() {
-      return this.formStrategies.length > 1;
+    showRelatedIssues() {
+      return this.featureFlagIssuesEndpoint.length > 0;
     },
   },
   mounted() {
@@ -160,8 +166,16 @@ export default {
     }
   },
   methods: {
+    keyFor(strategy) {
+      if (strategy.id) {
+        return strategy.id;
+      }
+
+      return uniqueId('strategy_');
+    },
+
     addStrategy() {
-      this.formStrategies.push({ name: '', parameters: {}, scopes: [] });
+      this.formStrategies.push({ name: ROLLOUT_STRATEGY_ALL_USERS, parameters: {}, scopes: [] });
     },
 
     deleteStrategy(s) {
@@ -306,6 +320,13 @@ export default {
         </div>
       </div>
 
+      <related-issues-root
+        v-if="showRelatedIssues"
+        :endpoint="featureFlagIssuesEndpoint"
+        :can-admin="true"
+        :is-linked-issue-block="false"
+      />
+
       <template v-if="supportsStrategies">
         <div class="row">
           <div class="col-md-12">
@@ -321,11 +342,10 @@ export default {
         <div v-if="filteredStrategies.length > 0" data-testid="feature-flag-strategies">
           <strategy
             v-for="(strategy, index) in filteredStrategies"
-            :key="strategy.id"
+            :key="keyFor(strategy)"
             :strategy="strategy"
             :index="index"
             :endpoint="environmentsEndpoint"
-            :can-delete="canDeleteStrategy"
             :user-lists="userLists"
             @change="onFormStrategyChange($event, index)"
             @delete="deleteStrategy(strategy)"
@@ -348,7 +368,7 @@ export default {
             </template>
           </gl-sprintf>
 
-          <div class="js-scopes-table prepend-top-default">
+          <div class="js-scopes-table gl-mt-3">
             <div class="gl-responsive-table-row table-row-header" role="row">
               <div class="table-section section-30" role="columnheader">
                 {{ s__('FeatureFlags|Environment Spec') }}

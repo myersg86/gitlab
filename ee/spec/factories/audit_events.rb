@@ -8,6 +8,8 @@ FactoryBot.define do
 
     entity_type { 'User' }
     entity_id   { target_user.id }
+    ip_address { IPAddr.new '127.0.0.1' }
+    author_name { 'Jane Doe' }
     details do
       {
         change: 'email address',
@@ -27,6 +29,7 @@ FactoryBot.define do
 
       entity_type { 'Project' }
       entity_id   { target_project.id }
+      ip_address { IPAddr.new '127.0.0.1' }
       details do
         {
           change: 'packges_enabled',
@@ -47,6 +50,7 @@ FactoryBot.define do
 
       entity_type { 'Group' }
       entity_id   { target_group.id }
+      ip_address { IPAddr.new '127.0.0.1' }
       details do
         {
           change: 'project_creation_level',

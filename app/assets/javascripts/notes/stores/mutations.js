@@ -95,6 +95,10 @@ export default {
     Object.assign(state, { noteableData: data });
   },
 
+  [types.SET_ISSUE_CONFIDENTIAL](state, data) {
+    state.noteableData.confidential = data;
+  },
+
   [types.SET_USER_DATA](state, data) {
     Object.assign(state, { userData: data });
   },
@@ -354,5 +358,8 @@ export default {
   },
   [types.RECEIVE_DELETE_DESCRIPTION_VERSION_ERROR](state) {
     state.isLoadingDescriptionVersion = false;
+  },
+  [types.UPDATE_ASSIGNEES](state, assignees) {
+    state.noteableData.assignees = assignees;
   },
 };

@@ -160,23 +160,37 @@ RSpec.describe API::Projects do
       end
     end
 
+    describe 'compliance_frameworks attribute' do
+      context 'when compliance_framework feature is available' do
+        context 'when project has a compliance framework' do
+          before do
+            project.update!(compliance_framework_setting: create(:compliance_framework_project_setting, :sox))
+            get api("/projects/#{project.id}", user)
+          end
+
+          it 'exposes framework names as array of strings' do
+            expect(json_response['compliance_frameworks']).to contain_exactly('sox')
+          end
+        end
+
+        context 'when project has no compliance framework' do
+          before do
+            get api("/projects/#{project.id}", user)
+          end
+
+          it 'returns an empty array' do
+            expect(json_response['compliance_frameworks']).to eq([])
+          end
+        end
+      end
+    end
+
     describe 'service desk attributes' do
       it 'are exposed when the feature is available' do
-        stub_licensed_features(service_desk: true)
-
         get api("/projects/#{project.id}", user)
 
         expect(json_response).to have_key 'service_desk_enabled'
         expect(json_response).to have_key 'service_desk_address'
-      end
-
-      it 'are not exposed when the feature is not available' do
-        stub_licensed_features(service_desk: false)
-
-        get api("/projects/#{project.id}", user)
-
-        expect(json_response).not_to have_key 'service_desk_enabled'
-        expect(json_response).not_to have_key 'service_desk_address'
       end
     end
 
@@ -716,7 +730,6 @@ RSpec.describe API::Projects do
       subject { put(api("/projects/#{project.id}", user), params: { service_desk_enabled: true }) }
 
       before do
-        stub_licensed_features(service_desk: true)
         project.update!(service_desk_enabled: false)
 
         allow(::Gitlab::IncomingEmail).to receive(:enabled?).and_return(true)

@@ -6,6 +6,8 @@ module Types
       graphql_name 'AlertManagementAlert'
       description "Describes an alert from the project's Alert Management"
 
+      implements(Types::Notes::NoteableType)
+
       authorize :read_alert_management_alert
 
       field :iid,
@@ -89,10 +91,14 @@ module Types
             null: true,
             description: 'Assignees of the alert'
 
-      def assignees
-        return User.none unless Feature.enabled?(:alert_assignee, object.project)
+      field :metrics_dashboard_url,
+            GraphQL::STRING_TYPE,
+            null: true,
+            description: 'URL for metrics embed for the alert',
+            resolve: -> (alert, _args, _context) { alert.present.metrics_dashboard_url }
 
-        object.assignees
+      def notes
+        object.ordered_notes
       end
     end
   end

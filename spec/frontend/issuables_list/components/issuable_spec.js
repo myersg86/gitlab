@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
-import { GlLink } from '@gitlab/ui';
+import { GlSprintf, GlLabel } from '@gitlab/ui';
 import { TEST_HOST } from 'helpers/test_constants';
 import { trimText } from 'helpers/text_helper';
 import initUserPopovers from '~/user_popovers';
@@ -8,6 +8,7 @@ import { mergeUrlParams } from '~/lib/utils/url_utility';
 import Issuable from '~/issuables_list/components/issuable.vue';
 import IssueAssignees from '~/vue_shared/components/issue/issue_assignees.vue';
 import { simpleIssue, testAssignees, testLabels } from '../issuable_list_test_data';
+import { isScopedLabel } from '~/lib/utils/common_utils';
 
 jest.mock('~/user_popovers');
 
@@ -37,12 +38,21 @@ describe('Issuable component', () => {
   let DateOrig;
   let wrapper;
 
-  const factory = (props = {}) => {
+  const factory = (props = {}, scopedLabels = false) => {
     wrapper = shallowMount(Issuable, {
       propsData: {
         issuable: simpleIssue,
         baseUrl: TEST_BASE_URL,
         ...props,
+      },
+      provide: {
+        glFeatures: {
+          scopedLabels,
+        },
+      },
+      stubs: {
+        'gl-sprintf': GlSprintf,
+        'gl-link': '<a><slot></slot></a>',
       },
     });
   };
@@ -53,6 +63,7 @@ describe('Issuable component', () => {
 
   afterEach(() => {
     wrapper.destroy();
+    wrapper = null;
   });
 
   beforeAll(() => {
@@ -66,12 +77,11 @@ describe('Issuable component', () => {
 
   const findConfidentialIcon = () => wrapper.find('.fa-eye-slash');
   const findTaskStatus = () => wrapper.find('.task-status');
-  const findOpenedAgoContainer = () => wrapper.find({ ref: 'openedAgoByContainer' });
+  const findOpenedAgoContainer = () => wrapper.find('[data-testid="openedByMessage"]');
   const findMilestone = () => wrapper.find('.js-milestone');
   const findMilestoneTooltip = () => findMilestone().attributes('title');
   const findDueDate = () => wrapper.find('.js-due-date');
-  const findLabelContainer = () => wrapper.find('.js-labels');
-  const findLabelLinks = () => findLabelContainer().findAll(GlLink);
+  const findLabels = () => wrapper.findAll(GlLabel);
   const findWeight = () => wrapper.find('.js-weight');
   const findAssignees = () => wrapper.find(IssueAssignees);
   const findMergeRequestsCount = () => wrapper.find('.js-merge-requests');
@@ -79,6 +89,10 @@ describe('Issuable component', () => {
   const findDownvotes = () => wrapper.find('.js-downvotes');
   const findNotes = () => wrapper.find('.js-notes');
   const findBulkCheckbox = () => wrapper.find('input.selected-issuable');
+  const findScopedLabels = () => findLabels().filter(w => isScopedLabel({ title: w.text() }));
+  const findUnscopedLabels = () => findLabels().filter(w => !isScopedLabel({ title: w.text() }));
+  const findIssuableTitle = () => wrapper.find('[data-testid="issuable-title"]');
+  const containsJiraLogo = () => wrapper.contains('[data-testid="jira-logo"]');
 
   describe('when mounted', () => {
     it('initializes user popovers', () => {
@@ -86,7 +100,55 @@ describe('Issuable component', () => {
 
       factory();
 
-      expect(initUserPopovers).toHaveBeenCalledWith([findOpenedAgoContainer().find('a').element]);
+      expect(initUserPopovers).toHaveBeenCalledWith([wrapper.vm.$refs.openedAgoByContainer.$el]);
+    });
+  });
+
+  describe('when scopedLabels feature is available', () => {
+    beforeEach(() => {
+      issuable.labels = [...testLabels];
+
+      factory({ issuable }, true);
+    });
+
+    describe('when label is scoped', () => {
+      it('returns label with correct props', () => {
+        const scopedLabel = findScopedLabels().at(0);
+
+        expect(scopedLabel.props('scoped')).toBe(true);
+      });
+    });
+
+    describe('when label is not scoped', () => {
+      it('returns label with correct props', () => {
+        const notScopedLabel = findUnscopedLabels().at(0);
+
+        expect(notScopedLabel.props('scoped')).toBe(false);
+      });
+    });
+  });
+
+  describe('when scopedLabels feature is not available', () => {
+    beforeEach(() => {
+      issuable.labels = [...testLabels];
+
+      factory({ issuable });
+    });
+
+    describe('when label is scoped', () => {
+      it('label scoped props is false', () => {
+        const scopedLabel = findScopedLabels().at(0);
+
+        expect(scopedLabel.props('scoped')).toBe(false);
+      });
+    });
+
+    describe('when label is not scoped', () => {
+      it('label scoped props is false', () => {
+        const notScopedLabel = findUnscopedLabels().at(0);
+
+        expect(notScopedLabel.props('scoped')).toBe(false);
+      });
     });
   });
 
@@ -113,7 +175,7 @@ describe('Issuable component', () => {
       ${'task status'}           | ${findTaskStatus}
       ${'milestone'}             | ${findMilestone}
       ${'due date'}              | ${findDueDate}
-      ${'labels'}                | ${findLabelContainer}
+      ${'labels'}                | ${findLabels}
       ${'weight'}                | ${findWeight}
       ${'merge request count'}   | ${findMergeRequestsCount}
       ${'upvotes'}               | ${findUpvotes}
@@ -135,7 +197,7 @@ describe('Issuable component', () => {
     });
 
     it('renders fuzzy opened date and author', () => {
-      expect(trimText(findOpenedAgoContainer().text())).toEqual(
+      expect(trimText(findOpenedAgoContainer().text())).toContain(
         `opened 1 month ago by ${TEST_USER_NAME}`,
       );
     });
@@ -154,6 +216,22 @@ describe('Issuable component', () => {
 
     it('renders the confidential icon', () => {
       expect(findConfidentialIcon().exists()).toBe(true);
+    });
+  });
+
+  describe('with Jira issuable', () => {
+    beforeEach(() => {
+      issuable.external_tracker = 'jira';
+
+      factory({ issuable });
+    });
+
+    it('renders the Jira icon', () => {
+      expect(containsJiraLogo()).toBe(true);
+    });
+
+    it('opens issuable in a new tab', () => {
+      expect(findIssuableTitle().props('target')).toBe('_blank');
     });
   });
 
@@ -239,10 +317,10 @@ describe('Issuable component', () => {
     it('renders labels', () => {
       factory({ issuable });
 
-      const labels = findLabelLinks().wrappers.map(label => ({
-        href: label.attributes('href'),
+      const labels = findLabels().wrappers.map(label => ({
+        href: label.props('target'),
         text: label.text(),
-        tooltip: label.find('span').attributes('title'),
+        tooltip: label.attributes('description'),
       }));
 
       const expected = testLabels.map(label => ({

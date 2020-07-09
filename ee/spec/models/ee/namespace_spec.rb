@@ -13,6 +13,7 @@ RSpec.describe Namespace do
   let!(:gold_plan) { create(:gold_plan) }
 
   it { is_expected.to have_one(:namespace_statistics) }
+  it { is_expected.to have_one(:namespace_limit) }
   it { is_expected.to have_one(:gitlab_subscription).dependent(:destroy) }
   it { is_expected.to have_one(:elasticsearch_indexed_namespace) }
 
@@ -24,6 +25,10 @@ RSpec.describe Namespace do
   it { is_expected.to delegate_method(:trial_ends_on).to(:gitlab_subscription) }
   it { is_expected.to delegate_method(:upgradable?).to(:gitlab_subscription) }
   it { is_expected.to delegate_method(:email).to(:owner).with_prefix.allow_nil }
+  it { is_expected.to delegate_method(:additional_purchased_storage_size).to(:namespace_limit) }
+  it { is_expected.to delegate_method(:additional_purchased_storage_size=).to(:namespace_limit).with_arguments(:args) }
+  it { is_expected.to delegate_method(:additional_purchased_storage_ends_on).to(:namespace_limit) }
+  it { is_expected.to delegate_method(:additional_purchased_storage_ends_on=).to(:namespace_limit).with_arguments(:args) }
 
   shared_examples 'plan helper' do |namespace_plan|
     let(:namespace) { create(:namespace_with_plan, plan: "#{plan_name}_plan") }
@@ -266,7 +271,7 @@ RSpec.describe Namespace do
     it 'only checks the plan once' do
       expect(group).to receive(:load_feature_available).once.and_call_original
 
-      2.times { group.feature_available?(:service_desk) }
+      2.times { group.feature_available?(:push_rules) }
     end
 
     context 'when checking namespace plan' do
@@ -424,8 +429,8 @@ RSpec.describe Namespace do
     end
   end
 
-  describe '#shared_runners_enabled?' do
-    subject { namespace.shared_runners_enabled? }
+  describe '#any_project_with_shared_runners_enabled?' do
+    subject { namespace.any_project_with_shared_runners_enabled? }
 
     context 'without projects' do
       it { is_expected.to be_falsey }
@@ -552,8 +557,8 @@ RSpec.describe Namespace do
     end
   end
 
-  describe '#shared_runners_enabled?' do
-    subject { namespace.shared_runners_enabled? }
+  describe '#any_project_with_shared_runners_enabled?' do
+    subject { namespace.any_project_with_shared_runners_enabled? }
 
     context 'subgroup with shared runners enabled project' do
       let(:subgroup) { create(:group, parent: namespace) }
@@ -1460,6 +1465,15 @@ RSpec.describe Namespace do
 
         it { is_expected.to be_nil }
       end
+    end
+  end
+
+  describe 'ensure namespace limit' do
+    it 'has namespace limit upon namespace initialization' do
+      namespace = build(:namespace)
+
+      expect(namespace.namespace_limit).to be_present
+      expect(namespace.namespace_limit).not_to be_persisted
     end
   end
 end

@@ -60,6 +60,12 @@ module Types
     field :merge_requests_ff_only_enabled, GraphQL::BOOLEAN_TYPE, null: true,
           description: 'Indicates if no merge commits should be created and all merges should instead be fast-forwarded, which means that merging is only allowed if the branch could be fast-forwarded.'
 
+    field :service_desk_enabled, GraphQL::BOOLEAN_TYPE, null: true,
+          description: 'Indicates if the project has service desk enabled.'
+
+    field :service_desk_address, GraphQL::STRING_TYPE, null: true,
+          description: 'E-mail address of the service desk.'
+
     field :avatar_url, GraphQL::STRING_TYPE, null: true, calls_gitaly: true,
           description: 'URL to avatar image file of the project',
           resolve: -> (project, args, ctx) do
@@ -153,6 +159,10 @@ module Types
           description: 'Environments of the project',
           resolver: Resolvers::EnvironmentsResolver
 
+    field :sast_ci_configuration, ::Types::CiConfiguration::Sast::Type, null: true,
+      description: 'SAST CI configuration for the project',
+      resolver: ::Resolvers::CiConfiguration::SastResolver
+
     field :issue,
           Types::IssueType,
           null: true,
@@ -164,6 +174,12 @@ module Types
           null: true,
           description: 'Build pipelines of the project',
           resolver: Resolvers::ProjectPipelinesResolver
+
+    field :pipeline,
+          Types::Ci::PipelineType,
+          null: true,
+          description: 'Build pipeline of the project',
+          resolver: Resolvers::ProjectPipelineResolver
 
     field :sentry_detailed_error,
           Types::ErrorTracking::SentryDetailedErrorType,
@@ -237,15 +253,14 @@ module Types
           Types::ReleaseType.connection_type,
           null: true,
           description: 'Releases of the project',
-          resolver: Resolvers::ReleasesResolver,
-          feature_flag: :graphql_release_data
+          resolver: Resolvers::ReleasesResolver
 
     field :release,
           Types::ReleaseType,
           null: true,
           description: 'A single release of the project',
           resolver: Resolvers::ReleasesResolver.single,
-          feature_flag: :graphql_release_data
+          authorize: :download_code
 
     field :container_expiration_policy,
           Types::ContainerExpirationPolicyType,

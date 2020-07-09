@@ -15,8 +15,6 @@ module EE
       include DeprecatedApprovalsBeforeMerge
       include UsageStatistics
 
-      has_many :approvals, dependent: :delete_all # rubocop:disable Cop/ActiveRecordDependent
-      has_many :approved_by_users, through: :approvals, source: :user
       has_many :approvers, as: :target, dependent: :delete_all # rubocop:disable Cop/ActiveRecordDependent
       has_many :approver_users, through: :approvers, source: :user
       has_many :approver_groups, as: :target, dependent: :delete_all # rubocop:disable Cop/ActiveRecordDependent
@@ -102,6 +100,7 @@ module EE
     override :mergeable?
     def mergeable?(skip_ci_check: false)
       return false unless approved?
+      return false if has_denied_policies?
       return false if merge_blocked_by_other_mrs?
 
       super
@@ -144,6 +143,13 @@ module EE
       hidden.count
     end
 
+    def has_denied_policies?
+      return false if ::Feature.disabled?(:license_compliance_denies_mr, project, default_enabled: false)
+      return false unless has_license_scanning_reports?
+
+      actual_head_pipeline.license_scanning_report.violates?(project.software_license_policies)
+    end
+
     def enabled_reports
       {
         sast: report_type_enabled?(:sast),
@@ -155,57 +161,57 @@ module EE
     end
 
     def has_dependency_scanning_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.dependency_list_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.dependency_list_reports)
     end
 
     def compare_dependency_scanning_reports(current_user)
       return missing_report_error("dependency scanning") unless has_dependency_scanning_reports?
 
-      compare_reports(::Ci::CompareDependencyScanningReportsService, current_user)
+      compare_reports(::Ci::CompareSecurityReportsService, current_user, 'dependency_scanning')
     end
 
     def has_license_scanning_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.license_scanning_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.license_scanning_reports)
     end
 
     def has_container_scanning_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.container_scanning_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.container_scanning_reports)
     end
 
     def compare_container_scanning_reports(current_user)
       return missing_report_error("container scanning") unless has_container_scanning_reports?
 
-      compare_reports(::Ci::CompareContainerScanningReportsService, current_user)
+      compare_reports(::Ci::CompareSecurityReportsService, current_user, 'container_scanning')
     end
 
     def has_sast_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.sast_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.sast_reports)
     end
 
     def has_secret_detection_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.secret_detection_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.secret_detection_reports)
     end
 
     def compare_sast_reports(current_user)
       return missing_report_error("SAST") unless has_sast_reports?
 
-      compare_reports(::Ci::CompareSastReportsService, current_user)
+      compare_reports(::Ci::CompareSecurityReportsService, current_user, 'sast')
     end
 
     def compare_secret_detection_reports(current_user)
       return missing_report_error("secret detection") unless has_secret_detection_reports?
 
-      compare_reports(::Ci::CompareSecretDetectionReportsService, current_user)
+      compare_reports(::Ci::CompareSecurityReportsService, current_user, 'secret_detection')
     end
 
     def has_dast_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.dast_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.dast_reports)
     end
 
     def compare_dast_reports(current_user)
       return missing_report_error("DAST") unless has_dast_reports?
 
-      compare_reports(::Ci::CompareDastReportsService, current_user)
+      compare_reports(::Ci::CompareSecurityReportsService, current_user, 'dast')
     end
 
     def compare_license_scanning_reports(current_user)
@@ -215,7 +221,7 @@ module EE
     end
 
     def has_metrics_reports?
-      !!(actual_head_pipeline&.has_reports?(::Ci::JobArtifact.metrics_reports))
+      !!actual_head_pipeline&.has_reports?(::Ci::JobArtifact.metrics_reports)
     end
 
     def compare_metrics_reports

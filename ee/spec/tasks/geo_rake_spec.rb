@@ -321,6 +321,47 @@ RSpec.describe 'geo rake tasks', :geo do
     end
   end
 
+  describe 'geo:check_replication_verification_status' do
+    let(:run_task) { run_rake_task('geo:check_replication_verification_status') }
+    let!(:current_node) { create(:geo_node) }
+    let!(:geo_node_status) { build(:geo_node_status, :healthy, geo_node: current_node) }
+
+    around do |example|
+      example.run
+    rescue SystemExit
+    end
+
+    before do
+      allow(GeoNodeStatus).to receive(:current_node_status).and_return(geo_node_status)
+      allow(Gitlab.config.geo.registry_replication).to receive(:enabled).and_return(true)
+
+      allow(Gitlab::Geo::GeoNodeStatusCheck).to receive(:replication_verification_complete?)
+        .and_return(complete)
+    end
+
+    context 'when replication is up-to-date' do
+      let(:complete) { true }
+
+      it 'prints a success message' do
+        expect { run_task }.to output(/SUCCESS - Replication is up-to-date/).to_stdout
+      end
+    end
+
+    context 'when replication is not up-to-date' do
+      let(:complete) { false }
+
+      it 'prints an error message' do
+        expect { run_task }.to output(/ERROR - Replication is not up-to-date/).to_stdout
+      end
+
+      it 'exits with a 1' do
+        expect { run_task }.to raise_error(SystemExit) do |error|
+          expect(error.status).to eq(1)
+        end
+      end
+    end
+  end
+
   describe 'geo:status', :geo_fdw do
     context 'without a valid license' do
       before do
@@ -342,7 +383,8 @@ RSpec.describe 'geo rake tasks', :geo do
         stub_licensed_features(geo: true)
         stub_current_geo_node(current_node)
 
-        allow(GeoNodeStatus).to receive(:current_node_status).once.and_return(geo_node_status)
+        allow(GeoNodeStatus).to receive(:current_node_status).and_return(geo_node_status)
+        allow(Gitlab.config.geo.registry_replication).to receive(:enabled).and_return(true)
       end
 
       it 'runs with no error' do
@@ -360,6 +402,32 @@ RSpec.describe 'geo rake tasks', :geo do
 
         it 'does not show health status summary' do
           expect { run_rake_task('geo:status') }.not_to output(/Health Status Summary/).to_stdout
+        end
+
+        it 'prints messages for all the checks' do
+          [
+            /Name/,
+            /URL/,
+            /GitLab Version/,
+            /Geo Role/,
+            /Health Status/,
+            /Sync Settings/,
+            /Database replication lag/,
+            /Repositories/,
+            /Verified Repositories/,
+            /Wikis/,
+            /Verified Wikis/,
+            /LFS Objects/,
+            /Attachments/,
+            /CI job artifacts/,
+            /Container repositories/,
+            /Design repositories/,
+            /Repositories Checked/,
+            /Last event ID seen from primary/,
+            /Last status report was/
+          ].each do |text|
+            expect { run_rake_task('geo:status') }.to output(text).to_stdout
+          end
         end
       end
 

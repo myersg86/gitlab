@@ -98,24 +98,10 @@ status on your [GCP dashboard](https://console.cloud.google.com/kubernetes).
 Next, you will install some applications on your cluster that are needed
 to take full advantage of Auto DevOps.
 
-## Install the package manager
-
-After creating your Kubernetes cluster, GitLab's Kubernetes integration provides
-[pre-defined applications](../../user/project/clusters/index.md#installing-applications)
-for you to install. To install them, you must next install Helm Tiller, the
-Kubernetes package manager for Kubernetes, to enable the installation of other applications.
-
-Next to **Helm Tiller**, click **Install**.
-
-![Cluster applications](img/guide_cluster_apps_v12_3.png)
-
-After installation completes, the page reloads, and you can install other
-applications.
-
 ## Install Ingress and Prometheus
 
-After installing **Helm Tiller**, you can install other applications that rely on it,
-including Ingress and Prometheus, which we will install in this quick start guide:
+After your cluster is running, you can install your first applications.
+In this guide, we will install Ingress and Prometheus:
 
 - Ingress - Provides load balancing, SSL termination, and name-based virtual hosting,
   using NGINX behind the scenes.
@@ -182,6 +168,7 @@ The jobs are separated into stages:
     ([Auto Dependency Scanning](stages.md#auto-dependency-scanning-ultimate)) **(ULTIMATE)**
   - Jobs suffixed with `-sast` run static analysis on the current code to check for potential
     security issues, and are allowed to fail ([Auto SAST](stages.md#auto-sast-ultimate)) **(ULTIMATE)**
+  - The `secret-detection` job checks for leaked secrets and is allowed to fail ([Auto Secret Detection](stages.md#auto-secret-detection-ultimate)) **(ULTIMATE)**
   - The `license_management` job searches the application's dependencies to determine each of their
     licenses and is allowed to fail
     ([Auto License Compliance](stages.md#auto-license-compliance-ultimate)) **(ULTIMATE)**
@@ -304,7 +291,7 @@ all within GitLab. Despite its automatic nature, Auto DevOps can also be configu
 and customized to fit your workflow. Here are some helpful resources for further reading:
 
 1. [Auto DevOps](index.md)
-1. [Multiple Kubernetes clusters](index.md#using-multiple-kubernetes-clusters-premium) **(PREMIUM)**
+1. [Multiple Kubernetes clusters](index.md#using-multiple-kubernetes-clusters)
 1. [Incremental rollout to production](customize.md#incremental-rollout-to-production-premium) **(PREMIUM)**
 1. [Disable jobs you don't need with environment variables](customize.md#environment-variables)
 1. [Use a static IP for your cluster](../../user/clusters/applications.md#using-a-static-ip)

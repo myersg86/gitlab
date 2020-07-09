@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe Packages::Composer::CreatePackageService do
-  include EE::PackagesManagerApiSpecHelpers
+RSpec.describe Packages::Composer::CreatePackageService do
+  include PackagesManagerApiSpecHelpers
 
   let_it_be(:package_name) { 'composer-package-name' }
   let_it_be(:json) { { name: package_name }.to_json }
@@ -34,6 +34,8 @@ describe Packages::Composer::CreatePackageService do
 
           expect(created_package.name).to eq package_name
           expect(created_package.version).to eq 'dev-master'
+          expect(created_package.composer_metadatum.target_sha).to eq branch.target
+          expect(created_package.composer_metadatum.composer_json.to_json).to eq json
         end
       end
 

@@ -145,7 +145,8 @@ module EE
         author_id: @author.id,
         entity_id: @entity.respond_to?(:id) ? @entity.id : -1,
         entity_type: 'User',
-        details: @details
+        details: @details,
+        ip_address: ip_address
       )
     end
 
@@ -213,14 +214,9 @@ module EE
 
     override :base_payload
     def base_payload
-      {
-        author_id: @author.id,
-        # `@author.respond_to?(:id)` is to support cases where we need to log events
-        # that could take place even when a user is unathenticated, Eg: downloading a public repo.
-        # For such events, it is not mandatory that an author is always present.
-        entity_id: @entity.id,
-        entity_type: @entity.class.name
-      }
+      super.tap do |payload|
+        payload[:ip_address] = ip_address if admin_audit_log_enabled?
+      end
     end
 
     def for_custom_model(model, key_title)

@@ -2,10 +2,12 @@
 import { GlDeprecatedButton, GlLoadingIcon, GlTooltipDirective } from '@gitlab/ui';
 import Icon from '~/vue_shared/components/icon.vue';
 import { __ } from '~/locale';
+import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 
 export default {
   components: { Icon, GlDeprecatedButton, GlLoadingIcon },
   directives: { 'gl-tooltip': GlTooltipDirective },
+  mixins: [glFeatureFlagsMixin()],
   props: {
     batchSuggestionsCount: {
       type: Number,
@@ -36,6 +38,11 @@ export default {
       type: String,
       required: true,
     },
+    inapplicableReason: {
+      type: String,
+      required: false,
+      default: null,
+    },
   },
   data() {
     return {
@@ -43,8 +50,17 @@ export default {
     };
   },
   computed: {
+    canBeBatched() {
+      return Boolean(this.glFeatures.batchSuggestions);
+    },
     isApplying() {
       return this.isApplyingSingle || this.isApplyingBatch;
+    },
+    tooltipMessage() {
+      return this.canApply ? __('This also resolves this thread') : this.inapplicableReason;
+    },
+    isDisableButton() {
+      return this.isApplying || !this.canApply;
     },
     applyingSuggestionsMessage() {
       if (this.isApplyingSingle || this.batchSuggestionsCount < 2) {
@@ -89,7 +105,7 @@ export default {
       <gl-loading-icon class="d-flex-center mr-2" />
       <span>{{ applyingSuggestionsMessage }}</span>
     </div>
-    <div v-else-if="canApply && isBatched" class="d-flex align-items-center">
+    <div v-else-if="canApply && canBeBatched && isBatched" class="d-flex align-items-center">
       <gl-deprecated-button
         class="btn-inverted js-remove-from-batch-btn btn-grouped"
         :disabled="isApplying"
@@ -110,23 +126,25 @@ export default {
         </span>
       </gl-deprecated-button>
     </div>
-    <div v-else-if="canApply" class="d-flex align-items-center">
+    <div v-else class="d-flex align-items-center">
       <gl-deprecated-button
+        v-if="canBeBatched && !isDisableButton"
         class="btn-inverted js-add-to-batch-btn btn-grouped"
-        :disabled="isApplying"
+        :disabled="isDisableButton"
         @click="addSuggestionToBatch"
       >
         {{ __('Add suggestion to batch') }}
       </gl-deprecated-button>
-      <gl-deprecated-button
-        v-gl-tooltip.viewport="__('This also resolves the thread')"
-        class="btn-inverted js-apply-btn btn-grouped"
-        :disabled="isApplying"
-        variant="success"
-        @click="applySuggestion"
-      >
-        {{ __('Apply suggestion') }}
-      </gl-deprecated-button>
+      <span v-gl-tooltip.viewport="tooltipMessage" tabindex="0">
+        <gl-deprecated-button
+          class="btn-inverted js-apply-btn btn-grouped"
+          :disabled="isDisableButton"
+          variant="success"
+          @click="applySuggestion"
+        >
+          {{ __('Apply suggestion') }}
+        </gl-deprecated-button>
+      </span>
     </div>
   </div>
 </template>

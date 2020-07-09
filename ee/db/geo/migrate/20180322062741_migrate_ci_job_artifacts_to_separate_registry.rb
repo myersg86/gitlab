@@ -53,6 +53,7 @@ class MigrateCiJobArtifactsToSeparateRegistry < ActiveRecord::Migration[4.2]
 
   def down
     tracking_db.drop_table :job_artifact_registry
+
     execute('DROP TRIGGER IF EXISTS replicate_job_artifact_registry ON file_registry')
     execute('DROP FUNCTION IF EXISTS replicate_job_artifact_registry()')
   end

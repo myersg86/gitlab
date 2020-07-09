@@ -45,7 +45,7 @@ GET /projects
 | --------- | ---- | -------- | ----------- |
 | `archived`                    | boolean  | no | Limit by archived status |
 | `visibility`                  | string   | no | Limit by visibility `public`, `internal`, or `private` |
-| `order_by`                    | string   | no | Return projects ordered by `id`, `name`, `path`, `created_at`, `updated_at`, or `last_activity_at` fields. Default is `created_at` |
+| `order_by`                    | string   | no | Return projects ordered by `id`, `name`, `path`, `created_at`, `updated_at`, or `last_activity_at` fields. `repository_size`, `storage_size`, or `wiki_size` fields are only allowed for admins. Default is `created_at` |
 | `sort`                        | string   | no | Return projects sorted in `asc` or `desc` order. Default is `desc` |
 | `search`                      | string   | no | Return list of projects matching the search criteria |
 | `search_namespaces`           | boolean  | no | Include ancestor namespaces when matching search criteria. Default is `false` |
@@ -60,11 +60,12 @@ GET /projects
 | `with_programming_language`   | string   | no | Limit by projects which use the given programming language |
 | `wiki_checksum_failed`        | boolean  | no | **(PREMIUM)** Limit projects where the wiki checksum calculation has failed ([Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/6137) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.2) |
 | `repository_checksum_failed`  | boolean  | no | **(PREMIUM)** Limit projects where the repository checksum calculation has failed ([Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/6137) in [GitLab Premium](https://about.gitlab.com/pricing/) 11.2) |
-| `min_access_level`            | integer  | no | Limit by current user minimal [access level](members.md) |
+| `min_access_level`            | integer  | no | Limit by current user minimal [access level](members.md#valid-access-levels) |
 | `id_after`                    | integer  | no | Limit results to projects with IDs greater than the specified ID |
 | `id_before`                   | integer  | no | Limit results to projects with IDs less than the specified ID |
 | `last_activity_after`         | datetime | no | Limit results to projects with last_activity after specified time. Format: ISO 8601 YYYY-MM-DDTHH:MM:SSZ |
 | `last_activity_before`        | datetime | no | Limit results to projects with last_activity before specified time. Format: ISO 8601 YYYY-MM-DDTHH:MM:SSZ |
+| `repository_storage`          | string   | no | Limit results to projects stored on repository_storage. Available for admins only. |
 
 NOTE: **Note:**
 This endpoint supports [keyset pagination](README.md#keyset-based-pagination) for selected `order_by` options.
@@ -174,7 +175,8 @@ When the user is authenticated and `simple` is not set this returns something li
       "wiki_size" : 0,
       "lfs_objects_size": 0,
       "job_artifacts_size": 0,
-      "packages_size": 0
+      "packages_size": 0,
+      "snippets_size": 0
     },
     "_links": {
       "self": "http://example.com/api/v4/projects",
@@ -276,7 +278,8 @@ When the user is authenticated and `simple` is not set this returns something li
       "wiki_size" : 0,
       "lfs_objects_size": 0,
       "job_artifacts_size": 0,
-      "packages_size": 0
+      "packages_size": 0,
+      "snippets_size": 0
     },
     "_links": {
       "self": "http://example.com/api/v4/projects",
@@ -348,7 +351,7 @@ GET /users/:user_id/projects
 | `with_issues_enabled` | boolean | no | Limit by enabled issues feature |
 | `with_merge_requests_enabled` | boolean | no | Limit by enabled merge requests feature |
 | `with_programming_language` | string | no | Limit by projects which use the given programming language |
-| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md) |
+| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md#valid-access-levels) |
 | `id_after`                    | integer | no | Limit results to projects with IDs greater than the specified ID |
 | `id_before`                   | integer | no | Limit results to projects with IDs less than the specified ID |
 
@@ -425,7 +428,8 @@ This endpoint supports [keyset pagination](README.md#keyset-based-pagination) fo
       "wiki_size" : 0,
       "lfs_objects_size": 0,
       "job_artifacts_size": 0,
-      "packages_size": 0
+      "packages_size": 0,
+      "snippets_size": 0
     },
     "_links": {
       "self": "http://example.com/api/v4/projects",
@@ -527,7 +531,8 @@ This endpoint supports [keyset pagination](README.md#keyset-based-pagination) fo
       "wiki_size" : 0,
       "lfs_objects_size": 0,
       "job_artifacts_size": 0,
-      "packages_size": 0
+      "packages_size": 0,
+      "snippets_size": 0
     },
     "_links": {
       "self": "http://example.com/api/v4/projects",
@@ -566,7 +571,7 @@ GET /users/:user_id/starred_projects
 | `with_custom_attributes` | boolean | no | Include [custom attributes](custom_attributes.md) in response (admins only). |
 | `with_issues_enabled` | boolean | no | Limit by enabled issues feature. |
 | `with_merge_requests_enabled` | boolean | no | Limit by enabled merge requests feature. |
-| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md). |
+| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md#valid-access-levels). |
 
 ```shell
 curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/users/5/starred_projects"
@@ -890,6 +895,7 @@ GET /projects/:id
   "suggestion_commit_message": null,
   "marked_for_deletion_at": "2020-04-03", // Deprecated and will be removed in API v5 in favor of marked_for_deletion_on
   "marked_for_deletion_on": "2020-04-03",
+  "compliance_frameworks": [ "sox" ],
   "statistics": {
     "commit_count": 37,
     "storage_size": 1038090,
@@ -897,7 +903,8 @@ GET /projects/:id
     "wiki_size" : 0,
     "lfs_objects_size": 0,
     "job_artifacts_size": 0,
-    "packages_size": 0
+    "packages_size": 0,
+    "snippets_size": 0
   },
   "_links": {
     "self": "http://example.com/api/v4/projects",
@@ -1045,7 +1052,7 @@ POST /projects
 | `show_default_award_emojis` | boolean | no | Show default award emojis |
 | `resolve_outdated_diff_discussions` | boolean | no | Automatically resolve merge request diffs discussions on lines changed with a push |
 | `container_registry_enabled` | boolean | no | Enable container registry for this project |
-| `container_expiration_policy_attributes` | hash | no | Update the image expiration policy for this project. Accepts: `cadence` (string), `keep_n` (string), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean) |
+| `container_expiration_policy_attributes` | hash | no | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (string), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean) |
 | `shared_runners_enabled` | boolean | no | Enable shared runners for this project |
 | `visibility` | string | no | See [project visibility level](#project-visibility-level) |
 | `import_url` | string | no | URL to import repository from |
@@ -1186,7 +1193,7 @@ PUT /projects/:id
 | `show_default_award_emojis` | boolean | no | Show default award emojis |
 | `resolve_outdated_diff_discussions` | boolean | no | Automatically resolve merge request diffs discussions on lines changed with a push |
 | `container_registry_enabled` | boolean | no | Enable container registry for this project |
-| `container_expiration_policy_attributes` | hash | no | Update the image expiration policy for this project. Accepts: `cadence` (string), `keep_n` (string), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean) |
+| `container_expiration_policy_attributes` | hash | no | Update the image cleanup policy for this project. Accepts: `cadence` (string), `keep_n` (string), `older_than` (string), `name_regex` (string), `name_regex_delete` (string), `name_regex_keep` (string), `enabled` (boolean) |
 | `shared_runners_enabled` | boolean | no | Enable shared runners for this project |
 | `visibility` | string | no | See [project visibility level](#project-visibility-level) |
 | `import_url` | string | no | URL to import repository from |
@@ -1272,7 +1279,7 @@ GET /projects/:id/forks
 | `with_custom_attributes` | boolean | no | Include [custom attributes](custom_attributes.md) in response (admins only) |
 | `with_issues_enabled` | boolean | no | Limit by enabled issues feature |
 | `with_merge_requests_enabled` | boolean | no | Limit by enabled merge requests feature |
-| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md) |
+| `min_access_level` | integer | no | Limit by current user minimal [access level](members.md#valid-access-levels) |
 
 ```shell
 curl --header "PRIVATE-TOKEN: <your_access_token>" "https://gitlab.example.com/api/v4/projects/5/forks"
@@ -1902,7 +1909,7 @@ POST /projects/:id/share
 | --------- | ---- | -------- | ----------- |
 | `id` | integer/string | yes | The ID or [URL-encoded path of the project](README.md#namespaced-path-encoding) |
 | `group_id` | integer | yes | The ID of the group to share with |
-| `group_access` | integer | yes | The [permissions level](members.md) to grant the group |
+| `group_access` | integer | yes | The [access level](members.md#valid-access-levels) to grant the group |
 | `expires_at` | string | no | Share expiration date in ISO 8601 format: 2016-09-26 |
 
 ## Delete a shared project link within a group

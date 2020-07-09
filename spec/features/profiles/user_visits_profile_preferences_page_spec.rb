@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'User visits the profile preferences page' do
+RSpec.describe 'User visits the profile preferences page' do
   include Select2Helper
 
   let(:user) { create(:user) }
@@ -65,7 +65,7 @@ describe 'User visits the profile preferences page' do
   end
 
   describe 'User changes their language', :js do
-    it 'creates a flash message', :quarantine do
+    it 'creates a flash message', quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/31404' do
       select2('en', from: '#user_preferred_language')
       click_button 'Save'
 

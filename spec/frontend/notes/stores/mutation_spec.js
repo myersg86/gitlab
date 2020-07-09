@@ -805,4 +805,30 @@ describe('Notes Store mutations', () => {
       expect(state.batchSuggestionsInfo.length).toEqual(0);
     });
   });
+
+  describe('SET_ISSUE_CONFIDENTIAL', () => {
+    let state;
+
+    beforeEach(() => {
+      state = { noteableData: { confidential: false } };
+    });
+
+    it('sets sort order', () => {
+      mutations.SET_ISSUE_CONFIDENTIAL(state, true);
+
+      expect(state.noteableData.confidential).toBe(true);
+    });
+  });
+
+  describe('UPDATE_ASSIGNEES', () => {
+    it('should update assignees', () => {
+      const state = {
+        noteableData: noteableDataMock,
+      };
+
+      mutations.UPDATE_ASSIGNEES(state, [userDataMock.id]);
+
+      expect(state.noteableData.assignees).toEqual([userDataMock.id]);
+    });
+  });
 });

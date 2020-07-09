@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Iteration do
+RSpec.describe Iteration do
   let_it_be(:project) { create(:project) }
   let_it_be(:group) { create(:group) }
 
@@ -43,6 +43,14 @@ describe Iteration do
         let(:due_date) { 3.weeks.from_now }
 
         it { is_expected.to be_valid }
+      end
+
+      context 'when updated iteration dates overlap with its own dates' do
+        it 'is valid' do
+          existing_iteration.start_date = 5.days.from_now
+
+          expect(existing_iteration).to be_valid
+        end
       end
 
       context 'when dates overlap' do

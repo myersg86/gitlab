@@ -6,16 +6,18 @@ import { objectToQuery } from '~/lib/utils/url_utility';
 import VueDraggable from 'vuedraggable';
 import MockAdapter from 'axios-mock-adapter';
 import axios from '~/lib/utils/axios_utils';
-import { metricStates } from '~/monitoring/constants';
+import { dashboardEmptyStates, metricStates } from '~/monitoring/constants';
 import Dashboard from '~/monitoring/components/dashboard.vue';
 
 import DashboardHeader from '~/monitoring/components/dashboard_header.vue';
+import RefreshButton from '~/monitoring/components/refresh_button.vue';
 import DateTimePicker from '~/vue_shared/components/date_time_picker/date_time_picker.vue';
 import CustomMetricsFormFields from '~/custom_metrics/components/custom_metrics_form_fields.vue';
 import DashboardsDropdown from '~/monitoring/components/dashboards_dropdown.vue';
 import EmptyState from '~/monitoring/components/empty_state.vue';
 import GroupEmptyState from '~/monitoring/components/group_empty_state.vue';
 import DashboardPanel from '~/monitoring/components/dashboard_panel.vue';
+import GraphGroup from '~/monitoring/components/graph_group.vue';
 import LinksSection from '~/monitoring/components/links_section.vue';
 import { createStore } from '~/monitoring/stores';
 import * as types from '~/monitoring/stores/mutation_types';
@@ -24,11 +26,15 @@ import {
   setupStoreWithDashboard,
   setMetricResult,
   setupStoreWithData,
-  setupStoreWithVariable,
+  setupStoreWithDataForPanelCount,
   setupStoreWithLinks,
 } from '../store_utils';
-import { environmentData, dashboardGitResponse, propsData } from '../mock_data';
-import { metricsDashboardViewModel, metricsDashboardPanelCount } from '../fixture_data';
+import { environmentData, dashboardGitResponse, storeVariables } from '../mock_data';
+import {
+  metricsDashboardViewModel,
+  metricsDashboardPanelCount,
+  dashboardProps,
+} from '../fixture_data';
 import createFlash from '~/flash';
 
 jest.mock('~/flash');
@@ -48,7 +54,7 @@ describe('Dashboard', () => {
 
   const createShallowWrapper = (props = {}, options = {}) => {
     wrapper = shallowMount(Dashboard, {
-      propsData: { ...propsData, ...props },
+      propsData: { ...dashboardProps, ...props },
       store,
       stubs: {
         DashboardHeader,
@@ -59,7 +65,7 @@ describe('Dashboard', () => {
 
   const createMountedWrapper = (props = {}, options = {}) => {
     wrapper = mount(Dashboard, {
-      propsData: { ...propsData, ...props },
+      propsData: { ...dashboardProps, ...props },
       store,
       stubs: {
         'graph-group': true,
@@ -120,13 +126,13 @@ describe('Dashboard', () => {
     });
 
     it('shows up a loading state', () => {
-      store.state.monitoringDashboard.emptyState = 'loading';
+      store.state.monitoringDashboard.emptyState = dashboardEmptyStates.LOADING;
 
       createShallowWrapper({ hasMetrics: true });
 
       return wrapper.vm.$nextTick().then(() => {
         expect(wrapper.find(EmptyState).exists()).toBe(true);
-        expect(wrapper.find(EmptyState).props('selectedState')).toBe('loading');
+        expect(wrapper.find(EmptyState).props('selectedState')).toBe(dashboardEmptyStates.LOADING);
       });
     });
 
@@ -153,6 +159,103 @@ describe('Dashboard', () => {
 
       return wrapper.vm.$nextTick().then(() => {
         expect(store.dispatch).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('panel containers layout', () => {
+    const findPanelLayoutWrapperAt = index => {
+      return wrapper
+        .find(GraphGroup)
+        .findAll('[data-testid="dashboard-panel-layout-wrapper"]')
+        .at(index);
+    };
+
+    beforeEach(() => {
+      createMountedWrapper({ hasMetrics: true });
+
+      return wrapper.vm.$nextTick();
+    });
+
+    describe('when the graph group has an even number of panels', () => {
+      it('2 panels - all panel wrappers take half width of their parent', () => {
+        setupStoreWithDataForPanelCount(store, 2);
+
+        wrapper.vm.$nextTick(() => {
+          expect(findPanelLayoutWrapperAt(0).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(1).classes('col-lg-6')).toBe(true);
+        });
+      });
+
+      it('4 panels - all panel wrappers take half width of their parent', () => {
+        setupStoreWithDataForPanelCount(store, 4);
+
+        wrapper.vm.$nextTick(() => {
+          expect(findPanelLayoutWrapperAt(0).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(1).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(2).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(3).classes('col-lg-6')).toBe(true);
+        });
+      });
+    });
+
+    describe('when the graph group has an odd number of panels', () => {
+      it('1 panel - panel wrapper does not take half width of its parent', () => {
+        setupStoreWithDataForPanelCount(store, 1);
+
+        wrapper.vm.$nextTick(() => {
+          expect(findPanelLayoutWrapperAt(0).classes('col-lg-6')).toBe(false);
+        });
+      });
+
+      it('3 panels - all panels but last take half width of their parents', () => {
+        setupStoreWithDataForPanelCount(store, 3);
+
+        wrapper.vm.$nextTick(() => {
+          expect(findPanelLayoutWrapperAt(0).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(1).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(2).classes('col-lg-6')).toBe(false);
+        });
+      });
+
+      it('5 panels - all panels but last take half width of their parents', () => {
+        setupStoreWithDataForPanelCount(store, 5);
+
+        wrapper.vm.$nextTick(() => {
+          expect(findPanelLayoutWrapperAt(0).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(1).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(2).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(3).classes('col-lg-6')).toBe(true);
+          expect(findPanelLayoutWrapperAt(4).classes('col-lg-6')).toBe(false);
+        });
+      });
+    });
+  });
+
+  describe('dashboard validation warning', () => {
+    it('displays a warning if there are validation warnings', () => {
+      createMountedWrapper({ hasMetrics: true });
+
+      store.commit(
+        `monitoringDashboard/${types.RECEIVE_DASHBOARD_VALIDATION_WARNINGS_SUCCESS}`,
+        true,
+      );
+
+      return wrapper.vm.$nextTick().then(() => {
+        expect(createFlash).toHaveBeenCalled();
+      });
+    });
+
+    it('does not display a warning if there are no validation warnings', () => {
+      createMountedWrapper({ hasMetrics: true });
+
+      store.commit(
+        `monitoringDashboard/${types.RECEIVE_DASHBOARD_VALIDATION_WARNINGS_SUCCESS}`,
+        false,
+      );
+
+      return wrapper.vm.$nextTick().then(() => {
+        expect(createFlash).not.toHaveBeenCalled();
       });
     });
   });
@@ -323,6 +426,32 @@ describe('Dashboard', () => {
         );
       });
     });
+
+    describe('when custom dashboard is selected', () => {
+      const windowLocation = window.location;
+      const findDashboardDropdown = () => wrapper.find(DashboardHeader).find(DashboardsDropdown);
+
+      beforeEach(() => {
+        delete window.location;
+        window.location = { ...windowLocation, assign: jest.fn() };
+        createMountedWrapper();
+
+        return wrapper.vm.$nextTick();
+      });
+
+      afterEach(() => {
+        window.location = windowLocation;
+      });
+
+      it('encodes dashboard param', () => {
+        findDashboardDropdown().vm.$emit('selectDashboard', {
+          path: 'dashboard&copy.yml',
+        });
+        expect(window.location.assign).toHaveBeenCalledWith(
+          'http://localhost/?dashboard=dashboard%2526copy.yml',
+        );
+      });
+    });
   });
 
   describe('when all requests have been commited by the store', () => {
@@ -464,10 +593,9 @@ describe('Dashboard', () => {
     setupStoreWithData(store);
 
     return wrapper.vm.$nextTick().then(() => {
-      const refreshBtn = wrapper.find(DashboardHeader).findAll({ ref: 'refreshDashboardBtn' });
+      const refreshBtn = wrapper.find(DashboardHeader).find(RefreshButton);
 
-      expect(refreshBtn).toHaveLength(1);
-      expect(refreshBtn.is(GlDeprecatedButton)).toBe(true);
+      expect(refreshBtn.exists()).toBe(true);
     });
   });
 
@@ -475,8 +603,7 @@ describe('Dashboard', () => {
     beforeEach(() => {
       createShallowWrapper({ hasMetrics: true });
       setupStoreWithData(store);
-      setupStoreWithVariable(store);
-
+      store.state.monitoringDashboard.variables = storeVariables;
       return wrapper.vm.$nextTick();
     });
 
@@ -1041,6 +1168,34 @@ describe('Dashboard', () => {
     });
   });
 
+  describe('keyboard shortcuts', () => {
+    const currentDashboard = dashboardGitResponse[1].path;
+    const panelRef = 'dashboard-panel-response-metrics-aws-elb-4-1'; // skip expanded panel
+
+    // While the recommendation in the documentation is to test
+    // with a data-testid attribute, I want to make sure that
+    // the dashboard panels have a ref attribute set.
+    const getDashboardPanel = () => wrapper.find({ ref: panelRef });
+
+    beforeEach(() => {
+      setupStoreWithData(store);
+      store.commit(`monitoringDashboard/${types.SET_INITIAL_STATE}`, {
+        currentDashboard,
+      });
+      createShallowWrapper({ hasMetrics: true });
+
+      wrapper.setData({ hoveredPanel: panelRef });
+
+      return wrapper.vm.$nextTick();
+    });
+
+    it('contains a ref attribute inside a DashboardPanel component', () => {
+      const dashboardPanel = getDashboardPanel();
+
+      expect(dashboardPanel.exists()).toBe(true);
+    });
+  });
+
   describe('add custom metrics', () => {
     const findAddMetricButton = () => wrapper.find(DashboardHeader).find({ ref: 'addMetricBtn' });
 
@@ -1082,7 +1237,7 @@ describe('Dashboard', () => {
 
       it('uses modal for custom metrics form', () => {
         expect(wrapper.find(GlModal).exists()).toBe(true);
-        expect(wrapper.find(GlModal).attributes().modalid).toBe('add-metric');
+        expect(wrapper.find(GlModal).attributes().modalid).toBe('addMetric');
       });
       it('adding new metric is tracked', done => {
         const submitButton = wrapper

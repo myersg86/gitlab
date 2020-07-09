@@ -2,10 +2,12 @@
 
 require 'spec_helper'
 
-describe Gitlab::Metrics::Dashboard::Processor do
+RSpec.describe Gitlab::Metrics::Dashboard::Processor do
+  include MetricsDashboardHelpers
+
   let(:project) { build(:project) }
   let(:environment) { create(:environment, project: project) }
-  let(:dashboard_yml) { YAML.load_file('spec/fixtures/lib/gitlab/metrics/dashboard/sample_dashboard.yml') }
+  let(:dashboard_yml) { load_sample_dashboard }
 
   describe 'process' do
     let(:sequence) do
@@ -13,10 +15,11 @@ describe Gitlab::Metrics::Dashboard::Processor do
         Gitlab::Metrics::Dashboard::Stages::CommonMetricsInserter,
         Gitlab::Metrics::Dashboard::Stages::CustomMetricsInserter,
         Gitlab::Metrics::Dashboard::Stages::CustomMetricsDetailsInserter,
-        Gitlab::Metrics::Dashboard::Stages::EndpointInserter,
+        Gitlab::Metrics::Dashboard::Stages::MetricEndpointInserter,
         Gitlab::Metrics::Dashboard::Stages::Sorter,
         Gitlab::Metrics::Dashboard::Stages::AlertsInserter,
-        Gitlab::Metrics::Dashboard::Stages::PanelIdsInserter
+        Gitlab::Metrics::Dashboard::Stages::PanelIdsInserter,
+        Gitlab::Metrics::Dashboard::Stages::UrlValidator
       ]
     end
 
@@ -97,7 +100,7 @@ describe Gitlab::Metrics::Dashboard::Processor do
         let(:sequence) do
           [
             Gitlab::Metrics::Dashboard::Stages::CommonMetricsInserter,
-            Gitlab::Metrics::Dashboard::Stages::EndpointInserter,
+            Gitlab::Metrics::Dashboard::Stages::MetricEndpointInserter,
             Gitlab::Metrics::Dashboard::Stages::Sorter
           ]
         end

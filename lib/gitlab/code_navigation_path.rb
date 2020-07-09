@@ -5,7 +5,7 @@ module Gitlab
     include Gitlab::Utils::StrongMemoize
     include Gitlab::Routing
 
-    LATEST_COMMITS_LIMIT = 10
+    LATEST_COMMITS_LIMIT = 2
 
     def initialize(project, commit_sha)
       @project = project
@@ -13,7 +13,7 @@ module Gitlab
     end
 
     def full_json_path_for(path)
-      return if Feature.disabled?(:code_navigation, project)
+      return unless Feature.enabled?(:code_navigation, project, default_enabled: true)
       return unless build
 
       raw_project_job_artifacts_path(project, build, path: "lsif/#{path}.json", file_type: :lsif)

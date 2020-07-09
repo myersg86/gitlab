@@ -1,5 +1,5 @@
 - test_reports_enabled = Feature.enabled?(:junit_pipeline_view, @project)
-- dag_pipeline_tab_enabled = Feature.enabled?(:dag_pipeline_tab)
+- dag_pipeline_tab_enabled = Feature.enabled?(:dag_pipeline_tab, @project, default_enabled: false)
 
 .tabs-holder
   %ul.pipelines-tabs.nav-links.no-top.no-bottom.mobile-separator.nav.nav-tabs
@@ -83,8 +83,8 @@
 
   - if dag_pipeline_tab_enabled
     #js-tab-dag.tab-pane
-      #js-pipeline-dag-vue{ data: { pipeline_data_path: dag_project_pipeline_path(@project, @pipeline) } }
+      #js-pipeline-dag-vue{ data: { pipeline_data_path: dag_project_pipeline_path(@project, @pipeline), empty_svg_path: image_path('illustrations/empty-state/empty-dag-md.svg'), dag_doc_path: help_page_path('ci/yaml/README.md', anchor: 'needs')} }
 
   #js-tab-tests.tab-pane
-    #js-pipeline-tests-detail
+    #js-pipeline-tests-detail{ data: { full_report_endpoint: test_report_project_pipeline_path(@project, @pipeline, format: :json), count_endpoint: test_reports_count_project_pipeline_path(@project, @pipeline, format: :json) } }
   = render_if_exists "projects/pipelines/tabs_content", pipeline: @pipeline, project: @project

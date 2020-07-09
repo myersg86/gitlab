@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe PrometheusService, :use_clean_rails_memory_store_caching do
+RSpec.describe PrometheusService, :use_clean_rails_memory_store_caching do
   include PrometheusHelpers
   include ReactiveCachingHelpers
 
@@ -23,7 +23,7 @@ describe PrometheusService, :use_clean_rails_memory_store_caching do
 
       # result = { success: false, result: error }
       expect(result[:success]).to be_falsy
-      expect(result[:result]).to be_instance_of(Gitlab::PrometheusClient::Error)
+      expect(result[:result]).to be_instance_of(Gitlab::PrometheusClient::UnexpectedResponseError)
 
       expect(redirect_req_stub).to have_been_requested
       expect(redirected_req_stub).not_to have_been_requested

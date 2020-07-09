@@ -120,13 +120,13 @@ As long as at least one of each component is online and capable of handling the 
 ### Automated database failover **(PREMIUM ONLY)**
 
 > - Level of complexity: **High**
-> - Required domain knowledge: PgBouncer, Repmgr, shared storage, distributed systems
+> - Required domain knowledge: PgBouncer, Repmgr or Patroni, shared storage, distributed systems
 > - Supported tiers: [GitLab Premium and Ultimate](https://about.gitlab.com/pricing/)
 
 By adding automatic failover for database systems, you can enable higher uptime
 with additional database nodes. This extends the default database with
 cluster management and failover policies.
-[PgBouncer in conjunction with Repmgr](../postgresql/replication_and_failover.md)
+[PgBouncer in conjunction with Repmgr or Patroni](../postgresql/replication_and_failover.md)
 is recommended.
 
 ### Instance level replication with GitLab Geo **(PREMIUM ONLY)**
@@ -164,12 +164,32 @@ column.
 | [PostgreSQL](../../development/architecture.md#postgresql) | Database | [PostgreSQL configuration](https://docs.gitlab.com/omnibus/settings/database.html) | Yes |
 | [PgBouncer](../../development/architecture.md#pgbouncer) | Database connection pooler | [PgBouncer configuration](../high_availability/pgbouncer.md#running-pgbouncer-as-part-of-a-non-ha-gitlab-installation) **(PREMIUM ONLY)** | Yes |
 | Repmgr | PostgreSQL cluster management and failover | [PostgreSQL and Repmgr configuration](../postgresql/replication_and_failover.md) | Yes |
+| Patroni | An alternative PostgreSQL cluster management and failover | [PostgreSQL and Patroni configuration](../postgresql/replication_and_failover.md#patroni) | Yes |
 | [Redis](../../development/architecture.md#redis) ([3](#footnotes))  | Key/value store for fast data lookup and caching | [Redis configuration](../high_availability/redis.md) | Yes |
 | Redis Sentinel | Redis | [Redis Sentinel configuration](../high_availability/redis.md) | Yes |
 | [Gitaly](../../development/architecture.md#gitaly) ([2](#footnotes)) ([7](#footnotes)) | Provides access to Git repositories | [Gitaly configuration](../gitaly/index.md#run-gitaly-on-its-own-server) | Yes |
 | [Sidekiq](../../development/architecture.md#sidekiq) | Asynchronous/background jobs | [Sidekiq configuration](../high_availability/sidekiq.md) | Yes |
 | [GitLab application services](../../development/architecture.md#unicorn)([1](#footnotes)) | Puma/Unicorn, Workhorse, GitLab Shell - serves front-end requests (UI, API, Git over HTTP/SSH) | [GitLab app scaling configuration](../high_availability/gitlab.md) | Yes |
 | [Prometheus](../../development/architecture.md#prometheus) and [Grafana](../../development/architecture.md#grafana) | GitLab environment monitoring | [Monitoring node for scaling](../high_availability/monitoring_node.md) | Yes |
+
+### Configuring select components with Cloud Native Helm
+
+We also provide [Helm charts](https://docs.gitlab.com/charts/) as a Cloud Native installation
+method for GitLab. For the reference architectures, select components can be set up in this
+way as an alternative if so desired.
+
+For these kind of setups we support using the charts in an [advanced configuration](https://docs.gitlab.com/charts/#advanced-configuration)
+where stateful backend components, such as the database or Gitaly, are run externally - either
+via Omnibus or reputable third party services. Note that we don't currently support running the
+stateful components via Helm _at large scales_.
+
+When designing these environments you should refer to the respective [Reference Architecture](#available-reference-architectures)
+above for guidance on sizing. Components run via Helm would be similarly scaled to their Omnibus
+specs, only translated into Kubernetes resources.
+
+For example, if you were to set up a 50k installation with the Rails nodes being run in Helm,
+then the same amount of resources as given for Omnibus should be given to the Kubernetes
+cluster with the Rails nodes broken down into a number of smaller Pods across that cluster.
 
 ## Footnotes
 
@@ -190,7 +210,7 @@ column.
    For medium sized installs (3,000 - 5,000) we suggest one Redis cluster for all
    classes and that Redis Sentinel is hosted alongside Consul.
    For larger architectures (10,000 users or more) we suggest running a separate
-   [Redis Cluster](../high_availability/redis.md#running-multiple-redis-clusters) for the Cache class
+   [Redis Cluster](../redis/replication_and_failover.md#running-multiple-redis-clusters) for the Cache class
    and another for the Queues and Shared State classes respectively. We also recommend
    that you run the Redis Sentinel clusters separately for each Redis Cluster.
 

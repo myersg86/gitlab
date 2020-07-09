@@ -19,7 +19,7 @@ gem 'default_value_for', '~> 3.3.0'
 gem 'pg', '~> 1.1'
 
 gem 'rugged', '~> 0.28'
-gem 'grape-path-helpers', '~> 1.2'
+gem 'grape-path-helpers', '~> 1.3'
 
 gem 'faraday', '~> 0.12'
 gem 'marginalia', '~> 1.8.0'
@@ -66,7 +66,7 @@ gem 'u2f', '~> 0.2.1'
 gem 'validates_hostname', '~> 1.0.10'
 gem 'rubyzip', '~> 2.0.0', require: 'zip'
 # GitLab Pages letsencrypt support
-gem 'acme-client', '~> 2.0.5'
+gem 'acme-client', '~> 2.0', '>= 2.0.6'
 
 # Browser detection
 gem 'browser', '~> 2.5'
@@ -81,7 +81,7 @@ gem 'gitlab_omniauth-ldap', '~> 2.1.1', require: 'omniauth-ldap'
 gem 'net-ldap'
 
 # API
-gem 'grape', '~> 1.1.0'
+gem 'grape', '~> 1.3.3'
 gem 'grape-entity', '~> 0.7.1'
 gem 'rack-cors', '~> 1.0.6', require: 'rack/cors'
 
@@ -140,6 +140,7 @@ gem 'deckar01-task_list', '2.3.1'
 gem 'gitlab-markup', '~> 1.7.1'
 gem 'github-markup', '~> 1.7.0', require: 'github/markup'
 gem 'commonmarker', '~> 0.20'
+gem 'kramdown', '~> 2.2.1'
 gem 'RedCloth', '~> 4.3.2'
 gem 'rdoc', '~> 6.1.2'
 gem 'org-ruby', '~> 0.9.12'
@@ -148,7 +149,7 @@ gem 'wikicloth', '0.8.1'
 gem 'asciidoctor', '~> 2.0.10'
 gem 'asciidoctor-include-ext', '~> 0.3.1', require: false
 gem 'asciidoctor-plantuml', '~> 0.0.12'
-gem 'rouge', '~> 3.19.0'
+gem 'rouge', '~> 3.20.0'
 gem 'truncato', '~> 0.7.11'
 gem 'bootstrap_form', '~> 4.2.0'
 gem 'nokogiri', '~> 1.10.9'
@@ -163,6 +164,8 @@ gem 'diff_match_patch', '~> 0.1.0'
 
 # Application server
 gem 'rack', '~> 2.0.9'
+# https://github.com/sharpstone/rack-timeout/blob/master/README.md#rails-apps-manually
+gem 'rack-timeout', '~> 0.5.1', require: 'rack/timeout/base'
 
 group :unicorn do
   gem 'unicorn', '~> 5.5'
@@ -172,7 +175,6 @@ end
 group :puma do
   gem 'gitlab-puma', '~> 4.3.3.gitlab.2', require: false
   gem 'gitlab-puma_worker_killer', '~> 0.1.1.gitlab.1', require: false
-  gem 'rack-timeout', require: false
 end
 
 # State machine
@@ -370,6 +372,7 @@ group :development, :test do
   gem 'scss_lint', '~> 0.56.0', require: false
   gem 'haml_lint', '~> 0.34.0', require: false
   gem 'simplecov', '~> 0.18.5', require: false
+  gem 'simplecov-cobertura', '~> 1.3.1', require: false
   gem 'bundler-audit', '~> 0.6.1', require: false
 
   gem 'benchmark-ips', '~> 2.3.0', require: false
@@ -416,7 +419,7 @@ end
 gem 'octokit', '~> 4.15'
 
 # https://gitlab.com/gitlab-org/gitlab/issues/207207
-gem 'gitlab-mail_room', '~> 0.0.4', require: 'mail_room'
+gem 'gitlab-mail_room', '~> 0.0.6', require: 'mail_room'
 
 gem 'email_reply_trimmer', '~> 0.1'
 gem 'html2text'
@@ -452,7 +455,7 @@ group :ed25519 do
 end
 
 # Gitaly GRPC protocol definitions
-gem 'gitaly', '~> 13.1.0.pre.rc1'
+gem 'gitaly', '~> 13.2.0.pre.rc2'
 
 gem 'grpc', '~> 1.24.0'
 

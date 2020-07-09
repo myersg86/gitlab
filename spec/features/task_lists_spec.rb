@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'Task Lists' do
+RSpec.describe 'Task Lists' do
   include Warden::Test::Helpers
 
   let(:project) { create(:project, :public, :repository) }
@@ -103,7 +103,7 @@ describe 'Task Lists' do
         wait_for_requests
 
         expect(page).to have_selector(".md .task-list .task-list-item .task-list-item-checkbox")
-        expect(page).to have_selector('a.btn-close')
+        expect(page).to have_selector('.btn-close')
       end
 
       it 'is only editable by author' do

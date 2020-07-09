@@ -77,10 +77,10 @@ To set this limit on a self-managed installation, run the following in the
 # Plan.default.create_limits!
 
 # For project webhooks
-Plan.default.limits.update!(project_hooks: 100)
+Plan.default.actual_limits.update!(project_hooks: 100)
 
 # For group webhooks
-Plan.default.limits.update!(group_hooks: 100)
+Plan.default.actual_limits.update!(group_hooks: 100)
 ```
 
 NOTE: **Note:** Set the limit to `0` to disable it.
@@ -115,7 +115,7 @@ To set this limit on a self-managed installation, run the following in the
 # If limits don't exist for the default plan, you can create one with:
 # Plan.default.create_limits!
 
-Plan.default.limits.update!(offset_pagination_limit: 10000)
+Plan.default.actual_limits.update!(offset_pagination_limit: 10000)
 ```
 
 - **Default offset pagination limit:** 50000
@@ -149,7 +149,7 @@ To set this limit on a self-managed installation, run the following in the
 # If limits don't exist for the default plan, you can create one with:
 # Plan.default.create_limits!
 
-Plan.default.limits.update!(ci_active_jobs: 500)
+Plan.default.actual_limits.update!(ci_active_jobs: 500)
 ```
 
 NOTE: **Note:** Set the limit to `0` to disable it.
@@ -171,7 +171,7 @@ To set this limit on a self-managed installation, run the following in the
 [GitLab Rails console](troubleshooting/debug.md#starting-a-rails-console-session):
 
 ```ruby
-Plan.default.limits.update!(ci_project_subscriptions: 500)
+Plan.default.actual_limits.update!(ci_project_subscriptions: 500)
 ```
 
 NOTE: **Note:** Set the limit to `0` to disable it.
@@ -196,7 +196,7 @@ To set this limit on a self-managed installation, run the following in the
 [GitLab Rails console](troubleshooting/debug.md#starting-a-rails-console-session):
 
 ```ruby
-Plan.default.limits.update!(ci_pipeline_schedules: 100)
+Plan.default.actual_limits.update!(ci_pipeline_schedules: 100)
 ```
 
 ### Number of instance level variables
@@ -214,7 +214,7 @@ To update this limit to a new value on a self-managed installation, run the foll
 [GitLab Rails console](troubleshooting/debug.md#starting-a-rails-console-session):
 
 ```ruby
-Plan.default.limits.update!(ci_instance_level_variables: 30)
+Plan.default.actual_limits.update!(ci_instance_level_variables: 30)
 ```
 
 ## Instance monitoring and metrics
@@ -242,6 +242,38 @@ Prometheus alert payloads sent to the `notify.json` endpoint are limited to 1 MB
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/16441) in GitLab 12.4.
 
 Alert payloads sent to the `notify.json` endpoint are limited to 1 MB in size.
+
+### Metrics dashboard YAML files
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/34834) in GitLab 13.2.
+
+The memory occupied by a parsed metrics dashboard YAML file cannot exceed 1 MB.
+
+The maximum depth of each YAML file is limited to 100. The maximum depth of a YAML
+file is the amount of nesting of its most nested key. Each hash and array on the
+path of the most nested key counts towards its depth. For example, the depth of the
+most nested key in the following YAML is 7:
+
+```yaml
+dashboard: 'Test dashboard'
+links:
+- title: Link 1
+  url: https://gitlab.com
+panel_groups:
+- group: Group A
+  priority: 1
+  panels:
+  - title: "Super Chart A1"
+    type: "area-chart"
+    y_label: "y_label"
+    weight: 1
+    max_value: 1
+    metrics:
+    - id: metric_a1
+      query_range: 'query'
+      unit: unit
+      label: Legend Label
+```
 
 ## Environment data on Deploy Boards
 
@@ -283,6 +315,10 @@ NOTE: **Note:** Set the limit to `0` to disable it.
 ## Snippets limits
 
 See the [documentation on Snippets settings](snippets/index.md).
+
+## Design Management limits
+
+See the [Design Management Limitations](../user/project/issues/design_management.md#limitations) section.
 
 ## Push Event Limits
 

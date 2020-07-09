@@ -83,7 +83,9 @@ export default {
       return this.item.type === ChildType.Epic ? 'epic' : 'issues';
     },
     stateIconClass() {
-      return this.isOpen ? 'issue-token-state-icon-open' : 'issue-token-state-icon-closed';
+      return this.isOpen
+        ? 'issue-token-state-icon-open gl-text-green-500'
+        : 'issue-token-state-icon-closed gl-text-blue-500';
     },
     itemId() {
       return this.itemReference.split(this.item.pathIdSeparator).pop();
@@ -173,7 +175,7 @@ export default {
               :title="__('Confidential')"
               :aria-label="__('Confidential')"
               name="eye-slash"
-              class="confidential-icon append-right-4 align-self-baseline align-self-md-auto mt-xl-0"
+              class="confidential-icon gl-mr-2 align-self-baseline align-self-md-auto mt-xl-0"
             />
             <gl-link
               v-gl-tooltip.hover

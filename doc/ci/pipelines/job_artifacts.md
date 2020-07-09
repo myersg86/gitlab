@@ -33,7 +33,7 @@ pdf:
   script: xelatex mycv.tex
   artifacts:
     paths:
-    - mycv.pdf
+      - mycv.pdf
     expire_in: 1 week
 ```
 
@@ -87,8 +87,8 @@ Below is an example of collecting a JUnit XML file from Ruby's RSpec test tool:
 rspec:
   stage: test
   script:
-  - bundle install
-  - rspec --format RspecJunitFormatter --out rspec.xml
+    - bundle install
+    - rspec --format RspecJunitFormatter --out rspec.xml
   artifacts:
     reports:
       junit: rspec.xml
@@ -114,14 +114,15 @@ The `dotenv` report collects a set of environment variables as artifacts.
 The collected variables are registered as runtime-created variables of the job,
 which is useful to [set dynamic environment URLs after a job finishes](../environments/index.md#set-dynamic-environment-urls-after-a-job-finishes).
 
-There are a couple of limitations on top of the [original dotenv rules](https://github.com/motdotla/dotenv#rules).
+There are a couple of exceptions to the [original dotenv rules](https://github.com/motdotla/dotenv#rules):
 
-- The variable key can contain only letters, digits and underscore ('_').
-- The size of the dotenv file must be smaller than 5 kilobytes.
-- The number of variables must be less than 10.
-- It does not support variable substitution in the dotenv file itself.
-- It does not support empty lines and comments (`#`) in dotenv file.
-- It does not support quote escape, spaces in a quote, a new line expansion in a quote, in dotenv file.
+- The variable key can contain only letters, digits, and underscores (`_`).
+- The maximum size of the `.env` file is 5 KB.
+- The maximum number of variables is 10.
+- Variable substitution in the `.env` file is not supported.
+- The `.env` file can't have empty lines or comments (starting with `#`).
+- Key values in the `env` file cannot have spaces or newline characters (`\n`), including when using single or double quotes.
+- Quote escaping during parsing (`key = 'value'` -> `{key: "value"}`) is not supported.
 
 #### `artifacts:reports:cobertura`
 
@@ -165,6 +166,18 @@ The `sast` report collects [SAST vulnerabilities](../../user/application_securit
 as artifacts.
 
 The collected SAST report will be uploaded to GitLab as an artifact and will be summarized
+in the merge requests and pipeline view. It's also used to provide data for security
+dashboards.
+
+#### `artifacts:reports:secret_detection` **(ULTIMATE)**
+
+> - Introduced in GitLab 13.1.
+> - Requires GitLab Runner 11.5 and above.
+
+The `secret-detection` report collects [detected secrets](../../user/application_security/secret_detection/index.md)
+as artifacts.
+
+The collected Secret Detection report is uploaded to GitLab as an artifact and summarized
 in the merge requests and pipeline view. It's also used to provide data for security
 dashboards.
 
@@ -238,10 +251,10 @@ dashboards.
 > - Introduced in GitLab 11.5.
 > - Requires GitLab Runner 11.5 and above.
 
-The `performance` report collects [Performance metrics](../../user/project/merge_requests/browser_performance_testing.md)
+The `performance` report collects [Browser Performance Testing metrics](../../user/project/merge_requests/browser_performance_testing.md)
 as artifacts.
 
-The collected Performance report will be uploaded to GitLab as an artifact and will
+The collected Browser Performance report will be uploaded to GitLab as an artifact and will
 be automatically shown in merge requests.
 
 #### `artifacts:reports:metrics` **(PREMIUM)**
@@ -253,6 +266,17 @@ as artifacts.
 
 The collected Metrics report will be uploaded to GitLab as an artifact and will
 be automatically shown in merge requests.
+
+#### `artifacts:reports:requirements` **(ULTIMATE)**
+
+> - [Introduced](https://gitlab.com/groups/gitlab-org/-/epics/2859) in GitLab 13.1.
+> - Requires GitLab Runner 11.5 and above.
+
+The `requirements` report collects `requirements.json` files as artifacts.
+
+The collected Requirements report will be uploaded to GitLab as an artifact and
+existing [requirements](../../user/project/requirements/index.md) will be
+marked as Satisfied.
 
 ## Browsing artifacts
 

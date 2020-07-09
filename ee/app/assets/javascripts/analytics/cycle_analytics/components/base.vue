@@ -1,8 +1,8 @@
 <script>
-import { GlEmptyState, GlLoadingIcon } from '@gitlab/ui';
+import { GlEmptyState, GlLoadingIcon, GlButton } from '@gitlab/ui';
+import { GlBreakpointInstance as bp } from '@gitlab/ui/dist/utils';
 import { mapActions, mapState, mapGetters } from 'vuex';
 import { featureAccessLevel } from '~/pages/projects/shared/permissions/constants';
-import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import { PROJECTS_PER_PAGE, STAGE_ACTIONS } from '../constants';
 import GroupsDropdownFilter from '../../shared/components/groups_dropdown_filter.vue';
 import ProjectsDropdownFilter from '../../shared/components/projects_dropdown_filter.vue';
@@ -26,6 +26,7 @@ export default {
   components: {
     DateRange,
     DurationChart,
+    GlButton,
     GlLoadingIcon,
     GlEmptyState,
     GroupsDropdownFilter,
@@ -40,7 +41,7 @@ export default {
     MetricCard,
     FilterBar,
   },
-  mixins: [glFeatureFlagsMixin(), UrlSyncMixin],
+  mixins: [UrlSyncMixin],
   props: {
     emptyStateSvgPath: {
       type: String,
@@ -58,14 +59,6 @@ export default {
       type: Boolean,
       required: true,
     },
-    milestonesPath: {
-      type: String,
-      required: true,
-    },
-    labelsPath: {
-      type: String,
-      required: true,
-    },
   },
   computed: {
     ...mapState([
@@ -76,8 +69,11 @@ export default {
       'selectedGroup',
       'selectedProjects',
       'selectedStage',
+      'selectedMilestone',
+      'selectedAuthor',
+      'selectedLabels',
+      'selectedAssignees',
       'stages',
-      'summary',
       'currentStageEvents',
       'errorCode',
       'startDate',
@@ -110,10 +106,21 @@ export default {
       return !this.hasNoAccessError && !this.isLoading;
     },
     shouldDsiplayPathNavigation() {
-      return this.featureFlags.hasPathNavigation && !this.hasNoAccessError;
+      return this.featureFlags.hasPathNavigation && !this.hasNoAccessError && this.selectedStage;
+    },
+    shouldDisplayFilterBar() {
+      // TODO: After we remove instance VSA currentGroupPath will be always set
+      // https://gitlab.com/gitlab-org/gitlab/-/issues/223735
+      return this.featureFlags.hasFilterBar && this.currentGroupPath;
+    },
+    shouldDisplayCreateMultipleValueStreams() {
+      return Boolean(this.featureFlags.hasCreateMultipleValueStreams);
     },
     isLoadingTypeOfWork() {
       return this.isLoadingTasksByTypeChartTopLabels || this.isLoadingTasksByTypeChart;
+    },
+    isXSBreakpoint() {
+      return bp.getBreakpointSize() === 'xs';
     },
     hasDateRangeSet() {
       return this.startDate && this.endDate;
@@ -124,32 +131,20 @@ export default {
         'project_ids[]': this.selectedProjectIds,
         created_after: toYmd(this.startDate),
         created_before: toYmd(this.endDate),
+        milestone_title: this.selectedMilestone,
+        author_username: this.selectedAuthor,
+        'label_name[]': this.selectedLabels,
+        'assignee_username[]': this.selectedAssignees,
       };
     },
     stageCount() {
       return this.activeStages.length;
     },
     hasProject() {
-      return this.selectedProjectIds.length;
+      return this.selectedProjectIds.length > 0;
     },
   },
-  mounted() {
-    const {
-      glFeatures: {
-        cycleAnalyticsScatterplotEnabled: hasDurationChart,
-        cycleAnalyticsScatterplotMedianEnabled: hasDurationChartMedian,
-        valueStreamAnalyticsPathNavigation: hasPathNavigation,
-        valueStreamAnalyticsFilterBar: hasFilterBar,
-      },
-    } = this;
 
-    this.setFeatureFlags({
-      hasDurationChart,
-      hasDurationChartMedian,
-      hasPathNavigation,
-      hasFilterBar,
-    });
-  },
   methods: {
     ...mapActions([
       'fetchCycleAnalyticsData',
@@ -160,9 +155,9 @@ export default {
       'setDateRange',
       'updateStage',
       'removeStage',
-      'setFeatureFlags',
       'updateStage',
       'reorderStage',
+      'setSelectedFilters',
     ]),
     ...mapActions('customStages', [
       'hideForm',
@@ -203,6 +198,9 @@ export default {
     onStageReorder(data) {
       this.reorderStage(data);
     },
+    onCreateValueStream() {
+      // stub handler - to be implemented in a follow up
+    },
   },
   multiProjectSelect: true,
   dateOptions: [7, 30, 90],
@@ -221,8 +219,22 @@ export default {
 </script>
 <template>
   <div>
-    <div class="mb-3">
+    <div
+      class="gl-mb-3 gl-display-flex gl-flex-direction-column gl-sm-flex-direction-row gl-justify-content-space-between"
+    >
       <h3>{{ __('Value Stream Analytics') }}</h3>
+      <div
+        v-if="shouldDisplayCreateMultipleValueStreams"
+        class="gl-align-self-center"
+        :class="{
+          'gl-w-full': isXSBreakpoint,
+          'gl-mt-5': !isXSBreakpoint,
+        }"
+      >
+        <gl-button data-testid="create-value-stream" @click="onCreateValueStream">{{
+          __('Create new value stream')
+        }}</gl-button>
+      </div>
     </div>
     <div class="mw-100">
       <div class="mt-3 py-2 px-3 bg-gray-light border-top border-bottom">
@@ -236,34 +248,34 @@ export default {
           />
         </div>
         <div
-          class="gl-display-flex gl-flex-direction-column gl-justify-content-space-between flex-lg-row"
+          class="gl-display-flex gl-flex-direction-column gl-lg-flex-direction-row gl-justify-content-space-between"
         >
-          <groups-dropdown-filter
-            v-if="!hideGroupDropDown"
-            class="js-groups-dropdown-filter mr-0 mr-lg-2"
-            :query-params="$options.groupsQueryParams"
-            :default-group="selectedGroup"
-            @selected="onGroupSelect"
-          />
-          <projects-dropdown-filter
-            v-if="shouldDisplayFilters"
-            :key="selectedGroup.id"
-            class="js-projects-dropdown-filter my-2 my-lg-0"
-            :group-id="selectedGroup.id"
-            :query-params="$options.projectsQueryParams"
-            :multi-select="$options.multiProjectSelect"
-            :default-projects="selectedProjects"
-            @selected="onProjectsSelect"
-          />
+          <div class="dropdown-container d-flex flex-column flex-lg-row">
+            <groups-dropdown-filter
+              v-if="!hideGroupDropDown"
+              class="js-groups-dropdown-filter"
+              :class="{ 'mr-lg-3': shouldDisplayFilters }"
+              :query-params="$options.groupsQueryParams"
+              :default-group="selectedGroup"
+              @selected="onGroupSelect"
+            />
+            <projects-dropdown-filter
+              v-if="shouldDisplayFilters"
+              :key="selectedGroup.id"
+              class="js-projects-dropdown-filter project-select"
+              :group-id="selectedGroup.id"
+              :query-params="$options.projectsQueryParams"
+              :multi-select="$options.multiProjectSelect"
+              :default-projects="selectedProjects"
+              @selected="onProjectsSelect"
+            />
+          </div>
           <filter-bar
-            v-if="featureFlags.hasFilterBar"
-            class="js-filter-bar filtered-search-box mx-2 gl-display-none"
+            v-if="shouldDisplayFilterBar"
+            class="js-filter-bar filtered-search-box gl-display-flex gl-mt-3 mt-md-0 gl-mr-3 gl-border-none"
             :disabled="!hasProject"
           />
-          <div
-            v-if="shouldDisplayFilters"
-            class="ml-0 ml-md-auto mt-2 mt-md-0 d-flex flex-column flex-md-row align-items-md-center justify-content-md-end"
-          >
+          <div v-if="shouldDisplayFilters" class="gl-justify-content-end gl-white-space-nowrap">
             <date-range
               :start-date="startDate"
               :end-date="endDate"
@@ -337,7 +349,6 @@ export default {
                 :stages="activeStages"
                 :medians="medians"
                 :is-creating-custom-stage="isCreatingCustomStage"
-                :can-edit-stages="true"
                 :custom-ordering="enableCustomOrdering"
                 @reorderStage="onStageReorder"
                 @selectStage="onStageSelect"

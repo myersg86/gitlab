@@ -265,7 +265,7 @@ class GeoNode < ApplicationRecord
   def lfs_objects
     return LfsObject.all unless selective_sync?
 
-    query = LfsObjectsProject.project_id_in(projects).select(:lfs_object_id)
+    query = LfsObjectsProject.project_id_in(projects).select(:lfs_object_id).distinct
     cte = Gitlab::SQL::CTE.new(:restricted_lfs_objects, query)
     lfs_object_table = LfsObject.arel_table
 
@@ -300,19 +300,19 @@ class GeoNode < ApplicationRecord
   end
 
   def replication_slots_count
-    return unless Gitlab::Database.replication_slots_supported? && primary?
+    return unless primary?
 
     PgReplicationSlot.count
   end
 
   def replication_slots_used_count
-    return unless Gitlab::Database.replication_slots_supported? && primary?
+    return unless primary?
 
     PgReplicationSlot.used_slots_count
   end
 
   def replication_slots_max_retained_wal_bytes
-    return unless Gitlab::Database.replication_slots_supported? && primary?
+    return unless primary?
 
     PgReplicationSlot.max_retained_wal
   end

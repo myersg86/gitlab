@@ -71,8 +71,8 @@ export default {
     <ul class="notes draft-notes">
       <noteable-note
         :note="draft"
-        :diff-lines="diffFile.highlighted_diff_lines"
         :line="line"
+        :discussion-root="true"
         class="draft-note"
         @handleEdit="handleEditing"
         @cancelForm="handleNotEditing"
@@ -81,7 +81,7 @@ export default {
         @handleUpdateNote="update"
         @toggleResolveStatus="toggleResolveDiscussion(draft.id)"
       >
-        <strong slot="note-header-info" class="badge draft-pending-label append-right-4">
+        <strong slot="note-header-info" class="badge draft-pending-label gl-mr-2">
           {{ __('Pending') }}
         </strong>
       </noteable-note>

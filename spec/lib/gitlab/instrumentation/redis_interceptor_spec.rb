@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'rspec-parameterized'
 
-describe Gitlab::Instrumentation::RedisInterceptor, :clean_gitlab_redis_shared_state, :request_store do
+RSpec.describe Gitlab::Instrumentation::RedisInterceptor, :clean_gitlab_redis_shared_state, :request_store do
   using RSpec::Parameterized::TableSyntax
 
   describe 'read and write' do
@@ -24,6 +24,9 @@ describe Gitlab::Instrumentation::RedisInterceptor, :clean_gitlab_redis_shared_s
 
       # Exercise counting of a bulk reply
       [[:set, 'foo', 'bar' * 100]] | [:get, 'foo'] | 3 + 3 | 3 * 100
+
+      # Nested array response: ['123456-89', ['foo', 'bar']]
+      [[:xadd, 'mystream', '123456-89', 'foo', 'bar']] | [:xrange, 'mystream', '-', '+'] | 6 + 8 + 1 + 1 | 9 + 3 + 3
     end
 
     with_them do
@@ -37,6 +40,28 @@ describe Gitlab::Instrumentation::RedisInterceptor, :clean_gitlab_redis_shared_s
         expect(Gitlab::Instrumentation::Redis.read_bytes).to eq(expect_read)
         expect(Gitlab::Instrumentation::Redis.write_bytes).to eq(expect_write)
       end
+    end
+  end
+
+  describe 'counting' do
+    let(:instrumentation_class) { Gitlab::Redis::SharedState.instrumentation_class }
+
+    it 'counts successful requests' do
+      expect(instrumentation_class).to receive(:count_request).and_call_original
+
+      Gitlab::Redis::SharedState.with { |redis| redis.call(:get, 'foobar') }
+    end
+
+    it 'counts exceptions' do
+      expect(instrumentation_class).to receive(:count_exception)
+        .with(instance_of(Redis::CommandError)).and_call_original
+      expect(instrumentation_class).to receive(:count_request).and_call_original
+
+      expect do
+        Gitlab::Redis::SharedState.with do |redis|
+          redis.call(:auth, 'foo', 'bar')
+        end
+      end.to raise_exception(Redis::CommandError)
     end
   end
 end

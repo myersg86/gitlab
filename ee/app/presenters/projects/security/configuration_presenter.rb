@@ -14,7 +14,8 @@ module Projects
         license_management: 'user/compliance/license_compliance/index',
         license_scanning: 'user/compliance/license_compliance/index',
         sast: 'user/application_security/sast/index',
-        secret_detection: 'user/application_security/secret_detection/index'
+        secret_detection: 'user/application_security/secret_detection/index',
+        coverage_fuzzing: 'user/application_security/coverage_fuzzing/index'
       }.freeze
 
       def self.localized_scan_descriptions
@@ -25,7 +26,8 @@ module Projects
           license_management: _('Search your project dependencies for their licenses and apply policies.'),
           license_scanning: _('Search your project dependencies for their licenses and apply policies.'),
           sast: _('Analyze your source code for known vulnerabilities.'),
-          secret_detection: _('Analyze your source code and git history for secrets')
+          secret_detection: _('Analyze your source code and git history for secrets.'),
+          coverage_fuzzing: _('Find bugs in your code with coverage-guided fuzzing')
         }.freeze
       end
 
@@ -37,7 +39,8 @@ module Projects
           license_management: 'License Management',
           license_scanning: _('License Compliance'),
           sast: _('Static Application Security Testing (SAST)'),
-          secret_detection: _('Secret Detection')
+          secret_detection: _('Secret Detection'),
+          coverage_fuzzing: _('Coverage Fuzzing')
         }.freeze
       end
 
@@ -49,8 +52,8 @@ module Projects
           help_page_path: help_page_path('user/application_security/index'),
           latest_pipeline_path: latest_pipeline_path,
           auto_fix_enabled: {
-            dependency_scanning: true,
-            container_scanning: true
+            dependency_scanning: project_settings.auto_fix_dependency_scanning,
+            container_scanning: project_settings.auto_fix_container_scanning
           }.to_json,
           can_toggle_auto_fix_settings: auto_fix_permission,
           auto_fix_user_path: '/' # TODO: real link will be updated with https://gitlab.com/gitlab-org/gitlab/-/issues/215669
@@ -141,6 +144,10 @@ module Projects
 
       def localized_scan_names
         @localized_scan_names ||= self.class.localized_scan_names
+      end
+
+      def project_settings
+        ProjectSecuritySetting.safe_find_or_create_for(project)
       end
     end
   end

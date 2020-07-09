@@ -8,12 +8,9 @@ class GeoNodeStatus < ApplicationRecord
   delegate :selective_sync_type, to: :geo_node
 
   after_initialize :initialize_feature_flags
+  before_save :coerce_status_field_values, if: :status_changed?
 
   attr_accessor :storage_shards
-
-  attr_accessor :attachments_replication_enabled, :lfs_objects_replication_enabled, :job_artifacts_replication_enabled,
-                :container_repositories_replication_enabled, :design_repositories_replication_enabled, :repositories_replication_enabled,
-                :repository_verification_enabled
 
   # Prometheus metrics, no need to store them in the database
   attr_accessor :event_log_max_id, :repository_created_max_id, :repository_updated_max_id,
@@ -35,16 +32,21 @@ class GeoNodeStatus < ApplicationRecord
   alias_attribute :cursor_last_event_timestamp, :cursor_last_event_date_timestamp
 
   RESOURCE_STATUS_FIELDS = %w(
+    repository_verification_enabled
+    repositories_replication_enabled
     repositories_synced_count
     repositories_failed_count
+    lfs_objects_replication_enabled
     lfs_objects_count
     lfs_objects_synced_count
     lfs_objects_failed_count
+    attachments_replication_enabled
     attachments_count
     attachments_synced_count
     attachments_failed_count
     wikis_synced_count
     wikis_failed_count
+    job_artifacts_replication_enabled
     job_artifacts_count
     job_artifacts_synced_count
     job_artifacts_failed_count
@@ -64,10 +66,12 @@ class GeoNodeStatus < ApplicationRecord
     repositories_retrying_verification_count
     wikis_retrying_verification_count
     projects_count
+    container_repositories_replication_enabled
     container_repositories_count
     container_repositories_synced_count
     container_repositories_failed_count
     container_repositories_registry_count
+    design_repositories_replication_enabled
     design_repositories_count
     design_repositories_synced_count
     design_repositories_failed_count
@@ -76,11 +80,13 @@ class GeoNodeStatus < ApplicationRecord
     package_files_checksum_failed_count
     package_files_synced_count
     package_files_failed_count
+    package_files_registry_count
   ).freeze
 
   # Be sure to keep this consistent with Prometheus naming conventions
   PROMETHEUS_METRICS = {
     db_replication_lag_seconds: 'Database replication lag (seconds)',
+    repository_verification_enabled: 'Boolean denoting if verification is enabled for Repositories',
     repositories_replication_enabled: 'Boolean denoting if replication is enabled for Repositories',
     repositories_count: 'Total number of repositories available on primary',
     repositories_synced_count: 'Number of repositories synced on secondary',
@@ -151,8 +157,9 @@ class GeoNodeStatus < ApplicationRecord
     package_files_count: 'Number of package files on primary',
     package_files_checksummed_count: 'Number of package files checksummed on primary',
     package_files_checksum_failed_count: 'Number of package files failed to checksum on primary',
-    package_files_synced_count: 'Number of syncable package files synced on secondary',
-    package_files_failed_count: 'Number of syncable package files failed to sync on secondary'
+    package_files_registry_count: 'Number of package files in the registry',
+    package_files_synced_count: 'Number of package files synced on secondary',
+    package_files_failed_count: 'Number of package files failed to sync on secondary'
   }.freeze
 
   EXPIRATION_IN_MINUTES = 10
@@ -162,25 +169,23 @@ class GeoNodeStatus < ApplicationRecord
   def self.alternative_status_store_accessor(attr_names)
     attr_names.each do |attr_name|
       define_method(attr_name) do
-        status[attr_name].nil? ? read_attribute(attr_name) : status[attr_name].to_i
+        val = status[attr_name]
+
+        # Backwards-compatible line for when the status was written by an
+        # earlier release without the `status` field
+        val ||= read_attribute(attr_name)
+
+        convert_status_value(attr_name, val)
       end
 
       define_method("#{attr_name}=") do |val|
-        status[attr_name] = val.nil? ? nil : val.to_i
+        val = convert_status_value(attr_name, val)
 
-        return unless self.class.column_names.include?(attr_name)
-
-        write_attribute(attr_name, val)
+        status[attr_name] = val
       end
     end
   end
 
-  # We migrated from attributes stored in individual columns to
-  # a single JSONB hash. To create accessors method for every fields in hash we could use
-  # Rails embeded store_accessor but in this case we won't have smooth update procedure.
-  # The method "alternative_status_store_accessor" does actually the same that store_accessor would
-  # but it uses the old fashioned fields in case the new ones are not set yet. We also casting the type into integer when
-  # we set the value to preserve the old behaviour.
   alternative_status_store_accessor RESOURCE_STATUS_FIELDS
 
   def self.current_node_status
@@ -232,14 +237,47 @@ class GeoNodeStatus < ApplicationRecord
     self.column_names - EXCLUDED_PARAMS + EXTRA_PARAMS
   end
 
+  # Helps make alternative_status_store_accessor act more like regular Rails
+  # attributes. Request params values are always strings, but when saved as
+  # attributes of a model, they are converted to the appropriate types. We could
+  # manually map a specified type to each attribute, but for now, the type can
+  # be easily inferred by the attribute name.
+  #
+  # If you add a new status attribute that does not look like existing
+  # attributes, then you'll get an error until you handle it in the cases below.
+  #
+  # @param [String] attr_name the status key
+  # @param [String, Integer, Boolean] val being assigned or retrieved
+  # @return [String, Integer, Boolean] converted value based on attr_name
+  def convert_status_value(attr_name, val)
+    return if val.nil?
+
+    case attr_name
+    when /_count\z/ then val.to_i
+    when /_enabled\z/ then val.to_s == 'true'
+    else raise "Unhandled status attribute name format \"#{attr_name}\""
+    end
+  end
+
+  # Leverages attribute reader methods written by
+  # alternative_status_store_accessor to convert string values to integers and
+  # booleans if necessary.
+  def coerce_status_field_values
+    status_attrs = status.slice(*RESOURCE_STATUS_FIELDS)
+    self.assign_attributes(status_attrs)
+  end
+
   def initialize_feature_flags
-    self.attachments_replication_enabled = Geo::UploadRegistry.replication_enabled?
-    self.container_repositories_replication_enabled = Geo::ContainerRepositoryRegistry.replication_enabled?
-    self.design_repositories_replication_enabled = Geo::DesignRegistry.replication_enabled?
-    self.job_artifacts_replication_enabled = Geo::JobArtifactRegistry.replication_enabled?
-    self.lfs_objects_replication_enabled = Geo::LfsObjectRegistry.replication_enabled?
-    self.repositories_replication_enabled = Geo::ProjectRegistry.replication_enabled?
     self.repository_verification_enabled = Gitlab::Geo.repository_verification_enabled?
+
+    if Gitlab::Geo.secondary?
+      self.attachments_replication_enabled = Geo::UploadRegistry.replication_enabled?
+      self.container_repositories_replication_enabled = Geo::ContainerRepositoryRegistry.replication_enabled?
+      self.design_repositories_replication_enabled = Geo::DesignRegistry.replication_enabled?
+      self.job_artifacts_replication_enabled = Geo::JobArtifactRegistry.replication_enabled?
+      self.lfs_objects_replication_enabled = Geo::LfsObjectRegistry.replication_enabled?
+      self.repositories_replication_enabled = Geo::ProjectRegistry.replication_enabled?
+    end
   end
 
   def update_cache!
@@ -338,7 +376,7 @@ class GeoNodeStatus < ApplicationRecord
   attr_in_percentage :container_repositories_synced, :container_repositories_synced_count, :container_repositories_count
   attr_in_percentage :design_repositories_synced,    :design_repositories_synced_count,    :design_repositories_count
   attr_in_percentage :package_files_checksummed,     :package_files_checksummed_count,     :package_files_count
-  attr_in_percentage :package_files_synced,          :package_files_synced_count,          :package_files_count
+  attr_in_percentage :package_files_synced,          :package_files_synced_count,          :package_files_registry_count
 
   def storage_shards_match?
     return true if geo_node.primary?
@@ -403,6 +441,7 @@ class GeoNodeStatus < ApplicationRecord
     load_attachments_data
     load_container_registry_data
     load_designs_data
+    load_package_files_data
   end
 
   def load_lfs_objects_data
@@ -453,6 +492,14 @@ class GeoNodeStatus < ApplicationRecord
     self.design_repositories_registry_count = design_registry_finder.count_registry
   end
 
+  def load_package_files_data
+    # return unless package_files_replication_enabled # TODO: https://gitlab.com/gitlab-org/gitlab/-/issues/221069
+
+    self.package_files_registry_count = Geo::PackageFileReplicator.registry_count
+    self.package_files_synced_count = Geo::PackageFileReplicator.synced_count
+    self.package_files_failed_count = Geo::PackageFileReplicator.failed_count
+  end
+
   def load_repository_check_data
     if Gitlab::Geo.primary?
       self.repositories_checked_count = Project.where.not(last_repository_check_at: nil).count
@@ -482,8 +529,6 @@ class GeoNodeStatus < ApplicationRecord
       self.wikis_checksum_mismatch_count = registries_for_mismatch_projects(:wiki).count
       self.repositories_retrying_verification_count = registries_retrying_verification(:repository).count
       self.wikis_retrying_verification_count = registries_retrying_verification(:wiki).count
-      self.package_files_synced_count = Geo::PackageFileReplicator.synced_count
-      self.package_files_failed_count = Geo::PackageFileReplicator.failed_count
     end
   end
 

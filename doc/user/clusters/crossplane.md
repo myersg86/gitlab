@@ -55,18 +55,18 @@ export REGION=us-central1 # the GCP region where the GKE cluster is provisioned.
         labels:
           rbac.authorization.k8s.io/aggregate-to-edit: "true"
       rules:
-      - apiGroups:
-        - database.crossplane.io
-        resources:
-        - postgresqlinstances
-        verbs:
-        - get
-        - list
-        - create
-        - update
-        - delete
-        - patch
-        - watch
+        - apiGroups:
+            - database.crossplane.io
+          resources:
+            - postgresqlinstances
+          verbs:
+            - get
+            - list
+            - create
+            - update
+            - delete
+            - patch
+            - watch
       ```
 
   1. Apply the cluster role to the cluster:
@@ -151,7 +151,7 @@ kubectl describe globaladdress.compute.gcp.crossplane.io gitlab-ad-globaladdress
 
 Resource classes are a way of defining a configuration for the required managed service. We will define the PostgreSQL Resource class
 
-- Define a `gcp-postgres-standard.yaml` resourceclass which contains
+- Define a `gcp-postgres-standard.yaml` resource class which contains
 
 1. A default CloudSQLInstanceClass.
 1. A CloudSQLInstanceClass with labels.

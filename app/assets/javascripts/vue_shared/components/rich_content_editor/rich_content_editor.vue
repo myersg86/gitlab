@@ -2,7 +2,7 @@
 import 'codemirror/lib/codemirror.css';
 import '@toast-ui/editor/dist/toastui-editor.css';
 
-import AddImageModal from './modals/add_image_modal.vue';
+import AddImageModal from './modals/add_image/add_image_modal.vue';
 import {
   EDITOR_OPTIONS,
   EDITOR_TYPES,
@@ -12,11 +12,12 @@ import {
 } from './constants';
 
 import {
+  registerHTMLToMarkdownRenderer,
   addCustomEventListener,
   removeCustomEventListener,
   addImage,
   getMarkdown,
-} from './editor_service';
+} from './services/editor_service';
 
 export default {
   components: {
@@ -27,7 +28,7 @@ export default {
     AddImageModal,
   },
   props: {
-    value: {
+    content: {
       type: String,
       required: true,
     },
@@ -51,6 +52,11 @@ export default {
       required: false,
       default: EDITOR_PREVIEW_STYLE,
     },
+    imageRoot: {
+      type: String,
+      required: true,
+      validator: prop => prop.endsWith('/'),
+    },
   },
   data() {
     return {
@@ -66,23 +72,6 @@ export default {
       return this.$refs.editor;
     },
   },
-  watch: {
-    value(newVal) {
-      const isSameMode = this.previousMode === this.editorApi.currentMode;
-      if (!isSameMode) {
-        /*
-        The ToastUI Editor consumes its content via the `initial-value` prop and then internally
-        manages changes. If we desire the `v-model` to work as expected, we need to manually call
-        `setMarkdown`. However, if we do this in each v-model change we'll continually prevent
-        the editor from internally managing changes. Thus we use the `previousMode` flag as
-        confirmation to actually update its internals. This is initially designed so that front
-        matter is excluded from editing in wysiwyg mode, but included in markdown mode.
-        */
-        this.editorInstance.invoke('setMarkdown', newVal);
-        this.previousMode = this.editorApi.currentMode;
-      }
-    },
-  },
   beforeDestroy() {
     removeCustomEventListener(
       this.editorApi,
@@ -93,12 +82,16 @@ export default {
     this.editorApi.eventManager.removeEventHandler('changeMode', this.onChangeMode);
   },
   methods: {
+    resetInitialValue(newVal) {
+      this.editorInstance.invoke('setMarkdown', newVal);
+    },
     onContentChanged() {
       this.$emit('input', getMarkdown(this.editorInstance));
     },
     onLoad(editorApi) {
       this.editorApi = editorApi;
 
+      registerHTMLToMarkdownRenderer(editorApi);
       addCustomEventListener(
         this.editorApi,
         CUSTOM_EVENTS.openAddImageModal,
@@ -110,7 +103,14 @@ export default {
     onOpenAddImageModal() {
       this.$refs.addImageModal.show();
     },
-    onAddImage(image) {
+    onAddImage({ imageUrl, altText, file }) {
+      const image = { imageUrl, altText };
+
+      if (file) {
+        this.$emit('uploadImage', { file, imageUrl });
+        // TODO - ensure that the actual repo URL for the image is used in Markdown mode
+      }
+
       addImage(this.editorInstance, image);
     },
     onChangeMode(newMode) {
@@ -123,7 +123,7 @@ export default {
   <div>
     <toast-editor
       ref="editor"
-      :initial-value="value"
+      :initial-value="content"
       :options="editorOptions"
       :preview-style="previewStyle"
       :initial-edit-type="initialEditType"
@@ -131,6 +131,6 @@ export default {
       @change="onContentChanged"
       @load="onLoad"
     />
-    <add-image-modal ref="addImageModal" @addImage="onAddImage" />
+    <add-image-modal ref="addImageModal" :image-root="imageRoot" @addImage="onAddImage" />
   </div>
 </template>

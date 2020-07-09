@@ -38,12 +38,23 @@ RSpec.shared_examples 'a blob replicator' do
     end
 
     it 'does not schedule the checksum calculation if feature flag is disabled' do
-      stub_feature_flags(geo_self_service_framework: false)
+      stub_feature_flags(geo_self_service_framework_replication: false)
 
       expect(Geo::BlobVerificationPrimaryWorker).not_to receive(:perform_async)
       allow(replicator).to receive(:needs_checksum?).and_return(true)
 
       replicator.handle_after_create_commit
+    end
+  end
+
+  describe '#handle_after_destroy' do
+    it 'creates a Geo::Event' do
+      expect do
+        replicator.handle_after_destroy
+      end.to change { ::Geo::Event.count }.by(1)
+
+      expect(::Geo::Event.last.attributes).to include(
+        "replicable_name" => replicator.replicable_name, "event_name" => "deleted", "payload" => { "model_record_id" => replicator.model_record.id, "blob_path" => replicator.blob_path })
     end
   end
 
@@ -71,7 +82,7 @@ RSpec.shared_examples 'a blob replicator' do
     end
   end
 
-  describe '#consume_created_event' do
+  describe '#consume_event_created' do
     context "when the blob's project is not excluded by selective sync" do
       it 'invokes Geo::BlobDownloadService' do
         expect(replicator).to receive(:excluded_by_selective_sync?).and_return(false)
@@ -91,6 +102,31 @@ RSpec.shared_examples 'a blob replicator' do
         expect(::Geo::BlobDownloadService).not_to receive(:new)
 
         replicator.consume_event_created
+      end
+    end
+  end
+
+  describe '#consume_event_deleted' do
+    context "when the blob's project is not excluded by selective sync" do
+      it 'invokes Geo::FileRegistryRemovalService' do
+        expect(replicator).to receive(:excluded_by_selective_sync?).and_return(false)
+        service = double(:service)
+
+        expect(service).to receive(:execute)
+        expect(::Geo::FileRegistryRemovalService)
+          .to receive(:new).with(replicator.replicable_name, replicator.model_record_id, 'blob_path').and_return(service)
+
+        replicator.consume_event_deleted({ blob_path: 'blob_path' })
+      end
+    end
+
+    context "when the blob's project is excluded by selective sync" do
+      it 'does not invoke Geo::FileRegistryRemovalService' do
+        expect(replicator).to receive(:excluded_by_selective_sync?).and_return(true)
+
+        expect(::Geo::FileRegistryRemovalService).not_to receive(:new)
+
+        replicator.consume_event_deleted({ blob_path: '' })
       end
     end
   end

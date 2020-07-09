@@ -14,8 +14,8 @@ module EE
       prepended do
         include UsageStatistics
 
-        has_many :vulnerabilities_occurrence_pipelines, class_name: 'Vulnerabilities::OccurrencePipeline'
-        has_many :vulnerability_findings, source: :occurrence, through: :vulnerabilities_occurrence_pipelines, class_name: 'Vulnerabilities::Occurrence'
+        has_many :vulnerabilities_finding_pipelines, class_name: 'Vulnerabilities::FindingPipeline'
+        has_many :vulnerability_findings, source: :occurrence, through: :vulnerabilities_finding_pipelines, class_name: 'Vulnerabilities::Occurrence'
 
         has_many :auto_canceled_pipelines, class_name: 'Ci::Pipeline', foreign_key: 'auto_canceled_by_id'
         has_many :auto_canceled_jobs, class_name: 'CommitStatus', foreign_key: 'auto_canceled_by_id'
@@ -32,7 +32,7 @@ module EE
         end
 
         scope :with_vulnerabilities, -> do
-          where('EXISTS (?)', ::Vulnerabilities::OccurrencePipeline.where('ci_pipelines.id=vulnerability_occurrence_pipelines.pipeline_id').select(1))
+          where('EXISTS (?)', ::Vulnerabilities::FindingPipeline.where('ci_pipelines.id=vulnerability_occurrence_pipelines.pipeline_id').select(1))
         end
 
         # This structure describes feature levels
@@ -45,10 +45,12 @@ module EE
           container_scanning: %i[container_scanning],
           dast: %i[dast],
           performance: %i[merge_request_performance_metrics],
+          browser_performance: %i[merge_request_performance_metrics],
           license_management: %i[license_scanning],
           license_scanning: %i[license_scanning],
           metrics: %i[metrics_reports],
-          requirements: %i[requirements]
+          requirements: %i[requirements],
+          coverage_fuzzing: %i[coverage_fuzzing]
         }.freeze
 
         state_machine :status do

@@ -18,7 +18,7 @@ module Ci
         variables.concat(deployment_variables(environment: environment))
         variables.concat(yaml_variables)
         variables.concat(user_variables)
-        variables.concat(dependency_variables) if Feature.enabled?(:ci_dependency_variables, project)
+        variables.concat(dependency_variables)
         variables.concat(secret_instance_variables)
         variables.concat(secret_group_variables)
         variables.concat(secret_project_variables(environment: environment))
@@ -84,8 +84,6 @@ module Ci
     end
 
     def secret_instance_variables
-      return [] unless ::Feature.enabled?(:ci_instance_level_variables, project, default_enabled: true)
-
       project.ci_instance_variables_for(ref: git_ref)
     end
 

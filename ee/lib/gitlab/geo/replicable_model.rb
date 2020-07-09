@@ -10,6 +10,7 @@ module Gitlab
       included do
         # If this hook turns out not to apply to all Models, perhaps we should extract a `ReplicableBlobModel`
         after_create_commit -> { replicator.handle_after_create_commit if replicator.respond_to?(:handle_after_create_commit) }
+        after_destroy -> { replicator.handle_after_destroy if replicator.respond_to?(:handle_after_destroy) }
 
         scope :checksummed, -> { where('verification_checksum IS NOT NULL') }
         scope :checksum_failed, -> { where('verification_failure IS NOT NULL') }
@@ -29,6 +30,10 @@ module Gitlab
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
             define_method :replicator do
               @_replicator ||= klass.new(model_record: self)
+            end
+
+            define_singleton_method :replicator_class do
+              @_replicator_class ||= klass
             end
           RUBY
         end
@@ -84,9 +89,9 @@ module Gitlab
       # @return [Boolean] whether the file exists on storage
       def file_exist?
         if local?
-          File.exist?(file.path)
+          File.exist?(replicator.carrierwave_uploader.path)
         else
-          file.exists?
+          replicator.carrierwave_uploader.exists?
         end
       end
     end

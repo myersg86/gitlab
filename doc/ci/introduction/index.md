@@ -202,7 +202,7 @@ according to each stage (Verify, Package, Release).
    - Continuous Delivery, manually click to deploy your app to production.
    - Deploy static websites with [GitLab Pages](../../user/project/pages/index.md).
    - Ship features to only a portion of your pods and let a percentage of your user base to visit the temporarily deployed feature with [Canary Deployments](../../user/project/canary_deployments.md). **(PREMIUM)**
-   - Deploy your features behind [Feature Flags](../../user/project/operations/feature_flags.md). **(PREMIUM)**
+   - Deploy your features behind [Feature Flags](../../operations/feature_flags.md). **(PREMIUM)**
    - Add release notes to any Git tag with [GitLab Releases](../../user/project/releases/index.md).
    - View of the current health and status of each CI environment running on Kubernetes with [Deploy Boards](../../user/project/deploy_boards.md). **(PREMIUM)**
    - Deploy your application to a production environment in a Kubernetes cluster with [Auto Deploy](../../topics/autodevops/stages.md#auto-deploy).
@@ -226,7 +226,7 @@ To get started with GitLab CI/CD, you need to familiarize yourself
 with the [`.gitlab-ci.yml`](../yaml/README.md) configuration file
 syntax and with its attributes.
 
-This document [introduces the concepts of GitLab CI/CD in the scope of GitLab Pages](../../user/project/pages/getting_started_part_four.md), for deploying static websites.
+This document [introduces the concepts of GitLab CI/CD in the scope of GitLab Pages](../../user/project/pages/getting_started/pages_from_scratch.md), for deploying static websites.
 Although it's meant for users who want to write their own Pages
 script from scratch, it also serves as an introduction to the setup process for GitLab CI/CD.
 It covers the very first general steps of writing a CI/CD configuration

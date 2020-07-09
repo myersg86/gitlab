@@ -11,21 +11,19 @@ import {
   GlTab,
   GlBadge,
   GlPagination,
+  GlSearchBoxByType,
 } from '@gitlab/ui';
 import { visitUrl } from '~/lib/utils/url_utility';
 import TimeAgo from '~/vue_shared/components/time_ago_tooltip.vue';
-import createFlash from '~/flash';
 import AlertManagementList from '~/alert_management/components/alert_management_list.vue';
 import {
   ALERTS_STATUS_TABS,
   trackAlertListViewsOptions,
   trackAlertStatusUpdateOptions,
 } from '~/alert_management/constants';
-import updateAlertStatus from '~/alert_management/graphql/mutations/update_alert_status.graphql';
+import updateAlertStatus from '~/alert_management/graphql/mutations/update_alert_status.mutation.graphql';
 import mockAlerts from '../mocks/alerts.json';
 import Tracking from '~/tracking';
-
-jest.mock('~/flash');
 
 jest.mock('~/lib/utils/url_utility', () => ({
   visitUrl: jest.fn().mockName('visitUrlMock'),
@@ -49,6 +47,8 @@ describe('AlertManagementList', () => {
   const findSeverityFields = () => wrapper.findAll('[data-testid="severityField"]');
   const findSeverityColumnHeader = () => wrapper.findAll('th').at(0);
   const findPagination = () => wrapper.find(GlPagination);
+  const findSearch = () => wrapper.find(GlSearchBoxByType);
+  const findIssueFields = () => wrapper.findAll('[data-testid="issueField"]');
   const alertsCount = {
     open: 14,
     triggered: 10,
@@ -70,6 +70,7 @@ describe('AlertManagementList', () => {
       propsData: {
         projectPath: 'gitlab-org/gitlab',
         enableAlertManagementPath: '/link',
+        populatingAlertsHelpUrl: '/help/help-page.md#populating-alert-data',
         emptyAlertSvgPath: 'illustration/path',
         ...props,
       },
@@ -206,6 +207,15 @@ describe('AlertManagementList', () => {
       expect(findStatusDropdown().exists()).toBe(true);
     });
 
+    it('does not display a dropdown status header', () => {
+      mountComponent({
+        props: { alertManagementEnabled: true, userCanEnableAlertManagement: true },
+        data: { alerts: { list: mockAlerts }, alertsCount, errored: false },
+        loading: false,
+      });
+      expect(findStatusDropdown().contains('.dropdown-title')).toBe(false);
+    });
+
     it('shows correct severity icons', () => {
       mountComponent({
         props: { alertManagementEnabled: true, userCanEnableAlertManagement: true },
@@ -278,6 +288,37 @@ describe('AlertManagementList', () => {
       expect(visitUrl).toHaveBeenCalledWith('/1527542/details');
     });
 
+    describe('alert issue links', () => {
+      beforeEach(() => {
+        mountComponent({
+          props: { alertManagementEnabled: true, userCanEnableAlertManagement: true },
+          data: { alerts: { list: mockAlerts }, alertsCount, errored: false },
+          loading: false,
+        });
+      });
+
+      it('shows "None" when no link exists', () => {
+        expect(
+          findIssueFields()
+            .at(0)
+            .text(),
+        ).toBe('None');
+      });
+
+      it('renders a link when one exists', () => {
+        expect(
+          findIssueFields()
+            .at(1)
+            .text(),
+        ).toBe('#1');
+        expect(
+          findIssueFields()
+            .at(1)
+            .attributes('href'),
+        ).toBe('/gitlab-org/gitlab/-/issues/1');
+      });
+    });
+
     describe('handle date fields', () => {
       it('should display time ago dates when values provided', () => {
         mountComponent({
@@ -289,7 +330,6 @@ describe('AlertManagementList', () => {
                   iid: 1,
                   status: 'acknowledged',
                   startedAt: '2020-03-17T23:18:14.996Z',
-                  endedAt: '2020-04-17T23:18:14.996Z',
                   severity: 'high',
                   assignees: { nodes: [] },
                 },
@@ -300,7 +340,7 @@ describe('AlertManagementList', () => {
           },
           loading: false,
         });
-        expect(findDateFields().length).toBe(2);
+        expect(findDateFields().length).toBe(1);
       });
 
       it('should not display time ago dates when values not provided', () => {
@@ -312,7 +352,6 @@ describe('AlertManagementList', () => {
                 iid: 1,
                 status: 'acknowledged',
                 startedAt: null,
-                endedAt: null,
                 severity: 'high',
               },
             ],
@@ -344,11 +383,11 @@ describe('AlertManagementList', () => {
     it('updates sort with new direction and column key', () => {
       findSeverityColumnHeader().trigger('click');
 
-      expect(wrapper.vm.$data.sort).toBe('SEVERITY_ASC');
+      expect(wrapper.vm.$data.sort).toBe('SEVERITY_DESC');
 
       findSeverityColumnHeader().trigger('click');
 
-      expect(wrapper.vm.$data.sort).toBe('SEVERITY_DESC');
+      expect(wrapper.vm.$data.sort).toBe('SEVERITY_ASC');
     });
   });
 
@@ -388,14 +427,15 @@ describe('AlertManagementList', () => {
       });
     });
 
-    it('calls `createFlash` when request fails', () => {
+    it('shows an error when request fails', () => {
       jest.spyOn(wrapper.vm.$apollo, 'mutate').mockReturnValue(Promise.reject(new Error()));
       findFirstStatusOption().vm.$emit('click');
+      wrapper.setData({
+        errored: true,
+      });
 
-      setImmediate(() => {
-        expect(createFlash).toHaveBeenCalledWith(
-          'There was an error while updating the status of the alert. Please try again.',
-        );
+      wrapper.vm.$nextTick(() => {
+        expect(wrapper.find('[data-testid="alert-error"]').exists()).toBe(true);
       });
     });
   });
@@ -484,6 +524,28 @@ describe('AlertManagementList', () => {
           expect(wrapper.vm.nextPage).toBeNull();
         });
       });
+    });
+  });
+
+  describe('Search', () => {
+    beforeEach(() => {
+      mountComponent({
+        props: { alertManagementEnabled: true, userCanEnableAlertManagement: true },
+        data: { alerts: { list: mockAlerts }, alertsCount, errored: false },
+        loading: false,
+      });
+    });
+
+    it('renders the search component', () => {
+      expect(findSearch().exists()).toBe(true);
+    });
+
+    it('sets the `searchTerm` graphql variable', () => {
+      const SEARCH_TERM = 'Simple Alert';
+
+      findSearch().vm.$emit('input', SEARCH_TERM);
+
+      expect(wrapper.vm.$data.searchTerm).toBe(SEARCH_TERM);
     });
   });
 });

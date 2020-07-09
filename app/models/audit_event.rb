@@ -3,8 +3,9 @@
 class AuditEvent < ApplicationRecord
   include CreatedAtFilterable
   include IgnorableColumns
+  include BulkInsertSafe
 
-  ignore_column :updated_at, remove_with: '13.3', remove_after: '2020-08-22'
+  ignore_column :updated_at, remove_with: '13.4', remove_after: '2020-09-22'
 
   serialize :details, Hash # rubocop:disable Cop/ActiveRecordSerialize
 
@@ -16,6 +17,7 @@ class AuditEvent < ApplicationRecord
 
   scope :by_entity_type, -> (entity_type) { where(entity_type: entity_type) }
   scope :by_entity_id, -> (entity_id) { where(entity_id: entity_id) }
+  scope :by_author_id, -> (author_id) { where(author_id: author_id) }
 
   after_initialize :initialize_details
 
@@ -51,7 +53,7 @@ class AuditEvent < ApplicationRecord
   private
 
   def default_author_value
-    ::Gitlab::Audit::NullAuthor.for(author_id, details[:author_name])
+    ::Gitlab::Audit::NullAuthor.for(author_id, (self[:author_name] || details[:author_name]))
   end
 end
 

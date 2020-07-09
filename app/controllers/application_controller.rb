@@ -22,6 +22,7 @@ class ApplicationController < ActionController::Base
   include Impersonation
   include Gitlab::Logging::CloudflareHelper
   include Gitlab::Utils::StrongMemoize
+  include ControllerWithFeatureCategory
 
   before_action :authenticate_user!, except: [:route_not_found]
   before_action :enforce_terms!, if: :should_enforce_terms?
@@ -327,13 +328,6 @@ class ApplicationController < ActionController::Base
         redirect_to new_user_session_path
       end
     end
-  end
-
-  def event_filter
-    @event_filter ||=
-      EventFilter.new(params[:event_filter].presence || cookies[:event_filter]).tap do |new_event_filter|
-        cookies[:event_filter] = new_event_filter.filter
-      end
   end
 
   # JSON for infinite scroll via Pager object

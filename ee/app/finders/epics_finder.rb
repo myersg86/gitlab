@@ -19,9 +19,11 @@
 #   include_ancestor_groups: boolean
 #   include_descendant_groups: boolean
 #   starts_with_iid: string (containing a number)
+#   confidential: boolean
 
 class EpicsFinder < IssuableFinder
   include TimeFrameFilter
+  include Gitlab::Utils::StrongMemoize
 
   IID_STARTS_WITH_PATTERN = %r{\A(\d)+\z}.freeze
 
@@ -50,7 +52,9 @@ class EpicsFinder < IssuableFinder
     Epic
   end
 
-  def execute
+  def execute(skip_visibility_check: false)
+    @skip_visibility_check = skip_visibility_check
+
     raise ArgumentError, 'group_id argument is missing' unless params[:group_id]
     return Epic.none unless Ability.allowed?(current_user, :read_epic, group)
 
@@ -75,9 +79,7 @@ class EpicsFinder < IssuableFinder
                # The `group` method takes care of checking permissions
                [group]
              else
-               # `same_root` should be set only if we are sure that all groups
-               # in related_groups have the same ancestor root group
-               ::Group.groups_user_can_read_epics(related_groups, current_user, same_root: true)
+               permissioned_related_groups
              end
 
     epics = Epic.where(group: groups)
@@ -86,6 +88,22 @@ class EpicsFinder < IssuableFinder
   # rubocop: enable CodeReuse/ActiveRecord
 
   private
+
+  def permissioned_related_groups
+    groups = related_groups
+
+    # if user is member of top-level related group, he can automatically read
+    # all epics in all subgroups
+    return groups if can_read_all_epics_in_related_groups?(groups)
+
+    groups_user_can_read_epics(groups)
+  end
+
+  def groups_user_can_read_epics(groups)
+    # `same_root` should be set only if we are sure that all groups
+    # in related_groups have the same ancestor root group
+    ::Group.groups_user_can_read_epics(groups, current_user, same_root: true)
+  end
 
   def filter_items(items)
     items = by_created_at(items)
@@ -97,6 +115,7 @@ class EpicsFinder < IssuableFinder
     items = by_parent(items)
     items = by_iids(items)
     items = by_my_reaction_emoji(items)
+    items = by_confidential(items)
 
     starts_with_iid(items)
   end
@@ -112,10 +131,15 @@ class EpicsFinder < IssuableFinder
   end
 
   def group
-    return unless params[:group_id]
-    return @group if defined?(@group)
+    strong_memoize(:group) do
+      next unless params[:group_id]
 
-    @group = Group.find(params[:group_id])
+      if params[:group_id].is_a?(Group)
+        params[:group_id]
+      else
+        Group.find(params[:group_id])
+      end
+    end
   end
 
   def starts_with_iid(items)
@@ -165,8 +189,7 @@ class EpicsFinder < IssuableFinder
   # rubocop: enable CodeReuse/ActiveRecord
 
   def with_confidentiality_access_check(epics, groups)
-    return epics unless Feature.enabled?(:confidential_epics_query, group)
-    return epics if can_read_all_related_groups?(groups)
+    return epics if can_read_all_epics_in_related_groups?(groups)
 
     epics.not_confidential_or_in_groups(groups_with_confidential_access(groups))
   end
@@ -179,7 +202,8 @@ class EpicsFinder < IssuableFinder
     GroupMember.by_group_ids(group_ids).by_user_id(current_user).non_guests.select(:source_id)
   end
 
-  def can_read_all_related_groups?(groups)
+  def can_read_all_epics_in_related_groups?(groups)
+    return true if skip_visibility_check?
     return false unless current_user
 
     # If a user is a member of a group, he also inherits access to all subgroups,
@@ -194,5 +218,15 @@ class EpicsFinder < IssuableFinder
     # - in that case top-level group is group's root parent
     parent = params.fetch(:include_ancestor_groups, false) ? groups.first.root_ancestor : group
     Ability.allowed?(current_user, :read_confidential_epic, parent)
+  end
+
+  def skip_visibility_check?
+    @skip_visibility_check && Feature.enabled?(:skip_epic_count_visibility_check, group, default_enabled: true)
+  end
+
+  def by_confidential(items)
+    return items if params[:confidential].nil?
+
+    params[:confidential] ? items.confidential : items.public_only
   end
 end

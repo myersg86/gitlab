@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe 'getting Alert Management Alert Assignees' do
+RSpec.describe 'getting Alert Management Alert Assignees' do
   include GraphqlHelpers
 
   let_it_be(:project) { create(:project) }
@@ -74,18 +74,5 @@ describe 'getting Alert Management Alert Assignees' do
 
     expect(third_assignees.length).to eq(1)
     expect(third_assignees.first).to include('username' => current_user.username)
-  end
-
-  context 'with alert_assignee flag disabled' do
-    before do
-      stub_feature_flags(alert_assignee: false)
-    end
-
-    it 'excludes assignees' do
-      post_graphql(query, current_user: current_user)
-
-      expect(first_assignees).to be_empty
-      expect(second_assignees).to be_empty
-    end
   end
 end

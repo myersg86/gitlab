@@ -1,5 +1,5 @@
 <script>
-import { GlDeprecatedButton, GlLoadingIcon } from '@gitlab/ui';
+import { GlButton } from '@gitlab/ui';
 import createFlash, { hideFlash } from '~/flash';
 import { s__ } from '~/locale';
 import eventHub from '~/vue_merge_request_widget/event_hub';
@@ -20,8 +20,7 @@ export default {
     ApprovalsSummaryOptional,
     ApprovalsFooter,
     ApprovalsAuth,
-    GlDeprecatedButton,
-    GlLoadingIcon,
+    GlButton,
   },
   props: {
     mr: {
@@ -85,18 +84,17 @@ export default {
     action() {
       // Use the default approve action, only if we aren't using the auth component for it
       if (this.showApprove) {
-        const inverted = this.isApproved;
         return {
           text: this.approvalText,
-          inverted,
-          variant: 'primary',
+          category: this.isApproved ? 'secondary' : 'primary',
+          variant: 'info',
           action: () => this.approve(),
         };
       } else if (this.showUnapprove) {
         return {
           text: s__('mrWidget|Revoke approval'),
           variant: 'warning',
-          inverted: true,
+          category: 'secondary',
           action: () => this.unapprove(),
         };
       }
@@ -207,18 +205,17 @@ export default {
           @approve="approveWithAuth"
           @hide="clearError"
         />
-        <gl-deprecated-button
+        <gl-button
           v-if="action"
           :variant="action.variant"
-          :class="{ 'btn-inverted': action.inverted }"
-          size="sm"
+          :category="action.category"
+          :loading="isApproving"
           class="mr-3"
           data-qa-selector="approve_button"
           @click="action.action"
         >
-          <gl-loading-icon v-if="isApproving" inline />
           {{ action.text }}
-        </gl-deprecated-button>
+        </gl-button>
         <approvals-summary-optional
           v-if="isOptional"
           :can-approve="hasAction"

@@ -8,7 +8,7 @@ This page offers a walkthrough of a common configuration
 for GitLab on AWS. You should customize it to accommodate your needs.
 
 NOTE: **Note**
-For organizations with 300 users or less, the recommended AWS installation method is to launch an EC2 single box [Omnibus Installation](https://about.gitlab.com/install/) and implement a snapshot strategy for backing up the data.
+For organizations with 1,000 users or less, the recommended AWS installation method is to launch an EC2 single box [Omnibus Installation](https://about.gitlab.com/install/) and implement a snapshot strategy for backing up the data. See the [1,000 user reference architecture](../../administration/reference_architectures/1k_users.md) for more.
 
 ## Introduction
 
@@ -360,7 +360,7 @@ persistence and is used to store session data, temporary cache information, and 
 
 1. Navigate back to the ElastiCache dashboard.
 1. Select **Redis** on the left menu and click **Create** to create a new
-   Redis cluster. Do not enable **Cluster Mode** as it is [not supported](../../administration/high_availability/redis.md#provide-your-own-redis-instance-core-only). Even without cluster mode on, you still get the
+   Redis cluster. Do not enable **Cluster Mode** as it is [not supported](../../administration/redis/replication_and_failover_external.md#requirements). Even without cluster mode on, you still get the
    chance to deploy Redis in multiple availability zones.
 1. In the settings section:
    1. Give the cluster a name (`gitlab-redis`) and a description.
@@ -638,7 +638,7 @@ That concludes the configuration changes for our GitLab instance. Next, we'll cr
 
 On the EC2 dashboard:
 
-1. Select the `GitLab` instance we [created earlier](#install-gitLab).
+1. Select the `GitLab` instance we [created earlier](#install-gitlab).
 1. Click on **Actions**, scroll down to **Image** and click **Create Image**.
 1. Give your image a name and description (we'll use `GitLab-Source` for both).
 1. Leave everything else as default and click **Create Image**

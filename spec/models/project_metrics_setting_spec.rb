@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe ProjectMetricsSetting do
+RSpec.describe ProjectMetricsSetting do
   describe 'Associations' do
     it { is_expected.to belong_to(:project) }
   end
@@ -50,6 +50,14 @@ describe ProjectMetricsSetting do
       it 'defaults to local' do
         expect(subject.dashboard_timezone).to eq('local')
       end
+    end
+  end
+
+  describe '#dashboard_timezone=' do
+    it 'downcases string' do
+      subject.dashboard_timezone = 'UTC'
+
+      expect(subject.dashboard_timezone).to eq('utc')
     end
   end
 end

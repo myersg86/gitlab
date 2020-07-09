@@ -20,7 +20,7 @@ Adjust your project's name, description, avatar, [default branch](../repository/
 
 The project description also partially supports [standard Markdown](../../markdown.md#standard-markdown-and-extensions-in-gitlab). You can use [emphasis](../../markdown.md#emphasis), [links](../../markdown.md#links), and [line-breaks](../../markdown.md#line-breaks) to add more context to the project description.
 
-#### Compliance framework **(ULTIMATE)**
+#### Compliance framework **(PREMIUM)**
 
 You can select a framework label to identify that your project has certain compliance requirements or needs additional oversight. Available labels include:
 
@@ -192,11 +192,9 @@ to transfer a project.
 
 You can transfer an existing project into a [group](../../group/index.md) if:
 
-1. You have at least **Maintainer** [permissions](../../permissions.md#project-members-permissions) to that group.
-1. The project is in a subgroup you own.
-1. You're at least a **Maintainer** of the project under your personal namespace.
-   Similarly, if you're an owner of a group, you can transfer any of its projects
-   under your own user.
+- You have at least **Maintainer** [permissions](../../permissions.md#project-members-permissions) to that group.
+- You're at least an **Owner** of the project to be transferred.
+- The group to which the project is being transferred to must allow creation of new projects.
 
 To transfer a project:
 

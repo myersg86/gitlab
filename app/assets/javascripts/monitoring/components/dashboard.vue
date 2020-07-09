@@ -1,6 +1,7 @@
 <script>
 import { mapActions, mapState, mapGetters } from 'vuex';
 import VueDraggable from 'vuedraggable';
+import Mousetrap from 'mousetrap';
 import { GlIcon, GlButton, GlModalDirective, GlTooltipDirective } from '@gitlab/ui';
 import DashboardHeader from './dashboard_header.vue';
 import DashboardPanel from './dashboard_panel.vue';
@@ -24,7 +25,7 @@ import {
   expandedPanelPayloadFromUrl,
   convertVariablesForURL,
 } from '../utils';
-import { metricStates } from '../constants';
+import { metricStates, keyboardShortcutKeys } from '../constants';
 import { defaultTimeRange } from '~/vue_shared/constants';
 
 export default {
@@ -71,6 +72,10 @@ export default {
       type: String,
       required: true,
     },
+    addDashboardDocumentationPath: {
+      type: String,
+      required: true,
+    },
     settingsPath: {
       type: String,
       required: true,
@@ -85,7 +90,8 @@ export default {
     },
     defaultBranch: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
     },
     emptyGettingStartedSvgPath: {
       type: String,
@@ -148,6 +154,7 @@ export default {
       selectedTimeRange: timeRangeFromUrl() || defaultTimeRange,
       isRearrangingPanels: false,
       originalDocumentTitle: document.title,
+      hoveredPanel: '',
     };
   },
   computed: {
@@ -159,10 +166,11 @@ export default {
       'variables',
       'links',
       'currentDashboard',
+      'hasDashboardValidationWarnings',
     ]),
     ...mapGetters('monitoringDashboard', ['selectedDashboard', 'getMetricStates']),
     shouldShowVariablesSection() {
-      return Object.keys(this.variables).length > 0;
+      return Boolean(this.variables.length);
     },
     shouldShowLinksSection() {
       return Object.keys(this.links).length > 0;
@@ -196,12 +204,29 @@ export default {
     selectedDashboard(dashboard) {
       this.prependToDocumentTitle(dashboard?.display_name);
     },
+    hasDashboardValidationWarnings(hasWarnings) {
+      /**
+       * This watcher is set for future SPA behaviour of the dashboard
+       */
+      if (hasWarnings) {
+        createFlash(
+          s__(
+            'Metrics|Your dashboard schema is invalid. Edit the dashboard to correct the YAML schema.',
+          ),
+          'warning',
+        );
+      }
+    },
   },
   created() {
     window.addEventListener('keyup', this.onKeyup);
+
+    Mousetrap.bind(Object.values(keyboardShortcutKeys), this.runShortcut);
   },
   destroyed() {
     window.removeEventListener('keyup', this.onKeyup);
+
+    Mousetrap.unbind(Object.values(keyboardShortcutKeys));
   },
   mounted() {
     if (!this.hasMetrics) {
@@ -301,6 +326,66 @@ export default {
       // As a fallback, switch to default time range instead
       this.selectedTimeRange = defaultTimeRange;
     },
+    isPanelHalfWidth(panelIndex, totalPanels) {
+      /**
+       * A single panel on a row should take the full width of its parent.
+       * All others should have half the width their parent.
+       */
+      const isNumberOfPanelsEven = totalPanels % 2 === 0;
+      const isLastPanel = panelIndex === totalPanels - 1;
+
+      return isNumberOfPanelsEven || !isLastPanel;
+    },
+    /**
+     * TODO: Investigate this to utilize the eventBus from Vue
+     * The intentation behind this cleanup is to allow for better tests
+     * as well as use the correct eventBus facilities that are compatible
+     * with Vue 3
+     * https://gitlab.com/gitlab-org/gitlab/-/issues/225583
+     */
+    //
+    runShortcut(e) {
+      const panel = this.$refs[this.hoveredPanel];
+
+      if (!panel) return;
+
+      const [panelInstance] = panel;
+      let actionToRun = '';
+
+      switch (e.key) {
+        case keyboardShortcutKeys.EXPAND:
+          actionToRun = 'onExpandFromKeyboardShortcut';
+          break;
+
+        case keyboardShortcutKeys.VISIT_LOGS:
+          actionToRun = 'visitLogsPageFromKeyboardShortcut';
+          break;
+
+        case keyboardShortcutKeys.SHOW_ALERT:
+          actionToRun = 'showAlertModalFromKeyboardShortcut';
+          break;
+
+        case keyboardShortcutKeys.DOWNLOAD_CSV:
+          actionToRun = 'downloadCsvFromKeyboardShortcut';
+          break;
+
+        case keyboardShortcutKeys.CHART_COPY:
+          actionToRun = 'copyChartLinkFromKeyboardShotcut';
+          break;
+
+        default:
+          actionToRun = 'onExpandFromKeyboardShortcut';
+          break;
+      }
+
+      panelInstance[actionToRun]();
+    },
+    setHoveredPanel(groupKey, graphIndex) {
+      this.hoveredPanel = `dashboard-panel-${groupKey}-${graphIndex}`;
+    },
+    clearHoveredPanel() {
+      this.hoveredPanel = '';
+    },
   },
   i18n: {
     goBackLabel: s__('Metrics|Go back (Esc)'),
@@ -314,6 +399,7 @@ export default {
       v-if="showHeader"
       ref="prometheusGraphsHeader"
       class="prometheus-graphs-header d-sm-flex flex-sm-wrap pt-2 pr-1 pb-0 pl-2 border-bottom bg-gray-light"
+      :add-dashboard-documentation-path="addDashboardDocumentationPath"
       :default-branch="defaultBranch"
       :rearrange-panels-available="rearrangePanelsAvailable"
       :custom-metrics-available="customMetricsAvailable"
@@ -376,8 +462,14 @@ export default {
             <div
               v-for="(graphData, graphIndex) in groupData.panels"
               :key="`dashboard-panel-${graphIndex}`"
-              class="col-12 col-lg-6 px-2 mb-2 draggable"
-              :class="{ 'draggable-enabled': isRearrangingPanels }"
+              data-testid="dashboard-panel-layout-wrapper"
+              class="col-12 px-2 mb-2 draggable"
+              :class="{
+                'draggable-enabled': isRearrangingPanels,
+                'col-lg-6': isPanelHalfWidth(graphIndex, groupData.panels.length),
+              }"
+              @mouseover="setHoveredPanel(groupData.key, graphIndex)"
+              @mouseout="clearHoveredPanel"
             >
               <div class="position-relative draggable-panel js-draggable-panel">
                 <div
@@ -391,6 +483,7 @@ export default {
                 </div>
 
                 <dashboard-panel
+                  :ref="`dashboard-panel-${groupData.key}-${graphIndex}`"
                   :settings-path="settingsPath"
                   :clipboard-text="generatePanelUrl(groupData.group, graphData)"
                   :graph-data="graphData"

@@ -2,21 +2,10 @@
 
 require 'spec_helper'
 
-describe 'OAuth tokens' do
+RSpec.describe 'OAuth tokens' do
+  include HttpBasicAuthHelpers
+
   context 'Resource Owner Password Credentials' do
-    def basic_auth_header(username, password)
-      {
-        'HTTP_AUTHORIZATION' => ActionController::HttpAuthentication::Basic.encode_credentials(
-          username,
-          password
-        )
-      }
-    end
-
-    def client_basic_auth_header(client)
-      basic_auth_header(client.uid, client.secret)
-    end
-
     def request_oauth_token(user, headers = {})
       post '/oauth/token',
          params: { username: user.username, password: user.password, grant_type: 'password' },

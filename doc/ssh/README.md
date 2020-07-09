@@ -344,7 +344,7 @@ NOTE: **Note:**
 The example `Host` aliases are defined as `user_1.gitlab.com` and
 `user_2.gitlab.com` for efficiency and transparency. Advanced configurations
 are more difficult to maintain; using this type of alias makes it easier to
-understand when using other tools such as `git remote` subcommands. SSH
+understand when using other tools such as `git remote` sub-commands. SSH
 would understand any string as a `Host` alias thus `Tanuki1` and `Tanuki2`,
 despite giving very little context as to where they point, would also work.
 
@@ -385,7 +385,7 @@ GitLab integrates with the system-installed SSH daemon, designating a user
 connecting to the GitLab server over SSH are identified by their SSH key instead
 of their username.
 
-SSH *client* operations performed on the GitLab server wil be executed as this
+SSH *client* operations performed on the GitLab server will be executed as this
 user. Although it is possible to modify the SSH configuration for this user to,
 e.g., provide a private SSH key to authenticate these requests by, this practice
 is **not supported** and is strongly discouraged as it presents significant
@@ -412,7 +412,7 @@ are *explicitly not supported* and may stop working at any time.
 
 ### Options for Microsoft Windows
 
-If you're running Windows 10, the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10), and its latest [WSL 2](https://docs.microsoft.com/en-us/install-win10) version,
+If you're running Windows 10, the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10), and its latest [WSL 2](https://docs.microsoft.com/en-us/windows/wsl/install-win10#update-to-wsl-2) version,
 support the installation of different Linux distributions, which include the Git and SSH clients.
 
 For current versions of Windows, you can also install the Git and SSH clients with

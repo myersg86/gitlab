@@ -13,8 +13,13 @@ RSpec.describe IssuablesHelper do
     end
 
     context 'for an epic' do
+      let_it_be(:epic) { create(:epic, author: user, description: 'epic text', confidential: true) }
+
+      before do
+        stub_feature_flags(confidential_epics: true)
+      end
+
       it 'returns the correct data' do
-        epic = create(:epic, author: user, description: 'epic text')
         @group = epic.group
 
         expected_data = {
@@ -26,6 +31,7 @@ RSpec.describe IssuablesHelper do
           canDestroy: true,
           canAdmin: true,
           issuableRef: "&#{epic.iid}",
+          issuableStatus: "opened",
           markdownPreviewPath: "/groups/#{@group.full_path}/preview_markdown",
           markdownDocsPath: '/help/user/markdown',
           issuableTemplateNamesPath: '',
@@ -34,10 +40,11 @@ RSpec.describe IssuablesHelper do
           groupPath: @group.path,
           initialTitleHtml: epic.title,
           initialTitleText: epic.title,
-          initialDescriptionHtml: '<p dir="auto">epic text</p>',
+          initialDescriptionHtml: '<p data-sourcepos="1:1-1:9" dir="auto">epic text</p>',
           initialDescriptionText: 'epic text',
           initialTaskStatus: '0 of 0 tasks completed',
-          projectsEndpoint: "/api/v4/groups/#{@group.id}/projects"
+          projectsEndpoint: "/api/v4/groups/#{@group.id}/projects",
+          confidential: epic.confidential
         }
         expect(helper.issuable_initial_data(epic)).to eq(expected_data)
       end

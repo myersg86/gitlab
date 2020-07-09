@@ -11,6 +11,8 @@ module Gitlab
             report_data = parse_report(json_data)
             raise SecurityReportParserError, "Invalid report format" unless report_data.is_a?(Hash)
 
+            report.scanned_resources = report_data.dig('scan', 'scanned_resources') || []
+
             collate_remediations(report_data).each do |vulnerability|
               create_vulnerability(report, vulnerability, report_data["version"])
             end
@@ -72,7 +74,8 @@ module Gitlab
             report.add_scanner(
               ::Gitlab::Ci::Reports::Security::Scanner.new(
                 external_id: scanner['id'],
-                name: scanner['name']))
+                name: scanner['name'],
+                vendor: scanner.dig('vendor', 'name')))
           end
 
           def create_identifiers(report, identifiers)

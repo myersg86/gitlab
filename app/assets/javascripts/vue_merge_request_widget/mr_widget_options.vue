@@ -36,7 +36,7 @@ import CheckingState from './components/states/mr_widget_checking.vue';
 import eventHub from './event_hub';
 import notify from '~/lib/utils/notify';
 import SourceBranchRemovalStatus from './components/source_branch_removal_status.vue';
-import TerraformPlan from './components/mr_widget_terraform_plan.vue';
+import TerraformPlan from './components/terraform/mr_widget_terraform_container.vue';
 import GroupedTestReportsApp from '../reports/components/grouped_test_reports_app.vue';
 import { setFaviconOverlay } from '../lib/utils/common_utils';
 import GroupedAccessibilityReportsApp from '../reports/accessibility_report/grouped_accessibility_reports_app.vue';
@@ -365,7 +365,7 @@ export default {
 };
 </script>
 <template>
-  <div v-if="mr" class="mr-state-widget prepend-top-default">
+  <div v-if="mr" class="mr-state-widget gl-mt-3">
     <mr-widget-header :mr="mr" />
     <mr-widget-suggest-pipeline
       v-if="shouldSuggestPipelines"
@@ -384,6 +384,7 @@ export default {
         v-if="mr.testResultsPath"
         class="js-reports-container"
         :endpoint="mr.testResultsPath"
+        :pipeline-path="mr.mergeRequestAddCiConfigPath"
       />
 
       <terraform-plan v-if="mr.terraformReportsPath" :endpoint="mr.terraformReportsPath" />

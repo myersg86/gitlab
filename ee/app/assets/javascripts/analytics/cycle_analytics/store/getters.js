@@ -9,13 +9,30 @@ export const hasNoAccessError = state => state.errorCode === httpStatus.FORBIDDE
 export const currentGroupPath = ({ selectedGroup }) =>
   selectedGroup && selectedGroup.fullPath ? selectedGroup.fullPath : null;
 
+export const currentGroupParentPath = ({ selectedGroup }, getters) =>
+  selectedGroup?.parentId || getters.currentGroupPath;
+
 export const selectedProjectIds = ({ selectedProjects }) =>
   selectedProjects.length ? selectedProjects.map(({ id }) => id) : [];
 
-export const cycleAnalyticsRequestParams = ({ startDate = null, endDate = null }, getters) => ({
+export const cycleAnalyticsRequestParams = (
+  {
+    startDate = null,
+    endDate = null,
+    selectedAuthor = null,
+    selectedMilestone = null,
+    selectedAssignees = [],
+    selectedLabels = [],
+  },
+  getters,
+) => ({
   project_ids: getters.selectedProjectIds,
   created_after: startDate ? dateFormat(startDate, dateFormats.isoDate) : null,
   created_before: endDate ? dateFormat(endDate, dateFormats.isoDate) : null,
+  author_username: selectedAuthor,
+  milestone_title: selectedMilestone,
+  assignee_username: selectedAssignees,
+  label_name: selectedLabels,
 });
 
 const filterStagesByHiddenStatus = (stages = [], isHidden = true) =>

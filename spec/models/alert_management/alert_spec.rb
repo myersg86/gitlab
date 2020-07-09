@@ -2,11 +2,16 @@
 
 require 'spec_helper'
 
-describe AlertManagement::Alert do
+RSpec.describe AlertManagement::Alert do
   describe 'associations' do
     it { is_expected.to belong_to(:project) }
-    it { is_expected.to belong_to(:issue) }
+    it { is_expected.to belong_to(:issue).optional }
+    it { is_expected.to belong_to(:prometheus_alert).optional }
+    it { is_expected.to belong_to(:environment).optional }
     it { is_expected.to have_many(:assignees).through(:alert_assignees) }
+    it { is_expected.to have_many(:notes) }
+    it { is_expected.to have_many(:ordered_notes) }
+    it { is_expected.to have_many(:user_mentions) }
   end
 
   describe 'validations' do
@@ -160,6 +165,15 @@ describe AlertManagement::Alert do
       it { is_expected.to contain_exactly(alert_with_fingerprint) }
     end
 
+    describe '.for_environment' do
+      let(:environment) { create(:environment, project: project) }
+      let!(:env_alert) { create(:alert_management_alert, project: project, environment: environment) }
+
+      subject { described_class.for_environment(environment) }
+
+      it { is_expected.to match_array(env_alert) }
+    end
+
     describe '.counts_by_status' do
       subject { described_class.counts_by_status }
 
@@ -170,6 +184,43 @@ describe AlertManagement::Alert do
           ignored_alert.status => 1
         )
       end
+    end
+
+    describe '.counts_by_project_id' do
+      subject { described_class.counts_by_project_id }
+
+      let!(:alert_other_project) { create(:alert_management_alert) }
+
+      it do
+        is_expected.to eq(
+          project.id => 3,
+          alert_other_project.project.id => 1
+        )
+      end
+    end
+
+    describe '.open' do
+      subject { described_class.open }
+
+      let!(:acknowledged_alert) { create(:alert_management_alert, :acknowledged, project: project)}
+
+      it { is_expected.to contain_exactly(acknowledged_alert, triggered_alert) }
+    end
+  end
+
+  describe '.last_prometheus_alert_by_project_id' do
+    subject { described_class.last_prometheus_alert_by_project_id }
+
+    let(:project_1) { create(:project) }
+    let!(:alert_1) { create(:alert_management_alert, project: project_1) }
+    let!(:alert_2) { create(:alert_management_alert, project: project_1) }
+
+    let(:project_2) { create(:project) }
+    let!(:alert_3) { create(:alert_management_alert, project: project_2) }
+    let!(:alert_4) { create(:alert_management_alert, project: project_2) }
+
+    it 'returns the latest alert for each project' do
+      expect(subject).to contain_exactly(alert_2, alert_4)
     end
   end
 
@@ -332,6 +383,24 @@ describe AlertManagement::Alert do
 
     it 'increments the events count by 1' do
       expect { subject }.to change { alert.events }.by(1)
+    end
+  end
+
+  describe '#present' do
+    context 'when alert is generic' do
+      let(:alert) { build(:alert_management_alert) }
+
+      it 'uses generic alert presenter' do
+        expect(alert.present).to be_kind_of(AlertManagement::AlertPresenter)
+      end
+    end
+
+    context 'when alert is Prometheus specific' do
+      let(:alert) { build(:alert_management_alert, :prometheus) }
+
+      it 'uses Prometheus Alert presenter' do
+        expect(alert.present).to be_kind_of(AlertManagement::PrometheusAlertPresenter)
+      end
     end
   end
 end

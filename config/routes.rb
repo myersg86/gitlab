@@ -190,7 +190,6 @@ Rails.application.routes.draw do
         Gitlab.ee do
           get :metrics, format: :json
           get :metrics_dashboard
-          get :'/prometheus/api/v1/*proxy_path', to: 'clusters#prometheus_proxy', as: :prometheus_api
           get :environments, format: :json
         end
 
@@ -200,6 +199,7 @@ Rails.application.routes.draw do
           delete '/:application', to: 'clusters/applications#destroy', as: :uninstall_applications
         end
 
+        get :'/prometheus/api/v1/*proxy_path', to: 'clusters#prometheus_proxy', as: :prometheus_api
         get :cluster_status, format: :json
         delete :clear_cache
       end
@@ -242,6 +242,8 @@ Rails.application.routes.draw do
     post :preview_markdown
   end
 
+  draw :group
+
   resources :projects, only: [:index, :new, :create]
 
   get '/projects/:id' => 'projects#resolve'
@@ -258,9 +260,16 @@ Rails.application.routes.draw do
   draw :admin
   draw :profile
   draw :dashboard
-  draw :group
   draw :user
   draw :project
+
+  # Serve snippet routes under /-/snippets.
+  # To ensure an old unscoped routing is used for the UI we need to
+  # add prefix 'as' to the scope routing and place it below original routing.
+  # Issue https://gitlab.com/gitlab-org/gitlab/-/issues/210024
+  scope '-', as: :scoped do
+    draw :snippets
+  end
 
   root to: "root#index"
 

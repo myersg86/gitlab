@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
 class Admin::ElasticsearchController < Admin::ApplicationController
-  before_action :check_elasticsearch_web_indexing_feature_flag!
-
-  def check_elasticsearch_web_indexing_feature_flag!
-    render_404 unless Feature.enabled?(:elasticsearch_web_indexing, default_enabled: true)
-  end
-
   # POST
   # Scheduling indexing jobs
   def enqueue_index
@@ -18,6 +12,19 @@ class Admin::ElasticsearchController < Admin::ApplicationController
       flash[:notice] = "#{notice} #{queue_link}".html_safe
     else
       flash[:warning] = _('Please create an index before enabling indexing')
+    end
+
+    redirect_to integrations_admin_application_settings_path(anchor: 'js-elasticsearch-settings')
+  end
+
+  # POST
+  # Trigger reindexing task
+  def trigger_reindexing
+    if Elastic::ReindexingTask.running?
+      flash[:warning] = _('Elasticsearch reindexing is already in progress')
+    else
+      Elastic::ReindexingTask.create!
+      flash[:notice] = _('Elasticsearch reindexing triggered')
     end
 
     redirect_to integrations_admin_application_settings_path(anchor: 'js-elasticsearch-settings')

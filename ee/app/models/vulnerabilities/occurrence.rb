@@ -20,10 +20,10 @@ module Vulnerabilities
     belongs_to :primary_identifier, class_name: 'Vulnerabilities::Identifier', inverse_of: :primary_occurrences
     belongs_to :vulnerability, inverse_of: :findings
 
-    has_many :occurrence_identifiers, class_name: 'Vulnerabilities::OccurrenceIdentifier'
-    has_many :identifiers, through: :occurrence_identifiers, class_name: 'Vulnerabilities::Identifier'
-    has_many :occurrence_pipelines, class_name: 'Vulnerabilities::OccurrencePipeline'
-    has_many :pipelines, through: :occurrence_pipelines, class_name: 'Ci::Pipeline'
+    has_many :finding_identifiers, class_name: 'Vulnerabilities::FindingIdentifier'
+    has_many :identifiers, through: :finding_identifiers, class_name: 'Vulnerabilities::Identifier'
+    has_many :finding_pipelines, class_name: 'Vulnerabilities::FindingPipeline'
+    has_many :pipelines, through: :finding_pipelines, class_name: 'Ci::Pipeline'
 
     attr_writer :sha
 
@@ -54,7 +54,8 @@ module Vulnerabilities
       dependency_scanning: 1,
       container_scanning: 2,
       dast: 3,
-      secret_detection: 4
+      secret_detection: 4,
+      coverage_fuzzing: 5
     }.with_indifferent_access.freeze
 
     enum confidence: CONFIDENCE_LEVELS, _prefix: :confidence
@@ -79,7 +80,7 @@ module Vulnerabilities
     validates :metadata_version, presence: true
     validates :raw_metadata, presence: true
 
-    delegate :name, to: :scanner, prefix: true, allow_nil: true
+    delegate :name, :external_id, to: :scanner, prefix: true, allow_nil: true
 
     scope :report_type, -> (type) { where(report_type: report_types[type]) }
     scope :ordered, -> { order(severity: :desc, confidence: :desc, id: :asc) }
@@ -102,12 +103,12 @@ module Vulnerabilities
     end
 
     def self.for_pipelines(pipelines)
-      joins(:occurrence_pipelines)
+      joins(:finding_pipelines)
         .where(vulnerability_occurrence_pipelines: { pipeline_id: pipelines })
     end
 
     def self.count_by_day_and_severity(period)
-      joins(:occurrence_pipelines)
+      joins(:finding_pipelines)
         .select('CAST(vulnerability_occurrence_pipelines.created_at AS DATE) AS day', :severity, 'COUNT(distinct vulnerability_occurrences.id) as count')
         .where(['vulnerability_occurrence_pipelines.created_at >= ?', Time.zone.now.beginning_of_day - period])
         .group(:day, :severity)
@@ -115,8 +116,8 @@ module Vulnerabilities
     end
 
     def self.counted_by_severity
-      group(:severity).count.each_with_object({}) do |(severity, count), accum|
-        accum[SEVERITY_LEVELS[severity]] = count
+      group(:severity).count.transform_keys do |severity|
+        SEVERITY_LEVELS[severity]
       end
     end
 
@@ -139,7 +140,6 @@ module Vulnerabilities
 
     def state
       return 'dismissed' if dismissal_feedback.present?
-      return 'detected' unless Feature.enabled?(:first_class_vulnerabilities, project, default_enabled: true)
 
       if vulnerability.nil?
         'detected'
@@ -205,7 +205,7 @@ module Vulnerabilities
         occurrence_keys.each do |occurrence_key|
           loader.call(
             occurrence_key,
-            feedback.select { |f| occurrence_key = f.occurrence_key }
+            feedback.select { |f| occurrence_key == f.occurrence_key }
           )
         end
       end

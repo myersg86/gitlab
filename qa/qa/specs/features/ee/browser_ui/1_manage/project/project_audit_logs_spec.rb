@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module QA
-  context 'Manage' do
+  RSpec.describe 'Manage' do
     shared_examples 'audit event' do |expected_events|
       it 'logs audit events for UI operations' do
         Page::Project::Menu.perform(&:go_to_audit_events_settings)
@@ -32,7 +32,7 @@ module QA
             project.initialize_with_readme = true
           end.visit!
         end
-        it_behaves_like 'audit event', ["Add project"]
+        it_behaves_like 'audit event', ["Added project"]
       end
 
       context "Add user access as guest" do
@@ -45,7 +45,7 @@ module QA
           end
         end
 
-        it_behaves_like 'audit event', ["Add user access as guest"]
+        it_behaves_like 'audit event', ["Added user access as Guest"]
       end
 
       context "Add deploy key" do
@@ -61,7 +61,7 @@ module QA
           end
         end
 
-        it_behaves_like 'audit event', ["Add deploy key"]
+        it_behaves_like 'audit event', ["Added deploy key"]
       end
 
       context "Change visibility" do
@@ -77,7 +77,7 @@ module QA
           end
         end
 
-        it_behaves_like 'audit event', ["Change visibility from public to private"]
+        it_behaves_like 'audit event', ["Changed visibility from Public to Private"]
       end
 
       context "Export file download", quarantine: { issue: 'https://gitlab.com/gitlab-org/gitlab/-/issues/217949', type: :investigating } do

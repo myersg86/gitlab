@@ -28,7 +28,7 @@ immediate update, unless:
 - The mirror is already being updated.
 - 5 minutes haven't elapsed since its last update.
 
-For security reasons, from [GitLab 12.10 onwards](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/27166),
+For security reasons, in [GitLab 12.10 and later](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/27166),
 the URL to the original repository is only displayed to users with
 Maintainer or Owner permissions to the mirrored project.
 
@@ -114,7 +114,7 @@ After the mirror is created, this option can currently only be modified via the 
 
 To set up a mirror from GitLab to GitHub, you need to follow these steps:
 
-1. Create a [GitHub personal access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) with the `public_repo` box checked.
+1. Create a [GitHub personal access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the `public_repo` box checked.
 1. Fill in the **Git repository URL** field using this format: `https://<your_github_username>@github.com/<your_github_group>/<your_github_project>.git`.
 1. Fill in **Password** field with your GitHub personal access token.
 1. Click the **Mirror repository** button.
@@ -125,10 +125,10 @@ The repository will push soon. To force a push, click the appropriate button.
 
 ## Setting up a push mirror to another GitLab instance with 2FA activated
 
-1. On the destination GitLab instance, create a [personal access token](../../profile/personal_access_tokens.md) with `API` scope.
+1. On the destination GitLab instance, create a [personal access token](../../profile/personal_access_tokens.md) with `write_repository` scope.
 1. On the source GitLab instance:
    1. Fill in the **Git repository URL** field using this format: `https://oauth2@<destination host>/<your_gitlab_group_or_name>/<your_gitlab_project>.git`.
-   1. Fill in **Password** field with the GitLab personal access token created on the destination GitLab instance.
+   1. Fill in the **Password** field with the GitLab personal access token created on the destination GitLab instance.
    1. Click the **Mirror repository** button.
 
 ## Pulling from a remote repository **(STARTER)**
@@ -231,7 +231,7 @@ those you expect. GitLab.com and other code hosting sites publish their
 fingerprints in the open for you to check:
 
 - [AWS CodeCommit](https://docs.aws.amazon.com/codecommit/latest/userguide/regions.html#regions-fingerprints)
-- [Bitbucket](https://confluence.atlassian.com/bitbucket/ssh-keys-935365775.html)
+- [Bitbucket](https://support.atlassian.com/bitbucket-cloud/docs/configure-ssh-and-two-step-verification/)
 - [GitHub](https://help.github.com/en/github/authenticating-to-github/githubs-ssh-key-fingerprints)
 - [GitLab.com](../../gitlab_com/index.md#ssh-host-keys-fingerprints)
 - [Launchpad](https://help.launchpad.net/SSHFingerprints)
@@ -406,13 +406,13 @@ proxy_push()
   REFNAME="$3"
 
   # --- Pattern of branches to proxy pushes
-  whitelisted=$(expr "$branch" : "\(master\)")
+  allowlist=$(expr "$branch" : "\(master\)")
 
   case "$refname" in
     refs/heads/*)
       branch=$(expr "$refname" : "refs/heads/\(.*\)")
 
-      if [ "$whitelisted" = "$branch" ]; then
+      if [ "$allowlist" = "$branch" ]; then
         unset GIT_QUARANTINE_PATH # handle https://git-scm.com/docs/git-receive-pack#_quarantine_environment
         error="$(git push --quiet $TARGET_REPO $NEWREV:$REFNAME 2>&1)"
         fail=$?
@@ -453,7 +453,7 @@ Note that this sample has a few limitations:
 - This example may not work verbatim for your use case and might need modification.
   - It does not regard different types of authentication mechanisms for the mirror.
   - It does not work with forced updates (rewriting history).
-  - Only branches that match the `whitelisted` patterns will be proxy pushed.
+  - Only branches that match the `allowlist` patterns will be proxy pushed.
 - The script circumvents the Git hook quarantine environment because the update of `$TARGET_REPO`
   is seen as a ref update and Git will complain about it.
 

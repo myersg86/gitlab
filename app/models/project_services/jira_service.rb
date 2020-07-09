@@ -23,7 +23,7 @@ class JiraService < IssueTrackerService
 
   # TODO: we can probably just delegate as part of
   # https://gitlab.com/gitlab-org/gitlab/issues/29404
-  data_field :username, :password, :url, :api_url, :jira_issue_transition_id
+  data_field :username, :password, :url, :api_url, :jira_issue_transition_id, :project_key, :issues_enabled
 
   before_update :reset_password
 
@@ -64,8 +64,6 @@ class JiraService < IssueTrackerService
   def set_default_data
     return unless issues_tracker.present?
 
-    self.title ||= issues_tracker['title']
-
     return if url
 
     data_fields.url ||= issues_tracker['url']
@@ -103,11 +101,11 @@ class JiraService < IssueTrackerService
     [Jira service documentation](#{help_page_url('user/project/integrations/jira')})."
   end
 
-  def default_title
+  def title
     'Jira'
   end
 
-  def default_description
+  def description
     s_('JiraService|Jira issue tracker')
   end
 
@@ -414,7 +412,7 @@ class JiraService < IssueTrackerService
   # Handle errors when doing Jira API calls
   def jira_request
     yield
-  rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::ECONNREFUSED, URI::InvalidURIError, JIRA::HTTPError, OpenSSL::SSL::SSLError => error
+  rescue => error
     @error = error
     log_error("Error sending message", client_url: client_url, error: @error.message)
     nil

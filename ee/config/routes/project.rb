@@ -22,7 +22,9 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
         end
 
-        resources :feature_flags, param: :iid
+        resources :feature_flags, param: :iid do
+          resources :feature_flag_issues, only: [:index, :create, :destroy], as: 'issues', path: 'issues'
+        end
         resource :feature_flags_client, only: [] do
           post :reset_token
         end
@@ -62,7 +64,12 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
           end
 
           resources :dashboard, only: [:index], controller: :dashboard
-          resource :configuration, only: [:show], controller: :configuration
+
+          resource :configuration, only: [:show], controller: :configuration do
+            post :auto_fix, on: :collection
+            resource :sast, only: [:show], controller: :sast_configuration
+          end
+
           resource :discover, only: [:show], controller: :discover
 
           resources :vulnerability_findings, only: [:index] do
@@ -94,6 +101,12 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
         resources :dependencies, only: [:index]
         resources :licenses, only: [:index, :create, :update]
         resources :on_demand_scans, only: [:index], controller: :on_demand_scans
+
+        namespace :integrations do
+          namespace :jira do
+            resources :issues, only: [:index]
+          end
+        end
       end
       # End of the /-/ scope.
 
@@ -117,6 +130,7 @@ constraints(::Constraints::ProjectUrlConstrainer.new) do
       resource :insights, only: [:show], trailing_slash: true do
         collection do
           post :query
+          get :embedded
         end
       end
       # All new routes should go under /-/ scope.

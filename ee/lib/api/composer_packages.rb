@@ -2,11 +2,12 @@
 
 # PHP composer support (https://getcomposer.org/)
 module API
-  class ComposerPackages < Grape::API
+  class ComposerPackages < Grape::API::Instance
     helpers ::API::Helpers::PackagesManagerClientsHelpers
     helpers ::API::Helpers::RelatedResourcesHelpers
     helpers ::API::Helpers::Packages::BasicAuthHelpers
     include ::API::Helpers::Packages::BasicAuthHelpers::Constants
+    include ::Gitlab::Utils::StrongMemoize
 
     content_type :json, 'application/json'
     default_format :json
@@ -25,6 +26,24 @@ module API
       render_api_error!(e.message, 400)
     end
 
+    helpers do
+      def packages
+        strong_memoize(:packages) do
+          packages = ::Packages::Composer::PackagesFinder.new(current_user, user_group).execute
+
+          if params[:package_name].present?
+            packages = packages.with_name(params[:package_name])
+          end
+
+          packages
+        end
+      end
+
+      def presenter
+        @presenter ||= ::Packages::Composer::PackagesPresenter.new(user_group, packages)
+      end
+    end
+
     before do
       require_packages_enabled!
     end
@@ -35,10 +54,6 @@ module API
 
     resource :group, requirements: API::NAMESPACE_OR_PROJECT_REQUIREMENTS do
       before do
-        unless ::Feature.enabled?(:composer_packages, user_group)
-          not_found!
-        end
-
         authorize_packages_feature!(user_group)
       end
 
@@ -47,6 +62,7 @@ module API
       route_setting :authentication, job_token_allowed: true
 
       get ':id/-/packages/composer/packages' do
+        presenter.root
       end
 
       desc 'Composer packages endpoint at group level for packages list'
@@ -58,13 +74,21 @@ module API
       route_setting :authentication, job_token_allowed: true
 
       get ':id/-/packages/composer/p/:sha' do
+        presenter.provider
       end
 
       desc 'Composer packages endpoint at group level for package versions metadata'
 
+      params do
+        requires :package_name, type: String, file_path: true, desc: 'The Composer package name'
+      end
+
       route_setting :authentication, job_token_allowed: true
 
       get ':id/-/packages/composer/*package_name', requirements: COMPOSER_ENDPOINT_REQUIREMENTS, file_path: true do
+        not_found! if packages.empty?
+
+        presenter.package_versions
       end
     end
 
@@ -74,22 +98,20 @@ module API
 
     resource :projects, requirements: API::NAMESPACE_OR_PROJECT_REQUIREMENTS do
       before do
-        unless ::Feature.enabled?(:composer_packages, unauthorized_user_project!)
-          not_found!
-        end
-
         authorize_packages_feature!(unauthorized_user_project!)
       end
 
       desc 'Composer packages endpoint for registering packages'
 
-      params do
-        optional :branch, type: String, desc: 'The name of the branch'
-        optional :tag, type: String, desc: 'The name of the tag'
-        exactly_one_of :tag, :branch
-      end
-
       namespace ':id/packages/composer' do
+        route_setting :authentication, job_token_allowed: true
+
+        params do
+          optional :branch, type: String, desc: 'The name of the branch'
+          optional :tag, type: String, desc: 'The name of the tag'
+          exactly_one_of :tag, :branch
+        end
+
         post do
           authorize_create_package!(authorized_user_project)
 
@@ -106,6 +128,25 @@ module API
             .execute
 
           created!
+        end
+
+        params do
+          requires :sha, type: String, desc: 'Shasum of current json'
+          requires :package_name, type: String, file_path: true, desc: 'The Composer package name'
+        end
+
+        get 'archives/*package_name' do
+          metadata = unauthorized_user_project
+            .packages
+            .composer
+            .with_name(params[:package_name])
+            .with_composer_target(params[:sha])
+            .first
+            &.composer_metadatum
+
+          not_found! unless metadata
+
+          send_git_archive unauthorized_user_project.repository, ref: metadata.target_sha, format: 'zip', append_sha: true
         end
       end
     end

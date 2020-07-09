@@ -10,7 +10,7 @@ RSpec.describe Security::PipelineVulnerabilitiesFinder do
   end
 
   let_it_be(:project) { create(:project, :repository) }
-  let_it_be(:pipeline) { create(:ci_pipeline, :success, project: project) }
+  let_it_be(:pipeline, reload: true) { create(:ci_pipeline, :success, project: project) }
 
   describe '#execute' do
     let(:params) { {} }
@@ -23,7 +23,7 @@ RSpec.describe Security::PipelineVulnerabilitiesFinder do
     let_it_be(:artifact_cs) { create(:ee_ci_job_artifact, :container_scanning, job: build_cs, project: project) }
     let_it_be(:artifact_dast) { create(:ee_ci_job_artifact, :dast, job: build_dast, project: project) }
     let_it_be(:artifact_ds) { create(:ee_ci_job_artifact, :dependency_scanning, job: build_ds, project: project) }
-    let_it_be(:artifact_sast) { create(:ee_ci_job_artifact, :sast, job: build_sast, project: project) }
+    let!(:artifact_sast) { create(:ee_ci_job_artifact, :sast, job: build_sast, project: project) }
 
     let(:cs_count) { read_fixture(artifact_cs)['vulnerabilities'].count }
     let(:ds_count) { read_fixture(artifact_ds)['vulnerabilities'].count }
@@ -207,12 +207,31 @@ RSpec.describe Security::PipelineVulnerabilitiesFinder do
       end
     end
 
+    context 'by scanner' do
+      context 'when unscoped' do
+        subject { described_class.new(pipeline: pipeline).execute }
+
+        it 'returns all vulnerabilities with all scanners available' do
+          expect(subject.occurrences.map(&:scanner).map(&:external_id).uniq).to match_array %w[bandit bundler_audit find_sec_bugs flawfinder gemnasium klar zaproxy]
+        end
+      end
+
+      context 'when `zaproxy`' do
+        subject { described_class.new(pipeline: pipeline, params: { scanner: 'zaproxy' } ).execute }
+
+        it 'returns only vulnerabilities with selected scanner external id' do
+          expect(subject.occurrences.map(&:scanner).map(&:external_id).uniq).to match_array(%w[zaproxy])
+        end
+      end
+    end
+
     context 'by all filters' do
       context 'with found entity' do
-        let(:params) { { report_type: %w[sast dast container_scanning dependency_scanning], scope: 'all' } }
+        let(:params) { { report_type: %w[sast dast container_scanning dependency_scanning], scanner: %w[bandit bundler_audit find_sec_bugs flawfinder gemnasium klar zaproxy], scope: 'all' } }
 
         it 'filters by all params' do
           expect(subject.occurrences.count).to eq(cs_count + dast_count + ds_count + sast_count)
+          expect(subject.occurrences.map(&:scanner).map(&:external_id).uniq).to match_array %w[bandit bundler_audit find_sec_bugs flawfinder gemnasium klar zaproxy]
           expect(subject.occurrences.map(&:confidence).uniq).to match_array(%w[unknown low medium high])
           expect(subject.occurrences.map(&:severity).uniq).to match_array(%w[unknown low medium high critical info])
         end
@@ -296,6 +315,16 @@ RSpec.describe Security::PipelineVulnerabilitiesFinder do
         found_occurrences.each_with_index do |found, i|
           expect(found.metadata['cve']).to eq(report_occurrences[i].compare_key)
         end
+      end
+    end
+
+    context 'when scanner is not provided in the report occurrences' do
+      let!(:artifact_sast) { create(:ee_ci_job_artifact, :sast_with_missing_scanner, job: build_sast, project: project) }
+
+      it 'sets empty scanner' do
+        sast_scanners = subject.occurrences.select(&:sast?).map(&:scanner)
+
+        expect(sast_scanners).to all(have_attributes(project_id: nil, external_id: nil, name: nil))
       end
     end
 

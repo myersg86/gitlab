@@ -40,6 +40,9 @@ const newlyEditedSnippetUrl = 'http://foo.bar';
 const apiError = { message: 'Ufff' };
 const mutationError = 'Bummer';
 
+const attachedFilePath1 = 'foo/bar';
+const attachedFilePath2 = 'alpha/beta';
+
 const defaultProps = {
   snippetGid: 'gid://gitlab/PersonalSnippet/42',
   markdownPreviewPath: 'http://preview.foo.bar',
@@ -120,8 +123,9 @@ describe('Snippet Edit app', () => {
     wrapper.destroy();
   });
 
-  const findSubmitButton = () => wrapper.find('[type=submit]');
+  const findSubmitButton = () => wrapper.find('[data-testid="snippet-submit-btn"]');
   const findCancellButton = () => wrapper.find('[data-testid="snippet-cancel-btn"]');
+  const clickSubmitBtn = () => wrapper.find('[data-testid="snippet-edit-form"]').trigger('submit');
 
   describe('rendering', () => {
     it('renders loader while the query is in flight', () => {
@@ -289,15 +293,27 @@ describe('Snippet Edit app', () => {
           },
         };
 
-        wrapper.vm.handleFormSubmit();
+        clickSubmitBtn();
+
         expect(resolveMutate).toHaveBeenCalledWith(mutationPayload);
       });
 
       it('redirects to snippet view on successful mutation', () => {
         createComponent();
-        wrapper.vm.handleFormSubmit();
+        clickSubmitBtn();
+
         return waitForPromises().then(() => {
           expect(redirectTo).toHaveBeenCalledWith(newlyEditedSnippetUrl);
+        });
+      });
+
+      it('makes sure there are no unsaved changes in the snippet', () => {
+        createComponent();
+        clickSubmitBtn();
+
+        return waitForPromises().then(() => {
+          expect(wrapper.vm.originalContent).toBe(wrapper.vm.content);
+          expect(wrapper.vm.hasChanges()).toBe(false);
         });
       });
 
@@ -322,7 +338,8 @@ describe('Snippet Edit app', () => {
             mutationRes: mutationTypes.RESOLVE_WITH_ERRORS,
           });
 
-          wrapper.vm.handleFormSubmit();
+          clickSubmitBtn();
+
           return waitForPromises().then(() => {
             expect(redirectTo).not.toHaveBeenCalled();
             expect(flashSpy).toHaveBeenCalledWith(mutationError);
@@ -334,7 +351,9 @@ describe('Snippet Edit app', () => {
         createComponent({
           mutationRes: mutationTypes.REJECT,
         });
-        wrapper.vm.handleFormSubmit();
+
+        clickSubmitBtn();
+
         return waitForPromises().then(() => {
           expect(redirectTo).not.toHaveBeenCalled();
           expect(flashSpy).toHaveBeenCalledWith(apiError);
@@ -354,12 +373,89 @@ describe('Snippet Edit app', () => {
             },
             mutationRes: mutationTypes.REJECT,
           });
-          wrapper.vm.handleFormSubmit();
+
+          clickSubmitBtn();
+
           return waitForPromises().then(() => {
             expect(Flash).toHaveBeenCalledWith(expect.stringContaining(expectation));
           });
         },
       );
+    });
+
+    describe('correctly includes attached files into the mutation', () => {
+      const createMutationPayload = expectation => {
+        return expect.objectContaining({
+          variables: {
+            input: expect.objectContaining({ uploadedFiles: expectation }),
+          },
+        });
+      };
+
+      const updateMutationPayload = () => {
+        return expect.objectContaining({
+          variables: {
+            input: expect.not.objectContaining({ uploadedFiles: expect.anything() }),
+          },
+        });
+      };
+
+      it.each`
+        paths                                     | expectation
+        ${[attachedFilePath1]}                    | ${[attachedFilePath1]}
+        ${[attachedFilePath1, attachedFilePath2]} | ${[attachedFilePath1, attachedFilePath2]}
+        ${[]}                                     | ${[]}
+      `(`correctly sends paths for $paths.length files`, ({ paths, expectation }) => {
+        createComponent({
+          data: {
+            newSnippet: true,
+          },
+        });
+
+        const fixtures = paths.map(path => {
+          return path ? `<input name="files[]" value="${path}">` : undefined;
+        });
+        wrapper.vm.$el.innerHTML += fixtures.join('');
+
+        clickSubmitBtn();
+
+        expect(resolveMutate).toHaveBeenCalledWith(createMutationPayload(expectation));
+      });
+
+      it(`neither fails nor sends 'uploadedFiles' to update mutation`, () => {
+        createComponent();
+
+        clickSubmitBtn();
+        expect(resolveMutate).toHaveBeenCalledWith(updateMutationPayload());
+      });
+    });
+
+    describe('on before unload', () => {
+      let event;
+      let returnValueSetter;
+
+      beforeEach(() => {
+        createComponent();
+
+        event = new Event('beforeunload');
+        returnValueSetter = jest.spyOn(event, 'returnValue', 'set');
+      });
+
+      it('does not prevent page navigation if there are no changes to the snippet content', () => {
+        window.dispatchEvent(event);
+
+        expect(returnValueSetter).not.toHaveBeenCalled();
+      });
+
+      it('prevents page navigation if there are some changes in the snippet content', () => {
+        wrapper.setData({ content: 'new content' });
+
+        window.dispatchEvent(event);
+
+        expect(returnValueSetter).toHaveBeenCalledWith(
+          'Are you sure you want to lose unsaved changes?',
+        );
+      });
     });
   });
 });

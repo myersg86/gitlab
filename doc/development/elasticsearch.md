@@ -111,11 +111,7 @@ Patterns:
 - `'"((?:\\"|[^"]|\\")*)"'`: captures terms inside quotes, removing the quotes
 - `"'((?:\\'|[^']|\\')*)'"`: same as above, for single-quotes
 - `'\.([^.]+)(?=\.|\s|\Z)'`: separate terms with periods in-between
-- `'\/?([^\/]+)(?=\/|\b)'`: separate path terms `like/this/one`
-
-#### `edgeNGram_filter`
-
-Uses an [Edge NGram token filter](https://www.elastic.co/guide/en/elasticsearch/reference/5.5/analysis-edgengram-tokenfilter.html) to allow inputs with only parts of a token to find the token. For example it would turn `glasses` into permutations starting with `gl` and ending with `glasses`, which would allow a search for "`glass`" to find the original token `glasses`
+- `'([\p{L}_.-]+)'` : some common chars in file names to keep the whole filename intact (eg. `my_file-ñame.txt`)
 
 ## Gotchas
 
@@ -221,6 +217,16 @@ Bar`](../administration/monitoring/performance/performance_bar.md), which can
 be used both locally in development and on any deployed GitLab instance to
 diagnose poor search performance. This will show the exact queries being made,
 which is useful to diagnose why a search might be slow.
+
+### Correlation ID and X-Opaque-Id
+
+Our [correlation
+ID](./distributed_tracing.md#developer-guidelines-for-working-with-correlation-ids)
+is forwarded by all requests from Rails to Elasticsearch as the
+[`X-Opaque-Id`](https://www.elastic.co/guide/en/elasticsearch/reference/current/tasks.html#_identifying_running_tasks)
+header which allows us to track any
+[tasks](https://www.elastic.co/guide/en/elasticsearch/reference/current/tasks.html)
+in the cluster back the request in GitLab.
 
 ## Troubleshooting
 

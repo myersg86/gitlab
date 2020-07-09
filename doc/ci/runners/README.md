@@ -35,12 +35,19 @@ Use shared Runners when you have multiple jobs with similar requirements. Rather
 having multiple Runners idling for many projects, you can have a few Runners that handle
 multiple projects.
 
-If you are using a self-managed instance of GitLab, your administrator can create
-shared Runners and configure them to use the
-[executor](https://docs.gitlab.com/runner/executors/README.html) you want.
+If you are using a self-managed instance of GitLab:
 
-If you are using GitLab.com, you can select from a list of
-[shared Runners that GitLab maintains](../../user/gitlab_com/index.md#shared-runners).
+- Your administrator can install and register shared Runners by going to your project's
+  **Settings > CI / CD**, expanding the **Runners** section, and clicking **Show Runner installation instructions**.
+  These instructions are also available [here](https://docs.gitlab.com/runner/install/index.html).
+- The administrator can also configure a maximum number of shared Runner [pipeline minutes for
+  each group](../../user/admin_area/settings/continuous_integration.md#shared-runners-pipeline-minutes-quota-starter-only).
+
+If you are using GitLab.com:
+
+- You can select from a list of [shared Runners that GitLab maintains](../../user/gitlab_com/index.md#shared-runners).
+- The shared Runners consume the [pipelines minutes](../../subscriptions/index.md#ci-pipeline-minutes)
+  included with your account.
 
 #### How shared Runners pick jobs
 
@@ -97,9 +104,13 @@ The fair usage algorithm assigns jobs in this order:
 
 #### Enable a shared Runner
 
-By default, all projects can use shared Runners, and they are enabled by default.
+On GitLab.com, [shared Runners](#shared-runners) are enabled in all projects by
+default.
 
-However, you can enable or disable shared Runners for individual projects.
+On self-managed instances of GitLab, an administrator must [install](https://docs.gitlab.com/runner/install/index.html)
+and [register](https://docs.gitlab.com/runner/register/index.html) them.
+
+You can also enable or disable shared Runners for individual projects.
 
 To enable or disable a shared Runner:
 

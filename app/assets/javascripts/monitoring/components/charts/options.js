@@ -17,9 +17,26 @@ const defaultTooltipFormat = defaultFormat;
 const defaultTooltipPrecision = 3;
 
 // Give enough space for y-axis with units and name.
-const chartGridLeft = 75;
+const chartGridLeft = 63; // larger gap than gitlab-ui's default to fit formatted numbers
+const chartGridRight = 10; // half of the scroll-handle icon for data zoom
+const yAxisNameGap = chartGridLeft - 12; // offset the axis label line-height
 
 // Axis options
+
+/**
+ * Axis types
+ * @see https://echarts.apache.org/en/option.html#xAxis.type
+ */
+export const axisTypes = {
+  /**
+   * Category axis, suitable for discrete category data.
+   */
+  category: 'category',
+  /**
+   *  Time axis, suitable for continuous time series data.
+   */
+  time: 'time',
+};
 
 /**
  * Converts .yml parameters to echarts axis options for data axis
@@ -47,7 +64,7 @@ export const getYAxisOptions = ({
   precision = defaultYAxisPrecision,
 } = {}) => {
   return {
-    nameGap: 63, // larger gap than gitlab-ui's default to fit with formatted numbers
+    nameGap: yAxisNameGap,
     scale: true,
     boundaryGap: yAxisBoundaryGap,
 
@@ -61,12 +78,12 @@ export const getYAxisOptions = ({
 
 export const getTimeAxisOptions = ({ timezone = timezones.LOCAL } = {}) => ({
   name: __('Time'),
-  type: 'time',
+  type: axisTypes.time,
   axisLabel: {
     formatter: date => formatDate(date, { format: formats.shortTime, timezone }),
   },
   axisPointer: {
-    snap: true,
+    snap: false,
   },
 });
 
@@ -75,7 +92,10 @@ export const getTimeAxisOptions = ({ timezone = timezones.LOCAL } = {}) => ({
 /**
  * Grid with enough room to display chart.
  */
-export const getChartGrid = ({ left = chartGridLeft } = {}) => ({ left });
+export const getChartGrid = ({ left = chartGridLeft, right = chartGridRight } = {}) => ({
+  left,
+  right,
+});
 
 // Tooltip options
 

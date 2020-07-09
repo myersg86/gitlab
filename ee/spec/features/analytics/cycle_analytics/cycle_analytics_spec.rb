@@ -556,7 +556,7 @@ RSpec.describe 'Group Value Stream Analytics', :js do
           it_behaves_like 'manual ordering disabled'
         end
 
-        context 'with at least one custom stage' do
+        context 'with at least one custom stage', quarantine: 'https://gitlab.com/gitlab-org/gitlab/-/issues/216745' do
           shared_examples 'draggable stage' do |original_order, updated_order, start_index, end_index,|
             before do
               page.driver.browser.manage.window.resize_to(1650, 1150)
@@ -964,10 +964,12 @@ RSpec.describe 'Group Value Stream Analytics', :js do
       context 'Duration chart' do
         let(:duration_chart_dropdown) { page.find('.js-dropdown-stages') }
 
-        default_stages = Analytics::CycleAnalytics::StagePresenter::DEFAULT_STAGE_ATTRIBUTES
-          .each_value
-          .map { |value| value[:title].call }
-          .freeze
+        let_it_be(:translated_default_stage_names) do
+          Gitlab::Analytics::CycleAnalytics::DefaultStages.names.map do |name|
+            stage = Analytics::CycleAnalytics::GroupStage.new(name: name)
+            Analytics::CycleAnalytics::StagePresenter.new(stage).title
+          end.freeze
+        end
 
         def duration_chart_stages
           duration_chart_dropdown.all('.dropdown-item').collect(&:text)
@@ -984,7 +986,7 @@ RSpec.describe 'Group Value Stream Analytics', :js do
         it 'has all the default stages' do
           toggle_duration_chart_dropdown
 
-          expect(duration_chart_stages).to eq(default_stages)
+          expect(duration_chart_stages).to eq(translated_default_stage_names)
         end
 
         context 'hidden stage' do

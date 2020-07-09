@@ -20,6 +20,7 @@ module Types
     mount_mutation Mutations::Issues::SetDueDate
     mount_mutation Mutations::Issues::Update
     mount_mutation Mutations::MergeRequests::Create
+    mount_mutation Mutations::MergeRequests::Update
     mount_mutation Mutations::MergeRequests::SetLabels
     mount_mutation Mutations::MergeRequests::SetLocked
     mount_mutation Mutations::MergeRequests::SetMilestone
@@ -56,4 +57,5 @@ module Types
   end
 end
 
+::Types::MutationType.prepend(::Types::DeprecatedMutations)
 ::Types::MutationType.prepend_if_ee('::EE::Types::MutationType')
