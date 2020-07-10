@@ -327,7 +327,8 @@ module ApplicationSettingsHelper
       :project_download_export_limit,
       :group_import_limit,
       :group_export_limit,
-      :group_download_export_limit
+      :group_download_export_limit,
+      :container_registry_delete_tags_service_timeout
     ]
   end
 

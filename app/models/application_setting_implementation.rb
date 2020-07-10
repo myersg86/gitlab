@@ -164,7 +164,8 @@ module ApplicationSettingImplementation
         project_download_export_limit: 1,
         group_import_limit: 6,
         group_export_limit: 6,
-        group_download_export_limit: 1
+        group_download_export_limit: 1,
+        container_registry_delete_tags_service_timeout: 100
       }
     end
 

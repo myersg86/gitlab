@@ -9151,6 +9151,7 @@ CREATE TABLE public.application_settings (
     group_import_limit integer DEFAULT 6 NOT NULL,
     group_export_limit integer DEFAULT 6 NOT NULL,
     group_download_export_limit integer DEFAULT 1 NOT NULL,
+    container_registry_delete_tags_service_timeout integer DEFAULT 100 NOT NULL,
     CONSTRAINT check_51700b31b5 CHECK ((char_length(default_branch_name) <= 255)),
     CONSTRAINT check_d03919528d CHECK ((char_length(container_registry_vendor) <= 255)),
     CONSTRAINT check_d820146492 CHECK ((char_length(spam_check_endpoint_url) <= 255)),
@@ -23593,5 +23594,6 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200706005325
 20200706170536
 20200707071941
+20200710113437
 \.
 
