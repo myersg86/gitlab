@@ -161,7 +161,7 @@ export default {
           variant="success"
           :disabled="isTemplateSaving"
           @click="onSaveTemplate"
-          >{{ __('Save template') }}</gl-deprecated-button
+          >{{ __('Save changes') }}</gl-deprecated-button
         >
       </div>
     </div>
