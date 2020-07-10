@@ -17,7 +17,7 @@ module Gitlab
     end
 
     def can_do_action?(action)
-      return false unless can_access_git?
+      git_access_check
 
       permission_cache[action] =
         permission_cache.fetch(action) do
@@ -30,7 +30,7 @@ module Gitlab
     end
 
     def allowed?
-      return false unless can_access_git?
+      git_access_check
 
       if user.requires_ldap_check? && user.try_obtain_ldap_lease
         return false unless Gitlab::Auth::Ldap::Access.allowed?(user)
@@ -40,7 +40,7 @@ module Gitlab
     end
 
     request_cache def can_create_tag?(ref)
-      return false unless can_access_git?
+      git_access_check
 
       if protected?(ProtectedTag, project, ref)
         protected_tag_accessible_to?(ref, action: :create)
@@ -50,7 +50,7 @@ module Gitlab
     end
 
     request_cache def can_delete_branch?(ref)
-      return false unless can_access_git?
+      git_access_check
 
       if protected?(ProtectedBranch, project, ref)
         user.can?(:push_to_delete_protected_branch, project)
@@ -64,7 +64,7 @@ module Gitlab
     end
 
     request_cache def can_push_to_branch?(ref)
-      return false unless can_access_git?
+      git_access_check
       return false unless project
 
       # Checking for an internal project to prevent an infinite loop:
@@ -83,7 +83,7 @@ module Gitlab
     end
 
     request_cache def can_merge_to_branch?(ref)
-      return false unless can_access_git?
+      git_access_check
 
       if protected?(ProtectedBranch, project, ref)
         protected_branch_accessible_to?(ref, action: :merge)
@@ -96,6 +96,10 @@ module Gitlab
 
     def permission_cache
       @permission_cache ||= {}
+    end
+
+    request_cache def git_access_check
+      return false unless can_access_git?
     end
 
     request_cache def can_access_git?

@@ -54,4 +54,14 @@ class DeployKey < Key
   def projects_with_write_access
     Project.with_route.where(id: deploy_keys_projects.with_write_access.select(:project_id))
   end
+
+  def check_access_for_default_branch(project)
+    true
+  end
+
+  def check_protected_ref_access(access_level_obj, project)
+    access_level_obj.deploy_key_id == self.id
+  end
 end
+
+DeployKey.prepend_if_ee('EE::DeployKey')

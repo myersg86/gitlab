@@ -265,9 +265,6 @@ module Gitlab
     end
 
     def check_change_access!
-      # Deploy keys with write access can push anything
-      return if deploy_key?
-
       if changes == ANY
         can_push = user_access.can_do_action?(:push_code) ||
           project.any_branch_allows_collaboration?(user_access.user)
@@ -394,6 +391,8 @@ module Gitlab
                          CiAccess.new
                        elsif user && request_from_ci_build?
                          BuildAccess.new(user, project: project)
+                       elsif deploy_key?
+                         DeployKeyAccess.new(deploy_key, project: project)
                        else
                          UserAccess.new(user, project: project)
                        end
