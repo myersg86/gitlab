@@ -20,11 +20,9 @@ instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer):
        }
        issuesEnabled
        boards {
-         edges {
-           node {
-             id
-             name
-           }
+         nodes {
+           id
+           name
          }
        }
      }
