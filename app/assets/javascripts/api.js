@@ -9,6 +9,7 @@ const Api = {
   groupsPath: '/api/:version/groups.json',
   groupPath: '/api/:version/groups/:id',
   groupMembersPath: '/api/:version/groups/:id/members',
+  groupMilestonesPath: '/api/:version/groups/:id/milestones',
   subgroupsPath: '/api/:version/groups/:id/subgroups',
   namespacesPath: '/api/:version/namespaces.json',
   groupPackagesPath: '/api/:version/groups/:id/packages',
@@ -41,7 +42,6 @@ const Api = {
   userPostStatusPath: '/api/:version/user/status',
   commitPath: '/api/:version/projects/:id/repository/commits/:sha',
   commitsPath: '/api/:version/projects/:id/repository/commits',
-
   applySuggestionPath: '/api/:version/suggestions/:id/apply',
   applySuggestionBatchPath: '/api/:version/suggestions/batch_apply',
   commitPipelinesPath: '/:project_id/commit/:sha/pipelines',
@@ -127,6 +127,14 @@ const Api = {
   groupLabels(namespace) {
     const url = Api.buildUrl(Api.groupLabelsPath).replace(':namespace_path', namespace);
     return axios.get(url).then(({ data }) => data);
+  },
+
+  groupMilestones(groupId, params = {}) {
+    const url = Api.buildUrl(Api.groupMilestonesPath).replace(':id', encodeURIComponent(groupId));
+
+    return axios.get(url, {
+      params,
+    });
   },
 
   // Return namespaces list. Filtered by query
@@ -293,10 +301,12 @@ const Api = {
     });
   },
 
-  projectMilestones(id) {
+  projectMilestones(id, params = {}) {
     const url = Api.buildUrl(Api.projectMilestonesPath).replace(':id', encodeURIComponent(id));
 
-    return axios.get(url);
+    return axios.get(url, {
+      params,
+    });
   },
 
   mergeRequests(params = {}) {
