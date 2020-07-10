@@ -42,6 +42,10 @@
   svg {
     vertical-align: middle;
   }
+
+  a.btn-remove svg {
+    vertical-align: unset;
+  }
 }
 
 .pipeline-schedules-user-callout {
