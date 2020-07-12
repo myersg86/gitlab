@@ -16,7 +16,11 @@ RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :
     namespaces.create!(id: 1, name: 'tanuki', path: 'tanuki')
     projects.create!(id: 42, name: 'tanuki', path: 'tanuki', namespace_id: 1)
     builds.create!(id: 1)
+    builds.create!(id: 2)
+    builds.create!(id: 3)
     job_artifacts.create!(project_id: 42, job_id: 1, file_type: 10)
+    job_artifacts.create!(project_id: 42, job_id: 2, file_type: 9)
+    job_artifacts.create!(project_id: 42, job_id: 2, file_type: 10)
   end
 
 
@@ -28,7 +32,9 @@ RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :
     it 'leaves only one artifact' do
       migrate!
 
-      expect(job_artifacts.where(file_type: 101).count).to be_nil
+      expect(job_artifacts.where(file_type: 10).count).to eq 0
+      expect(job_artifacts.where(file_type: 101).count).to eq 2
+      expect(job_artifacts.where(file_type: 9).count).to eq 1
     end
   end
 
@@ -36,7 +42,9 @@ RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :
     it 'change' do
       migrate!
 
-      expect(job_artifacts.where(file_type: 101).count).to be_nil
+      expect(job_artifacts.where(file_type: 10).count).to eq 0
+      expect(job_artifacts.where(file_type: 101).count).to eq 2
+      expect(job_artifacts.where(file_type: 9).count).to eq 1
     end
   end
 end
