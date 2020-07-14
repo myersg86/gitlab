@@ -11,7 +11,6 @@ RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :
   let(:license_management_type) { 10 }
   let(:license_scanning_type) { 101 }
 
-
   before do
     namespaces.create!(id: 1, name: 'tanuki', path: 'tanuki')
     projects.create!(id: 42, name: 'tanuki', path: 'tanuki', namespace_id: 1)
@@ -22,7 +21,6 @@ RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :
     job_artifacts.create!(project_id: 42, job_id: 2, file_type: 9)
     job_artifacts.create!(project_id: 42, job_id: 2, file_type: 10)
   end
-
 
   context 'with two types of the report' do
     before do
