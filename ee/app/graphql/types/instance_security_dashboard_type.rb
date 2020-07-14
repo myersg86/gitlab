@@ -17,5 +17,11 @@ module Types
           null: true,
           description: 'Vulnerability scanners reported on the vulnerabilties from projects selected in Instance Security Dashboard',
           resolver: ::Resolvers::Vulnerabilities::ScannersResolver
+
+    field :vulnerability_grades,
+          Types::VulnerabilityGradesType,
+          null: false,
+          description: 'Represents vulnerable project counts for each grade',
+          resolver: ::Resolvers::VulnerabilityGradesResolver
   end
 end
