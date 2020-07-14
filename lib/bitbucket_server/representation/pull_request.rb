@@ -11,6 +11,10 @@ module BitbucketServer
         raw.dig('author', 'user', 'emailAddress')
       end
 
+      def author_username
+        raw.dig('author', 'user', 'username')
+      end
+
       def description
         raw['description']
       end

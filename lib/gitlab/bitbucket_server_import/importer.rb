@@ -65,6 +65,10 @@ module Gitlab
         find_user_id(email) || project.creator_id
       end
 
+      def gitlab_user_id_by_username(username)
+        find_user_id_by_username(username) || project.creator_id
+      end
+
       def find_user_id(email)
         return unless email
 
@@ -72,6 +76,17 @@ module Gitlab
 
         user = User.find_by_any_email(email, confirmed: true)
         users[email] = user&.id
+
+        user&.id
+      end
+
+      def find_user_id_by_username(username)
+        return unless username
+
+        return users[username] if users.key?(username)
+
+        user = User.find_by_any_email(username)
+        users[username] = user&.id
 
         user&.id
       end
@@ -199,7 +214,12 @@ module Gitlab
         description = ''
         description += @formatter.author_line(pull_request.author) unless find_user_id(pull_request.author_email)
         description += pull_request.description if pull_request.description
-        author_id = gitlab_user_id(pull_request.author_email)
+        # author_id = gitlab_user_id(pull_request.author_email)
+        if Feature.enabled?(:bitbucket_server_username_mapping, default_enabled: false)
+          author_id = gitlab_user_id_by_slug(pull_request.author_username)
+        else
+          author_id = gitlab_user_id(pull_request.author_email)
+        end
 
         attributes = {
           iid: pull_request.iid,
