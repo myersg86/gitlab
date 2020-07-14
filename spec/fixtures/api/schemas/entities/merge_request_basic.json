@@ -23,7 +23,8 @@
     },
     "task_status": { "type": "string" },
     "task_status_short": { "type": "string" },
-    "lock_version": { "type": ["integer", "null"] }
+    "lock_version": { "type": ["integer", "null"] },
+    "discussion_locked": { "type": "boolean" }
   },
   "additionalProperties": false
 }

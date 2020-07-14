@@ -6,6 +6,7 @@ FactoryBot.define do
     association :source_project, :repository, factory: :project
     target_project { source_project }
     author { source_project.creator }
+    discussion_locked { false }
 
     # $ git log --pretty=oneline feature..master
     # 5937ac0a7beb003549fc5fd26fc247adbce4a52e Add submodule from gitlab.com
