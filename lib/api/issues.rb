@@ -120,10 +120,10 @@ module API
         requires :id, type: String, desc: 'The ID of the Issue'
       end
       get ":id" do
-        authenticate!
+        authenticated_as_admin!
         issue = Issue.find(params['id'])
 
-        present issue
+        present issue, with: Entities::Issue, current_user: current_user, project: issue.project
       end
     end
 

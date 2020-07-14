@@ -86,7 +86,7 @@ RSpec.describe API::Issues do
 
   describe 'GET /issues/:id' do
     context 'when unauthorized' do
-      it 'returns the unauthorized' do
+      it 'returns unauthorized' do
         get api("/issues/#{issue.id}" )
 
         expect(response).to have_gitlab_http_status(:unauthorized)
@@ -94,21 +94,31 @@ RSpec.describe API::Issues do
     end
 
     context 'when authorized' do
-      context 'when issue exists' do
-        it 'returns the issue' do
-          get api("/issues/#{issue.id}", user)
+      context 'as a normnal user' do
+        it 'returns forbidden' do
+          get api("/issues/#{issue.id}", user )
 
-          expect(response).to have_gitlab_http_status(:ok)
-          expect(json_response['author_id']).to eq(issue.author.id)
-          expect(json_response['description']).to eq(issue.description)
+          expect(response).to have_gitlab_http_status(:forbidden)
         end
       end
 
-      context 'when issue does not exist' do
-        it 'returns the 404' do
-          get api("/issues/0", user)
+      context 'as an admin' do
+        context 'when issue exists' do
+          it 'returns the issue' do
+            get api("/issues/#{issue.id}", admin)
 
-          expect(response).to have_gitlab_http_status(:not_found)
+            expect(response).to have_gitlab_http_status(:ok)
+            expect(json_response.dig('author', 'id')).to eq(issue.author.id)
+            expect(json_response['description']).to eq(issue.description)
+          end
+        end
+
+        context 'when issue does not exist' do
+          it 'returns 404' do
+            get api("/issues/0", admin)
+
+            expect(response).to have_gitlab_http_status(:not_found)
+          end
         end
       end
     end
@@ -385,20 +395,6 @@ RSpec.describe API::Issues do
         get api('/issues', user), params: { search: issue.description }
 
         expect_paginated_array_response(issue.id)
-      end
-
-      it 'returns the user\'s specified issue' do
-        get api("/issues/#{issue.id}", user)
-        expect(response).to have_gitlab_http_status(:ok)
-        expect(json_response.empty?).to be false
-        expect(json_response["title"]).to eq issue.title
-      end
-
-      it 'returns another user\'s specified issue' do
-        get api("/issues/#{issue.id}", user2)
-        expect(response).to have_gitlab_http_status(:ok)
-        expect(json_response.empty?).to be false
-        expect(json_response["title"]).to eq issue.title
       end
 
       context 'filtering before a specific date' do
