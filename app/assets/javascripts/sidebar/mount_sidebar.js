@@ -86,16 +86,20 @@ function mountLockComponent(mediator) {
   const dataNode = document.getElementById('js-lock-issue-data');
   const initialData = JSON.parse(dataNode.innerHTML);
 
-  const LockComp = Vue.extend(LockIssueSidebar);
-
-  new LockComp({
-    propsData: {
-      isLocked: initialData.is_locked,
-      isEditable: initialData.is_editable,
-      mediator,
-      issuableType: gl.utils.isInIssuePage() ? 'issue' : 'merge_request',
-    },
-  }).$mount(el);
+  // eslint-disable-next-line no-new
+  new Vue({
+    el,
+    store,
+    render: createElement =>
+      createElement(LockIssueSidebar, {
+        props: {
+          isLocked: initialData.is_locked,
+          isEditable: initialData.is_editable,
+          mediator,
+          issuableType: gl.utils.isInIssuePage() ? 'issue' : 'merge_request',
+        },
+      }),
+  });
 }
 
 function mountParticipantsComponent(mediator) {
