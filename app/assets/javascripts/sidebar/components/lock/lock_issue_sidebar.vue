@@ -6,6 +6,7 @@ import issuableMixin from '~/vue_shared/mixins/issuable';
 import Icon from '~/vue_shared/components/icon.vue';
 import eventHub from '~/sidebar/event_hub';
 import editForm from './edit_form.vue';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   components: {
@@ -20,11 +21,6 @@ export default {
   mixins: [issuableMixin],
 
   props: {
-    isLocked: {
-      required: true,
-      type: Boolean,
-    },
-
     isEditable: {
       required: true,
       type: Boolean,
@@ -40,6 +36,11 @@ export default {
   },
 
   computed: {
+    ...mapState({
+      isLocked: ({ noteableData }) => {
+        return noteableData.discussion_locked;
+      },
+    }),
     lockIcon() {
       return this.isLocked ? 'lock' : 'lock-open';
     },
@@ -62,6 +63,7 @@ export default {
   },
 
   methods: {
+    ...mapActions(['setIssuableLock']),
     toggleForm() {
       if (this.isEditable) {
         this.mediator.store.isLockDialogOpen = !this.mediator.store.isLockDialogOpen;
@@ -72,7 +74,9 @@ export default {
         .update(this.issuableType, {
           discussion_locked: locked,
         })
-        .then(() => window.location.reload())
+        .then(({ data }) => {
+          this.setIssuableLock(data.discussion_locked);
+        })
         .catch(() =>
           Flash(
             sprintf(
