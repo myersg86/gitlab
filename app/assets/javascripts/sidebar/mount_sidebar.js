@@ -12,6 +12,7 @@ import Translate from '../vue_shared/translate';
 import createDefaultClient from '~/lib/graphql';
 import { store } from '~/notes/stores';
 import { isInIssuePage } from '~/lib/utils/common_utils';
+import mergeRequestStore from '~/mr_notes/stores';
 
 Vue.use(Translate);
 Vue.use(VueApollo);
@@ -79,24 +80,27 @@ function mountConfidentialComponent(mediator) {
   });
 }
 
-function mountLockComponent(mediator) {
+function mountLockComponent() {
   const el = document.getElementById('js-lock-entry-point');
+  const { fullPath } = getSidebarOptions();
 
   if (!el) return;
 
   const dataNode = document.getElementById('js-lock-issue-data');
   const initialData = JSON.parse(dataNode.innerHTML);
 
-  const LockComp = Vue.extend(LockIssueSidebar);
-
-  new LockComp({
-    propsData: {
-      isLocked: initialData.is_locked,
-      isEditable: initialData.is_editable,
-      mediator,
-      issuableType: isInIssuePage() ? 'issue' : 'merge_request',
-    },
-  }).$mount(el);
+  // eslint-disable-next-line no-new
+  new Vue({
+    el,
+    store: isInIssuePage() ? store : mergeRequestStore,
+    render: createElement =>
+      createElement(LockIssueSidebar, {
+        props: {
+          fullPath,
+          isEditable: initialData.is_editable,
+        },
+      }),
+  });
 }
 
 function mountParticipantsComponent(mediator) {

@@ -1,22 +1,23 @@
 <script>
 import editFormButtons from './edit_form_buttons.vue';
-import issuableMixin from '../../../vue_shared/mixins/issuable';
 import { __, sprintf } from '../../../locale';
 
 export default {
   components: {
     editFormButtons,
   },
-  mixins: [issuableMixin],
   props: {
     isLocked: {
       required: true,
       type: Boolean,
     },
-
-    updateLockedAttribute: {
+    fullPath: {
       required: true,
-      type: Function,
+      type: String,
+    },
+    issuableDisplayName: {
+      required: true,
+      type: String,
     },
   },
   computed: {
@@ -42,12 +43,16 @@ export default {
 
 <template>
   <div class="dropdown show">
-    <div class="dropdown-menu sidebar-item-warning-message">
+    <div class="dropdown-menu sidebar-item-warning-message" data-testid="warning-text">
       <p v-if="isLocked" class="text" v-html="unlockWarning"></p>
 
       <p v-else class="text" v-html="lockWarning"></p>
 
-      <edit-form-buttons :is-locked="isLocked" :update-locked-attribute="updateLockedAttribute" />
+      <edit-form-buttons
+        :full-path="fullPath"
+        :is-locked="isLocked"
+        :issuable-display-name="issuableDisplayName"
+      />
     </div>
   </div>
 </template>
