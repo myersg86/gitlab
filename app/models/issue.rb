@@ -294,6 +294,24 @@ class Issue < ApplicationRecord
     end
   end
 
+  def related_issues(current_user, preload: nil)
+    related_issues = ::Issue
+                       .select(['issues.*', 'issue_links.id AS issue_link_id',
+                                'issue_links.link_type as issue_link_type_value',
+                                'issue_links.target_id as issue_link_source_id'])
+                       .joins("INNER JOIN issue_links ON
+               (issue_links.source_id = issues.id AND issue_links.target_id = #{id})
+               OR
+               (issue_links.target_id = issues.id AND issue_links.source_id = #{id})")
+                       .preload(preload)
+                       .reorder('issue_link_id')
+
+    cross_project_filter = -> (issues) { issues.where(project: project) }
+    Ability.issues_readable_by_user(related_issues,
+                                    current_user,
+                                    filters: { read_cross_project: cross_project_filter })
+  end
+
   def can_be_worked_on?
     !self.closed? && !self.project.forked?
   end

@@ -39,6 +39,7 @@ module Issues
       super
 
       mark_as_moved
+      rewrite_related_issues
     end
 
     def create_new_entity
@@ -58,6 +59,14 @@ module Issues
       original_entity.update(moved_to: new_entity)
     end
 
+    def rewrite_related_issues
+      source_issue_links = IssueLink.for_source_issue(original_entity)
+      source_issue_links.update_all(source_id: new_entity.id)
+
+      target_issue_links = IssueLink.for_target_issue(original_entity)
+      target_issue_links.update_all(target_id: new_entity.id)
+    end
+
     def notify_participants
       notification_service.async.issue_moved(original_entity, new_entity, @current_user)
     end
@@ -75,5 +84,3 @@ module Issues
     end
   end
 end
-
-Issues::MoveService.prepend_if_ee('EE::Issues::MoveService')
