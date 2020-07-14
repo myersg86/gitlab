@@ -100,6 +100,7 @@ export default {
   },
 
   [types.SET_ISSUABLE_LOCK](state, data) {
+    console.log(data);
     state.noteableData.discussion_locked = data;
   },
 

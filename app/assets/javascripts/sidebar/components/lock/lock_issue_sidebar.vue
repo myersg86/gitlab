@@ -21,6 +21,11 @@ export default {
   mixins: [issuableMixin],
 
   props: {
+    isLockedInitial: {
+      required: true,
+      type: Boolean,
+    },
+
     isEditable: {
       required: true,
       type: Boolean,
@@ -36,11 +41,14 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      isLocked: ({ noteableData }) => {
-        return noteableData.discussion_locked;
-      },
-    }),
+    /* 
+      OPTION B
+      Uses the pre-historic store attached to the sidebar.
+    */
+    isLocked() {
+      const discussionLocked = this.mediator.store.discussionLocked;
+      return discussionLocked ? discussionLocked : this.isLockedInitial;
+    },
     lockIcon() {
       return this.isLocked ? 'lock' : 'lock-open';
     },
@@ -75,7 +83,10 @@ export default {
           discussion_locked: locked,
         })
         .then(({ data }) => {
-          this.setIssuableLock(data.discussion_locked);
+          /* Required for Option B */ 
+          console.log("updateLockedAttribute:", data);
+          this.mediator.store.toggleDiscussionLocked();
+          this.setIssuableLock(this.mediator.store.discussionLocked);
         })
         .catch(() =>
           Flash(

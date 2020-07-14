@@ -27,6 +27,7 @@ export default class SidebarStore {
     this.autocompleteProjects = [];
     this.moveToProjectId = 0;
     this.isLockDialogOpen = false;
+    this.discussionLocked = true; /* TODO: Required for Option B */
     this.participants = [];
     this.projectEmailsDisabled = false;
     this.subscribeDisabledDescription = '';
@@ -40,6 +41,11 @@ export default class SidebarStore {
     if (data.assignees) {
       this.assignees = data.assignees;
     }
+  }
+
+  /* Required for Option B */
+  setDiscussionLockedData(data) {
+    this.discussionLocked = data.discussion_locked;
   }
 
   setTimeTrackingData(data) {
@@ -103,5 +109,9 @@ export default class SidebarStore {
 
   setMoveToProjectId(moveToProjectId) {
     this.moveToProjectId = moveToProjectId;
+  }
+  /* Required for Option B */
+  toggleDiscussionLocked() {
+    this.discussionLocked = !this.discussionLocked;
   }
 }

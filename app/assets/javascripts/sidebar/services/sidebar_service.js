@@ -44,6 +44,8 @@ export default class SidebarService {
   }
 
   update(key, data) {
+    // TODO remove this commment
+    // adding 'discussion_locked' in merge_request_basic_entity.rb necessary...
     return axios.put(this.endpoint, { [key]: data });
   }
 

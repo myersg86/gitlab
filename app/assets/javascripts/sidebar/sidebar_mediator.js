@@ -48,6 +48,7 @@ export default class SidebarMediator {
     return this.service
       .get()
       .then(([restResponse, graphQlResponse]) => {
+        console.log("sidebar_mediator:", restResponse);
         this.processFetchedData(restResponse.data, graphQlResponse.data);
       })
       .catch(() => new Flash(__('Error occurred when fetching sidebar data')));
@@ -58,6 +59,7 @@ export default class SidebarMediator {
     this.store.setTimeTrackingData(data);
     this.store.setParticipantsData(data);
     this.store.setSubscriptionsData(data);
+    this.store.setDiscussionLockedData(data);
   }
 
   toggleSubscription() {

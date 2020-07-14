@@ -11,4 +11,5 @@ class MergeRequestBasicEntity < Grape::Entity
   expose :assignees, using: API::Entities::UserBasic
   expose :task_status, :task_status_short
   expose :lock_version, :lock_version
+  expose :discussion_locked
 end
