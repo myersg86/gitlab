@@ -141,6 +141,16 @@ RSpec.describe MergeRequestWidgetEntity do
           expect(subject[:merge_request_add_ci_config_path]).to eq(expected_path)
         end
 
+        context 'when the suggest pipeline has been dismissed' do
+          before do
+            create(:user_callout, user: user, feature_name: described_class::SUGGEST_PIPELINE)
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
         context 'when auto devops is enabled' do
           before do
             project_auto_devops.enabled = true
@@ -252,6 +262,36 @@ RSpec.describe MergeRequestWidgetEntity do
         it 'has add ci config path' do
           expect(subject[:merge_request_add_ci_config_path]).to be_nil
         end
+      end
+    end
+  end
+
+  describe 'user callouts' do
+    context 'when suggest pipeline feature is enabled' do
+      before do
+        stub_feature_flags(suggest_pipeline: true)
+      end
+
+      it 'provides a valid path value for user callout path' do
+        expect(subject[:user_callouts_path]).to eq '/-/user_callouts'
+      end
+
+      it 'provides a valid value for suggest pipeline feature id' do
+        expect(subject[:suggest_pipeline_feature_id]).to eq described_class::SUGGEST_PIPELINE
+      end
+    end
+
+    context 'when suggest pipeline feature is not enabled' do
+      before do
+        stub_feature_flags(suggest_pipeline: false)
+      end
+
+      it 'provides no valid value for user callout path' do
+        expect(subject[:user_callouts_path]).to be_nil
+      end
+
+      it 'provides no valid value for suggest pipeline feature id' do
+        expect(subject[:suggest_pipeline_feature_id]).to be_nil
       end
     end
   end

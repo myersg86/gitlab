@@ -4,6 +4,7 @@ import suggestPipelineComponent from '~/vue_merge_request_widget/components/mr_w
 import MrWidgetIcon from '~/vue_merge_request_widget/components/mr_widget_icon.vue';
 import { mockTracking, triggerEvent, unmockTracking } from 'helpers/tracking_helper';
 import { popoverProps, iconName } from './pipeline_tour_mock_data';
+import PersistentUserCallout from '~/persistent_user_callout';
 
 describe('MRWidgetSuggestPipeline', () => {
   let wrapper;
@@ -17,6 +18,7 @@ describe('MRWidgetSuggestPipeline', () => {
   beforeEach(() => {
     document.body.dataset.page = 'projects:merge_requests:show';
     trackingSpy = mockTracking('_category_', undefined, jest.spyOn);
+    jest.spyOn(PersistentUserCallout, 'factory').mockImplementation(() => {});
 
     wrapper = mount(suggestPipelineComponent, {
       propsData: popoverProps,
@@ -73,6 +75,13 @@ describe('MRWidgetSuggestPipeline', () => {
       expect(link.attributes('href')).toBe(wrapper.vm.$options.helpURL);
     });
 
+    it('renders the dismissal button', () => {
+      const button = wrapper.find('[data-testid="suggest-close"]');
+
+      expect(button.exists()).toBe(true);
+      expect(button.classes()).toContain('btn-blank', 'js-close');
+    });
+
     it('renders the empty pipelines image', () => {
       const image = wrapper.find('[data-testid="pipeline-image"]');
 
@@ -112,6 +121,18 @@ describe('MRWidgetSuggestPipeline', () => {
           label: wrapper.vm.$options.trackLabel,
           property: popoverProps.humanAccess,
           value: '10',
+        });
+      });
+    });
+
+    describe('callout', () => {
+      it('initializes the callout', () => {
+        const container = wrapper.find({ ref: 'mr-pipeline-suggest-callout' });
+
+        expect(PersistentUserCallout.factory).toHaveBeenCalledWith(container.element, {
+          dismissEndpoint: popoverProps.userCalloutsPath,
+          featureId: popoverProps.userCalloutFeatureId,
+          errorMessage: wrapper.vm.$options.calloutErrorMessage,
         });
       });
     });

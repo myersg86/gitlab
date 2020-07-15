@@ -2529,6 +2529,9 @@ msgstr ""
 msgid "An error occurred while dismissing the feature highlight. Refresh the page and try dismissing again."
 msgstr ""
 
+msgid "An error occurred while dismissing the notification. Refresh the page and try again."
+msgstr ""
+
 msgid "An error occurred while enabling Service Desk."
 msgstr ""
 

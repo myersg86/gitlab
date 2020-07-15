@@ -823,6 +823,8 @@ describe('mrWidgetOptions', () => {
 
     it('should suggest pipelines when none exist', () => {
       vm.mr.mergeRequestAddCiConfigPath = 'some/path';
+      vm.mr.userCalloutsPath = 'some/callout/path';
+      vm.mr.suggestPipelineFeatureId = 'suggest_pipeline';
       vm.mr.hasCI = false;
 
       expect(vm.shouldSuggestPipelines).toBeTruthy();

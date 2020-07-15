@@ -1,11 +1,15 @@
 <script>
-import { GlLink, GlSprintf, GlButton } from '@gitlab/ui';
+import { GlLink, GlSprintf, GlButton, GlIcon } from '@gitlab/ui';
 import MrWidgetIcon from './mr_widget_icon.vue';
 import Tracking from '~/tracking';
-import { s__ } from '~/locale';
+import { s__, __ } from '~/locale';
+import PersistentUserCallout from '~/persistent_user_callout';
 
 const trackingMixin = Tracking.mixin();
 const TRACK_LABEL = 'no_pipeline_noticed';
+const CALLOUT_ERROR_MESSAGE = __(
+  'An error occurred while dismissing the notification. Refresh the page and try again.',
+);
 
 export default {
   name: 'MRWidgetSuggestPipeline',
@@ -19,10 +23,12 @@ export default {
     `mrWidget|Use %{linkStart}CI pipelines to test your code%{linkEnd} by simply adding a GitLab CI configuration file to your project. It only takes a minute to make your code more secure and robust.`,
   ),
   helpURL: 'https://about.gitlab.com/blog/2019/07/12/guide-to-ci-cd-pipelines/',
+  calloutErrorMessage: CALLOUT_ERROR_MESSAGE,
   components: {
     GlLink,
     GlSprintf,
     GlButton,
+    GlIcon,
     MrWidgetIcon,
   },
   mixins: [trackingMixin],
@@ -39,6 +45,14 @@ export default {
       type: String,
       required: true,
     },
+    userCalloutsPath: {
+      type: String,
+      required: true,
+    },
+    userCalloutFeatureId: {
+      type: String,
+      required: true,
+    },
   },
   computed: {
     tracking() {
@@ -50,11 +64,17 @@ export default {
   },
   mounted() {
     this.track();
+    const callout = this.$refs['mr-pipeline-suggest-callout'];
+    PersistentUserCallout.factory(callout, {
+      dismissEndpoint: this.userCalloutsPath,
+      featureId: this.userCalloutFeatureId,
+      errorMessage: CALLOUT_ERROR_MESSAGE,
+    });
   },
 };
 </script>
 <template>
-  <div class="mr-widget-body mr-pipeline-suggest gl-mb-3">
+  <div ref="mr-pipeline-suggest-callout" class="mr-widget-body mr-pipeline-suggest gl-mb-3">
     <div class="gl-display-flex gl-align-items-center">
       <mr-widget-icon :name="$options.iconName" />
       <div>
@@ -85,9 +105,19 @@ export default {
           </template>
         </gl-sprintf>
       </div>
+      <div class="ml-auto">
+        <button
+          :aria-label="__('Close')"
+          class="btn-blank js-close"
+          type="button"
+          data-testid="suggest-close"
+        >
+          <gl-icon name="close" aria-hidden="true" class="dismiss-icon" />
+        </button>
+      </div>
     </div>
     <div class="row">
-      <div class="col-md-5 order-md-last col-12 gl-mt-5 mt-md-n3 svg-content svg-225">
+      <div class="col-md-5 order-md-last col-12 gl-mt-5 mt-md-n1 pt-md-1 svg-content svg-225">
         <img data-testid="pipeline-image" :src="pipelineSvgPath" />
       </div>
       <div class="col-md-7 order-md-first col-12">

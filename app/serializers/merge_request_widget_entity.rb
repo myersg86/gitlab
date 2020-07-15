@@ -3,6 +3,8 @@
 class MergeRequestWidgetEntity < Grape::Entity
   include RequestAwareEntity
 
+  SUGGEST_PIPELINE = 'suggest_pipeline'
+
   expose :id
   expose :iid
 
@@ -64,6 +66,14 @@ class MergeRequestWidgetEntity < Grape::Entity
     )
   end
 
+  expose :user_callouts_path, if: -> (*) { Feature.enabled?(:suggest_pipeline) } do |merge_request|
+    user_callouts_path
+  end
+
+  expose :suggest_pipeline_feature_id, if: -> (*) { Feature.enabled?(:suggest_pipeline) } do |merge_request|
+    SUGGEST_PIPELINE
+  end
+
   expose :human_access do |merge_request|
     merge_request.project.team.human_max_access(current_user&.id)
   end
@@ -119,7 +129,8 @@ class MergeRequestWidgetEntity < Grape::Entity
   end
 
   def can_add_ci_config_path?(merge_request)
-    merge_request.open? &&
+    !current_user&.dismissed_callout?(feature_name: SUGGEST_PIPELINE) &&
+      merge_request.open? &&
       merge_request.source_branch_exists? &&
       merge_request.source_project&.uses_default_ci_config? &&
       !merge_request.source_project.has_ci? &&

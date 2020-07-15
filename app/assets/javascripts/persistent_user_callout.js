@@ -7,10 +7,11 @@ const DEFERRED_LINK_CLASS = 'deferred-link';
 
 export default class PersistentUserCallout {
   constructor(container, options = container.dataset) {
-    const { dismissEndpoint, featureId, deferLinks } = options;
+    const { dismissEndpoint, featureId, deferLinks, errorMessage } = options;
     this.container = container;
     this.dismissEndpoint = dismissEndpoint;
     this.featureId = featureId;
+    this.errorMessage = errorMessage;
     this.deferLinks = parseBoolean(deferLinks);
 
     this.init();
@@ -46,6 +47,11 @@ export default class PersistentUserCallout {
     followLink.addEventListener('click', event => this.registerCalloutWithLink(event));
   }
 
+  flashMessage(defaultMessage) {
+    const message = this.errorMessage === undefined ? defaultMessage : this.errorMessage;
+    Flash(message);
+  }
+
   dismiss(event, deferredLinkOptions = null) {
     event.preventDefault();
 
@@ -62,7 +68,9 @@ export default class PersistentUserCallout {
         }
       })
       .catch(() => {
-        Flash(__('An error occurred while dismissing the alert. Refresh the page and try again.'));
+        this.flashMessage(
+          __('An error occurred while dismissing the alert. Refresh the page and try again.'),
+        );
       });
   }
 
@@ -79,7 +87,7 @@ export default class PersistentUserCallout {
         window.location.assign(href);
       })
       .catch(() => {
-        Flash(
+        this.flashMessage(
           __(
             'An error occurred while acknowledging the notification. Refresh the page and try again.',
           ),
