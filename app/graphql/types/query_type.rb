@@ -63,11 +63,16 @@ module Types
 
     field :issue, Types::IssueType,
           null: true,
-          description: 'Find an issue',
-          resolver: Resolvers::IssueResolver
+          description: 'Find an issue' do
+            argument :id, ID, required: true, description: 'The GraphQL ID of the Issue'
+          end
 
     def design_management
       DesignManagementObject.new(nil)
+    end
+
+    def issue(id:)
+      GitlabSchema.object_from_id(id, expected_type: ::Issue)
     end
   end
 end

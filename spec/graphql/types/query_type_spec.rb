@@ -19,6 +19,7 @@ RSpec.describe GitlabSchema.types['Query'] do
       design_management
       user
       users
+      issue
     ]
 
     expect(described_class).to have_graphql_fields(*expected_fields).at_least
@@ -50,6 +51,15 @@ RSpec.describe GitlabSchema.types['Query'] do
     it 'returns metadata' do
       is_expected.to have_graphql_type(Types::MetadataType)
       is_expected.to have_graphql_resolver(Resolvers::MetadataResolver)
+    end
+  end
+
+  describe 'issue field' do
+    subject { described_class.fields['issue'] }
+
+    it 'returns issue' do
+      # is_expected.to have_graphql_arguments(:id)
+      is_expected.to have_graphql_type(Types::IssueType)
     end
   end
 end

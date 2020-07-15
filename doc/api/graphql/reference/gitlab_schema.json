@@ -30960,7 +30960,7 @@
               "args": [
                 {
                   "name": "id",
-                  "description": "ID of the Issue",
+                  "description": "The GraphQL ID of the Issue",
                   "type": {
                     "kind": "NON_NULL",
                     "name": null,

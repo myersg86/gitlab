@@ -662,6 +662,7 @@ the `epic` property:
 Please use `iid` of the `epic` attribute instead.
 
 ## Single Project Issue
+
 Get a single project issue.
 
 If the project is private or the issue is confidential, credentials will need to be provided for authorization.

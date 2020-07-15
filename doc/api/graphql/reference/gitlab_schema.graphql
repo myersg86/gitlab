@@ -10490,7 +10490,7 @@ type Query {
   """
   issue(
     """
-    ID of the Issue
+    The GraphQL ID of the Issue
     """
     id: ID!
   ): Issue
