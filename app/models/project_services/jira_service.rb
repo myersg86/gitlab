@@ -210,6 +210,8 @@ class JiraService < IssueTrackerService
     success = result.present?
     result = @error&.message unless success
 
+    update_deployment_type(result) if success
+
     { success: success, result: result }
   end
 
@@ -429,6 +431,17 @@ class JiraService < IssueTrackerService
     return false if api_url.present?
 
     url_changed?
+  end
+
+  def update_deployment_type(server_info)
+    case server_info['deploymentType']
+    when 'Server'
+      data_fields.deployment_server!
+    when 'Cloud'
+      data_fields.deployment_cloud!
+    else
+      data_fields.deployment_unknown!
+    end
   end
 
   def self.event_description(event)

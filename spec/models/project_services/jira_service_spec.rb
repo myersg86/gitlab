@@ -633,11 +633,11 @@ RSpec.describe JiraService do
       )
     end
 
-    def test_settings(url = 'jira.example.com')
+    def test_settings(url = 'jira.example.com', result = { url: 'http://url' })
       test_url = "http://#{url}/rest/api/2/serverInfo"
 
       WebMock.stub_request(:get, test_url).with(basic_auth: [username, password])
-        .to_return(body: { url: 'http://url' }.to_json )
+        .to_return(body: result.to_json )
 
       jira_service.test(nil)
     end
@@ -651,6 +651,26 @@ RSpec.describe JiraService do
         jira_service.update(api_url: 'http://jira.api.com')
 
         expect(test_settings('jira.api.com')).to eq(success: true, result: { 'url' => 'http://url' })
+      end
+
+      context 'when updating deployment type' do
+        it 'detects a Cloud instance' do
+          test_settings('jira.example.com', { url: 'http://url', deploymentType: 'Cloud' })
+
+          expect(service.jira_tracker_data.deployment_cloud?).to be_truthy
+        end
+
+        it 'detects a Server instance' do
+          test_settings('jira.example.com', { url: 'http://url', deploymentType: 'Server' })
+
+          expect(service.jira_tracker_data.deployment_server?).to be_truthy
+        end
+
+        it 'does not recognize the instance' do
+          test_settings('jira.example.com', { url: 'http://url', deploymentType: 'FutureCloud' })
+
+          expect(service.jira_tracker_data.deployment_unknown?).to be_truthy
+        end
       end
     end
 
