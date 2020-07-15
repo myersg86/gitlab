@@ -1,0 +1,101 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Project remove modal with no adjouned removal date matches the snapshot 1`] = `
+<form
+  action="some/path"
+  method="post"
+>
+  <input
+    name="_method"
+    type="hidden"
+    value="delete"
+  />
+   
+  <input
+    name="authenticity_token"
+    type="hidden"
+  />
+   
+  <gl-button-stub
+    category="primary"
+    icon=""
+    role="button"
+    size="medium"
+    tabindex="0"
+    variant="danger"
+  >
+    Remove project
+  </gl-button-stub>
+   
+  <gl-modal-stub
+    actioncancel="[object Object]"
+    actionprimary="[object Object]"
+    footer-class="gl-bg-gray-10 gl-p-5"
+    modalclass=""
+    modalid="delete-project-modal-2"
+    ok-variant="danger"
+    size="sm"
+    title-class="gl-text-red-500"
+    titletag="h4"
+  >
+     
+    <div>
+      <gl-alert-stub
+        class="gl-mb-5"
+        dismisslabel="Dismiss"
+        primarybuttonlink=""
+        primarybuttontext=""
+        secondarybuttonlink=""
+        secondarybuttontext=""
+        title=""
+        variant="danger"
+      >
+        <h4
+          class="gl-alert-title gl-text-red-500"
+        >
+          You are about to permanently delete this project
+        </h4>
+         
+        <span>
+          Once a project is permanently deleted it 
+          <strong>
+            cannot be recovered
+          </strong>
+          . Permanently deleting this project will 
+          <strong>
+            immediately delete
+          </strong>
+           its respositories and 
+          <strong>
+            all related resources
+          </strong>
+           including issues, merge requests etc.
+        </span>
+      </gl-alert-stub>
+       
+      <p>
+        This action cannot be undone. You will lose the project's respository and all conent: issues, merge requests, etc.
+      </p>
+       
+      <p
+        class="gl-mb-1"
+      >
+        Please type the following to confirm:
+      </p>
+       
+      <p>
+        <code>
+          foo
+        </code>
+      </p>
+       
+      <gl-form-input-stub
+        id="confirm_name_input"
+        name="confirm_name_input"
+        type="text"
+      />
+       
+    </div>
+  </gl-modal-stub>
+</form>
+`;
