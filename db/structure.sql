@@ -12497,6 +12497,7 @@ CREATE TABLE public.jira_tracker_data (
     jira_issue_transition_id character varying,
     project_key text,
     issues_enabled boolean DEFAULT false NOT NULL,
+    deployment_type smallint DEFAULT 0,
     CONSTRAINT check_214cf6a48b CHECK ((char_length(project_key) <= 255))
 );
 
@@ -23861,6 +23862,7 @@ COPY "schema_migrations" (version) FROM STDIN;
 20200712235622
 20200713071042
 20200713152443
+20200715171155
 20200716044023
 20200716120419
 \.
