@@ -242,12 +242,12 @@ export default {
               :title="$options.confidentialTooltipText"
               :aria-label="$options.confidentialTooltipText"
             />
-            <gl-link :href="issuable.web_url" :target="linkTarget" data-testid="issuable-title">
-              {{ issuable.title }}
-              <gl-icon
+            <gl-link :href="issuable.web_url" :target="linkTarget" data-testid="issuable-title"
+              >{{ issuable.title
+              }}<gl-icon
                 v-if="isJiraIssue"
                 name="external-link"
-                class="gl-vertical-align-text-bottom"
+                class="gl-vertical-align-text-bottom gl-ml-2"
               />
             </gl-link>
           </span>
@@ -281,9 +281,8 @@ export default {
                   v-bind="popoverDataAttrs"
                   :href="issuableAuthor.web_url"
                   :target="linkTarget"
+                  >{{ issuableAuthor.name }}</gl-link
                 >
-                  {{ issuableAuthor.name }}
-                </gl-link>
               </template>
             </gl-sprintf>
           </span>
