@@ -91,6 +91,7 @@ export default {
         feedbackMessage: null,
         isFeedbackDismissed: false,
       },
+      serverError: null,
       testAlert: {
         json: null,
         error: null,
@@ -196,6 +197,10 @@ export default {
     }
   },
   methods: {
+    createUserErrorMessage(errors) {
+      // eslint-disable-next-line prefer-destructuring
+      this.serverError = Object.values(errors)[0][0];
+    },
     setOpsgenieAsDefault() {
       this.options = this.options.map(el => {
         if (el.value !== 'opsgenie') {
@@ -203,8 +208,7 @@ export default {
         }
         return { ...el, disabled: false };
       });
-      const [selected] = this.options;
-      this.selectedEndpoint = selected.value;
+      this.selectedEndpoint = this.options.find(({ value }) => value === 'opsgenie').value;
       if (this.targetUrl === null) {
         this.targetUrl = this.selectedService.targetUrl;
       }
@@ -222,6 +226,7 @@ export default {
       this.targetUrl = this.selectedService.targetUrl;
     },
     dismissFeedback() {
+      this.serverError = null;
       this.feedback = { ...this.feedback, feedbackMessage: null };
       this.isFeedbackDismissed = false;
     },
@@ -286,9 +291,10 @@ export default {
           // eslint-disable-next-line no-return-assign
           return (this.options = serviceOptions);
         })
-        .catch(() => {
+        .catch(({ response: { data: { errors } = {} } = {} }) => {
+          this.createUserErrorMessage(errors);
           this.setFeedback({
-            feedbackMessage: this.$options.i18n.errorMsg,
+            feedbackMessage: `${this.$options.i18n.errorMsg}.`,
             variant: 'danger',
           });
         })
@@ -314,9 +320,10 @@ export default {
           this.toggleSuccess(value);
           this.removeOpsGenieOption();
         })
-        .catch(() => {
+        .catch(({ response: { data: { errors } = {} } = {} }) => {
+          this.createUserErrorMessage(errors);
           this.setFeedback({
-            feedbackMessage: this.$options.i18n.errorApiUrlMsg,
+            feedbackMessage: `${this.$options.i18n.errorMsg}.`,
             variant: 'danger',
           });
         })
@@ -395,6 +402,8 @@ export default {
   <div>
     <gl-alert v-if="showFeedbackMsg" :variant="feedback.variant" @dismiss="dismissFeedback">
       {{ feedback.feedbackMessage }}
+      <br />
+      <i v-if="serverError">{{ __('Error message:') }} {{ serverError }}</i>
       <gl-button
         v-if="showAlertSave"
         variant="danger"
@@ -497,7 +506,7 @@ export default {
           >
             <template #append>
               <clipboard-button
-                :text="selectedService.authKey"
+                :text="selectedService.authKey || ''"
                 :title="$options.i18n.copyToClipboard"
                 class="gl-m-0!"
               />

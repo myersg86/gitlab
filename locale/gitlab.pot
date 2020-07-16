@@ -568,25 +568,25 @@ msgstr[1] ""
 msgid "%{remaining_approvals} left"
 msgstr ""
 
-msgid "%{reportType} %{status} detected %{critical} critical and %{high} high severity vulnerabilities out of %{total}."
+msgid "%{reportType} %{status} detected %{criticalStart}%{critical} new critical%{criticalEnd} and %{highStart}%{high} new high%{highEnd} severity vulnerabilities out of %{total}."
 msgstr ""
 
-msgid "%{reportType} %{status} detected %{critical} critical and %{high} high severity vulnerabilities."
+msgid "%{reportType} %{status} detected %{criticalStart}%{critical} new critical%{criticalEnd} and %{highStart}%{high} new high%{highEnd} severity vulnerabilities."
 msgstr ""
 
-msgid "%{reportType} %{status} detected %{critical} critical severity vulnerabilities out of %{total}."
+msgid "%{reportType} %{status} detected %{criticalStart}%{critical} new critical%{criticalEnd} severity vulnerabilities out of %{total}."
 msgstr ""
 
-msgid "%{reportType} %{status} detected %{critical} critical severity vulnerability."
-msgid_plural "%{reportType} %{status} detected %{critical} critical severity vulnerabilities."
+msgid "%{reportType} %{status} detected %{criticalStart}%{critical} new critical%{criticalEnd} severity vulnerability."
+msgid_plural "%{reportType} %{status} detected %{criticalStart}%{critical} new critical%{criticalEnd} severity vulnerabilities."
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "%{reportType} %{status} detected %{high} high severity vulnerabilities out of %{total}."
+msgid "%{reportType} %{status} detected %{highStart}%{high} new high%{highEnd} severity vulnerabilities out of %{total}."
 msgstr ""
 
-msgid "%{reportType} %{status} detected %{high} high severity vulnerability."
-msgid_plural "%{reportType} %{status} detected %{high} high severity vulnerabilities."
+msgid "%{reportType} %{status} detected %{highStart}%{high} new high%{highEnd} severity vulnerability."
+msgid_plural "%{reportType} %{status} detected %{highStart}%{high} new high%{highEnd} severity vulnerabilities."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -600,6 +600,16 @@ msgstr ""
 
 msgid "%{retryButtonStart}Try again%{retryButtonEnd} or %{newFileButtonStart}attach a new file%{newFileButtonEnd}"
 msgstr ""
+
+msgid "%{securityScanner} is not enabled for this project. %{linkStart}More information%{linkEnd}"
+msgid_plural "%{securityScanner} are not enabled for this project. %{linkStart}More information%{linkEnd}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%{securityScanner} result is not available because a pipeline has not been run since it was enabled. %{linkStart}Run a pipeline%{linkEnd}"
+msgid_plural "%{securityScanner} results are not available because a pipeline has not been run since it was enabled. %{linkStart}Run a pipeline%{linkEnd}"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "%{service_title} %{message}."
 msgstr ""
@@ -764,6 +774,9 @@ msgid "(No changes)"
 msgstr ""
 
 msgid "(check progress)"
+msgstr ""
+
+msgid "(deleted)"
 msgstr ""
 
 msgid "(external source)"
@@ -2192,10 +2205,7 @@ msgstr ""
 msgid "AlertSettings|Test failed. Do you still want to save your changes anyway?"
 msgstr ""
 
-msgid "AlertSettings|There was an error updating the the alert settings. Please refresh the page to try again."
-msgstr ""
-
-msgid "AlertSettings|There was an error while trying to enable the alert settings. Please ensure you are using a valid URL."
+msgid "AlertSettings|There was an error updating the alert settings"
 msgstr ""
 
 msgid "AlertSettings|There was an error while trying to reset the key. Please refresh the page to try again."
@@ -3227,6 +3237,9 @@ msgid "Assigned Issues"
 msgstr ""
 
 msgid "Assigned Merge Requests"
+msgstr ""
+
+msgid "Assigned to %{assigneeName}"
 msgstr ""
 
 msgid "Assigned to %{assignee_name}"
@@ -4769,9 +4782,6 @@ msgstr ""
 msgid "CiVariable|Validation failed"
 msgstr ""
 
-msgid "Class"
-msgstr ""
-
 msgid "Classification Label (optional)"
 msgstr ""
 
@@ -6100,6 +6110,9 @@ msgstr ""
 msgid "Complete"
 msgstr ""
 
+msgid "Completed"
+msgstr ""
+
 msgid "Compliance"
 msgstr ""
 
@@ -6988,7 +7001,13 @@ msgstr ""
 msgid "Created branch '%{branch_name}' and a merge request to resolve this issue."
 msgstr ""
 
+msgid "Created by %{job}"
+msgstr ""
+
 msgid "Created by me"
+msgstr ""
+
+msgid "Created by:"
 msgstr ""
 
 msgid "Created date"
@@ -9366,6 +9385,9 @@ msgstr ""
 msgid "Error loading file viewer."
 msgstr ""
 
+msgid "Error loading issues"
+msgstr ""
+
 msgid "Error loading last commit."
 msgstr ""
 
@@ -9388,6 +9410,9 @@ msgid "Error loading template."
 msgstr ""
 
 msgid "Error loading viewer"
+msgstr ""
+
+msgid "Error message:"
 msgstr ""
 
 msgid "Error occurred when fetching sidebar data"
@@ -11037,6 +11062,9 @@ msgstr ""
 msgid "Git LFS objects will be synced in pull mirrors if LFS is %{docs_link_start}enabled for the project%{docs_link_end}. They will <strong>not</strong> be synced in push mirrors."
 msgstr ""
 
+msgid "Git LFS status:"
+msgstr ""
+
 msgid "Git global setup"
 msgstr ""
 
@@ -11236,6 +11264,12 @@ msgid "Gitaly"
 msgstr ""
 
 msgid "Gitaly Servers"
+msgstr ""
+
+msgid "Gitaly relative path:"
+msgstr ""
+
+msgid "Gitaly storage name:"
 msgstr ""
 
 msgid "Gitaly|Address"
@@ -12488,6 +12522,9 @@ msgid "ImportProjects|Error importing repository %{project_safe_import_url} into
 msgstr ""
 
 msgid "ImportProjects|Importing the project failed"
+msgstr ""
+
+msgid "ImportProjects|Importing the project failed: %{reason}"
 msgstr ""
 
 msgid "ImportProjects|Requesting your %{provider} repositories failed"
@@ -14362,6 +14399,9 @@ msgstr ""
 msgid "Maximum job timeout has a value which could not be accepted"
 msgstr ""
 
+msgid "Maximum length 100 characters"
+msgstr ""
+
 msgid "Maximum lifetime allowable for Personal Access Tokens is active, your expire date must be set before %{maximum_allowable_date}."
 msgstr ""
 
@@ -15290,6 +15330,9 @@ msgstr ""
 msgid "MrDeploymentActions|Stop environment"
 msgstr ""
 
+msgid "Multi-project"
+msgstr ""
+
 msgid "Multiple IP address ranges are supported."
 msgstr ""
 
@@ -15329,13 +15372,25 @@ msgstr ""
 msgid "Name has already been taken"
 msgstr ""
 
+msgid "Name is required"
+msgstr ""
+
 msgid "Name new label"
 msgstr ""
 
 msgid "Name:"
 msgstr ""
 
+msgid "Namespace"
+msgstr ""
+
 msgid "Namespace is empty"
+msgstr ""
+
+msgid "Namespace:"
+msgstr ""
+
+msgid "Namespaces"
 msgstr ""
 
 msgid "Namespaces to index"
@@ -15710,6 +15765,9 @@ msgid "No forks are available to you."
 msgstr ""
 
 msgid "No grouping"
+msgstr ""
+
+msgid "No issues found"
 msgstr ""
 
 msgid "No iteration"
@@ -16404,6 +16462,9 @@ msgstr ""
 msgid "Owned by me"
 msgstr ""
 
+msgid "Owned by:"
+msgstr ""
+
 msgid "Owner"
 msgstr ""
 
@@ -16645,6 +16706,33 @@ msgid "Page not found"
 msgstr ""
 
 msgid "Page was successfully deleted"
+msgstr ""
+
+msgid "PagerDutySettings|Active"
+msgstr ""
+
+msgid "PagerDutySettings|Create a GitLab issue for each PagerDuty incident by %{docsLink}"
+msgstr ""
+
+msgid "PagerDutySettings|Failed to update Webhook URL"
+msgstr ""
+
+msgid "PagerDutySettings|Reset webhook URL"
+msgstr ""
+
+msgid "PagerDutySettings|Resetting the webhook URL for this project will require updating this integration's settings in PagerDuty."
+msgstr ""
+
+msgid "PagerDutySettings|Setting up a webhook with PagerDuty will automatically create a GitLab issue for each PagerDuty incident."
+msgstr ""
+
+msgid "PagerDutySettings|Webhook URL"
+msgstr ""
+
+msgid "PagerDutySettings|Webhook URL update was successful"
+msgstr ""
+
+msgid "PagerDutySettings|configuring a webhook in PagerDuty"
 msgstr ""
 
 msgid "Pages"
@@ -18015,6 +18103,9 @@ msgstr ""
 msgid "Project has too many %{label_for_message} to search"
 msgstr ""
 
+msgid "Project info:"
+msgstr ""
+
 msgid "Project is required when cluster_type is :project"
 msgstr ""
 
@@ -18270,6 +18361,9 @@ msgstr ""
 msgid "ProjectSettings|Git Large File Storage (LFS)"
 msgstr ""
 
+msgid "ProjectSettings|Global"
+msgstr ""
+
 msgid "ProjectSettings|Internal"
 msgstr ""
 
@@ -18409,6 +18503,9 @@ msgid "ProjectSettings|This setting will override user notification preferences 
 msgstr ""
 
 msgid "ProjectSettings|This will dictate the commit history when you merge a merge request"
+msgstr ""
+
+msgid "ProjectSettings|Transfer project"
 msgstr ""
 
 msgid "ProjectSettings|Users can only push commits to this repository that were committed with one of their own verified emails."
@@ -20422,6 +20519,9 @@ msgid "Search by name"
 msgstr ""
 
 msgid "Search files"
+msgstr ""
+
+msgid "Search for Namespace"
 msgstr ""
 
 msgid "Search for a LDAP group"
@@ -23121,13 +23221,13 @@ msgstr ""
 msgid "TestReports|%{count} failures"
 msgstr ""
 
-msgid "TestReports|%{count} jobs"
+msgid "TestReports|%{count} tests"
 msgstr ""
 
 msgid "TestReports|%{rate}%{sign} success rate"
 msgstr ""
 
-msgid "TestReports|Test suites"
+msgid "TestReports|Jobs"
 msgstr ""
 
 msgid "TestReports|Tests"
@@ -24163,12 +24263,6 @@ msgstr ""
 msgid "This pipeline makes use of a predefined CI/CD configuration enabled by <b>Auto DevOps.</b>"
 msgstr ""
 
-msgid "This pipeline triggered a child pipeline"
-msgstr ""
-
-msgid "This pipeline was triggered by a parent pipeline"
-msgstr ""
-
 msgid "This pipeline was triggered by a schedule."
 msgstr ""
 
@@ -24857,6 +24951,9 @@ msgstr ""
 msgid "Track your project with Audit Events."
 msgstr ""
 
+msgid "Transfer"
+msgstr ""
+
 msgid "Transfer ownership"
 msgstr ""
 
@@ -24939,6 +25036,9 @@ msgid "Trigger pipelines when branches or tags are updated from the upstream rep
 msgstr ""
 
 msgid "Trigger removed."
+msgstr ""
+
+msgid "Trigger repository check"
 msgstr ""
 
 msgid "Trigger this manual action"
@@ -27421,6 +27521,9 @@ msgid_plural "about %d hours"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "access:"
+msgstr ""
+
 msgid "activated"
 msgstr ""
 
@@ -27461,6 +27564,9 @@ msgid "approved by: "
 msgstr ""
 
 msgid "archived"
+msgstr ""
+
+msgid "archived:"
 msgstr ""
 
 msgid "assign yourself"
@@ -27509,6 +27615,9 @@ msgid "cannot itself be blocked"
 msgstr ""
 
 msgid "cannot merge"
+msgstr ""
+
+msgid "child-pipeline"
 msgstr ""
 
 msgid "ciReport|%{degradedNum} degraded"
@@ -27794,6 +27903,9 @@ msgstr ""
 msgid "disabled"
 msgstr ""
 
+msgid "does not exist"
+msgstr ""
+
 msgid "does not have a supported extension. Only %{extension_list} are supported"
 msgstr ""
 
@@ -27897,6 +28009,9 @@ msgstr ""
 msgid "group"
 msgstr ""
 
+msgid "group members"
+msgstr ""
+
 msgid "groups"
 msgstr ""
 
@@ -27910,6 +28025,9 @@ msgid "help"
 msgstr ""
 
 msgid "here"
+msgstr ""
+
+msgid "http:"
 msgstr ""
 
 msgid "https://your-bitbucket-server"
@@ -28026,6 +28144,9 @@ msgid "it is too large"
 msgstr ""
 
 msgid "jigsaw is not defined"
+msgstr ""
+
+msgid "last commit:"
 msgstr ""
 
 msgid "latest"
@@ -28527,6 +28648,15 @@ msgstr ""
 msgid "project avatar"
 msgstr ""
 
+msgid "project bots cannot be added to other groups / projects"
+msgstr ""
+
+msgid "project is read-only"
+msgstr ""
+
+msgid "project members"
+msgstr ""
+
 msgid "projects"
 msgstr ""
 
@@ -28567,6 +28697,9 @@ msgid "reply"
 msgid_plural "replies"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "repository:"
+msgstr ""
 
 msgid "reset it."
 msgstr ""
@@ -28638,6 +28771,9 @@ msgid "specified top is not part of the tree"
 msgstr ""
 
 msgid "spendCommand|%{slash_command} will update the sum of the time spent."
+msgstr ""
+
+msgid "ssh:"
 msgstr ""
 
 msgid "started"

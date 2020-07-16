@@ -6,6 +6,7 @@ module Gitlab
   module Danger
     module Helper
       RELEASE_TOOLS_BOT = 'gitlab-release-tools-bot'
+      DRAFT_REGEX = /\A*#{Regexp.union(/(?i)(\[WIP\]\s*|WIP:\s*|WIP$)/, /(?i)(\[draft\]|\(draft\)|draft:|draft\s\-\s|draft$)/)}+\s*/i.freeze
 
       # Returns a list of all files that have been added, modified or renamed.
       # `git.modified_files` might contain paths that already have been renamed,
@@ -32,6 +33,18 @@ module Gitlab
           .subtract(git.renamed_files.map { |x| x[:before] })
           .to_a
           .sort
+      end
+
+      # Returns a string containing changed lines as git diff
+      #
+      # Considering changing a line in lib/gitlab/usage_data.rb it will return:
+      #
+      # [ "--- a/lib/gitlab/usage_data.rb",
+      #   "+++ b/lib/gitlab/usage_data.rb",
+      #   "+      # Test change",
+      #   "-      # Old change" ]
+      def changed_lines(changed_file)
+        git.diff_for_file(changed_file).patch.split("\n").select { |line| %r{^[+-]}.match?(line) }
       end
 
       def all_ee_changes
@@ -77,10 +90,19 @@ module Gitlab
         end
       end
 
-      # Determines the categories a file is in, e.g., `[:frontend]`, `[:backend]`, or  `%i[frontend engineering_productivity]`.
+      # Determines the categories a file is in, e.g., `[:frontend]`, `[:backend]`, or  `%i[frontend engineering_productivity]`
+      # using filename regex and specific change regex if given.
+      #
       # @return Array<Symbol>
       def categories_for_file(file)
-        _, categories = CATEGORIES.find { |regexp, _| regexp.match?(file) }
+        _, categories = CATEGORIES.find do |key, _|
+          filename_regex, changes_regex = Array(key)
+
+          found = filename_regex.match?(file)
+          found &&= changed_lines(file).any? { |changed_line| changes_regex.match?(changed_line) } if changes_regex
+
+          found
+        end
 
         Array(categories || :unknown)
       end
@@ -102,6 +124,8 @@ module Gitlab
       }.freeze
       # First-match win, so be sure to put more specific regex at the top...
       CATEGORIES = {
+        [%r{usage_data}, %r{^(\+|-).*(count|distinct_count)\(.*\)(.*)$}] => [:database, :backend],
+
         %r{\Adoc/.*(\.(md|png|gif|jpg))\z} => :docs,
         %r{\A(CONTRIBUTING|LICENSE|MAINTENANCE|PHILOSOPHY|PROCESS|README)(\.md)?\z} => :docs,
 
@@ -187,7 +211,7 @@ module Gitlab
       end
 
       def sanitize_mr_title(title)
-        title.gsub(/^WIP: */, '').gsub(/`/, '\\\`')
+        title.gsub(DRAFT_REGEX, '').gsub(/`/, '\\\`')
       end
 
       def security_mr?

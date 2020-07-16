@@ -177,6 +177,7 @@ describe('AlertsSettingsForm', () => {
 
     it('shows a input for the opsgenie target URL', () => {
       expect(findApiUrl().exists()).toBe(true);
+      expect(findSelect().attributes('value')).toBe('opsgenie');
     });
   });
 
@@ -217,7 +218,9 @@ describe('AlertsSettingsForm', () => {
       it('should show a error alert if failed', () => {
         const formPath = 'some/path';
         const toggleService = true;
-        mockAxios.onPut(formPath).replyOnce(404);
+        mockAxios.onPut(formPath).replyOnce(422, {
+          errors: 'Error message to display',
+        });
 
         createComponent({ generic: { ...defaultProps.generic, formPath } });
 

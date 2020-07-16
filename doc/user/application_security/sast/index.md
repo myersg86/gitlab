@@ -28,7 +28,7 @@ You can take advantage of SAST by doing one of the following:
 GitLab checks the SAST report, compares the found vulnerabilities between the
 source and target branches, and shows the information right on the merge request.
 
-![SAST Widget](img/sast_v13_1.png)
+![SAST Widget](img/sast_v13_2.png)
 
 The results are sorted by the priority of the vulnerability:
 
@@ -58,7 +58,8 @@ If you're using the shared Runners on GitLab.com, this is enabled by default.
 
 Beginning with GitLab 13.0, Docker privileged mode is necessary only if you've [enabled Docker-in-Docker for SAST](#enabling-docker-in-docker).
 
-CAUTION: **Caution:** Our SAST jobs currently expect a Linux container type. Windows containers are not yet supported.
+CAUTION: **Caution:**
+Our SAST jobs currently expect a Linux container type. Windows containers are not yet supported.
 
 CAUTION: **Caution:**
 If you use your own Runners, make sure the Docker version installed
