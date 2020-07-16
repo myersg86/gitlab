@@ -19757,7 +19757,7 @@ CREATE UNIQUE INDEX index_label_priorities_on_project_id_and_label_id ON public.
 
 CREATE UNIQUE INDEX index_labels_on_group_id_and_project_id_and_title ON public.labels USING btree (group_id, project_id, title);
 
-CREATE INDEX index_labels_on_group_id_and_title ON public.labels USING btree (group_id, title) WHERE (project_id = NULL::integer);
+CREATE UNIQUE INDEX index_labels_on_group_id_and_title_unique ON public.labels USING btree (group_id, title) WHERE (project_id IS NULL);
 
 CREATE INDEX index_labels_on_project_id ON public.labels USING btree (project_id);
 
