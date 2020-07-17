@@ -25,347 +25,326 @@ describe('PersistentUserCallout', () => {
     return fixture;
   }
 
-  describe('dismiss', () => {
-    let button;
+  describe('invocation', () => {
     let mockAxios;
-    let persistentUserCallout;
-
-    describe('without error data attribute', () => {
-      beforeEach(() => {
-        const fixture = createStandardFixture();
-        const container = fixture.querySelector('.container');
-        button = fixture.querySelector('.js-close');
-        mockAxios = new MockAdapter(axios);
-        persistentUserCallout = new PersistentUserCallout(container);
-        jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
-      });
-
-      afterEach(() => {
-        mockAxios.restore();
-      });
-
-      it('POSTs endpoint and removes container when clicking close', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(200);
-
-        button.click();
-
-        return waitForPromises().then(() => {
-          expect(persistentUserCallout.container.remove).toHaveBeenCalled();
-          expect(mockAxios.history.post[0].data).toBe(
-            JSON.stringify({ feature_name: featureName }),
-          );
-        });
-      });
-
-      it('invokes Flash when the dismiss request fails', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(500);
-
-        button.click();
-
-        return waitForPromises().then(() => {
-          expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
-          expect(Flash).toHaveBeenCalledWith(
-            'An error occurred while dismissing the alert. Refresh the page and try again.',
-          );
-        });
-      });
-    });
-
-    describe('with error data attribute', () => {
-      let errorMessage;
-
-      function createFixture(message) {
-        const fixture = document.createElement('div');
-        fixture.innerHTML = `
-      <div
-        class="container"
-        data-dismiss-endpoint="${dismissEndpoint}"
-        data-feature-id="${featureName}"
-        data-error-message="${message}"
-      >
-        <button type="button" class="js-close"></button>
-      </div>
-    `;
-
-        return fixture;
-      }
-
-      beforeEach(() => {
-        errorMessage = 'custom error message';
-        const fixture = createFixture(errorMessage);
-        const container = fixture.querySelector('.container');
-        button = fixture.querySelector('.js-close');
-        mockAxios = new MockAdapter(axios);
-        persistentUserCallout = new PersistentUserCallout(container);
-        jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
-      });
-
-      afterEach(() => {
-        mockAxios.restore();
-      });
-
-      it('invokes Flash when the dismiss request fails', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(500);
-
-        button.click();
-
-        return waitForPromises().then(() => {
-          expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
-          expect(Flash).toHaveBeenCalledWith(errorMessage);
-        });
-      });
-    });
-
-    describe('with passed options instead of data attributes', () => {
-      let errorMessage;
-
-      function createFixture() {
-        const fixture = document.createElement('div');
-        fixture.innerHTML = `
-      <div class="container">
-        <button type="button" class="js-close"></button>
-      </div>
-    `;
-
-        return fixture;
-      }
-
-      beforeEach(() => {
-        errorMessage = 'custom error message';
-        const fixture = createFixture();
-        const container = fixture.querySelector('.container');
-        button = fixture.querySelector('.js-close');
-        mockAxios = new MockAdapter(axios);
-        persistentUserCallout = new PersistentUserCallout(container, {
-          dismissEndpoint,
-          featureId: featureName,
-          errorMessage,
-        });
-        jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
-      });
-
-      afterEach(() => {
-        mockAxios.restore();
-      });
-
-      it('POSTs endpoint and removes container when clicking close', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(200);
-
-        button.click();
-
-        return waitForPromises().then(() => {
-          expect(persistentUserCallout.container.remove).toHaveBeenCalled();
-          expect(mockAxios.history.post[0].data).toBe(
-            JSON.stringify({ feature_name: featureName }),
-          );
-        });
-      });
-
-      it('invokes Flash when the dismiss request fails', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(500);
-
-        button.click();
-
-        return waitForPromises().then(() => {
-          expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
-          expect(Flash).toHaveBeenCalledWith(errorMessage);
-        });
-      });
-    });
-  });
-
-  describe('deferred links', () => {
-    let button;
-    let deferredLink;
-    let normalLink;
-    let mockAxios;
-    let persistentUserCallout;
-    let windowSpy;
-
-    function createDeferredLinkFixture() {
-      const fixture = document.createElement('div');
-      fixture.innerHTML = `
-      <div
-        class="container"
-        data-dismiss-endpoint="${dismissEndpoint}"
-        data-feature-id="${featureName}"
-        data-defer-links="true"
-      >
-        <button type="button" class="js-close"></button>
-        <a href="/somewhere-pleasant" target="_blank" class="deferred-link">A link</a>
-        <a href="/somewhere-else" target="_blank" class="normal-link">Another link</a>
-      </div>
-    `;
-
-      return fixture;
-    }
 
     beforeEach(() => {
-      const fixture = createDeferredLinkFixture();
-      const container = fixture.querySelector('.container');
-      button = fixture.querySelector('.js-close');
-      deferredLink = fixture.querySelector('.deferred-link');
-      normalLink = fixture.querySelector('.normal-link');
       mockAxios = new MockAdapter(axios);
-      persistentUserCallout = new PersistentUserCallout(container);
-      jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
-      windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {});
     });
 
     afterEach(() => {
       mockAxios.restore();
     });
 
-    it('defers loading of a link until callout is dismissed', () => {
-      const { href, target } = deferredLink;
-      mockAxios.onPost(dismissEndpoint).replyOnce(200);
+    describe('dismiss', () => {
+      let button;
+      let persistentUserCallout;
 
-      deferredLink.click();
+      describe('without error data attribute', () => {
+        beforeEach(() => {
+          const fixture = createStandardFixture();
+          const container = fixture.querySelector('.container');
+          button = fixture.querySelector('.js-close');
+          persistentUserCallout = new PersistentUserCallout(container);
+          jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
+        });
 
-      return waitForPromises().then(() => {
-        expect(windowSpy).toHaveBeenCalledWith(href, target);
-        expect(persistentUserCallout.container.remove).toHaveBeenCalled();
-        expect(mockAxios.history.post[0].data).toBe(JSON.stringify({ feature_name: featureName }));
+        it('POSTs endpoint and removes container when clicking close', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(200);
+
+          button.click();
+
+          return waitForPromises().then(() => {
+            expect(persistentUserCallout.container.remove).toHaveBeenCalled();
+            expect(mockAxios.history.post[0].data).toBe(
+              JSON.stringify({ feature_name: featureName }),
+            );
+          });
+        });
+
+        it('invokes Flash when the dismiss request fails', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(500);
+
+          button.click();
+
+          return waitForPromises().then(() => {
+            expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
+            expect(Flash).toHaveBeenCalledWith(
+              'An error occurred while dismissing the alert. Refresh the page and try again.',
+            );
+          });
+        });
+      });
+
+      describe('with error data attribute', () => {
+        let errorMessage;
+
+        function createFixture(message) {
+          const fixture = document.createElement('div');
+          fixture.innerHTML = `
+            <div
+              class="container"
+              data-dismiss-endpoint="${dismissEndpoint}"
+              data-feature-id="${featureName}"
+              data-error-message="${message}"
+            >
+              <button type="button" class="js-close"></button>
+            </div>
+          `;
+
+          return fixture;
+        }
+
+        beforeEach(() => {
+          errorMessage = 'custom error message';
+          const fixture = createFixture(errorMessage);
+          const container = fixture.querySelector('.container');
+          button = fixture.querySelector('.js-close');
+          persistentUserCallout = new PersistentUserCallout(container);
+          jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
+        });
+
+        it('invokes Flash when the dismiss request fails', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(500);
+
+          button.click();
+
+          return waitForPromises().then(() => {
+            expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
+            expect(Flash).toHaveBeenCalledWith(errorMessage);
+          });
+        });
+      });
+
+      describe('with passed options instead of data attributes', () => {
+        let errorMessage;
+
+        function createFixture() {
+          const fixture = document.createElement('div');
+          fixture.innerHTML = `
+            <div class="container">
+              <button type="button" class="js-close"></button>
+            </div>
+          `;
+
+          return fixture;
+        }
+
+        beforeEach(() => {
+          errorMessage = 'custom error message';
+          const fixture = createFixture();
+          const container = fixture.querySelector('.container');
+          button = fixture.querySelector('.js-close');
+          persistentUserCallout = new PersistentUserCallout(container, {
+            dismissEndpoint,
+            featureId: featureName,
+            errorMessage,
+          });
+          jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
+        });
+
+        it('POSTs endpoint and removes container when clicking close', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(200);
+
+          button.click();
+
+          return waitForPromises().then(() => {
+            expect(persistentUserCallout.container.remove).toHaveBeenCalled();
+            expect(mockAxios.history.post[0].data).toBe(
+              JSON.stringify({ feature_name: featureName }),
+            );
+          });
+        });
+
+        it('invokes Flash when the dismiss request fails', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(500);
+
+          button.click();
+
+          return waitForPromises().then(() => {
+            expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
+            expect(Flash).toHaveBeenCalledWith(errorMessage);
+          });
+        });
       });
     });
 
-    it('does not dismiss callout on non-deferred links', () => {
-      normalLink.click();
+    describe('deferred links', () => {
+      let button;
+      let deferredLink;
+      let normalLink;
+      let persistentUserCallout;
+      let windowSpy;
 
-      return waitForPromises().then(() => {
-        expect(windowSpy).not.toHaveBeenCalled();
-        expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
-      });
-    });
-
-    it('does not follow link when notification is closed', () => {
-      mockAxios.onPost(dismissEndpoint).replyOnce(200);
-
-      button.click();
-
-      return waitForPromises().then(() => {
-        expect(windowSpy).not.toHaveBeenCalled();
-        expect(persistentUserCallout.container.remove).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('follow links', () => {
-    let link;
-    let mockAxios;
-    let persistentUserCallout;
-
-    describe('without error data attribute', () => {
-      function createFollowLinkFixture() {
+      function createDeferredLinkFixture() {
         const fixture = document.createElement('div');
         fixture.innerHTML = `
-      <ul>
-        <li
-          class="container"
-          data-dismiss-endpoint="${dismissEndpoint}"
-          data-feature-id="${featureName}"
-        >
-          <a class="js-follow-link" href="/somewhere-pleasant">A Link</a>
-        </li>
-      </ul>
-  `;
+          <div
+            class="container"
+            data-dismiss-endpoint="${dismissEndpoint}"
+            data-feature-id="${featureName}"
+            data-defer-links="true"
+          >
+            <button type="button" class="js-close"></button>
+            <a href="/somewhere-pleasant" target="_blank" class="deferred-link">A link</a>
+            <a href="/somewhere-else" target="_blank" class="normal-link">Another link</a>
+          </div>
+        `;
 
         return fixture;
       }
 
       beforeEach(() => {
-        const fixture = createFollowLinkFixture();
+        const fixture = createDeferredLinkFixture();
         const container = fixture.querySelector('.container');
-        link = fixture.querySelector('.js-follow-link');
-        mockAxios = new MockAdapter(axios);
-
+        button = fixture.querySelector('.js-close');
+        deferredLink = fixture.querySelector('.deferred-link');
+        normalLink = fixture.querySelector('.normal-link');
         persistentUserCallout = new PersistentUserCallout(container);
         jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
-
-        delete window.location;
-        window.location = { assign: jest.fn() };
+        windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {});
       });
 
-      afterEach(() => {
-        mockAxios.restore();
-      });
-
-      it('uses a link to trigger callout and defers following until callout is finished', () => {
-        const { href } = link;
+      it('defers loading of a link until callout is dismissed', () => {
+        const { href, target } = deferredLink;
         mockAxios.onPost(dismissEndpoint).replyOnce(200);
 
-        link.click();
+        deferredLink.click();
 
         return waitForPromises().then(() => {
-          expect(window.location.assign).toBeCalledWith(href);
+          expect(windowSpy).toHaveBeenCalledWith(href, target);
+          expect(persistentUserCallout.container.remove).toHaveBeenCalled();
           expect(mockAxios.history.post[0].data).toBe(
             JSON.stringify({ feature_name: featureName }),
           );
+        });
+      });
+
+      it('does not dismiss callout on non-deferred links', () => {
+        normalLink.click();
+
+        return waitForPromises().then(() => {
+          expect(windowSpy).not.toHaveBeenCalled();
           expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
         });
       });
 
-      it('invokes Flash when the dismiss request fails', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(500);
+      it('does not follow link when notification is closed', () => {
+        mockAxios.onPost(dismissEndpoint).replyOnce(200);
 
-        link.click();
+        button.click();
 
         return waitForPromises().then(() => {
-          expect(window.location.assign).not.toHaveBeenCalled();
-          expect(Flash).toHaveBeenCalledWith(
-            'An error occurred while acknowledging the notification. Refresh the page and try again.',
-          );
+          expect(windowSpy).not.toHaveBeenCalled();
+          expect(persistentUserCallout.container.remove).toHaveBeenCalled();
         });
       });
     });
 
-    describe('with error data attribute', () => {
-      let errorMessage;
+    describe('follow links', () => {
+      let link;
+      let persistentUserCallout;
 
-      function createFollowLinkFixture(message) {
-        const fixture = document.createElement('div');
-        fixture.innerHTML = `
-      <ul>
-        <li
-          class="container"
-          data-dismiss-endpoint="${dismissEndpoint}"
-          data-feature-id="${featureName}"
-          data-error-message="${message}"
-        >
-          <a class="js-follow-link" href="/somewhere-pleasant">A Link</a>
-        </li>
-      </ul>
-  `;
+      describe('without error data attribute', () => {
+        function createFollowLinkFixture() {
+          const fixture = document.createElement('div');
+          fixture.innerHTML = `
+            <ul>
+              <li
+                class="container"
+                data-dismiss-endpoint="${dismissEndpoint}"
+                data-feature-id="${featureName}"
+              >
+                <a class="js-follow-link" href="/somewhere-pleasant">A Link</a>
+              </li>
+            </ul>
+        `;
 
-        return fixture;
-      }
+          return fixture;
+        }
 
-      beforeEach(() => {
-        errorMessage = 'custom error message';
-        const fixture = createFollowLinkFixture(errorMessage);
-        const container = fixture.querySelector('.container');
-        link = fixture.querySelector('.js-follow-link');
-        mockAxios = new MockAdapter(axios);
+        beforeEach(() => {
+          const fixture = createFollowLinkFixture();
+          const container = fixture.querySelector('.container');
+          link = fixture.querySelector('.js-follow-link');
+          persistentUserCallout = new PersistentUserCallout(container);
+          jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
 
-        persistentUserCallout = new PersistentUserCallout(container);
-        jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
+          delete window.location;
+          window.location = { assign: jest.fn() };
+        });
 
-        delete window.location;
-        window.location = { assign: jest.fn() };
+        it('uses a link to trigger callout and defers following until callout is finished', () => {
+          const { href } = link;
+          mockAxios.onPost(dismissEndpoint).replyOnce(200);
+
+          link.click();
+
+          return waitForPromises().then(() => {
+            expect(window.location.assign).toBeCalledWith(href);
+            expect(mockAxios.history.post[0].data).toBe(
+              JSON.stringify({ feature_name: featureName }),
+            );
+            expect(persistentUserCallout.container.remove).not.toHaveBeenCalled();
+          });
+        });
+
+        it('invokes Flash when the dismiss request fails', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(500);
+
+          link.click();
+
+          return waitForPromises().then(() => {
+            expect(window.location.assign).not.toHaveBeenCalled();
+            expect(Flash).toHaveBeenCalledWith(
+              'An error occurred while acknowledging the notification. Refresh the page and try again.',
+            );
+          });
+        });
       });
 
-      afterEach(() => {
-        mockAxios.restore();
-      });
+      describe('with error data attribute', () => {
+        let errorMessage;
 
-      it('invokes custom Flash message when the dismiss request fails', () => {
-        mockAxios.onPost(dismissEndpoint).replyOnce(500);
+        function createFollowLinkFixture(message) {
+          const fixture = document.createElement('div');
+          fixture.innerHTML = `
+            <ul>
+              <li
+                class="container"
+                data-dismiss-endpoint="${dismissEndpoint}"
+                data-feature-id="${featureName}"
+                data-error-message="${message}"
+              >
+                <a class="js-follow-link" href="/somewhere-pleasant">A Link</a>
+              </li>
+            </ul>
+        `;
 
-        link.click();
+          return fixture;
+        }
 
-        return waitForPromises().then(() => {
-          expect(window.location.assign).not.toHaveBeenCalled();
-          expect(Flash).toHaveBeenCalledWith(errorMessage);
+        beforeEach(() => {
+          errorMessage = 'custom error message';
+          const fixture = createFollowLinkFixture(errorMessage);
+          const container = fixture.querySelector('.container');
+          link = fixture.querySelector('.js-follow-link');
+          persistentUserCallout = new PersistentUserCallout(container);
+          jest.spyOn(persistentUserCallout.container, 'remove').mockImplementation(() => {});
+
+          delete window.location;
+          window.location = { assign: jest.fn() };
+        });
+
+        it('invokes custom Flash message when the dismiss request fails', () => {
+          mockAxios.onPost(dismissEndpoint).replyOnce(500);
+
+          link.click();
+
+          return waitForPromises().then(() => {
+            expect(window.location.assign).not.toHaveBeenCalled();
+            expect(Flash).toHaveBeenCalledWith(errorMessage);
+          });
         });
       });
     });

@@ -2,14 +2,12 @@
 import { GlLink, GlSprintf, GlButton, GlIcon } from '@gitlab/ui';
 import MrWidgetIcon from './mr_widget_icon.vue';
 import Tracking from '~/tracking';
-import { s__, __ } from '~/locale';
+import { s__ } from '~/locale';
 import PersistentUserCallout from '~/persistent_user_callout';
+import { CALLOUT_ERROR_MESSAGE } from '../constants';
 
 const trackingMixin = Tracking.mixin();
 const TRACK_LABEL = 'no_pipeline_noticed';
-const CALLOUT_ERROR_MESSAGE = __(
-  'An error occurred while dismissing the notification. Refresh the page and try again.',
-);
 
 export default {
   name: 'MRWidgetSuggestPipeline',
@@ -23,7 +21,6 @@ export default {
     `mrWidget|Use %{linkStart}CI pipelines to test your code%{linkEnd} by simply adding a GitLab CI configuration file to your project. It only takes a minute to make your code more secure and robust.`,
   ),
   helpURL: 'https://about.gitlab.com/blog/2019/07/12/guide-to-ci-cd-pipelines/',
-  calloutErrorMessage: CALLOUT_ERROR_MESSAGE,
   components: {
     GlLink,
     GlSprintf,
@@ -112,7 +109,7 @@ export default {
           type="button"
           data-testid="suggest-close"
         >
-          <gl-icon name="close" aria-hidden="true" class="dismiss-icon" />
+          <gl-icon name="close" aria-hidden="true" class="gl-text-gray-700" />
         </button>
       </div>
     </div>

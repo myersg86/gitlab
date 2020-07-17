@@ -5,6 +5,7 @@ import MrWidgetIcon from '~/vue_merge_request_widget/components/mr_widget_icon.v
 import { mockTracking, triggerEvent, unmockTracking } from 'helpers/tracking_helper';
 import { popoverProps, iconName } from './pipeline_tour_mock_data';
 import PersistentUserCallout from '~/persistent_user_callout';
+import { CALLOUT_ERROR_MESSAGE } from '~/vue_merge_request_widget/constants';
 
 describe('MRWidgetSuggestPipeline', () => {
   let wrapper;
@@ -132,7 +133,7 @@ describe('MRWidgetSuggestPipeline', () => {
         expect(PersistentUserCallout.factory).toHaveBeenCalledWith(container.element, {
           dismissEndpoint: popoverProps.userCalloutsPath,
           featureId: popoverProps.userCalloutFeatureId,
-          errorMessage: wrapper.vm.$options.calloutErrorMessage,
+          errorMessage: CALLOUT_ERROR_MESSAGE,
         });
       });
     });

@@ -129,7 +129,9 @@ class MergeRequestWidgetEntity < Grape::Entity
   end
 
   def can_add_ci_config_path?(merge_request)
-    !current_user&.dismissed_callout?(feature_name: SUGGEST_PIPELINE) &&
+    return false unless current_user
+
+    !current_user.dismissed_callout?(feature_name: SUGGEST_PIPELINE) &&
       merge_request.open? &&
       merge_request.source_branch_exists? &&
       merge_request.source_project&.uses_default_ci_config? &&
