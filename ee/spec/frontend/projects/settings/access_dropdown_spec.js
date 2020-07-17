@@ -15,6 +15,7 @@ describe('AccessDropdown', () => {
     `);
     const $dropdown = $('#dummy-dropdown');
     $dropdown.data('defaultLabel', defaultLabel);
+    gon.features = { deployKeysOnProtectedBranches: false };
     const options = {
       $dropdown,
       accessLevelsData: {

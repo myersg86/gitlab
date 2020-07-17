@@ -23,8 +23,6 @@ module EE
           }
         elsif level.type == :group
           { id: level.id, type: level.type, group_id: level.group_id }
-        elsif level.type == :deploy_key
-          { id: level.id, type: level.type, deploy_key_id: level.deploy_key_id }
         else
           { id: level.id, type: level.type, access_level: level.access_level }
         end

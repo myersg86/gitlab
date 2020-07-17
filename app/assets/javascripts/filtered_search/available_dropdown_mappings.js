@@ -1,7 +1,6 @@
 import DropdownHint from './dropdown_hint';
 import DropdownUser from './dropdown_user';
 import DropdownNonUser from './dropdown_non_user';
-import DropdownDeployKey from './dropdown_deploy_key';
 import DropdownEmoji from './dropdown_emoji';
 import NullDropdown from './null_dropdown';
 import DropdownAjaxFilter from './dropdown_ajax_filter';
@@ -144,11 +143,6 @@ export default class AvailableDropdownMappings {
           symbol: '',
         },
         element: this.container.querySelector('#js-dropdown-target-branch'),
-      },
-      'deploy-key': {
-        reference: null,
-        gl: DropdownDeployKey,
-        element: this.container.querySelector('#js-dropdown-milestone'),
       },
     };
   }
