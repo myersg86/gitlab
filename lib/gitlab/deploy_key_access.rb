@@ -17,18 +17,12 @@ module Gitlab
     end
 
     request_cache def can_push_to_branch?(ref)
-      if protected?(ProtectedBranch, project, ref)
-        protected_branch_accessible_to?(ref, action: :push)
-      else
-        true
-      end
+      return true unless protected?(ProtectedBranch, project, ref)
+
+      protected_branch_accessible_to?(ref, action: :push)
     end
 
     private
-
-    request_cache def git_access_check
-      true
-    end
 
     def protected_branch_accessible_to?(ref, action:)
       ProtectedBranch.protected_ref_accessible_to?(
@@ -36,6 +30,10 @@ module Gitlab
         project: project,
         action: action,
         protected_refs: project.protected_branches)
+    end
+
+    request_cache def can_access_git?
+      true
     end
   end
 end
