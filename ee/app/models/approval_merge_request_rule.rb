@@ -103,6 +103,10 @@ class ApprovalMergeRequestRule < ApplicationRecord
     read_attribute(:rule_type) == 'code_owner'
   end
 
+  def code_owner
+    raise
+  end
+
   def approval_project_rule_id=(approval_project_rule_id)
     self.approval_merge_request_rule_source ||= build_approval_merge_request_rule_source
     self.approval_merge_request_rule_source.approval_project_rule_id = approval_project_rule_id
