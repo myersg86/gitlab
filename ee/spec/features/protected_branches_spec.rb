@@ -9,6 +9,7 @@ RSpec.describe 'Protected Branches', :js do
   let(:project) { create(:project, :repository) }
 
   before do
+    stub_feature_flags(deploy_keys_on_protected_branches: false)
     sign_in(user)
   end
 

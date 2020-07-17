@@ -7,6 +7,7 @@ module Projects
       before_action :define_variables, only: [:create_deploy_token]
       before_action do
         push_frontend_feature_flag(:ajax_new_deploy_token, @project)
+        push_frontend_feature_flag(:deploy_keys_on_protected_branches, @project)
       end
 
       def show

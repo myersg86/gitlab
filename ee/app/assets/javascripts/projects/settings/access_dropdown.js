@@ -9,6 +9,8 @@ export default class AccessDropdown {
   constructor(options) {
     const { $dropdown, accessLevel, accessLevelsData } = options;
     this.options = options;
+    this.deployKeysOnProtectedBranchesEnabled = gon.features.deployKeysOnProtectedBranches;
+    this.hasLicense = options.hasLicense !== undefined ? options.hasLicense : true;
     this.groups = [];
     this.accessLevel = accessLevel;
     this.accessLevelsData = accessLevelsData.roles;
@@ -169,11 +171,11 @@ export default class AccessDropdown {
         case LEVEL_TYPES.GROUP:
           comparator = LEVEL_ID_PROP.GROUP;
           break;
-        case LEVEL_TYPES.USER:
-          comparator = LEVEL_ID_PROP.USER;
-          break;
         case LEVEL_TYPES.DEPLOY_KEY:
           comparator = LEVEL_ID_PROP.DEPLOY_KEY;
+          break;
+        case LEVEL_TYPES.USER:
+          comparator = LEVEL_ID_PROP.USER;
           break;
         default:
           break;
@@ -237,9 +239,9 @@ export default class AccessDropdown {
         index = i;
       } else if (item.type === LEVEL_TYPES.ROLE && item.access_level === itemToDelete.id) {
         index = i;
-      } else if (item.type === LEVEL_TYPES.GROUP && item.group_id === itemToDelete.id) {
-        index = i;
       } else if (item.type === LEVEL_TYPES.DEPLOY_KEY && item.deploy_key_id === itemToDelete.id) {
+        index = i;
+      } else if (item.type === LEVEL_TYPES.GROUP && item.group_id === itemToDelete.id) {
         index = i;
       }
 
@@ -287,12 +289,12 @@ export default class AccessDropdown {
       labelPieces.push(n__('1 role', '%d roles', counts[LEVEL_TYPES.ROLE]));
     }
 
-    if (counts[LEVEL_TYPES.DEPLOY_KEY] > 0) {
-      labelPieces.push(n__('1 deploy key', '%d deploy keys', counts[LEVEL_TYPES.DEPLOY_KEY]));
-    }
-
     if (counts[LEVEL_TYPES.USER] > 0) {
       labelPieces.push(n__('1 user', '%d users', counts[LEVEL_TYPES.USER]));
+    }
+
+    if (counts[LEVEL_TYPES.DEPLOY_KEY] > 0) {
+      labelPieces.push(n__('1 deploy key', '%d deploy keys', counts[LEVEL_TYPES.DEPLOY_KEY]));
     }
 
     if (counts[LEVEL_TYPES.GROUP] > 0) {
@@ -303,24 +305,36 @@ export default class AccessDropdown {
   }
 
   getData(query, callback) {
-    Promise.all([
-      this.getDeployKeys(query),
-      this.getUsers(query),
-      this.groupsData ? Promise.resolve(this.groupsData) : this.getGroups(),
-    ])
-      .then(([deployKeysResponse, usersResponse, groupsResponse]) => {
-        this.groupsData = groupsResponse;
-        callback(
-          this.consolidateData(deployKeysResponse.data, usersResponse.data, groupsResponse.data),
-        );
-      })
-      .catch(() => Flash(__('Failed to load groups, users and deploy keys.')));
+    if (this.hasLicense) {
+      Promise.all([
+        this.getUsers(query),
+        this.groupsData ? Promise.resolve(this.groupsData) : this.getGroups(),
+        this.getDeployKeys(query),
+      ])
+        .then(([usersResponse, groupsResponse, deployKeysResponse]) => {
+          this.groupsData = groupsResponse;
+          callback(
+            this.consolidateData(usersResponse.data, groupsResponse.data, deployKeysResponse.data),
+          );
+        })
+        .catch(() => {
+          if (this.deployKeysOnProtectedBranchesEnabled) {
+            Flash(__('Failed to load groups, users and deploy keys.'));
+          } else {
+            Flash(__('Failed to load groups & users.'));
+          }
+        });
+    } else {
+      Promise.all([this.getDeployKeys(query)])
+        .then(([deployKeysResponse]) => {
+          callback(this.consolidateData([], [], deployKeysResponse.data));
+        })
+        .catch(() => Flash(__('Failed to load deploy keys.')));
+    }
   }
 
-  consolidateData(deployKeysResponse, usersResponse, groupsResponse) {
+  consolidateData(usersResponse, groupsResponse, deployKeysResponse) {
     let consolidatedData = [];
-    const map = [];
-    const selectedItems = this.getSelectedItems();
 
     // ID property is handled differently locally from the server
     //
@@ -335,14 +349,10 @@ export default class AccessDropdown {
     // For Users
     // In dropdown: `id`
     // For submit: `user_id`
-
-    /*
-     * Build groups
-     */
-    const groups = groupsResponse.map(group => ({
-      ...group,
-      type: LEVEL_TYPES.GROUP,
-    }));
+    //
+    // For Deploy Keys
+    // In dropdown: `id`
+    // For submit: `deploy_key_id`
 
     /*
      * Build roles
@@ -358,49 +368,6 @@ export default class AccessDropdown {
       return level;
     });
 
-    /*
-     * Build users
-     */
-    const users = selectedItems
-      .filter(item => item.type === LEVEL_TYPES.USER)
-      .map(item => {
-        // Save identifiers for easy-checking more later
-        map.push(LEVEL_TYPES.USER + item.user_id);
-
-        return {
-          id: item.user_id,
-          name: item.name,
-          username: item.username,
-          avatar_url: item.avatar_url,
-          type: LEVEL_TYPES.USER,
-        };
-      });
-
-    const deployKeys = deployKeysResponse.map(response => {
-      const key = { ...response };
-      const { owner } = key;
-
-      return {
-        id: key.id,
-        fingerprint: key.fingerprint,
-        avatar_url: owner.avatar_url,
-        fullname: owner.name,
-        username: owner.username,
-        type: LEVEL_TYPES.DEPLOY_KEY,
-      };
-    });
-
-    // Has to be checked against server response
-    // because the selected item can be in filter results
-    usersResponse.forEach(response => {
-      // Add is it has not been added
-      if (map.indexOf(LEVEL_TYPES.USER + response.id) === -1) {
-        const user = { ...response };
-        user.type = LEVEL_TYPES.USER;
-        users.push(user);
-      }
-    });
-
     if (roles.length) {
       consolidatedData = consolidatedData.concat(
         [{ type: 'header', content: s__('AccessDropdown|Roles') }],
@@ -408,48 +375,97 @@ export default class AccessDropdown {
       );
     }
 
-    if (groups.length) {
-      if (roles.length) {
-        consolidatedData = consolidatedData.concat([{ type: 'divider' }]);
+    if (this.hasLicense) {
+      const selectedItems = this.getSelectedItems();
+      const map = [];
+
+      /*
+       * Build users
+       */
+      const users = selectedItems
+        .filter(item => item.type === LEVEL_TYPES.USER)
+        .map(item => {
+          // Save identifiers for easy-checking more later
+          map.push(LEVEL_TYPES.USER + item.user_id);
+
+          return {
+            id: item.user_id,
+            name: item.name,
+            username: item.username,
+            avatar_url: item.avatar_url,
+            type: LEVEL_TYPES.USER,
+          };
+        });
+
+      // Has to be checked against server response
+      // because the selected item can be in filter results
+      usersResponse.forEach(response => {
+        // Add is it has not been added
+        if (map.indexOf(LEVEL_TYPES.USER + response.id) === -1) {
+          const user = { ...response };
+          user.type = LEVEL_TYPES.USER;
+          users.push(user);
+        }
+      });
+
+      /*
+       * Build groups
+       */
+      const groups = groupsResponse.map(group => ({
+        ...group,
+        type: LEVEL_TYPES.GROUP,
+      }));
+
+      if (groups.length) {
+        if (roles.length) {
+          consolidatedData = consolidatedData.concat([{ type: 'divider' }]);
+        }
+
+        consolidatedData = consolidatedData.concat(
+          [{ type: 'header', content: s__('AccessDropdown|Groups') }],
+          groups,
+        );
       }
 
-      consolidatedData = consolidatedData.concat(
-        [{ type: 'header', content: s__('AccessDropdown|Groups') }],
-        groups,
-      );
-    }
-
-    if (this.accessLevel === ACCESS_LEVELS.PUSH) {
-      if (deployKeys.length) {
+      if (users.length) {
         consolidatedData = consolidatedData.concat(
           [{ type: 'divider' }],
-          [{ type: 'header', content: s__('AccessDropdown|Deploy Keys') }],
-          deployKeys,
+          [{ type: 'header', content: s__('AccessDropdown|Users') }],
+          users,
         );
       }
     }
 
-    if (users.length) {
-      consolidatedData = consolidatedData.concat(
-        [{ type: 'divider' }],
-        [{ type: 'header', content: s__('AccessDropdown|Users') }],
-        users,
-      );
+    if (this.deployKeysOnProtectedBranchesEnabled) {
+      const deployKeys = deployKeysResponse.map(response => {
+        const key = { ...response };
+        const { owner } = key;
+
+        const shortFingerprint = `(${key.fingerprint.substring(0, 14)}...)`;
+        const title = key.title.concat(' ', shortFingerprint);
+
+        return {
+          id: key.id,
+          title,
+          avatar_url: owner.avatar_url,
+          fullname: owner.name,
+          username: owner.username,
+          type: LEVEL_TYPES.DEPLOY_KEY,
+        };
+      });
+
+      if (this.accessLevel === ACCESS_LEVELS.PUSH) {
+        if (deployKeys.length) {
+          consolidatedData = consolidatedData.concat(
+            [{ type: 'divider' }],
+            [{ type: 'header', content: s__('AccessDropdown|Deploy Keys') }],
+            deployKeys,
+          );
+        }
+      }
     }
 
     return consolidatedData;
-  }
-
-  getDeployKeys(query) {
-    return axios.get(this.buildUrl(gon.relative_url_root, this.deployKeysPath), {
-      params: {
-        search: query,
-        per_page: 20,
-        active: true,
-        project_id: gon.current_project_id,
-        push_code: true,
-      },
-    });
   }
 
   getUsers(query) {
@@ -470,6 +486,24 @@ export default class AccessDropdown {
         project_id: gon.current_project_id,
       },
     });
+  }
+
+  getDeployKeys(query) {
+    let keys = {};
+
+    if (this.deployKeysOnProtectedBranchesEnabled) {
+      keys = axios.get(this.buildUrl(gon.relative_url_root, this.deployKeysPath), {
+        params: {
+          search: query,
+          per_page: 20,
+          active: true,
+          project_id: gon.current_project_id,
+          push_code: true,
+        },
+      });
+    }
+
+    return keys;
   }
 
   buildUrl(urlRoot, url) {
@@ -493,11 +527,11 @@ export default class AccessDropdown {
       case LEVEL_TYPES.ROLE:
         criteria = { access_level: item.id };
         break;
-      case LEVEL_TYPES.GROUP:
-        criteria = { group_id: item.id };
-        break;
       case LEVEL_TYPES.DEPLOY_KEY:
         criteria = { deploy_key_id: item.id };
+        break;
+      case LEVEL_TYPES.GROUP:
+        criteria = { group_id: item.id };
         break;
       default:
         break;
@@ -512,12 +546,12 @@ export default class AccessDropdown {
       case LEVEL_TYPES.ROLE:
         groupRowEl = this.roleRowHtml(item, isActive);
         break;
-      case LEVEL_TYPES.GROUP:
-        groupRowEl = this.groupRowHtml(item, isActive);
-        break;
       case LEVEL_TYPES.DEPLOY_KEY:
         groupRowEl =
           this.accessLevel === ACCESS_LEVELS.PUSH ? this.deployKeyRowHtml(item, isActive) : '';
+        break;
+      case LEVEL_TYPES.GROUP:
+        groupRowEl = this.groupRowHtml(item, isActive);
         break;
       default:
         groupRowEl = '';
@@ -547,7 +581,7 @@ export default class AccessDropdown {
     return `
       <li>
         <a href="#" class="${isActiveClass}">
-          <strong>${key.fingerprint}</strong>
+          <strong>${key.title}</strong>
           <p>
             Owned by <img src="${key.avatar_url}" class="avatar avatar-inline s26" width="30">
             <strong class="dropdown-menu-user-full-name inline">${escape(key.fullname)}</strong>

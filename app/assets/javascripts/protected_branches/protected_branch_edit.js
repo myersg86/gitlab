@@ -1,10 +1,14 @@
 import flash from '../flash';
 import axios from '../lib/utils/axios_utils';
 import ProtectedBranchAccessDropdown from './protected_branch_access_dropdown';
+import AccessDropdown from 'ee/projects/settings/access_dropdown';
 import { __ } from '~/locale';
+import { ACCESS_LEVELS } from './constants';
 
 export default class ProtectedBranchEdit {
   constructor(options) {
+    this.deployKeysOnProtectedBranchesEnabled = gon.features.deployKeysOnProtectedBranches;
+
     this.$wrap = options.$wrap;
     this.$allowedToMergeDropdown = this.$wrap.find('.js-allowed-to-merge');
     this.$allowedToPushDropdown = this.$wrap.find('.js-allowed-to-push');
@@ -22,11 +26,21 @@ export default class ProtectedBranchEdit {
     });
 
     // Allowed to push dropdown
-    this.protectedBranchAccessDropdown = new ProtectedBranchAccessDropdown({
-      $dropdown: this.$allowedToPushDropdown,
-      data: gon.push_access_levels,
-      onSelect: this.onSelectCallback,
-    });
+    if (this.deployKeysOnProtectedBranchesEnabled) {
+      this[`${ACCESS_LEVELS.PUSH}_dropdown`] = new AccessDropdown({
+        $dropdown: this.$allowedToPushDropdown,
+        accessLevelsData: gon.push_access_levels,
+        onSelect: this.onSelectCallback,
+        accessLevel: 'push_access_levels',
+        hasLicense: false,
+      });
+    } else {
+      this.protectedBranchAccessDropdown = new ProtectedBranchAccessDropdown({
+        $dropdown: this.$allowedToPushDropdown,
+        data: gon.push_access_levels,
+        onSelect: this.onSelectCallback,
+      });
+    }
   }
 
   onSelect() {
