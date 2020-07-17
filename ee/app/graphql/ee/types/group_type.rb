@@ -49,7 +49,7 @@ module EE
               resolver: ::Resolvers::VulnerabilitiesHistoryResolver
 
         field :vulnerability_grades,
-              ::Types::VulnerabilityGradesType,
+              [::Types::VulnerabilityGradesType],
               null: false,
               description: 'Represents vulnerable project counts for each grade',
               resolver: ::Resolvers::VulnerabilityGradesResolver
