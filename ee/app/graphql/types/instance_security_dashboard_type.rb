@@ -19,7 +19,7 @@ module Types
           resolver: ::Resolvers::Vulnerabilities::ScannersResolver
 
     field :vulnerability_grades,
-          [Types::VulnerabilityGradesType],
+          [Types::VulnerableProjectsByGradeType],
           null: false,
           description: 'Represents vulnerable project counts for each grade',
           resolver: ::Resolvers::VulnerabilityGradesResolver

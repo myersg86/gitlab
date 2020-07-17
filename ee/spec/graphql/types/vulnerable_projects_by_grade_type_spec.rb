@@ -6,5 +6,5 @@ RSpec.describe GitlabSchema.types['VulnerabilityGrades'] do
   let(:fields) { %w(grade projects).freeze }
 
   specify { expect(described_class).to have_graphql_fields(fields) }
-  specify { expect(described_class.graphql_name).to eq('VulnerabilityGrades') }
+  specify { expect(described_class.graphql_name).to eq('VulnerableProjectsByGrade') }
 end

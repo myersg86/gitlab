@@ -2,9 +2,9 @@
 
 module Types
   # rubocop: disable Graphql/AuthorizeTypes
-  class VulnerabilityGradesType < BaseObject
-    graphql_name 'VulnerabilityGrades'
-    description 'Represents vulnerability letter grades'
+  class VulnerableProjectsByGradeType < BaseObject
+    graphql_name 'VulnerableProjectsByGrade'
+    description 'Represents vulnerability letter grades wit associated projects'
 
     field :grade, Types::VulnerabilityGradeEnum, null: false,
           description: "Grade based on the highest severity vulnerability present"
