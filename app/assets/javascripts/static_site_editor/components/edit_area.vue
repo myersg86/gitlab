@@ -7,6 +7,7 @@ import parseSourceFile from '~/static_site_editor/services/parse_source_file';
 import { EDITOR_TYPES } from '~/vue_shared/components/rich_content_editor/constants';
 import { DEFAULT_IMAGE_UPLOAD_PATH } from '../constants';
 import imageRepository from '../image_repository';
+import formatter from '../services/formatter';
 
 export default {
   components: {
@@ -40,6 +41,7 @@ export default {
       validator: prop => prop.endsWith('/'),
     },
   },
+
   data() {
     return {
       saveable: false,
@@ -56,6 +58,9 @@ export default {
     isWysiwygMode() {
       return this.editorMode === EDITOR_TYPES.wysiwyg;
     },
+  },
+  created() {
+    this.formatter = formatter;
   },
   methods: {
     onInputChange(newVal) {
@@ -86,6 +91,7 @@ export default {
       :content="editableContent"
       :initial-edit-type="editorMode"
       :image-root="imageRoot"
+      :formatter="formatter"
       class="mb-9 h-100"
       @modeChange="onModeChange"
       @input="onInputChange"
