@@ -52,6 +52,8 @@ RSpec.describe ForkTargetsFinder do
         let(:user) { create :user }
 
         it 'returns namespaces with the same root group as project one only' do
+          project_group.namespace_settings.update!(prevent_forking_outside_group: true)
+
           expect(fork_targets).to be_a(ActiveRecord::Relation)
           expect(fork_targets).to match_array([inner_subgroup])
         end

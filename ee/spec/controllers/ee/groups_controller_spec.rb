@@ -543,12 +543,12 @@ RSpec.describe GroupsController do
 
       subject { put :update, params: params }
 
-      shared_examples_for 'updates the attribute' do
+      shared_examples_for 'updates the attribute if needed' do
         it 'updates the attribute' do
           subject
 
           expect(response).to have_gitlab_http_status(:found)
-          expect(group.reload.prevent_forking_outside_group?).to eq(prevent_forking_outside_group)
+          expect(group.reload.prevent_forking_outside_group?).to eq(result)
         end
       end
 
@@ -572,7 +572,7 @@ RSpec.describe GroupsController do
             stub_licensed_features(group_forking_protection: feature_enabled)
           end
 
-          it_behaves_like 'updates the attribute'
+          it_behaves_like 'updates the attribute if needed'
         end
       end
     end
