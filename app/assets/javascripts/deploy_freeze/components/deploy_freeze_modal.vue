@@ -3,7 +3,7 @@ import { GlFormGroup, GlFormInput, GlModal, GlSprintf, GlLink } from '@gitlab/ui
 import { mapActions, mapState } from 'vuex';
 import { mapComputed } from '~/vuex_shared/bindings';
 import { __ } from '~/locale';
-import { MODAL_ID } from '../constants';
+import { MODAL_ID } from '../utils/constants';
 import DeployFreezeTimezoneDropdown from './deploy_freeze_timezone_dropdown.vue';
 import { isValidCron } from 'cron-validator';
 

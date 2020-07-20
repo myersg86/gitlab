@@ -1,9 +1,10 @@
 import state from '~/deploy_freeze/store/state';
 import mutations from '~/deploy_freeze/store/mutations';
 import * as types from '~/deploy_freeze/store/mutation_types';
+import { addTimezoneIdentifier } from '~/deploy_freeze/utils/lib';
 import { mockFreezePeriods, mockTimezoneData } from '../mock_data';
 
-describe('CI variable list mutations', () => {
+describe('Deploy freeze mutations', () => {
   let stateCopy;
   beforeEach(() => {
     stateCopy = state({
@@ -27,7 +28,9 @@ describe('CI variable list mutations', () => {
     it('should set environments', () => {
       mutations[types.RECEIVE_FREEZE_PERIODS_SUCCESS](stateCopy, mockFreezePeriods);
 
-      expect(stateCopy.freezePeriods).toEqual(mockFreezePeriods);
+      expect(stateCopy.freezePeriods).toEqual(
+        mockFreezePeriods.map(addTimezoneIdentifier(stateCopy.timezoneData)),
+      );
     });
   });
 

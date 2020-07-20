@@ -2,7 +2,6 @@ import * as types from './mutation_types';
 import Api from '~/api';
 import createFlash from '~/flash';
 import { __ } from '~/locale';
-import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 
 export const requestAddFreezePeriod = ({ commit }) => {
   commit(types.REQUEST_ADD_FREEZE_PERIOD);
@@ -38,15 +37,8 @@ export const addFreezePeriod = ({ state, dispatch, commit }) => {
 export const requestFreezePeriods = ({ commit }) => {
   commit(types.REQUEST_FREEZE_PERIODS);
 };
-export const receiveFreezePeriodsSuccess = ({ state, commit }, freezePeriods) => {
-  const addTimezoneIdentifier = freezePeriod =>
-    convertObjectPropsToCamelCase({
-      ...freezePeriod,
-      cron_timezone: state.timezoneData.find(tz => tz.identifier === freezePeriod.cron_timezone)
-        ?.name,
-    });
-
-  commit(types.RECEIVE_FREEZE_PERIODS_SUCCESS, freezePeriods.map(addTimezoneIdentifier));
+export const receiveFreezePeriodsSuccess = ({ commit }, freezePeriods) => {
+  commit(types.RECEIVE_FREEZE_PERIODS_SUCCESS, freezePeriods);
 };
 
 export const fetchFreezePeriods = ({ dispatch, state }) => {
@@ -54,7 +46,7 @@ export const fetchFreezePeriods = ({ dispatch, state }) => {
 
   return Api.freezePeriods(state.projectId)
     .then(({ data }) => {
-      dispatch('receiveFreezePeriodsSuccess', convertObjectPropsToCamelCase(data));
+      dispatch('receiveFreezePeriodsSuccess', data);
     })
     .catch(() => {
       createFlash(__('There was an error fetching the deploy freezes.'));

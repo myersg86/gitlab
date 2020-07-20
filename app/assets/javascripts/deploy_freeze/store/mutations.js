@@ -1,4 +1,5 @@
 import * as types from './mutation_types';
+import { addTimezoneIdentifier } from '../utils/lib';
 
 export default {
   [types.REQUEST_FREEZE_PERIODS](state) {
@@ -7,7 +8,7 @@ export default {
 
   [types.RECEIVE_FREEZE_PERIODS_SUCCESS](state, freezePeriods) {
     state.isLoading = false;
-    state.freezePeriods = freezePeriods;
+    state.freezePeriods = freezePeriods.map(addTimezoneIdentifier(state.timezoneData));
   },
 
   [types.REQUEST_ADD_FREEZE_PERIOD](state) {
