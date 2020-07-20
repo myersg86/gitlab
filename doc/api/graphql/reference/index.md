@@ -2396,7 +2396,7 @@ Represents a vulnerable package. Used in vulnerability dependency data
 
 ## VulnerableProjectsByGrade
 
-Represents vulnerability letter grades wit associated projects
+Represents vulnerability letter grades with associated projects
 
 | Name  | Type  | Description |
 | ---   |  ---- | ----------  |

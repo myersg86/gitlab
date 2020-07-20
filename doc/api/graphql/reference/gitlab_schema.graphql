@@ -15453,7 +15453,7 @@ type VulnerablePackage {
 }
 
 """
-Represents vulnerability letter grades wit associated projects
+Represents vulnerability letter grades with associated projects
 """
 type VulnerableProjectsByGrade {
   """

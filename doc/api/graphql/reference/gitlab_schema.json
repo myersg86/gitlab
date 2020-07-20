@@ -45623,7 +45623,7 @@
         {
           "kind": "OBJECT",
           "name": "VulnerableProjectsByGrade",
-          "description": "Represents vulnerability letter grades wit associated projects",
+          "description": "Represents vulnerability letter grades with associated projects",
           "fields": [
             {
               "name": "grade",
