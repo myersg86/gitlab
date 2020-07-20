@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# This worker is deprecated
 class PipelineUpdateWorker
   include ApplicationWorker
   include PipelineQueue
