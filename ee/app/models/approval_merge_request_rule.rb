@@ -104,7 +104,7 @@ class ApprovalMergeRequestRule < ApplicationRecord
   end
 
   def code_owner
-    raise
+    code_owner?
   end
 
   def approval_project_rule_id=(approval_project_rule_id)
