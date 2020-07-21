@@ -132,7 +132,7 @@ module EE
         enable :read_group_cycle_analytics, :create_group_stage, :read_group_stage, :update_group_stage, :delete_group_stage
       end
 
-      rule { owner &  ~has_parent & prevent_group_forking_enabled }.policy do
+      rule { owner & ~has_parent & prevent_group_forking_enabled }.policy do
         enable :change_prevent_group_forking
       end
 

@@ -253,14 +253,14 @@ RSpec.describe API::Groups do
 
       context 'authenticated as group owner' do
         where(:feature_enabled, :prevent_forking_outside_group, :result) do
-          false | false | nil
-          false | true  | nil
-          true  | false | false
+          # false | false | nil
+          # false | true  | nil
+          # true  | false | false
           true  | true  | true
         end
 
         with_them do
-          let(:params) { { prevent_forking_outside_group: false } }
+          let(:params) { { prevent_forking_outside_group: prevent_forking_outside_group } }
 
           before do
             group.add_owner(user)

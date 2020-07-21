@@ -21,7 +21,7 @@ module EE
           end
         end
 
-        group.namespace_settings ? group.namespace_settings.attributes= (settings_params) : group.build_namespace_settings(settings_params)
+        group.namespace_settings ? group.namespace_settings.attributes = settings_params : group.build_namespace_settings(settings_params)
       end
 
       private

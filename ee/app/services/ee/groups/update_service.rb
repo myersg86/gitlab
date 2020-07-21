@@ -115,22 +115,7 @@ module EE
       def handle_settings_update
         settings_params = params.slice(:prevent_forking_outside_group)
         params.delete(:prevent_forking_outside_group)
-
         NamespaceSettings::UpdateService.new(current_user, group, settings_params).execute
-      end
-
-      def valid_path_change_with_npm_packages?
-        return true unless group.packages_feature_available?
-        return true if params[:path].blank?
-        return true if !group.has_parent? && group.path == params[:path]
-
-        npm_packages = ::Packages::GroupPackagesFinder.new(current_user, group, package_type: :npm).execute
-        if npm_packages.exists?
-          group.errors.add(:path, s_('GroupSettings|cannot change when group contains projects with NPM packages'))
-          return
-        end
-
-        true
       end
 
       def log_audit_event
