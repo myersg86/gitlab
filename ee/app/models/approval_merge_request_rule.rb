@@ -48,6 +48,9 @@ class ApprovalMergeRequestRule < ApplicationRecord
     any_approver: 4
   }
 
+  alias_method :regular, :regular?
+  alias_method :code_owner, :code_owner?
+
   enum report_type: {
     security: 1,
     license_scanning: 2
@@ -88,22 +91,6 @@ class ApprovalMergeRequestRule < ApplicationRecord
 
   def project
     merge_request.target_project
-  end
-
-  # ApprovalRuleLike interface
-  # Temporary override to handle legacy records that have not yet been migrated
-  # To be removed with https://gitlab.com/gitlab-org/gitlab/issues/11834
-  def regular?
-    read_attribute(:rule_type) == 'regular' || (!report_approver? && !code_owner? && !any_approver?)
-  end
-  alias_method :regular, :regular?
-
-  def code_owner?
-    read_attribute(:rule_type) == 'code_owner'
-  end
-
-  def code_owner
-    code_owner?
   end
 
   def approval_project_rule_id=(approval_project_rule_id)
