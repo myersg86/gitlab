@@ -74,6 +74,14 @@ describe('Rich Content Editor', () => {
 
       expect(wrapper.emitted().input[0][0]).toBe(changedMarkdown);
     });
+
+    it('should format the content when a formatter is set', () => {
+      wrapper.setProps({ formatter: jest.fn() });
+
+      findEditor().vm.$emit('change');
+
+      expect(wrapper.vm.formatter).toHaveBeenCalled();
+    });
   });
 
   describe('when content is reset', () => {
@@ -85,6 +93,14 @@ describe('Rich Content Editor', () => {
       wrapper.vm.resetInitialValue(newContent);
 
       expect(mockInstance.invoke).toHaveBeenCalledWith('setMarkdown', newContent);
+    });
+
+    it('should format the content when a formatter is set', () => {
+      wrapper.setProps({ formatter: jest.fn() });
+
+      wrapper.vm.resetInitialValue('New content');
+
+      expect(wrapper.vm.formatter).toHaveBeenCalled();
     });
   });
 

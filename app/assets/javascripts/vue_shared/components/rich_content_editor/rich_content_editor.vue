@@ -60,7 +60,7 @@ export default {
     formatter: {
       type: Function,
       required: false,
-      default: value => value,
+      default: null,
     },
   },
   data() {
@@ -95,12 +95,14 @@ export default {
 
       this.editorApi.eventManager.removeEventHandler('changeMode', this.onChangeMode);
     },
+    tryFormat(value) {
+      return this.formatter ? this.formatter(value) : value;
+    },
     resetInitialValue(newVal) {
-      const value = this.formatter ? this.formatter(newVal) : newVal;
-      this.editorInstance.invoke('setMarkdown', value);
+      this.editorInstance.invoke('setMarkdown', this.tryFormat(newVal));
     },
     onContentChanged() {
-      this.$emit('input', getMarkdown(this.editorInstance));
+      this.$emit('input', this.tryFormat(getMarkdown(this.editorInstance)));
     },
     onLoad(editorApi) {
       this.editorApi = editorApi;
