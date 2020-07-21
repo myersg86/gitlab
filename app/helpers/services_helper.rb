@@ -94,7 +94,10 @@ module ServicesHelper
       comment_detail: integration.comment_detail,
       trigger_events: trigger_events_for_service(integration),
       fields: fields_for_service(integration),
-      inherit_from_id: integration.inherit_from_id
+      inherit_from_id: integration.inherit_from_id,
+      cancel_path: scoped_integrations_path,
+      can_test: integration.can_test?.to_s,
+      test_path: scoped_test_integration_path(integration)
     }
   end
 

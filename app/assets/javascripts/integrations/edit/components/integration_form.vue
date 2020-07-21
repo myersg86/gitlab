@@ -91,10 +91,17 @@ export default {
         <gl-loading-icon v-show="isSaving" inline color="dark" />
         {{ __('Save changes') }}
       </gl-button>
-      <gl-button :disabled="isSavingOrTesting" @click.prevent="onTestClick">
+      <gl-button
+        v-if="propsSource.canTest"
+        :disabled="isSavingOrTesting"
+        :href="propsSource.testPath"
+        @click.prevent="onTestClick"
+      >
         <gl-loading-icon v-show="isTesting" inline color="dark" />
         {{ __('Test settings') }}
       </gl-button>
+
+      <gl-button class="btn-cancel" :href="propsSource.cancelPath">{{ __('Cancel') }}</gl-button>
     </div>
   </div>
 </template>
