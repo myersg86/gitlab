@@ -7,6 +7,9 @@ import { __ } from '~/locale';
 
 export default class ProtectedBranchEdit {
   constructor(options) {
+    this.deployKeysOnProtectedBranchesEnabled = gon.features.deployKeysOnProtectedBranches;
+    this.hasLicense = options.hasLicense;
+
     this.$wraps = {};
     this.hasChanges = false;
     this.$wrap = options.$wrap;
@@ -22,7 +25,10 @@ export default class ProtectedBranchEdit {
     );
 
     this.buildDropdowns();
-    this.bindEvents();
+
+    if (this.hasLicense) {
+      this.bindEvents();
+    }
   }
 
   bindEvents() {
@@ -61,6 +67,7 @@ export default class ProtectedBranchEdit {
       $dropdown: this.$allowedToMergeDropdown,
       onSelect: this.onSelectOption.bind(this),
       onHide: this.onDropdownHide.bind(this),
+      hasLicense: this.hasLicense,
     });
 
     // Allowed to push dropdown
@@ -70,6 +77,7 @@ export default class ProtectedBranchEdit {
       $dropdown: this.$allowedToPushDropdown,
       onSelect: this.onSelectOption.bind(this),
       onHide: this.onDropdownHide.bind(this),
+      hasLicense: this.hasLicense,
     });
   }
 
@@ -142,6 +150,13 @@ export default class ProtectedBranchEdit {
           id: currentItem.id,
           group_id: currentItem.group_id,
           type: LEVEL_TYPES.GROUP,
+          persisted: true,
+        };
+      } else if (currentItem.deploy_key_id) {
+        return {
+          id: currentItem.id,
+          deploy_key_id: currentItem.deploy_key_id,
+          type: LEVEL_TYPES.DEPLOY_KEY,
           persisted: true,
         };
       }

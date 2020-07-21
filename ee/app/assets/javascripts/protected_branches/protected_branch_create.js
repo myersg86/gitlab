@@ -8,18 +8,22 @@ import { ACCESS_LEVELS, LEVEL_TYPES } from './constants';
 import { __ } from '~/locale';
 
 export default class ProtectedBranchCreate {
-  constructor() {
+  constructor(options) {
+    this.deployKeysOnProtectedBranchesEnabled = gon.features.deployKeysOnProtectedBranches;
+    this.hasLicense = options.hasLicense;
+
     this.$form = $('.js-new-protected-branch');
     this.isLocalStorageAvailable = AccessorUtilities.isLocalStorageAccessSafe();
     this.currentProjectUserDefaults = {};
     this.buildDropdowns();
-    this.$branchInput = this.$form.find('input[name="protected_branch[name]"]');
     this.$codeOwnerToggle = this.$form.find('.js-code-owner-toggle');
     this.bindEvents();
   }
 
   bindEvents() {
-    this.$codeOwnerToggle.on('click', this.onCodeOwnerToggleClick.bind(this));
+    if (this.hasLicense) {
+      this.$codeOwnerToggle.on('click', this.onCodeOwnerToggleClick.bind(this));
+    }
     this.$form.on('submit', this.onFormSubmit.bind(this));
   }
 
@@ -40,6 +44,7 @@ export default class ProtectedBranchCreate {
       accessLevelsData: gon.merge_access_levels,
       onSelect: this.onSelectCallback,
       accessLevel: ACCESS_LEVELS.MERGE,
+      hasLicense: this.hasLicense,
     });
 
     // Allowed to Push dropdown
@@ -48,6 +53,7 @@ export default class ProtectedBranchCreate {
       accessLevelsData: gon.push_access_levels,
       onSelect: this.onSelectCallback,
       accessLevel: ACCESS_LEVELS.PUSH,
+      hasLicense: this.hasLicense,
     });
 
     this.createItemDropdown = new CreateItemDropdown({
@@ -98,6 +104,10 @@ export default class ProtectedBranchCreate {
         } else if (item.type === LEVEL_TYPES.ROLE) {
           levelAttributes.push({
             access_level: item.access_level,
+          });
+        } else if (item.type === LEVEL_TYPES.DEPLOY_KEY) {
+          levelAttributes.push({
+            deploy_key_id: item.deploy_key_id,
           });
         } else if (item.type === LEVEL_TYPES.GROUP) {
           levelAttributes.push({

@@ -1,15 +1,11 @@
 import $ from 'jquery';
 import ProtectedBranchAccessDropdown from './protected_branch_access_dropdown';
-import AccessDropdown from 'ee/projects/settings/access_dropdown';
 import CreateItemDropdown from '../create_item_dropdown';
 import AccessorUtilities from '../lib/utils/accessor';
-import { ACCESS_LEVELS } from './constants';
 import { __ } from '~/locale';
 
 export default class ProtectedBranchCreate {
   constructor() {
-    this.deployKeysOnProtectedBranchesEnabled = gon.features.deployKeysOnProtectedBranches;
-
     this.$form = $('.js-new-protected-branch');
     this.isLocalStorageAvailable = AccessorUtilities.isLocalStorageAccessSafe();
     this.currentProjectUserDefaults = {};
@@ -32,21 +28,11 @@ export default class ProtectedBranchCreate {
     });
 
     // Allowed to Push dropdown
-    if (this.deployKeysOnProtectedBranchesEnabled) {
-      this[`${ACCESS_LEVELS.PUSH}_dropdown`] = new AccessDropdown({
-        $dropdown: $allowedToPushDropdown,
-        accessLevelsData: gon.push_access_levels,
-        onSelect: this.onSelectCallback,
-        accessLevel: 'push_access_levels',
-        hasLicense: false,
-      });
-    } else {
-      this.protectedBranchPushAccessDropdown = new ProtectedBranchAccessDropdown({
-        $dropdown: $allowedToPushDropdown,
-        data: gon.push_access_levels,
-        onSelect: this.onSelectCallback,
-      });
-    }
+    this.protectedBranchPushAccessDropdown = new ProtectedBranchAccessDropdown({
+      $dropdown: $allowedToPushDropdown,
+      data: gon.push_access_levels,
+      onSelect: this.onSelectCallback,
+    });
 
     this.createItemDropdown = new CreateItemDropdown({
       $dropdown: $protectedBranchDropdown,
@@ -61,12 +47,12 @@ export default class ProtectedBranchCreate {
   onSelect() {
     // Enable submit button
     const $branchInput = this.$form.find('input[name="protected_branch[name]"]');
-
     const $allowedToMergeInput = this.$form.find(
       'input[name="protected_branch[merge_access_levels_attributes][0][access_level]"]',
     );
-    const $allowedToPushInput = this.getPushLevelValues();
-
+    const $allowedToPushInput = this.$form.find(
+      'input[name="protected_branch[push_access_levels_attributes][0][access_level]"]',
+    );
     const completedForm = !(
       $branchInput.val() &&
       $allowedToMergeInput.length &&
@@ -78,19 +64,5 @@ export default class ProtectedBranchCreate {
 
   static getProtectedBranches(term, callback) {
     callback(gon.open_branches);
-  }
-
-  getPushLevelValues() {
-    let values;
-
-    if (this.deployKeysOnProtectedBranchesEnabled) {
-      values = this[`${ACCESS_LEVELS.PUSH}_dropdown`].getSelectedItems();
-    } else {
-      values = this.$form.find(
-        'input[name="protected_branch[push_access_levels_attributes][0][access_level]"]',
-      );
-    }
-
-    return values;
   }
 }
