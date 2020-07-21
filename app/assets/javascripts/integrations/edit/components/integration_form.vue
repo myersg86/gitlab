@@ -27,6 +27,9 @@ export default {
   computed: {
     ...mapGetters(['currentKey', 'propsSource', 'isSavingOrTesting']),
     ...mapState(['adminState', 'override', 'isSaving', 'isTesting']),
+    isEditable() {
+      return this.propsSource.editable;
+    },
     isJira() {
       return this.propsSource.type === 'jira';
     },
@@ -81,7 +84,7 @@ export default {
       :key="`${currentKey}-jira-issues-fields`"
       v-bind="propsSource.jiraIssuesProps"
     />
-    <div class="footer-block row-content-block">
+    <div v-if="isEditable" class="footer-block row-content-block">
       <gl-button
         category="primary"
         variant="success"
