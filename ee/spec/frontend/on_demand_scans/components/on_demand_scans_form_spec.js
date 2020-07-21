@@ -1,19 +1,23 @@
-import { shallowMount } from '@vue/test-utils';
+import { mount, shallowMount } from '@vue/test-utils';
+import { within } from '@testing-library/dom';
 import { GlForm } from '@gitlab/ui';
 import { TEST_HOST } from 'helpers/test_constants';
 import OnDemandScansForm from 'ee/on_demand_scans/components/on_demand_scans_form.vue';
 import runDastScanMutation from 'ee/on_demand_scans/graphql/run_dast_scan.mutation.graphql';
-import createFlash from '~/flash';
 import { redirectTo } from '~/lib/utils/url_utility';
 
 const helpPagePath = `${TEST_HOST}/application_security/dast/index#on-demand-scans`;
 const projectPath = 'group/project';
 const defaultBranch = 'master';
+const profilesLibraryPath = `${TEST_HOST}/${projectPath}/-/on_demand_scans/profiles`;
+const newSiteProfilePath = `${TEST_HOST}/${projectPath}/-/on_demand_scans/profiles`;
 
-const targetUrl = 'http://example.com';
+const siteProfiles = [
+  { id: 1, name: 'My first site profile', targetUrl: 'https://example.com' },
+  { id: 2, name: 'My second site profile', targetUrl: 'https://foo.bar' },
+];
 const pipelineUrl = `${TEST_HOST}/${projectPath}/pipelines/123`;
 
-jest.mock('~/flash');
 jest.mock('~/lib/utils/url_utility', () => ({
   isAbsolute: jest.requireActual('~/lib/utils/url_utility').isAbsolute,
   redirectTo: jest.fn(),
@@ -22,20 +26,30 @@ jest.mock('~/lib/utils/url_utility', () => ({
 describe('OnDemandScansApp', () => {
   let wrapper;
 
+  const withinComponent = () => within(wrapper.element);
+
   const findForm = () => wrapper.find(GlForm);
-  const findTargetUrlInput = () => wrapper.find('[data-testid="target-url-input"]');
+  const findSiteProfilesDropdown = () => wrapper.find('[data-testid="site-profiles-dropdown"]');
+  const findCreateNewSiteProfileLink = () =>
+    withinComponent().getByRole('link', { name: /create a new site profile/i });
+  const findAlert = () => wrapper.find('[data-testid="on-demand-scan-error"]');
   const submitForm = () => findForm().vm.$emit('submit', { preventDefault: () => {} });
 
-  const createComponent = ({ props = {}, computed = {} } = {}) => {
-    wrapper = shallowMount(OnDemandScansForm, {
+  const wrapperFactory = (mountFn = shallowMount) => (options = {}) => {
+    wrapper = mountFn(OnDemandScansForm, {
       attachToDocument: true,
       propsData: {
         helpPagePath,
         projectPath,
         defaultBranch,
-        ...props,
+        profilesLibraryPath,
+        newSiteProfilePath,
+        ...options.props,
       },
-      computed,
+      computed: options.computed,
+      data() {
+        return { ...options.data };
+      },
       mocks: {
         $apollo: {
           mutate: jest.fn(),
@@ -43,6 +57,8 @@ describe('OnDemandScansApp', () => {
       },
     });
   };
+  const createComponent = wrapperFactory();
+  const createFullComponent = wrapperFactory(mount);
 
   beforeEach(() => {
     createComponent();
@@ -61,15 +77,15 @@ describe('OnDemandScansApp', () => {
     describe('formData', () => {
       it('returns an object with a key:value mapping from the form object including the project path', () => {
         wrapper.vm.form = {
-          targetUrl: {
-            value: targetUrl,
+          siteProfile: {
+            value: siteProfiles[0],
             state: null,
             feedback: '',
           },
         };
         expect(wrapper.vm.formData).toEqual({
           projectPath,
-          targetUrl,
+          siteProfile: siteProfiles[0],
         });
       });
     });
@@ -77,8 +93,8 @@ describe('OnDemandScansApp', () => {
     describe('formHasErrors', () => {
       it('returns true if any of the fields are invalid', () => {
         wrapper.vm.form = {
-          targetUrl: {
-            value: targetUrl,
+          siteProfile: {
+            value: siteProfiles[0],
             state: false,
             feedback: '',
           },
@@ -92,8 +108,8 @@ describe('OnDemandScansApp', () => {
 
       it('returns false if none of the fields are invalid', () => {
         wrapper.vm.form = {
-          targetUrl: {
-            value: targetUrl,
+          siteProfile: {
+            value: siteProfiles[0],
             state: null,
             feedback: '',
           },
@@ -109,7 +125,7 @@ describe('OnDemandScansApp', () => {
     describe('someFieldEmpty', () => {
       it('returns true if any of the fields are empty', () => {
         wrapper.vm.form = {
-          targetUrl: {
+          siteProfile: {
             value: '',
             state: false,
             feedback: '',
@@ -124,8 +140,8 @@ describe('OnDemandScansApp', () => {
 
       it('returns false if no field is empty', () => {
         wrapper.vm.form = {
-          targetUrl: {
-            value: targetUrl,
+          siteProfile: {
+            value: siteProfiles[0],
             state: null,
             feedback: '',
           },
@@ -161,42 +177,65 @@ describe('OnDemandScansApp', () => {
     });
   });
 
-  describe('target URL input', () => {
-    it.each(['asd', 'example.com'])('is marked as invalid provided an invalid URL', async value => {
-      const input = findTargetUrlInput();
-      input.vm.$emit('input', value);
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.vm.form.targetUrl).toEqual({
-        value,
-        state: false,
-        feedback: 'Please enter a valid URL format, ex: http://www.example.com/home',
+  describe('site profiles', () => {
+    describe('when there are no site profiles yet', () => {
+      beforeEach(() => {
+        createFullComponent();
       });
-      expect(input.attributes().state).toBeUndefined();
+
+      it('disables the link to manage site profiles', () => {
+        const button = withinComponent().getByRole('button', { name: /manage profiles/i });
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+      });
+
+      it('shows a link to create a new site profile', () => {
+        const link = findCreateNewSiteProfileLink();
+        expect(link).not.toBe(null);
+        expect(link.getAttribute('href')).toBe(newSiteProfilePath);
+      });
     });
 
-    it('is marked as valid provided a valid URL', async () => {
-      const input = findTargetUrlInput();
-      input.vm.$emit('input', targetUrl);
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.vm.form.targetUrl).toEqual({
-        value: targetUrl,
-        state: true,
-        feedback: null,
+    describe('when there are site profiles', () => {
+      beforeEach(() => {
+        createComponent({
+          data: {
+            siteProfiles,
+          },
+        });
       });
-      expect(input.attributes().state).toBe('true');
+
+      it('shows a dropdown containing the site profiles', () => {
+        const dropdown = findSiteProfilesDropdown();
+        expect(dropdown.exists()).toBe(true);
+        expect(dropdown.element.children).toHaveLength(siteProfiles.length);
+      });
+
+      it('when a site profile is selected, its summary is displayed below the dropdown', async () => {
+        wrapper.vm.form.siteProfile.value = siteProfiles[0].id;
+        await wrapper.vm.$nextTick();
+        const summary = wrapper.find('[data-testid="site-profile-summary"]');
+
+        expect(summary.exists()).toBe(true);
+        expect(summary.text()).toContain(siteProfiles[0].targetUrl);
+      });
     });
   });
 
   describe('submission', () => {
+    beforeEach(() => {
+      createComponent({
+        data: {
+          siteProfiles,
+        },
+      });
+    });
+
     describe('on success', () => {
-      beforeEach(async () => {
+      beforeEach(() => {
         jest
           .spyOn(wrapper.vm.$apollo, 'mutate')
           .mockResolvedValue({ data: { runDastScan: { pipelineUrl, errors: [] } } });
-        const input = findTargetUrlInput();
-        input.vm.$emit('input', targetUrl);
+        findSiteProfilesDropdown().vm.$emit('input', siteProfiles[0]);
         submitForm();
       });
 
@@ -210,7 +249,7 @@ describe('OnDemandScansApp', () => {
           variables: {
             scanType: 'PASSIVE',
             branch: 'master',
-            targetUrl,
+            siteProfile: siteProfiles[0],
             projectPath,
           },
         });
@@ -224,8 +263,7 @@ describe('OnDemandScansApp', () => {
     describe('on top-level error', () => {
       beforeEach(async () => {
         jest.spyOn(wrapper.vm.$apollo, 'mutate').mockRejectedValue();
-        const input = findTargetUrlInput();
-        input.vm.$emit('input', targetUrl);
+        findSiteProfilesDropdown().vm.$emit('input', siteProfiles[0]);
         submitForm();
       });
 
@@ -233,19 +271,19 @@ describe('OnDemandScansApp', () => {
         expect(wrapper.vm.loading).toBe(false);
       });
 
-      it('shows an error flash', () => {
-        expect(createFlash).toHaveBeenCalledWith('Could not run the scan. Please try again.');
+      it('shows an alert', () => {
+        expect(findAlert().exists()).toBe(true);
       });
     });
 
     describe('on errors as data', () => {
+      const errors = ['error#1', 'error#2', 'error#3'];
+
       beforeEach(async () => {
-        const errors = ['A', 'B', 'C'];
         jest
           .spyOn(wrapper.vm.$apollo, 'mutate')
           .mockResolvedValue({ data: { runDastScan: { pipelineUrl: null, errors } } });
-        const input = findTargetUrlInput();
-        input.vm.$emit('input', targetUrl);
+        findSiteProfilesDropdown().vm.$emit('input', siteProfiles[0]);
         submitForm();
       });
 
@@ -253,8 +291,13 @@ describe('OnDemandScansApp', () => {
         expect(wrapper.vm.loading).toBe(false);
       });
 
-      it('shows an error flash', () => {
-        expect(createFlash).toHaveBeenCalledWith('Could not run the scan: A, B, C');
+      it('shows an alert with the returned errors', () => {
+        const alert = findAlert();
+
+        expect(alert.exists()).toBe(true);
+        errors.forEach(error => {
+          expect(alert.text()).toContain(error);
+        });
       });
     });
   });

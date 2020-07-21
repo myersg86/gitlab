@@ -8,7 +8,14 @@ export default () => {
     return;
   }
 
-  const { helpPagePath, emptyStateSvgPath, projectPath, defaultBranch } = el.dataset;
+  const {
+    helpPagePath,
+    emptyStateSvgPath,
+    projectPath,
+    defaultBranch,
+    profilesLibraryPath,
+    newSiteProfilePath,
+  } = el.dataset;
 
   // eslint-disable-next-line no-new
   new Vue({
@@ -21,6 +28,8 @@ export default () => {
           emptyStateSvgPath,
           projectPath,
           defaultBranch,
+          profilesLibraryPath,
+          newSiteProfilePath,
         },
       });
     },

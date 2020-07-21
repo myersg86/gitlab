@@ -16433,16 +16433,19 @@ msgstr ""
 msgid "OnDemandScans|Could not run the scan. Please try again."
 msgstr ""
 
-msgid "OnDemandScans|Could not run the scan: %{backendErrorMessage}"
+msgid "OnDemandScans|Create a new site profile"
 msgstr ""
 
 msgid "OnDemandScans|Create new DAST scan"
 msgstr ""
 
-msgid "OnDemandScans|DAST will scan the target URL and any discovered sub URLs."
+msgid "OnDemandScans|Manage profiles"
 msgstr ""
 
 msgid "OnDemandScans|New on-demand DAST scan"
+msgstr ""
+
+msgid "OnDemandScans|No profile yet. In order to create a new scan, you need to have at least one completed site profile."
 msgstr ""
 
 msgid "OnDemandScans|On-demand Scans"
@@ -16454,22 +16457,28 @@ msgstr ""
 msgid "OnDemandScans|Only a passive scan can be performed on demand."
 msgstr ""
 
-msgid "OnDemandScans|Passive DAST Scan"
+msgid "OnDemandScans|Passive"
 msgstr ""
 
-msgid "OnDemandScans|Please enter a valid URL format, ex: http://www.example.com/home"
-msgstr ""
-
-msgid "OnDemandScans|Run this scan"
+msgid "OnDemandScans|Run scan"
 msgstr ""
 
 msgid "OnDemandScans|Scan mode"
 msgstr ""
 
+msgid "OnDemandScans|Scanner settings"
+msgstr ""
+
 msgid "OnDemandScans|Schedule or run scans immediately against target sites. Currently available on-demand scan type: DAST. %{helpLinkStart}More information%{helpLinkEnd}"
 msgstr ""
 
-msgid "OnDemandScans|Target URL"
+msgid "OnDemandScans|Select one of the existing profiles"
+msgstr ""
+
+msgid "OnDemandScans|Site profiles"
+msgstr ""
+
+msgid "OnDemandScans|Use existing site profile"
 msgstr ""
 
 msgid "Once imported, repositories can be mirrored over SSH. Read more %{link_start}here%{link_end}."

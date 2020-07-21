@@ -1,15 +1,17 @@
 <script>
 import * as Sentry from '@sentry/browser';
-import { s__, sprintf } from '~/locale';
-import createFlash from '~/flash';
-import { isAbsolute, redirectTo } from '~/lib/utils/url_utility';
+import { s__ } from '~/locale';
+import { redirectTo } from '~/lib/utils/url_utility';
 import {
+  GlAlert,
   GlButton,
+  GlCard,
   GlForm,
   GlFormGroup,
-  GlFormInput,
   GlIcon,
   GlLink,
+  GlNewDropdown,
+  GlNewDropdownItem,
   GlSprintf,
   GlTooltipDirective,
 } from '@gitlab/ui';
@@ -24,17 +26,33 @@ const initField = value => ({
 
 export default {
   components: {
+    GlAlert,
     GlButton,
+    GlCard,
     GlForm,
     GlFormGroup,
-    GlFormInput,
     GlIcon,
     GlLink,
+    GlNewDropdown,
+    GlNewDropdownItem,
     GlSprintf,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
   },
+  // apollo: {
+  //   siteProfiles: {
+  //     query: null,
+  //     variables() {
+  //       return {
+  //         fullPath: this.projectPath,
+  //       };
+  //     },
+  //     skip() {
+  //       return true;
+  //     },
+  //   },
+  // },
   props: {
     helpPagePath: {
       type: String,
@@ -48,15 +66,26 @@ export default {
       type: String,
       required: true,
     },
+    profilesLibraryPath: {
+      type: String,
+      required: true,
+    },
+    newSiteProfilePath: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
+      siteProfiles: [],
       form: {
         scanType: initField(SCAN_TYPES.PASSIVE),
         branch: initField(this.defaultBranch),
-        targetUrl: initField(''),
+        siteProfile: initField(null),
       },
       loading: false,
+      errors: [],
+      showAlert: false,
     };
   },
   computed: {
@@ -75,25 +104,27 @@ export default {
     isSubmitDisabled() {
       return this.formHasErrors || this.someFieldEmpty;
     },
+    selectedSiteProfile() {
+      const selectedSiteProfileId = this.form.siteProfile.value;
+      return selectedSiteProfileId === null
+        ? null
+        : this.siteProfiles.find(({ id }) => id === selectedSiteProfileId);
+    },
+    siteProfileText() {
+      const { selectedSiteProfile } = this;
+      return selectedSiteProfile
+        ? `${selectedSiteProfile.name}: ${selectedSiteProfile.targetUrl}`
+        : s__('OnDemandScans|Select one of the existing profiles');
+    },
   },
   methods: {
-    validateTargetUrl() {
-      let [state, feedback] = [true, null];
-      const { value: targetUrl } = this.form.targetUrl;
-      if (!isAbsolute(targetUrl)) {
-        state = false;
-        feedback = s__(
-          'OnDemandScans|Please enter a valid URL format, ex: http://www.example.com/home',
-        );
-      }
-      this.form.targetUrl = {
-        ...this.form.targetUrl,
-        state,
-        feedback,
-      };
+    setSiteProfile({ id }) {
+      this.form.siteProfile.value = id;
     },
     onSubmit() {
       this.loading = true;
+      this.dismissAlert();
+
       this.$apollo
         .mutate({
           mutation: runDastScanMutation,
@@ -101,11 +132,7 @@ export default {
         })
         .then(({ data: { runDastScan: { pipelineUrl, errors } } }) => {
           if (errors?.length) {
-            createFlash(
-              sprintf(s__('OnDemandScans|Could not run the scan: %{backendErrorMessage}'), {
-                backendErrorMessage: errors.join(', '),
-              }),
-            );
+            this.setErrors(errors);
             this.loading = false;
           } else {
             redirectTo(pipelineUrl);
@@ -113,9 +140,17 @@ export default {
         })
         .catch(e => {
           Sentry.captureException(e);
-          createFlash(s__('OnDemandScans|Could not run the scan. Please try again.'));
+          this.setErrors();
           this.loading = false;
         });
+    },
+    setErrors(errors = []) {
+      this.errors = errors;
+      this.showAlert = true;
+    },
+    dismissAlert() {
+      this.errors = [];
+      this.showAlert = false;
     },
   },
 };
@@ -143,51 +178,111 @@ export default {
       </p>
     </header>
 
-    <gl-form-group>
-      <template #label>
-        {{ s__('OnDemandScans|Scan mode') }}
-        <gl-icon
-          v-gl-tooltip.hover
-          name="information-o"
-          class="gl-vertical-align-text-bottom gl-text-gray-600"
-          :title="s__('OnDemandScans|Only a passive scan can be performed on demand.')"
-        />
-      </template>
-      {{ s__('OnDemandScans|Passive DAST Scan') }}
-    </gl-form-group>
+    <gl-alert v-if="showAlert" variant="danger" class="gl-mb-5" data-testid="on-demand-scan-error" @dismiss="dismissAlert">
+      {{ s__('OnDemandScans|Could not run the scan. Please try again.') }}
+      <ul v-if="errors.length">
+        <li v-for="error in errors" :key="error" v-text="error"></li>
+      </ul>
+    </gl-alert>
 
-    <gl-form-group>
-      <template #label>
-        {{ s__('OnDemandScans|Attached branch') }}
-        <gl-icon
-          v-gl-tooltip.hover
-          name="information-o"
-          class="gl-vertical-align-text-bottom gl-text-gray-600"
-          :title="s__('OnDemandScans|Attached branch is where the scan job runs.')"
-        />
+    <gl-card>
+      <template #header>
+        <strong class="gl-font-lg">{{ s__('OnDemandScans|Scanner settings') }}</strong>
       </template>
-      {{ defaultBranch }}
-    </gl-form-group>
 
-    <gl-form-group :invalid-feedback="form.targetUrl.feedback">
-      <template #label>
-        {{ s__('OnDemandScans|Target URL') }}
-        <gl-icon
-          v-gl-tooltip.hover
-          name="information-o"
-          class="gl-vertical-align-text-bottom gl-text-gray-600"
-          :title="s__('OnDemandScans|DAST will scan the target URL and any discovered sub URLs.')"
-        />
+      <gl-form-group class="gl-mt-4">
+        <template #label>
+          {{ s__('OnDemandScans|Scan mode') }}
+          <gl-icon
+            v-gl-tooltip.hover
+            name="information-o"
+            class="gl-vertical-align-text-bottom gl-text-gray-600"
+            :title="s__('OnDemandScans|Only a passive scan can be performed on demand.')"
+          />
+        </template>
+        {{ s__('OnDemandScans|Passive') }}
+      </gl-form-group>
+
+      <gl-form-group class="gl-mt-7 gl-mb-2">
+        <template #label>
+          {{ s__('OnDemandScans|Attached branch') }}
+          <gl-icon
+            v-gl-tooltip.hover
+            name="information-o"
+            class="gl-vertical-align-text-bottom gl-text-gray-600"
+            :title="s__('OnDemandScans|Attached branch is where the scan job runs.')"
+          />
+        </template>
+        {{ defaultBranch }}
+      </gl-form-group>
+    </gl-card>
+
+    <gl-card>
+      <template #header>
+        <div class="row">
+          <div class="col-7">
+            <strong class="gl-font-lg">{{ s__('OnDemandScans|Site profiles') }}</strong>
+          </div>
+          <div class="col-5 gl-text-right">
+            <gl-button
+              :href="siteProfiles.length ? profilesLibraryPath : '#'"
+              :disabled="!siteProfiles.length"
+              variant="success"
+              category="secondary"
+              size="small"
+            >
+              {{ s__('OnDemandScans|Manage profiles') }}
+            </gl-button>
+          </div>
+        </div>
       </template>
-      <gl-form-input
-        v-model="form.targetUrl.value"
-        class="mw-460"
-        data-testid="target-url-input"
-        type="url"
-        :state="form.targetUrl.state"
-        @input="validateTargetUrl"
-      />
-    </gl-form-group>
+      <gl-form-group v-if="siteProfiles.length">
+        <template #label>
+          {{ s__('OnDemandScans|Use existing site profile') }}
+        </template>
+        <gl-new-dropdown
+          v-model="form.siteProfile.value"
+          :text="siteProfileText"
+          class="mw-460"
+          data-testid="site-profiles-dropdown"
+        >
+          <gl-new-dropdown-item
+            v-for="siteProfile in siteProfiles"
+            :key="siteProfile.id"
+            :is-checked="form.siteProfile.value === siteProfile.id"
+            is-check-item
+            @click="setSiteProfile(siteProfile)"
+          >
+            {{ siteProfile.name }}
+          </gl-new-dropdown-item>
+        </gl-new-dropdown>
+        <template v-if="selectedSiteProfile">
+          <hr />
+          <div class="row" data-testid="site-profile-summary">
+            <div class="col-md-6">
+              <div class="row">
+                <div class="col-md-3">{{ s__('DastProfiles|Target URL') }}:</div>
+                <div class="col-md-9 gl-font-weight-bold">
+                  {{ selectedSiteProfile.targetUrl }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </gl-form-group>
+      <template v-else>
+        <p class="gl-text-gray-700">
+          {{
+            s__(
+              'OnDemandScans|No profile yet. In order to create a new scan, you need to have at least one completed site profile.',
+            )
+          }}
+        </p>
+        <gl-button :href="newSiteProfilePath" variant="success" category="secondary">
+          {{ s__('OnDemandScans|Create a new site profile') }}
+        </gl-button>
+      </template>
+    </gl-card>
 
     <div class="gl-mt-6 gl-pt-6">
       <gl-button
@@ -197,7 +292,7 @@ export default {
         :disabled="isSubmitDisabled"
         :loading="loading"
       >
-        {{ s__('OnDemandScans|Run this scan') }}
+        {{ s__('OnDemandScans|Run scan') }}
       </gl-button>
       <gl-button @click="$emit('cancel')">
         {{ __('Cancel') }}

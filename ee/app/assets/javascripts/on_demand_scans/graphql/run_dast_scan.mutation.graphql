@@ -1,17 +1,5 @@
-mutation runDastScan(
-  $projectPath: ID!
-  $targetUrl: String!
-  $branch: String!
-  $scanType: DastScanTypeEnum!
-) {
-  runDastScan(
-    input: {
-      projectPath: $projectPath
-      targetUrl: $targetUrl
-      branch: $branch
-      scanType: $scanType
-    }
-  ) {
+mutation dastOnDemandScanCreate($fullPath: ID!, $dastSiteProfileId: ID!) {
+  dastOnDemandScanCreate(input: { fullPath: $fullPath, dastSiteProfileId: dastSiteProfileId }) {
     pipelineUrl
     errors
   }
