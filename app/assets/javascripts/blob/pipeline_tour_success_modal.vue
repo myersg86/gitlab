@@ -18,6 +18,8 @@ export default {
   helpMessage: s__(
     `MR widget|Take a look at our %{beginnerLinkStart}Beginner's Guide to Continuous Integration%{beginnerLinkEnd} and our %{exampleLinkStart}examples of GitLab CI/CD%{exampleLinkEnd} to learn more.`,
   ),
+  pipelinesButton: s__('MR widget|See your pipeline in action'),
+  mergeRequestButton: s__('MR widget|Back to the Merge request'),
   modalTitle: sprintf(
     __("That's it, well done!%{celebrate}"),
     {
@@ -25,7 +27,8 @@ export default {
     },
     false,
   ),
-  goToTrackValue: 10,
+  goToTrackValuePipelines: 10,
+  goToTrackValueMergeRequest: 20,
   trackEvent: 'click_button',
   components: {
     GlModal,
@@ -35,6 +38,10 @@ export default {
   mixins: [trackingMixin],
   props: {
     goToPipelinesPath: {
+      type: String,
+      required: true,
+    },
+    projectMergeRequestsPath: {
       type: String,
       required: true,
     },
@@ -58,6 +65,9 @@ export default {
         label: this.trackLabel,
         property: this.humanAccess,
       };
+    },
+    goToMergeRequestPath() {
+      return Cookies.get(this.commitCookie) || this.projectMergeRequestsPath;
     },
   },
   mounted() {
@@ -100,16 +110,27 @@ export default {
       </template>
     </gl-sprintf>
     <template #modal-footer>
-      <a
-        ref="goto"
-        :href="goToPipelinesPath"
-        class="btn btn-success"
+      <gl-link
+        ref="goToMergeRequest"
+        :href="goToMergeRequestPath"
+        class="btn"
         :data-track-property="humanAccess"
-        :data-track-value="$options.goToTrackValue"
+        :data-track-value="$options.goToTrackValueMergeRequest"
         :data-track-event="$options.trackEvent"
         :data-track-label="trackLabel"
       >
-        {{ __('See your pipeline in action') }}
+        {{ $options.mergeRequestButton }}
+      </gl-link>
+      <a
+        ref="goToPipelines"
+        :href="goToPipelinesPath"
+        class="btn btn-success"
+        :data-track-property="humanAccess"
+        :data-track-value="$options.goToTrackValuePipelines"
+        :data-track-event="$options.trackEvent"
+        :data-track-label="trackLabel"
+      >
+        {{ $options.pipelinesButton }}
       </a>
     </template>
   </gl-modal>

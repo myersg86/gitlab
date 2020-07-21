@@ -58,13 +58,25 @@ describe('PipelineTourSuccessModal', () => {
 
     it('send an event when go to pipelines is clicked', () => {
       trackingSpy = mockTracking('_category_', wrapper.element, jest.spyOn);
-      const goToBtn = wrapper.find({ ref: 'goto' });
+      const goToBtn = wrapper.find({ ref: 'goToPipelines' });
       triggerEvent(goToBtn.element);
 
       expect(trackingSpy).toHaveBeenCalledWith('_category_', 'click_button', {
         label: 'congratulate_first_pipeline',
         property: modalProps.humanAccess,
         value: '10',
+      });
+    });
+
+    it('sends an event when back to the merge request is clicked', () => {
+      trackingSpy = mockTracking('_category_', wrapper.element, jest.spyOn);
+      const goToBtn = wrapper.find({ ref: 'goToMergeRequest' });
+      triggerEvent(goToBtn.element);
+
+      expect(trackingSpy).toHaveBeenCalledWith('_category_', 'click_button', {
+        label: 'congratulate_first_pipeline',
+        property: modalProps.humanAccess,
+        value: '20',
       });
     });
   });
