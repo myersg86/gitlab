@@ -53,7 +53,6 @@ class ApprovalMergeRequestRule < ApplicationRecord
     license_scanning: 2
   }
 
-  scope :code_owner, -> { where(rule_type: :code_owner) }
   scope :security_report, -> { report_approver.where(report_type: :security) }
   scope :license_compliance, -> { report_approver.where(report_type: :license_scanning) }
   scope :with_head_pipeline, -> { includes(merge_request: [:head_pipeline]) }
