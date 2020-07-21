@@ -617,6 +617,8 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
           /file-path/components-within-slashes/
           another/file-path/differeñt-lønguage.txt
 
+          print("Hello%World")
+          print('Goodbye\'Moon')
           us-east-2
           bye
 
@@ -646,6 +648,14 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
       it 'finds files with dashes' do
         expect(search_for('"us-east-2"')).to include(file_name)
         expect(search_for('bikes-3.4')).to include(file_name)
+      end
+
+      it 'finds files with double quotes' do
+        expect(search_for("Hello%World")).to include(file_name)
+      end
+
+      it 'finds files with single quotes' do
+        expect(search_for('Goodbye\'Moon')).to include(file_name)
       end
 
       it 'finds files with dots' do
@@ -700,7 +710,7 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
         expect(search_for('missing_token_around_equals')).to include(file_name)
       end
 
-      it 'finds a ruby method name even if preceeded with dot' do
+      it 'finds a ruby method name even if preceded with dot' do
         expect(search_for('ruby_method_name')).to include(file_name)
       end
 
@@ -708,7 +718,7 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
         expect(search_for('ruby_method_123')).to include(file_name)
       end
 
-      it 'finds a ruby method call even if preceeded with dot' do
+      it 'finds a ruby method call even if preceded with dot' do
         expect(search_for('ruby_method_call')).to include(file_name)
       end
 
