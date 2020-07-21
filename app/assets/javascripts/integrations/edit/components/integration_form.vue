@@ -1,6 +1,7 @@
 <script>
 import { mapState, mapActions, mapGetters } from 'vuex';
 import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
+import { GlButton, GlLoadingIcon } from '@gitlab/ui';
 
 import OverrideDropdown from './override_dropdown.vue';
 import ActiveToggle from './active_toggle.vue';
@@ -18,11 +19,13 @@ export default {
     JiraIssuesFields,
     TriggerFields,
     DynamicField,
+    GlButton,
+    GlLoadingIcon,
   },
   mixins: [glFeatureFlagsMixin()],
   computed: {
-    ...mapGetters(['currentKey', 'propsSource']),
-    ...mapState(['adminState', 'override']),
+    ...mapGetters(['currentKey', 'propsSource', 'isSavingOrTesting']),
+    ...mapState(['adminState', 'override', 'isSaving', 'isTesting']),
     isJira() {
       return this.propsSource.type === 'jira';
     },
@@ -31,7 +34,13 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['setOverride']),
+    ...mapActions(['setOverride', 'setIsSaving', 'setIsTesting']),
+    onSaveClick() {
+      this.setIsSaving(true);
+    },
+    onTestClick() {
+      this.setIsTesting(true);
+    },
   },
 };
 </script>
@@ -70,5 +79,22 @@ export default {
       :key="`${currentKey}-jira-issues-fields`"
       v-bind="propsSource.jiraIssuesProps"
     />
+    <div class="footer-block row-content-block">
+      <gl-button
+        category="primary"
+        variant="success"
+        type="submit"
+        :disabled="isSavingOrTesting"
+        data-qa-selector="save_changes_button"
+        @click="onSaveClick"
+      >
+        <gl-loading-icon v-show="isSaving" inline color="dark" />
+        {{ __('Save changes') }}
+      </gl-button>
+      <gl-button :disabled="isSavingOrTesting" @click.prevent="onTestClick">
+        <gl-loading-icon v-show="isTesting" inline color="dark" />
+        {{ __('Test settings') }}
+      </gl-button>
+    </div>
   </div>
 </template>
