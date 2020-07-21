@@ -23302,7 +23302,13 @@ msgstr[1] ""
 msgid "Test failed."
 msgstr ""
 
+msgid "Test settings"
+msgstr ""
+
 msgid "Test settings and save changes"
+msgstr ""
+
+msgid "Test successful!"
 msgstr ""
 
 msgid "TestHooks|Ensure one of your projects has merge requests."

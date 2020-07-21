@@ -10,6 +10,8 @@ export default class IntegrationSettingsForm {
     this.$form = $(formSelector);
     this.formActive = false;
 
+    this.vue = null;
+
     // Form Metadata
     this.canTestService = this.$form.data('canTest');
     this.testEndPoint = this.$form.data('testUrl');
@@ -22,13 +24,22 @@ export default class IntegrationSettingsForm {
 
   init() {
     // Init Vue component
-    initForm(
+    this.vue = initForm(
       document.querySelector('.js-vue-integration-settings'),
       document.querySelector('.js-vue-admin-integration-settings'),
     );
     eventHub.$on('toggle', active => {
       this.formActive = active;
       this.handleServiceToggle();
+    });
+    eventHub.$on('testIntegration', () => {
+      if (this.$form.get(0).checkValidity()) {
+        // eslint-disable-next-line no-jquery/no-serialize
+        this.testSettings(this.$form.serialize());
+      } else {
+        eventHub.$emit('validateForm');
+        this.vue.$store.dispatch('setIsTesting', false);
+      }
     });
 
     // Bind Event Listeners
@@ -130,13 +141,15 @@ export default class IntegrationSettingsForm {
 
           flash(`${data.message} ${data.service_response}`, 'alert', document, flashActions);
         } else {
-          this.$form.submit();
+          // this.$form.submit();
+          this.vue.$toast.show(__('Test successful!'));
         }
-
+        this.vue.$store.dispatch('setIsTesting', false);
         this.toggleSubmitBtnState(false);
       })
       .catch(() => {
         flash(__('Something went wrong on our end.'));
+        this.vue.$store.dispatch('setIsTesting', false);
         this.toggleSubmitBtnState(false);
       });
   }

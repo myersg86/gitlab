@@ -2,6 +2,7 @@
 import { mapState, mapActions, mapGetters } from 'vuex';
 import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import { GlButton, GlLoadingIcon } from '@gitlab/ui';
+import eventHub from '../event_hub';
 
 import OverrideDropdown from './override_dropdown.vue';
 import ActiveToggle from './active_toggle.vue';
@@ -40,6 +41,7 @@ export default {
     },
     onTestClick() {
       this.setIsTesting(true);
+      eventHub.$emit('testIntegration');
     },
   },
 };
