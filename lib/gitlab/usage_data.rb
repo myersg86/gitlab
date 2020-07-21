@@ -146,7 +146,7 @@ module Gitlab
             personal_snippets: count(PersonalSnippet),
             project_snippets: count(ProjectSnippet),
             suggestions: count(Suggestion),
-            terraform_reports: count(::Ci::JobArtifact.terraform_reports),
+            terraform_reports: count(::Ci::JobArtifact.terraform_reports, batch: false),
             terraform_states: count(::Terraform::State),
             todos: count(Todo),
             uploads: count(Upload),
