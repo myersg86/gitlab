@@ -37,16 +37,13 @@ export const addFreezePeriod = ({ state, dispatch, commit }) => {
 export const requestFreezePeriods = ({ commit }) => {
   commit(types.REQUEST_FREEZE_PERIODS);
 };
-export const receiveFreezePeriodsSuccess = ({ commit }, freezePeriods) => {
-  commit(types.RECEIVE_FREEZE_PERIODS_SUCCESS, freezePeriods);
-};
 
 export const fetchFreezePeriods = ({ dispatch, state }) => {
   dispatch('requestFreezePeriods');
 
   return Api.freezePeriods(state.projectId)
     .then(({ data }) => {
-      dispatch('receiveFreezePeriodsSuccess', data);
+      commit(types.RECEIVE_FREEZE_PERIODS_SUCCESS, data);
     })
     .catch(() => {
       createFlash(__('There was an error fetching the deploy freezes.'));

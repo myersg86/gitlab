@@ -91,16 +91,7 @@ describe('deploy freeze store actions', () => {
 
   describe('fetchFreezePeriods', () => {
     it('dispatch correct actions on fetchFreezePeriods', () => {
-      testAction(
-        actions.fetchFreezePeriods,
-        {},
-        state,
-        [],
-        [
-          { type: 'requestFreezePeriods' },
-          { type: 'receiveFreezePeriodsSuccess', payload: mockFreezePeriods },
-        ],
-      );
+      testAction(actions.fetchFreezePeriods, {}, state, [], [{ type: 'requestFreezePeriods' }]);
     });
 
     it('should show flash error and set error in state on fetch variables failure', () => {
