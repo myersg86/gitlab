@@ -29,7 +29,9 @@ describe('Deploy freeze mutations', () => {
       mutations[types.RECEIVE_FREEZE_PERIODS_SUCCESS](stateCopy, mockFreezePeriods);
 
       expect(stateCopy.freezePeriods).toEqual(
-        mockFreezePeriods.map(addTimezoneIdentifier(stateCopy.timezoneData)),
+        mockFreezePeriods.map(freezePeriod =>
+          addTimezoneIdentifier(freezePeriod, state.timezoneData),
+        ),
       );
     });
   });

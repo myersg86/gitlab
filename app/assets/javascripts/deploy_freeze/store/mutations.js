@@ -8,7 +8,9 @@ export default {
 
   [types.RECEIVE_FREEZE_PERIODS_SUCCESS](state, freezePeriods) {
     state.isLoading = false;
-    state.freezePeriods = freezePeriods.map(addTimezoneIdentifier(state.timezoneData));
+    state.freezePeriods = freezePeriods.map(freezePeriod =>
+      addTimezoneIdentifier(freezePeriod, state.timezoneData),
+    );
   },
 
   [types.REQUEST_ADD_FREEZE_PERIOD](state) {
