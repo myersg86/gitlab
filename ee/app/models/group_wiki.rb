@@ -30,4 +30,13 @@ class GroupWiki < Wiki
   def disk_path(*args, &block)
     storage.disk_path + '.wiki'
   end
+
+  override :after_push_hooks
+  def after_push_hooks
+    # TODO: Record group wiki activity
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/209306
+
+    # TODO: Record group wiki storage
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/230465
+  end
 end

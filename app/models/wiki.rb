@@ -132,8 +132,7 @@ class Wiki
     commit = commit_details(:created, message, title)
 
     wiki.write_page(title, format.to_sym, content, commit)
-
-    update_container_activity
+    true
   rescue Gitlab::Git::Wiki::DuplicatePageError => e
     @error_message = "Duplicate page: #{e.message}"
     false
@@ -143,16 +142,14 @@ class Wiki
     commit = commit_details(:updated, message, page.title)
 
     wiki.update_page(page.path, title || page.name, format.to_sym, content, commit)
-
-    update_container_activity
+    true
   end
 
   def delete_page(page, message = nil)
     return unless page
 
     wiki.delete_page(page.path, commit_details(:deleted, message, page.title))
-
-    update_container_activity
+    true
   end
 
   def page_title_and_dir(title)
@@ -208,6 +205,10 @@ class Wiki
     web_url(only_path: true).sub(%r{/#{Wiki::HOMEPAGE}\z}, '')
   end
 
+  def after_push_hooks
+    raise NotImplementedError
+  end
+
   private
 
   def commit_details(action, message = nil, title = nil)
@@ -223,10 +224,6 @@ class Wiki
 
   def default_message(action, title)
     "#{user.username} #{action} page: #{title}"
-  end
-
-  def update_container_activity
-    container.after_wiki_activity
   end
 end
 

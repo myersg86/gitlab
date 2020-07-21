@@ -10,6 +10,12 @@ class ProjectWiki < Wiki
   def disk_path(*args, &block)
     container.disk_path + '.wiki'
   end
+
+  override :after_push_hooks
+  def after_push_hooks
+    project.touch(:last_activity_at, :last_repository_updated_at)
+    ProjectCacheWorker.perform_async(project.id, [], [:wiki_size])
+  end
 end
 
 # TODO: Remove this once we implement ES support for group wikis.
