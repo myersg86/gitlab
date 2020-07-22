@@ -16,16 +16,13 @@ describe('Actions TestReports Store', () => {
   const testReports = getJSONFixture('pipelines/test_report.json');
   const summary = { total_count: 1 };
 
-  const fullReportEndpoint = `${TEST_HOST}/test_reports.json`;
   const suiteEndpoint = `${TEST_HOST}/tests/:suite_name.json`;
   const summaryEndpoint = `${TEST_HOST}/test_reports/summary.json`;
   const defaultState = {
-    fullReportEndpoint,
     suiteEndpoint,
     summaryEndpoint,
     testReports: {},
     selectedSuite: null,
-    useBuildSummaryReport: false,
   };
 
   beforeEach(() => {
@@ -42,63 +39,29 @@ describe('Actions TestReports Store', () => {
       mock.onGet(summaryEndpoint).replyOnce(200, summary, {});
     });
 
-    describe('when useBuildSummaryReport in state is true', () => {
-      it('sets testReports and shows tests', done => {
-        testAction(
-          actions.fetchSummary,
-          null,
-          { ...state, useBuildSummaryReport: true },
-          [{ type: types.SET_SUMMARY, payload: summary }],
-          [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
-          done,
-        );
-      });
-
-      it('should create flash on API error', done => {
-        testAction(
-          actions.fetchSummary,
-          null,
-          {
-            summaryEndpoint: null,
-            useBuildSummaryReport: true,
-          },
-          [],
-          [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
-          () => {
-            expect(createFlash).toHaveBeenCalled();
-            done();
-          },
-        );
-      });
+    it('sets testReports and shows tests', done => {
+      testAction(
+        actions.fetchSummary,
+        null,
+        state,
+        [{ type: types.SET_SUMMARY, payload: summary }],
+        [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
+        done,
+      );
     });
 
-    describe('when useBuildSummaryReport in state is false', () => {
-      it('sets testReports and shows tests', done => {
-        testAction(
-          actions.fetchSummary,
-          null,
-          state,
-          [{ type: types.SET_SUMMARY, payload: summary }],
-          [],
-          done,
-        );
-      });
-
-      it('should create flash on API error', done => {
-        testAction(
-          actions.fetchSummary,
-          null,
-          {
-            summaryEndpoint: null,
-          },
-          [],
-          [],
-          () => {
-            expect(createFlash).toHaveBeenCalled();
-            done();
-          },
-        );
-      });
+    it('should create flash on API error', done => {
+      testAction(
+        actions.fetchSummary,
+        null,
+        { summaryEndpoint: null },
+        [],
+        [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
+        () => {
+          expect(createFlash).toHaveBeenCalled();
+          done();
+        },
+      );
     });
   });
 
@@ -149,48 +112,6 @@ describe('Actions TestReports Store', () => {
 
         testAction(actions.fetchTestSuite, index, { ...state, testReports }, [], [], done);
       });
-    });
-
-    describe('when we already have the full report data', () => {
-      it('should not fetch suite', done => {
-        const index = 0;
-        testReports.hasFullReport = true;
-
-        testAction(actions.fetchTestSuite, index, { ...state, testReports }, [], [], done);
-      });
-    });
-  });
-
-  describe('fetch full report', () => {
-    beforeEach(() => {
-      mock.onGet(fullReportEndpoint).replyOnce(200, testReports, {});
-    });
-
-    it('sets testReports and shows tests', done => {
-      testAction(
-        actions.fetchFullReport,
-        null,
-        state,
-        [{ type: types.SET_REPORTS, payload: testReports }],
-        [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
-        done,
-      );
-    });
-
-    it('should create flash on API error', done => {
-      testAction(
-        actions.fetchFullReport,
-        null,
-        {
-          fullReportEndpoint: null,
-        },
-        [],
-        [{ type: 'toggleLoading' }, { type: 'toggleLoading' }],
-        () => {
-          expect(createFlash).toHaveBeenCalled();
-          done();
-        },
-      );
     });
   });
 
