@@ -48,6 +48,7 @@ export default {
       parsedSource: parseSourceFile(this.content),
       editorMode: EDITOR_TYPES.wysiwyg,
       isModified: false,
+      formatter,
     };
   },
   imageRepository: imageRepository(),
@@ -59,9 +60,6 @@ export default {
       return this.editorMode === EDITOR_TYPES.wysiwyg;
     },
   },
-  created() {
-    this.formatter = formatter;
-  },
   methods: {
     onInputChange(newVal) {
       this.parsedSource.sync(newVal, this.isWysiwygMode);
@@ -69,14 +67,16 @@ export default {
     },
     onModeChange(mode) {
       this.editorMode = mode;
-      this.$refs.editor.resetInitialValue(this.editableContent);
+      const formattedContent = this.formatter(this.editableContent);
+      this.$refs.editor.resetInitialValue(formattedContent);
     },
     onUploadImage({ file, imageUrl }) {
       this.$options.imageRepository.add(file, imageUrl);
     },
     onSubmit() {
+      const formattedContent = this.formatter(this.parsedSource.content());
       this.$emit('submit', {
-        content: this.parsedSource.content(),
+        content: formattedContent,
         images: this.$options.imageRepository.getAll(),
       });
     },
@@ -91,7 +91,6 @@ export default {
       :content="editableContent"
       :initial-edit-type="editorMode"
       :image-root="imageRoot"
-      :formatter="formatter"
       class="mb-9 h-100"
       @modeChange="onModeChange"
       @input="onInputChange"

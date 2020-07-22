@@ -129,5 +129,25 @@ describe('~/static_site_editor/components/edit_area.vue', () => {
         expect(wrapper.vm.editorMode).toBe(targetMode);
       },
     );
+
+    it('should format the content', () => {
+      setInitialMode(EDITOR_TYPES.wysiwyg);
+      wrapper.setData({ formatter: jest.fn() });
+
+      findRichContentEditor().setMethods({ resetInitialValue: jest.fn() });
+      findRichContentEditor().vm.$emit('modeChange', EDITOR_TYPES.markdown);
+
+      expect(wrapper.vm.formatter).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('when content is submitted', () => {
+    it('should format the content', () => {
+      wrapper.setData({ formatter: jest.fn() });
+
+      findPublishToolbar().vm.$emit('submit', 'Some content');
+
+      expect(wrapper.vm.formatter).toHaveBeenCalledTimes(1);
+    });
   });
 });

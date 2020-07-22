@@ -57,11 +57,6 @@ export default {
       required: true,
       validator: prop => prop.endsWith('/'),
     },
-    formatter: {
-      type: Function,
-      required: false,
-      default: null,
-    },
   },
   data() {
     return {
@@ -95,14 +90,11 @@ export default {
 
       this.editorApi.eventManager.removeEventHandler('changeMode', this.onChangeMode);
     },
-    tryFormat(value) {
-      return this.formatter ? this.formatter(value) : value;
-    },
     resetInitialValue(newVal) {
-      this.editorInstance.invoke('setMarkdown', this.tryFormat(newVal));
+      this.editorInstance.invoke('setMarkdown', newVal);
     },
     onContentChanged() {
-      this.$emit('input', this.tryFormat(getMarkdown(this.editorInstance)));
+      this.$emit('input', getMarkdown(this.editorInstance));
     },
     onLoad(editorApi) {
       this.editorApi = editorApi;
