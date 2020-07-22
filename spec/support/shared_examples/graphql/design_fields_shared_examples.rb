@@ -20,6 +20,7 @@ RSpec.shared_examples 'a GraphQL type with design fields' do
       diff_refs
       event
       notes_count
+      relative_position
     ] + extra_design_fields
 
     expect(described_class).to have_graphql_fields(*expected_fields).only

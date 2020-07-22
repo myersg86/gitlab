@@ -31,6 +31,11 @@ module Types
             method: :user_notes_count,
             description: 'The total count of user-created notes for this design'
 
+      field :relative_position, GraphQL::INT_TYPE,
+        null: false,
+        method: :relative_position,
+        description: 'The sort-index of the design'
+
       def diff_refs(parent:)
         version = cached_stateful_version(parent)
         version.diff_refs
@@ -72,6 +77,11 @@ module Types
 
       def issue
         ::Gitlab::Graphql::Loaders::BatchModelLoader.new(::Issue, design.issue_id).find
+      end
+
+      # TODO: remove when this class includes RelativePositioning
+      def relative_position
+        0
       end
     end
   end
