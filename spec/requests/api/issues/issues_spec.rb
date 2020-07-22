@@ -94,7 +94,7 @@ RSpec.describe API::Issues do
     end
 
     context 'when authorized' do
-      context 'as a normnal user' do
+      context 'as a normal user' do
         it 'returns forbidden' do
           get api("/issues/#{issue.id}", user )
 
