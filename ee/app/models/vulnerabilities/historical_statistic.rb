@@ -4,6 +4,8 @@ module Vulnerabilities
   class HistoricalStatistic < ApplicationRecord
     self.table_name = 'vulnerability_historical_statistics'
 
+    RETENTION_PERIOD = 90.days
+
     belongs_to :project, optional: false
 
     validates :date, presence: true
