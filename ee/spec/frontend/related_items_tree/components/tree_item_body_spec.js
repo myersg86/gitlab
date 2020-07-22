@@ -15,16 +15,26 @@ import ItemAssignees from '~/vue_shared/components/issue/issue_assignees.vue';
 import ItemDueDate from '~/boards/components/issue_due_date.vue';
 import ItemMilestone from '~/vue_shared/components/issue/issue_milestone.vue';
 
-import { mockParentItem, mockInitialConfig, mockQueryResponse, mockIssue1 } from '../mock_data';
+import {
+  mockParentItem,
+  mockInitialConfig,
+  mockQueryResponse,
+  mockIssue1,
+  mockIssue3,
+} from '../mock_data';
 
 const localVue = createLocalVue();
 localVue.use(Vuex);
 
-const mockItem = {
-  ...mockIssue1,
-  type: ChildType.Issue,
-  pathIdSeparator: PathIdSeparator.Issue,
-  assignees: epicUtils.extractIssueAssignees(mockIssue1.assignees),
+let mockItem;
+
+const createMockItem = mockIssue => {
+  mockItem = {
+    ...mockIssue,
+    type: ChildType.Issue,
+    pathIdSeparator: PathIdSeparator.Issue,
+    assignees: epicUtils.extractIssueAssignees(mockIssue.assignees),
+  };
 };
 
 const createComponent = (parentItem = mockParentItem, item = mockItem) => {
@@ -73,7 +83,16 @@ describe('RelatedItemsTree', () => {
   describe('TreeItemBody', () => {
     let wrapper;
 
+    const findHealthStatus = () => wrapper.find('[data-testid="item-health-status"]');
+    const turnOnHealthStatus = () => {
+      wrapper.vm.$store.commit('SET_INITIAL_CONFIG', {
+        ...mockInitialConfig,
+        allowIssuableHealthStatus: true,
+      });
+    };
+
     beforeEach(() => {
+      createMockItem(mockIssue1);
       wrapper = createComponent();
     });
 
@@ -366,22 +385,32 @@ describe('RelatedItemsTree', () => {
         epicWrapper.destroy();
       });
 
-      it('renders health status when feature', () => {
-        function testExistence(exists) {
-          const healthStatus = wrapper.find('.item-health-status').exists();
+      describe('health status', () => {
+        it('renders when feature is available', () => {
+          expect(findHealthStatus().exists()).toBe(false);
 
-          expect(healthStatus).toBe(exists);
-        }
+          turnOnHealthStatus();
 
-        testExistence(false);
-
-        wrapper.vm.$store.commit('SET_INITIAL_CONFIG', {
-          ...mockInitialConfig,
-          allowIssuableHealthStatus: true,
+          return wrapper.vm.$nextTick(() => {
+            expect(findHealthStatus().exists()).toBe(true);
+          });
         });
 
-        return wrapper.vm.$nextTick(() => {
-          testExistence(true);
+        describe.each`
+          mockIssue     | openState
+          ${mockIssue1} | ${mockIssue1.state}
+          ${mockIssue3} | ${mockIssue3.state}
+        `("for issue with issue.state='$openState'", ({ mockIssue, openState }) => {
+          beforeEach(() => {
+            createMockItem(mockIssue);
+            wrapper = createComponent();
+            turnOnHealthStatus();
+          });
+
+          const shouldRender = openState !== 'closed';
+          it(`does ${shouldRender ? '' : 'not '}render(s)`, () => {
+            expect(findHealthStatus().exists()).toBe(shouldRender);
+          });
         });
       });
     });

@@ -125,7 +125,7 @@ export default {
       return this.item.type === ChildType.Issue;
     },
     showHealthStatus() {
-      return this.item.healthStatus && this.allowIssuableHealthStatus;
+      return this.isOpen && this.item.healthStatus && this.allowIssuableHealthStatus;
     },
   },
   methods: {
@@ -143,20 +143,22 @@ export default {
 </script>
 
 <template>
-  <div class="card card-slim sortable-row flex-grow-1">
+  <div class="card card-slim sortable-row gl-flex-grow-1">
     <div
-      class="item-body card-body d-flex align-items-center pr-1 pl-2 py-1"
+      class="item-body card-body gl-display-flex gl-align-items-center pr-1 pl-2 py-1"
       :class="{
         'item-logged-out': !userSignedIn,
         'item-closed': isClosed,
       }"
     >
-      <div class="item-contents d-flex align-items-center flex-wrap flex-grow-1 flex-xl-nowrap">
-        <div class="item-title-wrapper flex-grow-1 mr-2">
-          <div class="item-title d-flex mb-0 pt-1 pb-1">
+      <div
+        class="item-contents gl-display-flex gl-align-items-center gl-flex-wrap gl-flex-grow-1 flex-xl-nowrap"
+      >
+        <div class="item-title-wrapper gl-flex-grow-1 gl-mr-3">
+          <div class="item-title gl-display-flex gl-mb-0 pt-1 pb-1">
             <gl-icon
               ref="stateIconMd"
-              class="d-block mr-2"
+              class="gl-display-block gl-mr-3"
               :class="stateIconClass"
               :name="stateIconName"
               :aria-label="stateText"
@@ -188,11 +190,11 @@ export default {
           </div>
 
           <div
-            class="item-meta d-flex flex-wrap mt-xl-0 flex-xl-nowrap align-items-center pb-1 pt-1 ml-4"
+            class="item-meta gl-display-flex gl-flex-wrap mt-xl-0 flex-xl-nowrap gl-align-items-center pb-1 pt-1 gl-ml-6"
           >
-            <span class="mr-3">{{ itemHierarchy }}</span>
+            <span class="gl-mr-4">{{ itemHierarchy }}</span>
             <gl-tooltip v-if="isEpic" :target="() => $refs.countBadge">
-              <p v-if="allowSubEpics" class="font-weight-bold m-0">
+              <p v-if="allowSubEpics" class="font-weight-bold gl-m-0">
                 {{ __('Epics') }} &#8226;
                 <span class="text-secondary-400 font-weight-normal"
                   >{{
@@ -203,7 +205,7 @@ export default {
                   }}
                 </span>
               </p>
-              <p class="font-weight-bold m-0">
+              <p class="font-weight-bold gl-m-0">
                 {{ __('Issues') }} &#8226;
                 <span class="text-secondary-400 font-weight-normal"
                   >{{
@@ -221,15 +223,15 @@ export default {
               ref="countBadge"
               class="issue-count-badge gl-display-inline-flex text-secondary py-0 p-lg-0"
             >
-              <span v-if="allowSubEpics" class="d-inline-flex align-items-center mr-2">
-                <gl-icon name="epic" class="mr-1" />
+              <span v-if="allowSubEpics" class="d-inline-flex gl-align-items-center gl-mr-3">
+                <gl-icon name="epic" class="gl-mr-2" />
                 {{ totalEpicsCount }}
               </span>
               <span
-                class="d-inline-flex align-items-center mr-2"
+                class="gl-display-inline-flex gl-align-items-center gl-mr-3"
                 :class="{ 'ml-2': allowSubEpics }"
               >
-                <gl-icon name="issues" class="mr-1" />
+                <gl-icon name="issues" class="gl-mr-2" />
                 {{ totalIssuesCount }}
               </span>
             </div>
@@ -237,30 +239,30 @@ export default {
             <item-milestone
               v-if="hasMilestone"
               :milestone="item.milestone"
-              class="d-flex align-items-center item-milestone mr-3"
+              class="gl-display-flex gl-align-items-center item-milestone gl-mr-4"
             />
 
             <item-due-date
               v-if="item.dueDate"
               :date="item.dueDate"
               tooltip-placement="top"
-              css-class="item-due-date d-flex align-items-center mr-3"
+              css-class="item-due-date gl-display-flex gl-align-items-center gl-mr-4"
             />
 
             <item-weight
               v-if="item.weight"
               :weight="item.weight"
-              class="item-weight d-flex align-items-center mr-3"
+              class="item-weight gl-display-flex gl-align-items-center gl-mr-4"
               tag-name="span"
             />
 
             <item-assignees
               v-if="hasAssignees"
               :assignees="item.assignees"
-              class="item-assignees d-inline-flex align-items-center mr-3 mb-md-0 flex-xl-grow-0"
+              class="item-assignees gl-display-inline-flex gl-align-items-center gl-mr-4 mb-md-0 flex-xl-grow-0"
             />
 
-            <div v-if="showHealthStatus" class="item-health-status">
+            <div v-if="showHealthStatus" data-testid="item-health-status">
               <epic-health-status v-if="isEpic" :health-status="item.healthStatus" />
               <issue-health-status v-else-if="isIssue" :health-status="item.healthStatus" />
             </div>
@@ -273,12 +275,12 @@ export default {
           v-gl-modal-directive="$options.itemRemoveModalId"
           :title="__('Remove')"
           :disabled="itemActionInProgress"
-          class="btn-svg btn-item-remove js-issue-item-remove-button qa-remove-issue-button align-self-start"
+          class="btn-svg btn-item-remove js-issue-item-remove-button qa-remove-issue-button gl-align-self-start"
           @click="handleRemoveClick"
         >
           <gl-icon name="close" class="btn-item-remove-icon" />
         </gl-deprecated-button>
-        <span v-if="showEmptySpacer" class="p-3"></span>
+        <span v-if="showEmptySpacer" class="gl-p-3"></span>
       </div>
     </div>
   </div>

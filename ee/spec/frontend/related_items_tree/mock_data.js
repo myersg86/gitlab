@@ -24,7 +24,7 @@ export const mockParentItem = {
   descendantCounts: {
     openedEpics: 1,
     closedEpics: 1,
-    openedIssues: 1,
+    openedIssues: 2,
     closedIssues: 1,
   },
   healthStatus: {
@@ -186,7 +186,7 @@ export const mockIssue3 = {
 
 export const mockEpics = [mockEpic1, mockEpic2];
 
-export const mockIssues = [mockIssue1, mockIssue2];
+export const mockIssues = [mockIssue1, mockIssue2, mockIssue3];
 
 export const mockQueryResponse = {
   data: {
@@ -225,6 +225,9 @@ export const mockQueryResponse = {
             {
               node: mockIssue2,
             },
+            {
+              node: mockIssue3,
+            },
           ],
           pageInfo: {
             endCursor: 'def',
@@ -233,9 +236,9 @@ export const mockQueryResponse = {
         },
         descendantCounts: mockParentItem.descendantCounts,
         healthStatus: {
-          atRisk: 1,
+          atRisk: 0,
           needsAttention: 1,
-          onTrack: 0,
+          onTrack: 1,
         },
       },
     },
