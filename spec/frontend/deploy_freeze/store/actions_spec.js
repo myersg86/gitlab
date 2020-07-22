@@ -91,7 +91,16 @@ describe('deploy freeze store actions', () => {
 
   describe('fetchFreezePeriods', () => {
     it('dispatch correct actions on fetchFreezePeriods', () => {
-      testAction(actions.fetchFreezePeriods, {}, state, [], [{ type: 'requestFreezePeriods' }]);
+      testAction(
+        actions.fetchFreezePeriods,
+        {},
+        state,
+        [
+          { type: 'REQUEST_FREEZE_PERIODS' },
+          { type: 'RECEIVE_FREEZE_PERIODS_SUCCESS', payload: mockFreezePeriods },
+        ],
+        [],
+      );
     });
 
     it('should show flash error and set error in state on fetch variables failure', () => {
@@ -101,8 +110,8 @@ describe('deploy freeze store actions', () => {
         actions.fetchFreezePeriods,
         {},
         state,
+        [{ type: 'REQUEST_FREEZE_PERIODS' }],
         [],
-        [{ type: 'requestFreezePeriods' }],
         () =>
           expect(createFlash).toHaveBeenCalledWith(
             'There was an error fetching the deploy freezes.',

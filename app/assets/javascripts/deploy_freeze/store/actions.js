@@ -34,12 +34,8 @@ export const addFreezePeriod = ({ state, dispatch, commit }) => {
     });
 };
 
-export const requestFreezePeriods = ({ commit }) => {
+export const fetchFreezePeriods = ({ commit, state }) => {
   commit(types.REQUEST_FREEZE_PERIODS);
-};
-
-export const fetchFreezePeriods = ({ dispatch, state }) => {
-  dispatch('requestFreezePeriods');
 
   return Api.freezePeriods(state.projectId)
     .then(({ data }) => {
