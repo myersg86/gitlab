@@ -1,8 +1,8 @@
 import state from '~/deploy_freeze/store/state';
 import mutations from '~/deploy_freeze/store/mutations';
 import * as types from '~/deploy_freeze/store/mutation_types';
-import { addTimezoneIdentifier } from '~/deploy_freeze/utils/lib';
 import { mockFreezePeriods, mockTimezoneData } from '../mock_data';
+import { convertObjectPropsToCamelCase } from '~/lib/utils/common_utils';
 
 describe('Deploy freeze mutations', () => {
   let stateCopy;
@@ -25,14 +25,28 @@ describe('Deploy freeze mutations', () => {
   });
 
   describe('RECEIVE_FREEZE_PERIODS_SUCCESS', () => {
-    it('should set environments', () => {
+    it('should set freeze periods and format timezones from identifiers to names', () => {
+      const timezoneIdentifiers = ['America/New_York', 'Etc/UTC', 'Europe/Berlin'];
+      const timezoneNames = ['Eastern Time (US & Canada)', 'UTC', 'Berlin'];
+
+      mockFreezePeriods.forEach((period, index) => {
+        expect(period.cron_timezone).toBe(timezoneIdentifiers[index]);
+      });
+
       mutations[types.RECEIVE_FREEZE_PERIODS_SUCCESS](stateCopy, mockFreezePeriods);
 
-      expect(stateCopy.freezePeriods).toEqual(
-        mockFreezePeriods.map(freezePeriod =>
-          addTimezoneIdentifier(freezePeriod, state.timezoneData),
-        ),
-      );
+      const expectedFreezePeriods = mockFreezePeriods.map((freezePeriod, index) => {
+        return {
+          ...convertObjectPropsToCamelCase(freezePeriod),
+          cronTimezone: timezoneNames[index],
+        };
+      });
+
+      expect(stateCopy.freezePeriods).toMatchObject(expectedFreezePeriods);
+
+      stateCopy.freezePeriods.forEach((period, index) => {
+        expect(period.cronTimezone).toBe(timezoneNames[index]);
+      });
     });
   });
 
