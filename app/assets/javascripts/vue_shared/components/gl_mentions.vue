@@ -13,7 +13,7 @@ const AutoComplete = {
 const autoCompleteMap = {
   [AutoComplete.Labels]: {
     filterValues() {
-      const fullText = this.$slots.default[0].elm.value;
+      const fullText = this.$slots.default?.[0]?.elm?.value;
 
       if (fullText.startsWith('/label ')) {
         return this.labels.filter(label => !label.set);
@@ -33,7 +33,7 @@ const autoCompleteMap = {
   },
   [AutoComplete.Members]: {
     filterValues() {
-      const fullText = this.$slots.default[0].elm.value;
+      const fullText = this.$slots.default?.[0]?.elm?.value;
 
       if (!this.assignees) {
         this.assignees =
@@ -113,11 +113,11 @@ export default {
       ],
     });
 
-    const input = this.$slots.default[0].elm;
+    const input = this.$slots.default?.[0]?.elm;
     this.tribute.attach(input);
   },
   beforeDestroy() {
-    const input = this.$slots.default[0].elm;
+    const input = this.$slots.default?.[0]?.elm;
     this.tribute.detach(input);
   },
   methods: {
