@@ -508,7 +508,7 @@ the `weight` parameter:
 
 Only for administrators. Get a single issue.
 
-The preferred way to do this, is by using [personal access tokens](../user/profile/personal_access_tokens.md).
+The preferred way to do this is by using [personal access tokens](../user/profile/personal_access_tokens.md).
 
 ```plaintext
 GET /issues/:id
