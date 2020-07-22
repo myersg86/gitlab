@@ -119,7 +119,7 @@ export default {
       this.service
         .updateTemplate({ selectedTemplate, outgoingName, projectKey }, this.isEnabled)
         .then(({ data }) => {
-          this.incomingEmail = data.service_desk_address;
+          this.incomingEmail = data?.service_desk_address;
           this.showAlert(__('Changes were successfully made.'), 'success');
         })
         .catch(() =>
