@@ -55,7 +55,7 @@ describe('Project remove modal', () => {
       createComponent({ userInput: 'bar' });
     });
 
-    it('the confirm button is dislabled', () => {
+    it('the confirm button is disabled', () => {
       expect(findConfirmButton().attributes('disabled')).toBeTruthy();
     });
   });
@@ -65,7 +65,7 @@ describe('Project remove modal', () => {
       createComponent({ userInput: defaultProps.confirmPhrase });
     });
 
-    it('the confirm button is not dislabled', () => {
+    it('the confirm button is not disabled', () => {
       expect(findConfirmButton().attributes('disabled')).toBe(undefined);
     });
   });

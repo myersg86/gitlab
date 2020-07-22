@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Project remove modal with no adjouned removal date matches the snapshot 1`] = `
+exports[`Project remove modal initialized matches the snapshot 1`] = `
 <form
   action="some/path"
   method="post"
@@ -56,21 +56,9 @@ exports[`Project remove modal with no adjouned removal date matches the snapshot
           You are about to permanently delete this project
         </h4>
          
-        <span>
-          Once a project is permanently deleted it 
-          <strong>
-            cannot be recovered
-          </strong>
-          . Permanently deleting this project will 
-          <strong>
-            immediately delete
-          </strong>
-           its respositories and 
-          <strong>
-            all related resources
-          </strong>
-           including issues, merge requests etc.
-        </span>
+        <gl-sprintf-stub
+          message="Once a project is permanently deleted it %{strongStart}cannot be recovered%{strongEnd}. Permanently deleting this project will %{strongStart}immediately delete%{strongEnd} its respositories and %{strongStart}all related resources%{strongEnd} including issues, merge requests etc."
+        />
       </gl-alert-stub>
        
       <p>

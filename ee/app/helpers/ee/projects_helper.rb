@@ -101,6 +101,19 @@ module EE
         }
     end
 
+    def marked_for_removal_message(project)
+      date = permanent_deletion_date(Time.now.utc)
+      html_escape(_('This action will %{strongOpen}permanently delete%{strongClose} %{codeOpen}%{project}%{codeClose} %{strongOpen}on %{date}%{strongClose}, including its repositories and all content: issues, merge requests, etc.')) %
+      {
+        date: date,
+        project: project.path,
+        strongOpen: '<strong>'.html_safe,
+        strongClose: '</strong>'.html_safe,
+        codeOpen: '<code>'.html_safe,
+        codeClose: '</code>'.html_safe
+      }
+    end
+
     def permanent_deletion_date(date)
       (date + ::Gitlab::CurrentSettings.deletion_adjourned_period.days).strftime('%F')
     end

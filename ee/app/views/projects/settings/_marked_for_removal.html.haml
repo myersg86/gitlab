@@ -1,8 +1,6 @@
 - return unless @project.feature_available?(:adjourned_deletion_for_projects_and_groups)
 
-- date = permanent_deletion_date(Time.now.utc)
-
 %p
   %span.gl-text-gray-500= _('Projects will be permanently deleted after a 7-day waiting period.')
   = link_to(_('Customizable by an administrator.'), help_page_path('user/admin_area/settings/visibility_and_access_controls', anchor: 'default-deletion-adjourned-period-premium-only'))
-%p= _('This action will <strong>permanently delete</strong> <code>%{project}</code> <strong>on %{date}</strong>, including its repositories and all content: issues, merge requests, etc.').html_safe % { project: @project.path, date: date }
+%p= marked_for_removal_message(@project)
