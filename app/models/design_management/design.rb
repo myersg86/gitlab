@@ -197,7 +197,7 @@ module DesignManagement
     end
 
     def immediately_before?(next_design)
-      gap = self.class.on_issue(issue).where('? < relative_position AND relative_position < ?',
+      gap = self.class.on_issue(issue).where("relative_position <@ int4range(?, ?, '()')",
                [self, next_design].map(&:relative_position))
 
       !gap.exists?
