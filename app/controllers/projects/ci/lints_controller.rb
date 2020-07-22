@@ -20,26 +20,10 @@ class Projects::Ci::LintsController < Projects::ApplicationController
       @jobs = @config_processor.jobs
     end
 
-    
-    # # binding.pry
-    
-    # pp 'content', @content
-    # pp 'result', result
-    # pp 'status', @status
-    # pp 'errrors', @errors
-    # pp 'config processor', @config_processor
-    # pp 'stages', @stages
-    # pp 'builds', @builds
-    # pp 'jobs', @jobs
-
     respond_to do |format|
       format.html { render :show }
       format.json do
-        render json: { 
-          valid: @status,
-          errors: @errors,
-          config_processor: @config_processor
-        } 
+        render json: ::Ci::Yaml::LintSerializer.new.represent(result)
       end
     end
   end

@@ -45,15 +45,11 @@ RSpec.describe Projects::Ci::LintsController do
   end
 
   describe 'POST #create' do
-    def request_params(format = {})
-      params = { namespace_id: project.namespace, project_id: project, content: content }
-      
-      params.merge(format)
-    end
+    let(:params) { { namespace_id: project.namespace, project_id: project, content: content, format: format } }
 
     RSpec.shared_context 'valid config' do
       let(:remote_file_path) { 'https://gitlab.com/gitlab-org/gitlab-foss/blob/1234/.gitlab-ci-1.yml' }
-      
+
       let(:remote_file_content) do
         <<~HEREDOC
         before_script:
@@ -68,7 +64,7 @@ RSpec.describe Projects::Ci::LintsController do
         <<~HEREDOC
         include:
           - #{remote_file_path}
-  
+
         rubocop:
           script:
             - bundle exec rubocop
@@ -92,14 +88,12 @@ RSpec.describe Projects::Ci::LintsController do
       end
 
       before do
-        project.add_developer(user)
-
         post :create, params: params
       end
     end
 
     context 'when format is html' do
-      let(:params) { request_params }
+      let(:format) { 'html' }
 
       context 'with linting privileges' do
         before do
@@ -129,11 +123,11 @@ RSpec.describe Projects::Ci::LintsController do
         end
       end
 
-      context 'without enough privileges' do
+      context 'without linting privileges' do
         before do
           project.add_guest(user)
         end
-        
+
         include_context 'valid config'
 
         it 'responds with 404' do
@@ -143,8 +137,8 @@ RSpec.describe Projects::Ci::LintsController do
     end
 
     context 'when requested format is json' do
-      let(:params) { request_params(format: :json) }
-      let(:body) { JSON.parse(response.body) }
+      let(:body) { Gitlab::Json.parse(response.body) }
+      let(:format) { 'json' }
 
       context 'with linting privileges' do
         before do
@@ -153,38 +147,42 @@ RSpec.describe Projects::Ci::LintsController do
 
         context 'with a valid gitlab-ci.yml' do
           include_context 'valid config'
-    
-          it 'returns json success response' do
-            expect(response).to be_successful
+
+          it { expect(response).to be_successful }
+
+          it 'returns json content' do
             expect(response.content_type).to eq "application/json"
           end
-    
-          it 'returns serialized body' do
+
+          it 'returns data for valid config' do
             expect(body['valid']).to eq(true)
             expect(body['errors']).to eq([])
+            expect(body['config']['builds']).not_to be_empty
           end
         end
 
         context 'with an invalid gitlab-ci.yml' do
           include_context 'invalid config'
 
-          it 'returns json success response' do
-            expect(response).to be_successful
+          it { expect(response).to be_successful }
+
+          it 'returns json content' do
             expect(response.content_type).to eq "application/json"
           end
 
-          it 'returns serialized body' do
+          it 'returns data for invalid config' do
             expect(body['valid']).to eq(false)
             expect(body['errors']).to eq(['root config contains unknown keys: rubocop'])
+            expect(body['config']).to eq(nil)
           end
         end
       end
 
-      context 'without enough privileges' do
+      context 'without linting privileges' do
         before do
           project.add_guest(user)
         end
-        
+
         include_context 'valid config'
 
         it 'responds with 404' do

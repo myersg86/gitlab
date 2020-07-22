@@ -1,0 +1,18 @@
+{
+    "type": "object",
+    "required": ["jobs", "builds", "stages"],
+    "properties": {
+      "jobs": {
+        "type": "object"
+      },
+      "builds": {
+        "type": "array",
+        "items": { "type": "object"}
+      },
+      "stages": {
+        "type": "array",
+        "items": { "type": "string"}
+      }
+    },
+    "additionalProperties": false
+  }

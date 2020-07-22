@@ -1,0 +1,18 @@
+{
+    "type": "object",
+    "required": ["valid", "errors", "config"],
+    "properties": {
+      "config": {
+        "type": ["object", "null"],
+        "items": { "$ref": "yaml_config.json" }
+      },
+      "errors": {
+        "type": "array",
+        "items": { "type": "string"}
+      },
+      "valid": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  }
