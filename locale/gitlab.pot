@@ -4371,6 +4371,9 @@ msgstr ""
 msgid "Changes the title to \"%{title_param}\"."
 msgstr ""
 
+msgid "Changes were successfully made."
+msgstr ""
+
 msgid "Changes won't take place until the index is %{link_start}recreated%{link_end}."
 msgstr ""
 
@@ -20524,9 +20527,6 @@ msgstr ""
 msgid "Save space and find tags in the Container Registry more easily. Enable the cleanup policy to remove stale tags and keep only the ones you need."
 msgstr ""
 
-msgid "Save template"
-msgstr ""
-
 msgid "Save variables"
 msgstr ""
 
@@ -23249,9 +23249,6 @@ msgid "Template"
 msgstr ""
 
 msgid "Template to append to all Service Desk issues"
-msgstr ""
-
-msgid "Template was successfully saved."
 msgstr ""
 
 msgid "Templates"
