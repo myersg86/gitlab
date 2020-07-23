@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require Rails.root.join('db', 'post_migrate', '20200714124528_migrate_license_management_artifacts_to_license_scanning.rb')
+require Rails.root.join('db', 'post_migrate', '20200723133628_migrate_license_management_artifacts_to_license_scanning.rb')
 
 RSpec.describe MigrateLicenseManagementArtifactsToLicenseScanning, :migration, :sidekiq do
   let(:namespaces) { table(:namespaces) }

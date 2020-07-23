@@ -12,7 +12,7 @@ class MigrateLicenseManagementArtifactsToLicenseScanning < ActiveRecord::Migrati
 
     belongs_to :job, class_name: "Ci::Build", foreign_key: :job_id
 
-    scope :original_reports, -> { select("MIN(id) as id").group(:job_id).pluck(&:id) }
+    scope :original_reports, -> { select("MIN(id) as id").group(:job_id).map(&:id) }
     scope :license_compliance, -> { where(file_type: [10, 101]) }
   end
 
