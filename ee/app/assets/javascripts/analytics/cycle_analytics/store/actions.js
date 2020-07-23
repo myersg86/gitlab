@@ -321,8 +321,8 @@ export const createValueStream = ({ commit, dispatch, rootState }, data) => {
   return Api.cycleAnalyticsCreateValueStream(fullPath, data)
     .then(() => dispatch('receiveCreateValueStreamSuccess'))
     .catch(({ response } = {}) => {
-      const { data: { message, errors } = null } = response;
-      commit(types.RECEIVE_CREATE_VALUE_STREAM_ERROR, { data, message, errors });
+      const { data: { message, payload: { errors } } = null } = response;
+      commit(types.RECEIVE_CREATE_VALUE_STREAM_ERROR, { message, errors });
     });
 };
 

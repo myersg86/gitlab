@@ -48,7 +48,7 @@ export default {
   data() {
     return {
       name: '',
-      errors: { name: [] },
+      errors: {},
     };
   },
   computed: {
@@ -59,10 +59,10 @@ export default {
       selectedValueStream: 'selectedValueStream',
     }),
     isValid() {
-      return !this.errors?.name.length;
+      return !this.errors.name?.length;
     },
     invalidFeedback() {
-      return this.errors?.name.join('\n');
+      return this.errors.name?.join('\n');
     },
     hasValueStreams() {
       return Boolean(this.data.length);
@@ -73,10 +73,21 @@ export default {
     selectedValueStreamId() {
       return this.selectedValueStream?.id || null;
     },
+    hasFormErrors() {
+      const { initialFormErrors } = this;
+      return Boolean(Object.keys(initialFormErrors).length);
+    },
+  },
+  watch: {
+    initialFormErrors(newErrors = {}) {
+      this.errors = {
+        ...newErrors,
+      };
+    },
   },
   mounted() {
     const { initialFormErrors } = this;
-    if (Object.keys(initialFormErrors).length) {
+    if (this.hasFormErrors) {
       this.errors = initialFormErrors;
     } else {
       this.onHandleInput();
@@ -87,10 +98,12 @@ export default {
     onSubmit() {
       const { name } = this;
       return this.createValueStream({ name }).then(() => {
-        this.$toast.show(sprintf(__("'%{name}' Value Stream created"), { name }), {
-          position: 'top-center',
-        });
-        this.name = '';
+        if (!this.hasFormErrors) {
+          this.$toast.show(sprintf(__("'%{name}' Value Stream created"), { name }), {
+            position: 'top-center',
+          });
+          this.name = '';
+        }
       });
     },
     onHandleInput: debounce(function debouncedValidation() {

@@ -882,7 +882,7 @@ describe('Cycle analytics actions', () => {
     });
   });
 
-  describe('createValueStream', () => {
+  describe.only('createValueStream', () => {
     const payload = { name: 'cool value stream' };
 
     beforeEach(() => {
@@ -909,8 +909,10 @@ describe('Cycle analytics actions', () => {
       });
     });
 
-    describe('with errors', () => {
-      const resp = { message: 'error', errors: {} };
+    describe.only('with errors', () => {
+      const errors = { name: ['is taken'] };
+      const message = { message: 'error' };
+      const resp = { message, payload: { errors } };
       beforeEach(() => {
         mock.onPost(endpoints.valueStreamData).replyOnce(httpStatusCodes.NOT_FOUND, resp);
       });
@@ -924,7 +926,7 @@ describe('Cycle analytics actions', () => {
             { type: types.REQUEST_CREATE_VALUE_STREAM },
             {
               type: types.RECEIVE_CREATE_VALUE_STREAM_ERROR,
-              payload: { data: { ...payload }, ...resp },
+              payload: { message, errors },
             },
           ],
           [],
