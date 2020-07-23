@@ -8,6 +8,7 @@ class ClusterSerializer < BaseSerializer
     represent(resource, {
       only: [
         :cluster_type,
+        :connection_error,
         :enabled,
         :environment_scope,
         :gitlab_managed_apps_logs_path,

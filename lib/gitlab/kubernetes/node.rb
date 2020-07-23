@@ -14,16 +14,24 @@ module Gitlab
         end
       end
 
+      def all_with_errors
+        { nodes: all, connection_error: @connection_error }
+      end
+
       private
 
       attr_reader :cluster
 
       def nodes_from_cluster
-        graceful_request { cluster.kubeclient.get_nodes }
+        request = graceful_request { cluster.kubeclient.get_nodes }
+        update_connection_error(request)
+        request
       end
 
       def nodes_metrics_from_cluster
-        graceful_request { cluster.kubeclient.metrics_client.get_nodes }
+        request = graceful_request { cluster.kubeclient.metrics_client.get_nodes }
+        update_connection_error(request)
+        request
       end
 
       def nodes
@@ -72,6 +80,10 @@ module Gitlab
             'memory' => node_metrics.usage.memory
           }
         }
+      end
+
+      def update_connection_error(request)
+        @connection_error = request[:connection_error] if request[:connection_error]
       end
     end
   end

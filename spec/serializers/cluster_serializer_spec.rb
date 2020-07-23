@@ -11,6 +11,7 @@ RSpec.describe ClusterSerializer do
     it 'serializes attrs correctly' do
       is_expected.to contain_exactly(
         :cluster_type,
+        :connection_error,
         :enabled,
         :environment_scope,
         :gitlab_managed_apps_logs_path,

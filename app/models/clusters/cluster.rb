@@ -218,6 +218,12 @@ module Clusters
       provider&.status_name || connection_status.presence || :created
     end
 
+    def connection_error
+      with_reactive_cache do |data|
+        data[:connection_error]
+      end
+    end
+
     def connection_status
       with_reactive_cache do |data|
         data[:connection_status]
@@ -233,9 +239,14 @@ module Clusters
     def calculate_reactive_cache
       return unless enabled?
 
-      gitlab_kubernetes_nodes = Gitlab::Kubernetes::Node.new(self)
+      connection_data = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
+      node_data = Gitlab::Kubernetes::Node.new(self).all_with_errors
 
-      { connection_status: retrieve_connection_status, nodes: gitlab_kubernetes_nodes.all.presence }
+      {
+        connection_status: connection_data[:status],
+        nodes: node_data[:nodes].presence,
+        connection_error: node_data[:connection_error] || connection_data[:connection_error]
+      }
     end
 
     def persisted_applications

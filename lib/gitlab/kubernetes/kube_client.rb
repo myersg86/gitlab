@@ -116,15 +116,15 @@ module Gitlab
       def self.graceful_request(cluster_id)
         { status: :connected, response: yield }
       rescue *Gitlab::Kubernetes::Errors::CONNECTION
-        { status: :unreachable }
+        { status: :unreachable, connection_error: :kubernetes_connection_error }
       rescue *Gitlab::Kubernetes::Errors::AUTHENTICATION
-        { status: :authentication_failure }
+        { status: :authentication_failure, connection_error: :kubernetes_authentication_error }
       rescue Kubeclient::HttpError => e
-        { status: kubeclient_error_status(e.message) }
+        { status: kubeclient_error_status(e.message), connection_error: :kubeclient_http_error }
       rescue => e
         Gitlab::ErrorTracking.track_exception(e, cluster_id: cluster_id)
 
-        { status: :unknown_failure }
+        { status: :unknown_failure, connection_error: :unknown_error }
       end
 
       # KubeClient uses the same error class
