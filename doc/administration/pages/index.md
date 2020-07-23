@@ -613,7 +613,7 @@ gitlab_pages['domain_config_source'] = nil
 ```
 
 The default value is `nil`, however, GitLab Pages will default to using `disk`.
-This is the only available value before [GitLab API-based configuration](#GitLab-API-based-configuration)
+This is the only available value before [GitLab API-based configuration](#gitlab-api-based-configuration)
 is officially supported.
 
 When `domain_config_source` is set to `nil` or `disk`, the Pages daemon will look in the [shared pages directory](#change-storage-path)
@@ -653,7 +653,7 @@ on how to enable API-based configuration.
 GitLab Pages uses a [polling mechanism](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/304)
 to get the status of the internal Pages API by calling the `/api/v4/internal/pages/status` endpoint.
 
-This will help you [troubleshoot connections](#Failed-to-connect-to-the-GitLab-API) between GitLab Pages and the GitLab API.
+This will help you [troubleshoot connections](#failed-to-connect-to-the-gitlab-api) between GitLab Pages and the GitLab API.
 
 Ensuring that the API is available to GitLab Pages will allow you to
 [source domain configuration from the GitLab API](https://gitlab.com/gitlab-org/gitlab/-/issues/218357)
@@ -757,7 +757,7 @@ If you've customized the Pages storage path, adjust the command above to use you
 
 ### Failed to connect to the GitLab API
 
-If [GitLab API status polling](#GitLab-API-status-polling) is available,
+If [GitLab API status polling](#gitlab-api-status-polling) is available,
 you are [Running GitLab Pages on a separate server](#running-gitlab-pages-on-a-separate-server),
 and you see the following error message
 
