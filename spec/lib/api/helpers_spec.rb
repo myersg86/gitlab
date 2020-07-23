@@ -230,4 +230,48 @@ RSpec.describe API::Helpers do
       end
     end
   end
+
+  describe '#destroy_conditionally!' do
+
+    context 'valid if_unmodified_since'
+      let(:project) { create(:project) }
+      it 'returns 204' do
+        puts "not working yet"
+       # subject.destroy_conditionally!(project)
+
+        #expect { subject.destroy_conditionally!(project) }.to raise_error('status 204')
+      end
+
+  end
+
+  describe "#check_unmodified_since!" do
+    context 'valid if_unmodified_since' do
+      let(:project) { create(:project) }
+      it 'does the thing ' do
+        last_modified = Time.now
+        puts last_modified
+        res = subject.check_unmodified_since!(last_modified)
+
+        expect(res).to eq(nil)
+      end
+
+    end
+    context 'invalid if_unmodified_since' do
+      it 'returns 412' do
+        last_modified = Time.now
+        res = ""
+
+        travel_to(Time.parse('20170303T133952Z')) do
+          res = subject.check_unmodified_since!(last_modified)
+        end
+
+        expect(res).to eq('412)')
+
+
+
+
+      end
+    end
+
+  end
 end
