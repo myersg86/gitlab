@@ -186,6 +186,9 @@ module EE
                                                                 finish: approval_merge_request_rule_maximum_id),
                 merge_requests_with_optional_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_optional, :merge_request_id),
                 merge_requests_with_required_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_required, :merge_request_id),
+                merge_requests_with_overridden_approval_rules: distinct_count(::MergeRequest.with_overridden_project_rules,
+                                                                              start: mr_minimum_id,
+                                                                              finish: mr_maximum_id),
                 projects_mirrored_with_pipelines_enabled: count(::Project.mirrored_with_enabled_pipelines),
                 projects_reporting_ci_cd_back_to_github: count(::GithubService.without_defaults.active),
                 projects_with_packages: distinct_count(::Packages::Package, :project_id),
@@ -238,6 +241,9 @@ module EE
                                                             finish: approval_merge_request_rule_maximum_id),
             merge_requests_with_optional_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_optional.where(time_period), :merge_request_id),
             merge_requests_with_required_codeowners: distinct_count(::ApprovalMergeRequestRule.code_owner_approval_required.where(time_period), :merge_request_id),
+            merge_requests_with_overridden_approval_rules: distinct_count(::MergeRequest.where(time_period).with_overridden_project_rules,
+                                                                          start: mr_minimum_id,
+                                                                          finish: mr_maximum_id),
             projects_imported_from_github: distinct_count(::Project.github_imported.where(time_period), :creator_id),
             projects_with_repositories_enabled: distinct_count(::Project.with_repositories_enabled.where(time_period),
                                                                :creator_id,
@@ -359,6 +365,18 @@ module EE
         def approval_merge_request_rule_maximum_id
           strong_memoize(:approval_merge_request_rule_maximum_id) do
             ::ApprovalMergeRequestRule.maximum(:id)
+          end
+        end
+
+        def mr_minimum_id
+          strong_memoize(:mr_minimum_id) do
+            ::MergeRequest.minimum(:id)
+          end
+        end
+
+        def mr_maximum_id
+          strong_memoize(:mr_maximum_id) do
+            ::MergeRequest.maximum(:id)
           end
         end
 

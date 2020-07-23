@@ -41,6 +41,7 @@ class ApprovalMergeRequestRule < ApplicationRecord
   has_and_belongs_to_many :approved_approvers, class_name: 'User', join_table: :approval_merge_request_rules_approved_approvers
   has_one :approval_merge_request_rule_source
   has_one :approval_project_rule, through: :approval_merge_request_rule_source
+  has_one :project, through: :approval_project_rule
   alias_method :source_rule, :approval_project_rule
 
   validate :validate_approval_project_rule
@@ -65,6 +66,12 @@ class ApprovalMergeRequestRule < ApplicationRecord
   scope :with_head_pipeline, -> { includes(merge_request: [:head_pipeline]) }
   scope :open_merge_requests, -> { merge(MergeRequest.opened) }
   scope :for_checks_that_can_be_refreshed, -> { license_compliance.open_merge_requests.with_head_pipeline }
+  scope :with_groups_and_project_rule, -> { left_joins(:groups, :project, approval_project_rule: [:groups]) }
+  scope :with_modifiable_project_rules, -> { with_groups_and_project_rule.where(projects: { disable_overriding_approvers_per_merge_request: [false, nil] }) }
+  scope :different_name_than_project_rule, -> { with_modifiable_project_rules.where.not('approval_merge_request_rules.name = approval_project_rules.name') }
+  scope :different_required_approvals_than_project_rule, -> { with_modifiable_project_rules.where.not('approval_merge_request_rules.approvals_required = approval_project_rules.approvals_required') }
+  scope :different_groups_than_project_rule, -> { with_modifiable_project_rules.where('(approval_merge_request_rules_groups.id IS NULL OR approval_project_rules_groups.id IS NULL) AND approval_project_rules.id IS NOT NULL') }
+  scope :different_from_project_rule, -> { different_name_than_project_rule .or(different_required_approvals_than_project_rule) .or(different_groups_than_project_rule) }
 
   def self.find_or_create_code_owner_rule(merge_request, entry)
     merge_request.approval_rules.code_owner.where(name: entry.pattern).where(section: entry.section).first_or_create do |rule|

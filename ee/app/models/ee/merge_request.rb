@@ -19,6 +19,8 @@ module EE
       has_many :approver_users, through: :approvers, source: :user
       has_many :approver_groups, as: :target, dependent: :delete_all # rubocop:disable Cop/ActiveRecordDependent
       has_many :approval_rules, class_name: 'ApprovalMergeRequestRule', inverse_of: :merge_request
+      has_many :approval_merge_request_rule_sources, through: :approval_rules
+      has_many :approval_project_rules, through: :target_project, source: :approval_rules
       has_one :merge_train, inverse_of: :merge_request, dependent: :destroy # rubocop:disable Cop/ActiveRecordDependent
 
       has_many :blocks_as_blocker,
@@ -54,6 +56,14 @@ module EE
           .group(:id)
           .having("COUNT(users.id) = ?", usernames.size)
       end
+      scope :with_rules_and_sources, -> { left_outer_joins(:approval_rules, :approval_merge_request_rule_sources, :approval_project_rules) }
+      scope :with_deleted_project_rules, -> do
+        with_rules_and_sources.merge(ApprovalMergeRequestRuleSource.where(id: nil)).merge(ApprovalProjectRule.where.not(id: nil))
+      end
+      scope :with_modified_project_rules, -> do
+        with_rules_and_sources.merge(ApprovalMergeRequestRule.different_from_project_rule)
+      end
+      scope :with_overridden_project_rules, -> { with_deleted_project_rules.merge(with_modified_project_rules) }
 
       accepts_nested_attributes_for :approval_rules, allow_destroy: true
 

@@ -677,6 +677,8 @@ module Gitlab
         clear_memoization(:issue_maximum_id)
         clear_memoization(:user_minimum_id)
         clear_memoization(:user_maximum_id)
+        clear_memoization(:mr_minimum_id)
+        clear_memoization(:mr_maximum_id)
         clear_memoization(:unique_visit_service)
         clear_memoization(:deployment_minimum_id)
         clear_memoization(:deployment_maximum_id)
