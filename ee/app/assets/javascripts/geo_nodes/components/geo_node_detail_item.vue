@@ -27,6 +27,11 @@ export default {
       type: String,
       required: true,
     },
+    itemName: {
+      type: String,
+      required: false,
+      default: '',
+    },
     cssClass: {
       type: String,
       required: false,
@@ -43,7 +48,8 @@ export default {
     },
     itemValueType: {
       type: String,
-      required: true,
+      required: false,
+      default: VALUE_TYPE.GRAPH,
     },
     customType: {
       type: String,
@@ -96,6 +102,7 @@ export default {
         v-if="isValueTypeGraph"
         :item-enabled="itemEnabled"
         :item-title="itemTitle"
+        :item-name="itemName"
         :item-value="itemValue"
         :details-path="detailsPath"
         class="mt-1"

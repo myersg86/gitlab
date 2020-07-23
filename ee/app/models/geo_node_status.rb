@@ -34,6 +34,7 @@ class GeoNodeStatus < ApplicationRecord
   RESOURCE_STATUS_FIELDS = %w(
     repository_verification_enabled
     repositories_replication_enabled
+    repositories_count
     repositories_synced_count
     repositories_failed_count
     lfs_objects_replication_enabled
@@ -44,6 +45,7 @@ class GeoNodeStatus < ApplicationRecord
     attachments_count
     attachments_synced_count
     attachments_failed_count
+    wikis_count
     wikis_synced_count
     wikis_failed_count
     job_artifacts_replication_enabled
