@@ -1,3 +1,8 @@
+- if should_show_invite_banner?
+  = content_for :invite_banner do
+    .js-invite-your-teammates{ data: { svg_path: image_path('illustrations/merge_requests.svg'),
+       group_members_path: group_group_members_path(@group) }}
+
 - breadcrumb_title _("Details")
 - page_title _("Groups")
 - @content_class = "limit-container-width" unless fluid_layout
