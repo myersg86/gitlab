@@ -41,14 +41,12 @@ export default {
       validator: prop => prop.endsWith('/'),
     },
   },
-
   data() {
     return {
       saveable: false,
       parsedSource: parseSourceFile(this.content),
       editorMode: EDITOR_TYPES.wysiwyg,
       isModified: false,
-      formatter,
     };
   },
   imageRepository: imageRepository(),
@@ -67,14 +65,14 @@ export default {
     },
     onModeChange(mode) {
       this.editorMode = mode;
-      const formattedContent = this.formatter(this.editableContent);
+      const formattedContent = formatter(this.editableContent);
       this.$refs.editor.resetInitialValue(formattedContent);
     },
     onUploadImage({ file, imageUrl }) {
       this.$options.imageRepository.add(file, imageUrl);
     },
     onSubmit() {
-      const formattedContent = this.formatter(this.parsedSource.content());
+      const formattedContent = formatter(this.parsedSource.content());
       this.$emit('submit', {
         content: formattedContent,
         images: this.$options.imageRepository.getAll(),

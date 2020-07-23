@@ -15,8 +15,11 @@ import {
   returnUrl,
 } from '../mock_data';
 
+jest.mock('~/static_site_editor/services/formatter', () => jest.fn(str => `${str} formatted`));
+
 describe('~/static_site_editor/components/edit_area.vue', () => {
   let wrapper;
+  const formattedContent = `${content} formatted`;
   const savingChanges = true;
   const newBody = `new ${body}`;
 
@@ -103,26 +106,32 @@ describe('~/static_site_editor/components/edit_area.vue', () => {
   });
 
   describe('when the mode changes', () => {
+    let resetInitialValue;
+
     const setInitialMode = mode => {
       wrapper.setData({ editorMode: mode });
     };
 
+    const buildResetInitialValue = () => {
+      resetInitialValue = jest.fn();
+      findRichContentEditor().setMethods({ resetInitialValue });
+    };
+
     afterEach(() => {
       setInitialMode(EDITOR_TYPES.wysiwyg);
+      resetInitialValue = null;
     });
 
     it.each`
       initialMode              | targetMode               | resetValue
-      ${EDITOR_TYPES.wysiwyg}  | ${EDITOR_TYPES.markdown} | ${content}
-      ${EDITOR_TYPES.markdown} | ${EDITOR_TYPES.wysiwyg}  | ${body}
+      ${EDITOR_TYPES.wysiwyg}  | ${EDITOR_TYPES.markdown} | ${formattedContent}
+      ${EDITOR_TYPES.markdown} | ${EDITOR_TYPES.wysiwyg}  | ${`${body} formatted`}
     `(
       'sets editorMode from $initialMode to $targetMode',
       ({ initialMode, targetMode, resetValue }) => {
         setInitialMode(initialMode);
+        buildResetInitialValue();
 
-        const resetInitialValue = jest.fn();
-
-        findRichContentEditor().setMethods({ resetInitialValue });
         findRichContentEditor().vm.$emit('modeChange', targetMode);
 
         expect(resetInitialValue).toHaveBeenCalledWith(resetValue);
@@ -131,23 +140,19 @@ describe('~/static_site_editor/components/edit_area.vue', () => {
     );
 
     it('should format the content', () => {
-      setInitialMode(EDITOR_TYPES.wysiwyg);
-      wrapper.setData({ formatter: jest.fn() });
+      buildResetInitialValue();
 
-      findRichContentEditor().setMethods({ resetInitialValue: jest.fn() });
       findRichContentEditor().vm.$emit('modeChange', EDITOR_TYPES.markdown);
 
-      expect(wrapper.vm.formatter).toHaveBeenCalledTimes(1);
+      expect(resetInitialValue).toHaveBeenCalledWith(formattedContent);
     });
   });
 
   describe('when content is submitted', () => {
     it('should format the content', () => {
-      wrapper.setData({ formatter: jest.fn() });
+      findPublishToolbar().vm.$emit('submit', content);
 
-      findPublishToolbar().vm.$emit('submit', 'Some content');
-
-      expect(wrapper.vm.formatter).toHaveBeenCalledTimes(1);
+      expect(wrapper.emitted('submit')[0][0].content).toBe(formattedContent);
     });
   });
 });
