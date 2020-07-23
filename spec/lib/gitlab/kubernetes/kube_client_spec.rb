@@ -81,12 +81,12 @@ RSpec.describe Gitlab::Kubernetes::KubeClient do
       using RSpec::Parameterized::TableSyntax
 
       where(:error, :connection_status, :error_status) do
-        SocketError                     | :unreachable                     | :kubernetes_connection_error
-        OpenSSL::X509::CertificateError | :authentication_failure          | :kubernetes_authentication_error
-        StandardError                   | :unknown_failure                 | :unknown_error
-        Kubeclient::HttpError.new(408, "timed out", nil) | :unreachable    | :kubeclient_http_error
-        Kubeclient::HttpError.new(408, "timeout", nil) | :unreachable      | :kubeclient_http_error
-        Kubeclient::HttpError.new(408, "", nil) | :authentication_failure  | :kubeclient_http_error
+        SocketError                                      | :unreachable            | :kubernetes_connection_error
+        OpenSSL::X509::CertificateError                  | :authentication_failure | :kubernetes_authentication_error
+        StandardError                                    | :unknown_failure        | :unknown_error
+        Kubeclient::HttpError.new(408, "timed out", nil) | :unreachable            | :kubeclient_http_error
+        Kubeclient::HttpError.new(408, "timeout", nil)   | :unreachable            | :kubeclient_http_error
+        Kubeclient::HttpError.new(408, "", nil)          | :authentication_failure | :kubeclient_http_error
       end
 
       with_them do

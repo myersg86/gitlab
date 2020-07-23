@@ -5,10 +5,10 @@ require 'spec_helper'
 RSpec.describe Gitlab::Kubernetes::Node do
   include KubernetesHelpers
 
-  describe '#all' do
-    let(:cluster) { create(:cluster, :provided_by_user, :group) }
-    let(:expected_nodes) { [] }
+  let(:cluster) { create(:cluster, :provided_by_user, :group) }
+  let(:expected_nodes) { [kube_node.merge(kube_node_metrics)] }
 
+  describe '#all' do
     before do
       stub_kubeclient_nodes_and_nodes_metrics(cluster.platform.api_url)
     end
@@ -16,36 +16,40 @@ RSpec.describe Gitlab::Kubernetes::Node do
     subject { described_class.new(cluster).all }
 
     context 'when connection to the cluster is successful' do
-      let(:expected_nodes) { [kube_node.merge(kube_node_metrics)] }
-
       it { is_expected.to eq(expected_nodes) }
     end
+  end
 
-    context 'when cluster cannot be reached' do
+  describe '#all_with_errors' do
+    let(:empty_nodes) { [] }
+
+    subject { described_class.new(cluster).all_with_errors }
+
+    context 'when connection to the cluster is successful' do
       before do
-        allow(cluster.kubeclient.core_client).to receive(:discover)
-          .and_raise(SocketError)
+        stub_kubeclient_nodes_and_nodes_metrics(cluster.platform.api_url)
       end
 
-      it { is_expected.to eq(expected_nodes) }
+      it { is_expected.to eq({ nodes: expected_nodes, connection_error: nil }) }
     end
 
-    context 'when cluster cannot be authenticated to' do
-      before do
-        allow(cluster.kubeclient.core_client).to receive(:discover)
-          .and_raise(OpenSSL::X509::CertificateError.new('Certificate error'))
+    context 'connection error' do
+      using RSpec::Parameterized::TableSyntax
+
+      where(:error, :error_status) do
+        SocketError                             | :kubernetes_connection_error
+        OpenSSL::X509::CertificateError         | :kubernetes_authentication_error
+        StandardError                           | :unknown_error
+        Kubeclient::HttpError.new(408, "", nil) | :kubeclient_http_error
       end
 
-      it { is_expected.to eq(expected_nodes) }
-    end
+      with_them do
+        before do
+          allow(cluster.kubeclient).to receive(:get_nodes).and_raise(error)
+        end
 
-    context 'when Kubeclient::HttpError is raised' do
-      before do
-        allow(cluster.kubeclient.core_client).to receive(:discover)
-          .and_raise(Kubeclient::HttpError.new(403, 'Forbidden', nil))
+        it { is_expected.to eq({ nodes: empty_nodes, connection_error: error_status }) }
       end
-
-      it { is_expected.to eq(expected_nodes) }
     end
 
     context 'when an uncategorised error is raised' do
@@ -54,7 +58,7 @@ RSpec.describe Gitlab::Kubernetes::Node do
           .and_raise(StandardError)
       end
 
-      it { is_expected.to eq(expected_nodes) }
+      it { is_expected.to eq({ nodes: empty_nodes, connection_error: :unknown_error }) }
 
       it 'notifies Sentry' do
         expect(Gitlab::ErrorTracking).to receive(:track_exception)
