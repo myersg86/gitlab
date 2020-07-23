@@ -356,5 +356,5 @@ export const fetchValueStreams = ({ commit, dispatch, getters, state }) => {
         commit(types.RECEIVE_VALUE_STREAMS_ERROR, data);
       });
   }
-  return Promise.resolve();
+  return dispatch('fetchGroupStagesAndEvents');
 };

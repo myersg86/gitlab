@@ -68,7 +68,6 @@ export const receiveCreateStageError = (
 export const createStage = ({ dispatch, rootState, rootGetters }, data) => {
   const {
     selectedGroup: { fullPath },
-    featureFlags: { hasCreateMultipleValueStreams = false },
   } = rootState;
 
   const { currentValueStreamId } = rootGetters;
