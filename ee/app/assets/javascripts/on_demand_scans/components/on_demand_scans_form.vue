@@ -15,7 +15,7 @@ import {
   GlSprintf,
   GlTooltipDirective,
 } from '@gitlab/ui';
-import runDastScanMutation from '../graphql/run_dast_scan.mutation.graphql';
+import runDastScanMutation from '../graphql/dast_on_demand_scan_create.mutation.graphql';
 import { SCAN_TYPES } from '../constants';
 
 const initField = value => ({

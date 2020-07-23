@@ -3,7 +3,7 @@ import { within } from '@testing-library/dom';
 import { GlForm } from '@gitlab/ui';
 import { TEST_HOST } from 'helpers/test_constants';
 import OnDemandScansForm from 'ee/on_demand_scans/components/on_demand_scans_form.vue';
-import runDastScanMutation from 'ee/on_demand_scans/graphql/run_dast_scan.mutation.graphql';
+import runDastScanMutation from 'ee/on_demand_scans/graphql/dast_on_demand_scan_create.mutation.graphql';
 import { redirectTo } from '~/lib/utils/url_utility';
 
 const helpPagePath = `${TEST_HOST}/application_security/dast/index#on-demand-scans`;
