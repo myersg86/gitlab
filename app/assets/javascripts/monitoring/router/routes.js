@@ -15,6 +15,7 @@ export default [
     name: PANEL_NEW_PAGE,
     path: '/:dashboard(.*)?/panel/new',
     component: PanelNewPage,
+    props: route => ({ yml: route.query.yml }),
   },
   {
     name: DASHBOARD_PAGE,
