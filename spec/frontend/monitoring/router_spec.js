@@ -102,16 +102,23 @@ describe('Monitoring router', () => {
 
   describe('supports URLs to visit new panel page', () => {
     it.each`
-      path                                                     | currentDashboard
-      ${'/panel/new'}                                          | ${undefined}
-      ${'/dashboard.yml/panel/new'}                            | ${'dashboard.yml'}
-      ${'/config/prometheus/common_metrics.yml/panel/new'}     | ${'config/prometheus/common_metrics.yml'}
-      ${'/config%2Fprometheus%2Fcommon_metrics.yml/panel/new'} | ${'config/prometheus/common_metrics.yml'}
-    `('"$path" renders page with dashboard "$currentDashboard"', ({ path, currentDashboard }) => {
-      const wrapper = createWrapper(BASE_PATH, path);
+      path                                                                     | currentDashboard                          | props
+      ${'/panel/new'}                                                          | ${undefined}                              | ${{}}
+      ${'/dashboard.yml/panel/new'}                                            | ${'dashboard.yml'}                        | ${{}}
+      ${'/dashboard.yml/panel/new?yml=yml-content'}                            | ${'dashboard.yml'}                        | ${{ yml: 'yml-content' }}
+      ${'/config/prometheus/common_metrics.yml/panel/new'}                     | ${'config/prometheus/common_metrics.yml'} | ${{}}
+      ${'/config/prometheus/common_metrics.yml/panel/new?yml=yml-content'}     | ${'config/prometheus/common_metrics.yml'} | ${{ yml: 'yml-content' }}
+      ${'/config%2Fprometheus%2Fcommon_metrics.yml/panel/new'}                 | ${'config/prometheus/common_metrics.yml'} | ${{}}
+      ${'/config%2Fprometheus%2Fcommon_metrics.yml/panel/new?yml=yml-content'} | ${'config/prometheus/common_metrics.yml'} | ${{ yml: 'yml-content' }}
+    `(
+      '"$path" renders page with dashboard "$currentDashboard"',
+      ({ path, currentDashboard, props }) => {
+        const wrapper = createWrapper(BASE_PATH, path);
 
-      expect(wrapper.vm.$route.params.dashboard).toBe(currentDashboard);
-      expect(wrapper.find(PanelNewPage).exists()).toBe(true);
-    });
+        expect(wrapper.vm.$route.params.dashboard).toBe(currentDashboard);
+        expect(wrapper.find(PanelNewPage).exists()).toBe(true);
+        expect(wrapper.find(PanelNewPage).props()).toMatchObject(props);
+      },
+    );
   });
 });
