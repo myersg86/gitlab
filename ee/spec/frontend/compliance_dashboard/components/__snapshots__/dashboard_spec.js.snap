@@ -63,6 +63,8 @@ exports[`ComplianceDashboard component when there are merge requests matches the
         approvers=""
       />
        
+      <!---->
+       
       <span
         class="gl-text-gray-700"
       >
@@ -95,6 +97,8 @@ exports[`ComplianceDashboard component when there are merge requests matches the
       <approvers-stub
         approvers=""
       />
+       
+      <!---->
        
       <span
         class="gl-text-gray-700"

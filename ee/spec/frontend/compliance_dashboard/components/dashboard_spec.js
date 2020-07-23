@@ -4,7 +4,9 @@ import ComplianceDashboard from 'ee/compliance_dashboard/components/dashboard.vu
 import ApprovalStatus from 'ee/compliance_dashboard/components/approval_status.vue';
 import PipelineStatus from 'ee/compliance_dashboard/components/pipeline_status.vue';
 import Approvers from 'ee/compliance_dashboard/components/approvers.vue';
-import { createMergeRequests } from '../mock_data';
+import BranchDetails from 'ee/compliance_dashboard/components/branch_details.vue';
+
+import { createMergeRequests, createPipelineStatus } from '../mock_data';
 
 describe('ComplianceDashboard component', () => {
   let wrapper;
@@ -14,11 +16,12 @@ describe('ComplianceDashboard component', () => {
   const findApprovalStatus = () => wrapper.find(ApprovalStatus);
   const findPipelineStatus = () => wrapper.find(PipelineStatus);
   const findApprovers = () => wrapper.find(Approvers);
+  const findBranchDetails = () => wrapper.find(BranchDetails);
 
-  const createComponent = (props = {}, options = {}) => {
+  const createComponent = (props = {}, mergeRequestProps = {}) => {
     return shallowMount(ComplianceDashboard, {
       propsData: {
-        mergeRequests: createMergeRequests({ count: 2, options }),
+        mergeRequests: createMergeRequests({ count: 2, props: mergeRequestProps }),
         isLastPage: false,
         emptyStateSvgPath: 'empty.svg',
         ...props,
@@ -55,7 +58,7 @@ describe('ComplianceDashboard component', () => {
       });
 
       it('renders if there is an approval status', () => {
-        wrapper = createComponent({}, { approvalStatus: 'success' });
+        wrapper = createComponent({}, { approval_status: 'success' });
         expect(findApprovalStatus().exists()).toBe(true);
       });
     });
@@ -66,13 +69,30 @@ describe('ComplianceDashboard component', () => {
       });
 
       it('renders if there is a pipeline', () => {
-        wrapper = createComponent({}, { addPipeline: true });
+        wrapper = createComponent({}, { pipeline_status: createPipelineStatus('success') });
         expect(findPipelineStatus().exists()).toBe(true);
       });
     });
 
     it('renders the approvers list', () => {
       expect(findApprovers().exists()).toBe(true);
+    });
+
+    describe('branch details', () => {
+      it('does not render if there are no branch details', () => {
+        expect(findBranchDetails().exists()).toBe(false);
+      });
+
+      it('renders if there are branch details', () => {
+        wrapper = createComponent(
+          {},
+          {
+            target_branch: 'master',
+            source_branch: 'feature',
+          },
+        );
+        expect(findBranchDetails().exists()).toBe(true);
+      });
     });
 
     it('renders the "merged at" time', () => {
