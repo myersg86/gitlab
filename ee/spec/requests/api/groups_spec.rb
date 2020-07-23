@@ -253,8 +253,8 @@ RSpec.describe API::Groups do
 
       context 'authenticated as group owner' do
         where(:feature_enabled, :prevent_forking_outside_group, :result) do
-          false | false | nil
-          false | true  | nil
+          false | false | false
+          false | true  | false
           true  | false | false
           true  | true  | true
         end
