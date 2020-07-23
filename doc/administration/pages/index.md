@@ -204,6 +204,7 @@ control over how the Pages daemon runs and serves content in your environment.
 | `external_https` |  Configure Pages to bind to one or more secondary IP addresses, serving HTTPS requests. Multiple addresses can be given as an array, along with exact ports, for example `['1.2.3.4', '1.2.3.5:8063']`. Sets value for `listen_https`.
 | `gitlab_client_http_timeout`  | GitLab API HTTP client connection timeout in seconds (default: 10s).
 | `gitlab_client_jwt_expiry`  | JWT Token expiry time in seconds (default: 30s).
+| `domain_config_source` | Domain configuration source (default: 'disk')
 | `gitlab_id` |  The OAuth application public ID. Leave blank to automatically fill when Pages authenticates with GitLab.
 | `gitlab_secret` |  The OAuth application secret. Leave blank to automatically fill when Pages authenticates with GitLab.
 | `gitlab_server` |  Server to use for authentication when access control is enabled; defaults to GitLab `external_url`.
@@ -600,6 +601,39 @@ configuring your DNS server to return multiple IPs for your Pages server,
 configuring a load balancer to work at the IP level, and so on. If you wish to
 set up GitLab Pages on multiple servers, perform the above procedure for each
 Pages server.
+
+## Domain source configuration
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/217912) in GitLab 13.3.
+
+Domain source configuration allows GitLab Pages to get domain information from different sources. The default vaule
+is `disk`. This means that GitLab Pages will look in the [shared pages directory](#change-storage-path) for the requested domain and
+will obtain the configuration from the `config.json` file inside the project's directory. For example, to source
+the domain configuration for `example.gitlab.io`; GitLab Pages will look for this file under
+`/path/to/shared/pages/example/example.gitlab.io/config.json`. The file contains information about the
+[domain and custom domain](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/internal/source/disk/config.go#L21)
+configurations (if any).
+
+All the domains availabe on self-managed instances are loaded when the
+[Pages daemon starts](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/app.go#L439).
+However, this is not efficient. In [GitLab Pages Architecture Updates](https://gitlab.com/groups/gitlab-org/-/epics/1316)
+the team is currently working on improving this and other features.
+
+### GitLab API-based configuration
+
+> [Introduced](https://gitlab.com/gitlab-org/gitlab-pages/-/issues/282) in GitLab 12.10
+
+On [`gitlab.com`](https://gitlab.com), the Pages daemon sources the domain configuration via an internal API endpoint
+`/api/v4/internal/pages?domain=example.gitlab.io`. This is done per domain on demand and the configuration is cached
+in the daemon for some time to speed up serving content from a Pages node.
+
+For self-managed instances, this mechanism will be officially supported when
+[source domain configuration from the GitLab API](https://gitlab.com/gitlab-org/gitlab/-/issues/218357)
+is delivered.
+
+If you would like to try using the API, this issue contains a
+[potential guide](https://gitlab.com/gitlab-org/gitlab/-/issues/28298#potential-workaround)
+on how to enable API-based configuration.
 
 ## Backup
 
