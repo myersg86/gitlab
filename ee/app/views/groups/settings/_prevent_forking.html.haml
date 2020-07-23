@@ -1,4 +1,4 @@
-- return unless can?(current_user, :change_prevent_group_forking, group)
+- return unless can_change_prevent_forking?(current_user, group)
 %h5= _('Prevent project forking outside current group')
 
 .form-group.gl-mb-3

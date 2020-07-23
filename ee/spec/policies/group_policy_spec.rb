@@ -654,6 +654,12 @@ RSpec.describe GroupPolicy do
         let(:current_user) { owner }
 
         it { is_expected.to be_allowed(:change_prevent_group_forking) }
+
+        context 'when group has parent' do
+          let(:group) { create(:group, :private, parent: create(:group)) }
+
+          it { is_expected.to be_disallowed(:change_prevent_group_forking) }
+        end
       end
 
       context 'with maintainer' do

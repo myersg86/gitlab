@@ -47,6 +47,7 @@ module EE
       has_one :deletion_schedule, class_name: 'GroupDeletionSchedule'
       delegate :deleting_user, :marked_for_deletion_on, to: :deletion_schedule, allow_nil: true
       delegate :enforced_group_managed_accounts?, :enforced_sso?, to: :saml_provider, allow_nil: true
+      delegate :prevent_forking_outside_group?, to: :namespace_settings
 
       has_one :group_wiki_repository
 
@@ -228,12 +229,6 @@ module EE
 
     def group_project_template_available?
       feature_available?(:group_project_templates)
-    end
-
-    def prevent_forking_outside_group?
-      return false unless feature_available?(:group_forking_protection)
-
-      root_ancestor.saml_provider&.prohibited_outer_forks? || root_ancestor.namespace_settings&.prevent_forking_outside_group
     end
 
     def actual_size_limit
