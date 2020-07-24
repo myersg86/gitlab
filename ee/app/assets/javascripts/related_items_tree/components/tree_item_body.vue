@@ -145,7 +145,7 @@ export default {
 <template>
   <div class="card card-slim sortable-row gl-flex-grow-1">
     <div
-      class="item-body card-body gl-display-flex gl-align-items-center pr-1 pl-2 py-1"
+      class="item-body card-body gl-display-flex gl-align-items-center gl-pr-2 gl-pl-3 gl-py-2"
       :class="{
         'item-logged-out': !userSignedIn,
         'item-closed': isClosed,
@@ -155,7 +155,7 @@ export default {
         class="item-contents gl-display-flex gl-align-items-center gl-flex-wrap gl-flex-grow-1 flex-xl-nowrap"
       >
         <div class="item-title-wrapper gl-flex-grow-1 gl-mr-3">
-          <div class="item-title gl-display-flex gl-mb-0 pt-1 pb-1">
+          <div class="item-title gl-display-flex gl-mb-0 gl-pt-2 gl-pb-2">
             <gl-icon
               ref="stateIconMd"
               class="gl-display-block gl-mr-3"
@@ -190,7 +190,7 @@ export default {
           </div>
 
           <div
-            class="item-meta gl-display-flex gl-flex-wrap mt-xl-0 flex-xl-nowrap gl-align-items-center pb-1 pt-1 gl-ml-6"
+            class="item-meta gl-display-flex gl-flex-wrap mt-xl-0 flex-xl-nowrap gl-align-items-center gl-pb-2 gl-pt-2 gl-ml-6"
           >
             <span class="gl-mr-4">{{ itemHierarchy }}</span>
             <gl-tooltip v-if="isEpic" :target="() => $refs.countBadge">
@@ -221,7 +221,7 @@ export default {
             <div
               v-if="isEpic"
               ref="countBadge"
-              class="issue-count-badge gl-display-inline-flex text-secondary py-0 p-lg-0"
+              class="issue-count-badge gl-display-inline-flex text-secondary gl-py-0 p-lg-0"
             >
               <span v-if="allowSubEpics" class="d-inline-flex gl-align-items-center gl-mr-3">
                 <gl-icon name="epic" class="gl-mr-2" />
