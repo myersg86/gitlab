@@ -24,9 +24,14 @@ describe('EE - DastProfilesList', () => {
   };
 
   const withinComponent = () => within(wrapper.element);
-  const getProfilesTable = () => withinComponent().getByRole('table', { name: /site profiles/i });
-  const getProfilesTableBody = () => within(getProfilesTable()).getAllByRole('rowgroup')[1]; // `0` is thead
-  const getAllProfilesRows = () => within(getProfilesTableBody()).getAllByRole('row');
+  const getTable = () => withinComponent().getByRole('table', { name: /site profiles/i });
+  const getAllRowGroups = () => within(getTable()).getAllByRole('rowgroup');
+  const getTableBody = () => {
+    // first item is the table head
+    const [, tableBody] = getAllRowGroups();
+    return tableBody;
+  };
+  const getAllTableRows = () => within(getTableBody()).getAllByRole('row');
 
   afterEach(() => {
     wrapper.destroy();
@@ -65,12 +70,12 @@ describe('EE - DastProfilesList', () => {
     });
 
     it('renders a list of profiles', () => {
-      expect(getProfilesTable()).not.toBe(null);
-      expect(getAllProfilesRows()).toHaveLength(mockProfiles.length);
+      expect(getTable()).not.toBe(null);
+      expect(getAllTableRows()).toHaveLength(mockProfiles.length);
     });
 
     it.each(mockProfiles)('renders list item %# correctly', profile => {
-      const { innerText } = getAllProfilesRows()[mockProfiles.indexOf(profile)];
+      const { innerText } = getAllTableRows()[mockProfiles.indexOf(profile)];
 
       expect(innerText).toContain(profile.profileName);
       expect(innerText).toContain(profile.targetUrl);
