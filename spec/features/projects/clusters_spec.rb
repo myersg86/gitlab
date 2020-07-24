@@ -55,20 +55,6 @@ RSpec.describe 'Clusters', :js do
         end
       end
 
-      context 'when user updates environment scope' do
-        before do
-          click_link 'default-cluster'
-          fill_in 'cluster_environment_scope', with: 'production/*'
-          within '.js-cluster-integration-form' do
-            click_button 'Save changes'
-          end
-        end
-
-        it 'updates the environment scope' do
-          expect(page.find_field('cluster[environment_scope]').value).to eq('production/*')
-        end
-      end
-
       context 'when user updates duplicated environment scope' do
         before do
           click_link 'Add Kubernetes cluster'
@@ -142,21 +128,6 @@ RSpec.describe 'Clusters', :js do
 
         it 'user sees a cluster details page' do
           expect(page).to have_content('GitLab Integration')
-          expect(page.find_field('cluster[environment_scope]').value).to eq('staging/*')
-        end
-      end
-
-      context 'when user updates environment scope' do
-        before do
-          click_link 'default-cluster'
-          fill_in 'cluster_environment_scope', with: 'production/*'
-          within ".js-cluster-integration-form" do
-            click_button 'Save changes'
-          end
-        end
-
-        it 'updates the environment scope' do
-          expect(page.find_field('cluster[environment_scope]').value).to eq('production/*')
         end
       end
 

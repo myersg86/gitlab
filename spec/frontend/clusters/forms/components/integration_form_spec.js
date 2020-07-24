@@ -11,12 +11,15 @@ describe('ClusterIntegrationForm', () => {
   const toggleButton = () => glToggle().find('button');
   const toggleInput = () => wrapper.find('[data-testid="hidden-toggle-input"]');
   const environmentScope = () => wrapper.find('[data-testid="hidden-environment-scope-input"]');
+  const baseDomain = () => wrapper.find('[data-testid="hidden-base-domain-input"]');
+  const saveButton = () => wrapper.find('[data-qa-selector="save_changes_button"]');
 
   const createWrapper = () => {
     store = createStore({
       enabled: 'true',
       editable: 'true',
-      environmentScope: "*",
+      environmentScope: '*',
+      baseDomain: 'testDomain',
     });
     wrapper = mount(IntegrationForm, { store });
     return wrapper.vm.$nextTick();
@@ -53,5 +56,20 @@ describe('ClusterIntegrationForm', () => {
     expect(environmentScope().attributes('value')).toBe('*');
   });
 
+  it('creates the base domain input', () => {
+    expect(wrapper.text()).toContain('Base domain');
+    expect(baseDomain().attributes('value')).toBe('testDomain');
+  });
 
+  it('disables the save button if no change to the form', () => {
+    expect(saveButton().attributes('disabled')).toBe('disabled');
+  });
+
+  it('enables the save button when form changes', () => {
+    expect(saveButton().attributes('disabled')).toBe('disabled');
+    toggleButton().trigger('click');
+    wrapper.vm.$nextTick(() => {
+      expect(saveButton().attributes('disabled')).not.toBe('disabled');
+    });
+  });
 });

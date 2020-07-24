@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module ClustersHelper
-  def has_multiple_clusters?
-    true
-  end
-
   def create_new_cluster_label(provider: nil)
     case provider
     when 'aws'
@@ -32,7 +28,9 @@ module ClustersHelper
     {
       enabled: cluster.enabled?.to_s,
       editable: can_edit.to_s,
-      environment_scope: cluster.environment_scope
+      environment_scope: cluster.environment_scope,
+      base_domain: cluster.base_domain,
+      application_ingress_external_ip: cluster.application_ingress_external_ip
     }
   end
 
