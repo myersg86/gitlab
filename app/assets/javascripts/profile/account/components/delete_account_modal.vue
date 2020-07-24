@@ -1,11 +1,11 @@
 <script>
-import DeprecatedModal from '~/vue_shared/components/deprecated_modal.vue';
+import { GlModal } from '@gitlab/ui';
 import { __, s__, sprintf } from '~/locale';
 import csrf from '~/lib/utils/csrf';
 
 export default {
   components: {
-    DeprecatedModal,
+    GlModal,
   },
   props: {
     actionUrl: {
@@ -47,17 +47,15 @@ export default {
         false,
       );
     },
-    text() {
-      return sprintf(
-        s__(`Profiles|
-You are about to permanently delete %{yourAccount}, and all of the issues, merge requests, and groups linked to your account.
-Once you confirm %{deleteAccount}, it cannot be undone or recovered.`),
-        {
-          yourAccount: `<strong>${s__('Profiles|your account')}</strong>`,
-          deleteAccount: `<strong>${s__('Profiles|Delete Account')}</strong>`,
-        },
-        false,
-      );
+    primaryProps() {
+      return {
+        text: 'Delete account',
+      };
+    },
+    cancelProps() {
+      return {
+        text: 'Cancel',
+      };
     },
   },
   methods: {
@@ -76,13 +74,11 @@ Once you confirm %{deleteAccount}, it cannot be undone or recovered.`),
 </script>
 
 <template>
-  <deprecated-modal
-    id="delete-account-modal"
-    :title="s__('Profiles|Delete your account?')"
-    :text="text"
-    :primary-button-label="s__('Profiles|Delete account')"
-    :submit-disabled="!canSubmit()"
-    kind="danger"
+  <gl-modal
+    modal-id="delete-account-modal"
+    title="Profiles"
+    :action-primary="primaryProps"
+    :action-cancel="cancelProps"
     @submit="onSubmit"
   >
     <template #body="props">
@@ -113,5 +109,5 @@ Once you confirm %{deleteAccount}, it cannot be undone or recovered.`),
         />
       </form>
     </template>
-  </deprecated-modal>
+  </gl-modal>
 </template>
