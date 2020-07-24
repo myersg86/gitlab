@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples 'a class that supports relative positioning' do
-  let(:item1) { create(factory, default_params) }
-  let(:item2) { create(factory, default_params) }
-  let(:new_item) { create(factory, default_params) }
+  let(:item1) { create_item }
+  let(:item2) { create_item }
+  let(:new_item) { create_item }
 
-  def create_item(params)
+  def create_item(params = {})
     create(factory, params.merge(default_params))
   end
 
@@ -16,15 +16,23 @@ RSpec.shared_examples 'a class that supports relative positioning' do
   end
 
   describe '.move_nulls_to_end' do
+    let(:item3) { create_item }
+
     it 'moves items with null relative_position to the end' do
-      item1.update!(relative_position: nil)
+      item1.update!(relative_position: 1000)
       item2.update!(relative_position: nil)
+      item3.update!(relative_position: nil)
 
-      described_class.move_nulls_to_end([item1, item2])
+      expect(item1).not_to receive(:save)
 
-      expect(item2.prev_relative_position).to eq item1.relative_position
-      expect(item1.prev_relative_position).to eq nil
-      expect(item2.next_relative_position).to eq nil
+      items = [item1, item2, item3]
+      described_class.move_nulls_to_end(items)
+
+      expect(items.sort_by(&:relative_position)).to eq(items)
+      expect(item1.prev_relative_position).to be_nil
+      expect(item1.next_relative_position).to eq(item2.relative_position)
+      expect(item2.next_relative_position).to eq(item3.relative_position)
+      expect(item3.next_relative_position).to be_nil
     end
 
     it 'moves the item near the start position when there are no existing positions' do
@@ -41,6 +49,43 @@ RSpec.shared_examples 'a class that supports relative positioning' do
       expect(item1).not_to receive(:save)
 
       described_class.move_nulls_to_end([item1])
+    end
+  end
+
+  describe '.move_nulls_to_start' do
+    let(:item3) { create_item }
+
+    it 'moves items with null relative_position to the start' do
+      item1.update!(relative_position: nil)
+      item2.update!(relative_position: nil)
+      item3.update!(relative_position: 1000)
+
+      expect(item3).not_to receive(:save)
+
+      items = [item1, item2, item3]
+      described_class.move_nulls_to_start(items)
+
+      expect(items.sort_by(&:relative_position)).to eq(items)
+      expect(item1.prev_relative_position).to eq nil
+      expect(item1.next_relative_position).to eq item2.relative_position
+      expect(item2.next_relative_position).to eq item3.relative_position
+      expect(item3.next_relative_position).to eq nil
+    end
+
+    it 'moves the item near the start position when there are no existing positions' do
+      item1.update!(relative_position: nil)
+
+      described_class.move_nulls_to_start([item1])
+
+      expect(item1.relative_position).to eq(described_class::START_POSITION - described_class::IDEAL_DISTANCE)
+    end
+
+    it 'does not perform any moves if all items have their relative_position set' do
+      item1.update!(relative_position: 1)
+
+      expect(item1).not_to receive(:save)
+
+      described_class.move_nulls_to_start([item1])
     end
   end
 

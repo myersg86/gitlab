@@ -47,6 +47,23 @@ module RelativePositioning
       end
     end
 
+    def move_nulls_to_start(objects)
+      objects = objects.reject(&:relative_position)
+
+      return if objects.empty?
+
+      min_relative_position = objects.first.min_relative_position
+
+      self.transaction do
+        objects.reverse_each do |object|
+          relative_position = position_between(MIN_POSITION, min_relative_position || START_POSITION)
+          object.relative_position = relative_position
+          min_relative_position = relative_position
+          object.save(touch: false)
+        end
+      end
+    end
+
     # This method takes two integer values (positions) and
     # calculates the position between them. The range is huge as
     # the maximum integer value is 2147483647. We are incrementing position by IDEAL_DISTANCE * 2 every time
