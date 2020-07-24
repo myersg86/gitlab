@@ -8,14 +8,14 @@ module Gitlab
       end
 
       def all
-        nodes.map do |node|
-          attributes = node(node)
-          attributes.merge(node_metrics(node))
-        end
-      end
-
-      def all_with_errors
-        { nodes: all, connection_error: @connection_error }
+        {
+          nodes: nodes.map do |node|
+            attributes = node(node)
+            attributes.merge(node_metrics(node))
+          end.presence,
+          node_connection_error: @node_connection_error,
+          metrics_connection_error: @metrics_connection_error
+        }
       end
 
       private
@@ -24,13 +24,13 @@ module Gitlab
 
       def nodes_from_cluster
         request = graceful_request { cluster.kubeclient.get_nodes }
-        update_connection_error(request)
+        @node_connection_error = request[:connection_error]
         request
       end
 
       def nodes_metrics_from_cluster
         request = graceful_request { cluster.kubeclient.metrics_client.get_nodes }
-        update_connection_error(request)
+        @metrics_connection_error = request[:connection_error]
         request
       end
 
@@ -80,10 +80,6 @@ module Gitlab
             'memory' => node_metrics.usage.memory
           }
         }
-      end
-
-      def update_connection_error(request)
-        @connection_error = request[:connection_error] if request[:connection_error]
       end
     end
   end

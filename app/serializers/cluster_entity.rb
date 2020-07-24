@@ -7,7 +7,9 @@ class ClusterEntity < Grape::Entity
   expose :connection_error
   expose :enabled
   expose :environment_scope
+  expose :metrics_connection_error
   expose :name
+  expose :node_connection_error
   expose :nodes
   expose :provider_type
   expose :status_name, as: :status

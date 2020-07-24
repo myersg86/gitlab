@@ -224,6 +224,18 @@ module Clusters
       end
     end
 
+    def node_connection_error
+      with_reactive_cache do |data|
+        data[:node_connection_error]
+      end
+    end
+
+    def metrics_connection_error
+      with_reactive_cache do |data|
+        data[:metrics_connection_error]
+      end
+    end
+
     def connection_status
       with_reactive_cache do |data|
         data[:connection_status]
@@ -239,14 +251,7 @@ module Clusters
     def calculate_reactive_cache
       return unless enabled?
 
-      connection_data = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
-      node_data = Gitlab::Kubernetes::Node.new(self).all_with_errors
-
-      {
-        connection_status: connection_data[:status],
-        nodes: node_data[:nodes].presence,
-        connection_error: node_data[:connection_error] || connection_data[:connection_error]
-      }
+      connection_data.merge(Gitlab::Kubernetes::Node.new(self).all)
     end
 
     def persisted_applications
@@ -406,9 +411,8 @@ module Clusters
       @instance_domain ||= Gitlab::CurrentSettings.auto_devops_domain
     end
 
-    def retrieve_connection_status
-      result = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
-      result[:status]
+    def connection_data
+      @connection_data ||= ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
     end
 
     # To keep backward compatibility with AUTO_DEVOPS_DOMAIN
