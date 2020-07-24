@@ -1,5 +1,4 @@
 <script>
-import { GlLoadingIcon } from '@gitlab/ui';
 import { isUndefined } from 'lodash';
 import { mapActions, mapState } from 'vuex';
 
@@ -8,7 +7,6 @@ import InsightsChart from './insights_chart.vue';
 
 export default {
   components: {
-    GlLoadingIcon,
     InsightsChart,
     InsightsConfigWarning,
   },
@@ -23,7 +21,7 @@ export default {
     },
   },
   computed: {
-    ...mapState('insights', ['chartData', 'pageLoading']),
+    ...mapState('insights', ['chartData']),
     charts() {
       return this.pageConfig.charts;
     },
@@ -39,7 +37,6 @@ export default {
   },
   watch: {
     pageConfig() {
-      this.setPageLoading(true);
       this.fetchCharts();
     },
   },
@@ -47,21 +44,12 @@ export default {
     this.fetchCharts();
   },
   methods: {
-    ...mapActions('insights', ['fetchChartData', 'initChartData', 'setPageLoading']),
+    ...mapActions('insights', ['fetchChartData', 'initChartData']),
     fetchCharts() {
       if (this.hasChartsConfigured) {
         this.initChartData(this.chartKeys);
 
-        const insightsRequests = this.charts.map(chart =>
-          this.fetchChartData({ endpoint: this.queryEndpoint, chart }),
-        );
-        Promise.all(insightsRequests)
-          .then(() => {
-            this.setPageLoading(!this.storePopulated());
-          })
-          .catch(() => {
-            this.setPageLoading(false);
-          });
+        this.charts.forEach(chart => this.fetchChartData({ endpoint: this.queryEndpoint, chart }));
       }
     },
     storePopulated() {
@@ -85,9 +73,6 @@ export default {
           :data="data"
           :error="error"
         />
-      </div>
-      <div v-if="pageLoading" class="insights-chart-loading text-center p-5">
-        <gl-loading-icon :inline="true" size="lg" />
       </div>
     </div>
     <insights-config-warning

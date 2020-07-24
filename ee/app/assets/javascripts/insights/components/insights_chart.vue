@@ -3,6 +3,7 @@ import { GlColumnChart, GlLineChart, GlStackedColumnChart } from '@gitlab/ui/dis
 
 import { getSvgIconPathContent } from '~/lib/utils/icon_utils';
 import ResizableChartContainer from '~/vue_shared/components/resizable_chart/resizable_chart_container.vue';
+import ChartSkeletonLoader from '~/vue_shared/components/resizable_chart/skeleton_loader.vue';
 
 import InsightsChartError from './insights_chart_error.vue';
 import { CHART_TYPES } from '../constants';
@@ -14,8 +15,9 @@ export default {
     GlColumnChart,
     GlLineChart,
     GlStackedColumnChart,
-    ResizableChartContainer,
     InsightsChartError,
+    ResizableChartContainer,
+    ChartSkeletonLoader,
   },
   props: {
     loaded: {
@@ -161,4 +163,5 @@ export default {
       :error="error"
     />
   </div>
+  <chart-skeleton-loader v-else class="insights-chart" />
 </template>
