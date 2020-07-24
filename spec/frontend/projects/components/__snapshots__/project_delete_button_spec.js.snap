@@ -47,15 +47,9 @@ exports[`Project remove modal initialized matches the snapshot 1`] = `
         primarybuttontext=""
         secondarybuttonlink=""
         secondarybuttontext=""
-        title=""
+        title="You are about to permanently delete this project"
         variant="danger"
       >
-        <h4
-          class="gl-alert-title gl-text-red-500"
-        >
-          You are about to permanently delete this project
-        </h4>
-         
         <gl-sprintf-stub
           message="Once a project is permanently deleted it %{strongStart}cannot be recovered%{strongEnd}. Permanently deleting this project will %{strongStart}immediately delete%{strongEnd} its respositories and %{strongStart}all related resources%{strongEnd} including issues, merge requests etc."
         />

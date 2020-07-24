@@ -56,7 +56,7 @@ describe('Project remove modal', () => {
     });
 
     it('the confirm button is disabled', () => {
-      expect(findConfirmButton().attributes('disabled')).toBeTruthy();
+      expect(findConfirmButton().attributes('disabled')).toBe('true');
     });
   });
 

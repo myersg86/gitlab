@@ -34,17 +34,18 @@ export default {
 <template>
   <shared-delete-button v-bind="{ confirmPhrase, formPath }">
     <template #modal-body>
-      <gl-alert class="gl-mb-5" variant="danger" :dismissible="false">
-        <template>
-          <h4 class="gl-alert-title gl-text-red-500">{{ $options.strings.alertTitle }}</h4>
-          <gl-sprintf :message="$options.strings.alertBody">
-            <template #strong="{ content }">
-              <strong>{{ content }}</strong>
-            </template>
-          </gl-sprintf>
-        </template>
+      <gl-alert
+        class="gl-mb-5"
+        variant="danger"
+        :title="$options.strings.alertTitle"
+        :dismissible="false"
+      >
+        <gl-sprintf :message="$options.strings.alertBody">
+          <template #strong="{ content }">
+            <strong>{{ content }}</strong>
+          </template>
+        </gl-sprintf>
       </gl-alert>
-
       <p>{{ $options.strings.modalBody }}</p>
     </template>
   </shared-delete-button>
