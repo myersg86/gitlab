@@ -164,7 +164,7 @@ export const mockIssue2 = {
   healthStatus: 'needsAttention',
 };
 
-export const mockIssue3 = {
+export const mockClosedIssue = {
   iid: '42',
   epicIssueId: 'gid://gitlab/EpicIssue/5',
   title: 'View closed issues in epic',
@@ -186,7 +186,7 @@ export const mockIssue3 = {
 
 export const mockEpics = [mockEpic1, mockEpic2];
 
-export const mockIssues = [mockIssue1, mockIssue2, mockIssue3];
+export const mockIssues = [mockIssue1, mockIssue2, mockClosedIssue];
 
 export const mockQueryResponse = {
   data: {
@@ -226,7 +226,7 @@ export const mockQueryResponse = {
               node: mockIssue2,
             },
             {
-              node: mockIssue3,
+              node: mockClosedIssue,
             },
           ],
           pageInfo: {
@@ -277,7 +277,7 @@ export const mockQueryResponse2 = {
         issues: {
           edges: [
             {
-              node: mockIssue3,
+              node: mockClosedIssue,
             },
             {
               node: mockIssue1,

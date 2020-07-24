@@ -20,7 +20,7 @@ import {
   mockInitialConfig,
   mockQueryResponse,
   mockIssue1,
-  mockIssue3,
+  mockClosedIssue,
 } from '../mock_data';
 
 const localVue = createLocalVue();
@@ -28,7 +28,7 @@ localVue.use(Vuex);
 
 let mockItem;
 
-const createMockItem = mockIssue => {
+const createMockItem = (mockIssue = mockIssue1) => {
   mockItem = {
     ...mockIssue,
     type: ChildType.Issue,
@@ -92,7 +92,7 @@ describe('RelatedItemsTree', () => {
     };
 
     beforeEach(() => {
-      createMockItem(mockIssue1);
+      createMockItem();
       wrapper = createComponent();
     });
 
@@ -397,9 +397,9 @@ describe('RelatedItemsTree', () => {
         });
 
         describe.each`
-          mockIssue     | openState
-          ${mockIssue1} | ${mockIssue1.state}
-          ${mockIssue3} | ${mockIssue3.state}
+          mockIssue          | openState
+          ${mockIssue1}      | ${mockIssue1.state}
+          ${mockClosedIssue} | ${mockClosedIssue.state}
         `("for issue with issue.state='$openState'", ({ mockIssue, openState }) => {
           beforeEach(() => {
             createMockItem(mockIssue);
