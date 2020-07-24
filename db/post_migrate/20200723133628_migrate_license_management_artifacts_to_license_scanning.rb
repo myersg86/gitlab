@@ -8,6 +8,8 @@ class MigrateLicenseManagementArtifactsToLicenseScanning < ActiveRecord::Migrati
   disable_ddl_transaction!
 
   class JobArtifact < ActiveRecord::Base
+    include EachBatch
+
     self.table_name = 'ci_job_artifacts'
 
     belongs_to :job, class_name: "Ci::Build", foreign_key: :job_id
@@ -16,12 +18,18 @@ class MigrateLicenseManagementArtifactsToLicenseScanning < ActiveRecord::Migrati
     scope :license_compliance, -> { where(file_type: [10, 101]) }
   end
 
+  # We're updating file_type of ci artifacts from license_management to license_scanning
+  # But before that we need to delete "rogue" artifacts for CI builds that have associated with them
+  # both license_scanning and license_management artifacts. It's an edge case and usually, we don't have
+  # such builds in the database.
   def up
     JobArtifact.license_compliance.where.not(id: JobArtifact.license_compliance.original_reports).delete_all
-    JobArtifact.where(file_type: 10).update_all(file_type: 101)
+    JobArtifact.where(file_type: 10).each_batch do |relation|
+      relation.update_all(file_type: 101)
+    end
   end
 
   def down
-    # this one way migration as we're updating data
+    # this one way migration as we're deleting duplicating artifacts and updating their file_type
   end
 end
