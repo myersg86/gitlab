@@ -1,6 +1,6 @@
 <script>
 import { GlButton, GlTab, GlTabs } from '@gitlab/ui';
-import ProfilesListing from './dast_profiles_listing.vue';
+import ProfilesList from './dast_profiles_list.vue';
 import dastSiteProfilesQuery from '../graphql/dast_site_profiles.query.graphql';
 
 export default {
@@ -8,7 +8,7 @@ export default {
     GlButton,
     GlTab,
     GlTabs,
-    ProfilesListing,
+    ProfilesList,
   },
   props: {
     newDastSiteProfilePath: {
@@ -81,7 +81,7 @@ export default {
           <span>{{ s__('DastProfiles|Site Profiles') }}</span>
         </template>
 
-        <profiles-listing :profiles="profiles" />
+        <profiles-list :profiles="profiles" />
       </gl-tab>
     </gl-tabs>
   </section>

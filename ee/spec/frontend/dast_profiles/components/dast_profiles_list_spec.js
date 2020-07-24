@@ -1,9 +1,9 @@
 import { merge } from 'lodash';
 import { mount } from '@vue/test-utils';
 import { within } from '@testing-library/dom';
-import DastProfilesListing from 'ee/dast_profiles/components/dast_profiles_listing.vue';
+import DastProfilesListing from 'ee/dast_profiles/components/dast_profiles_list.vue';
 
-describe('EE - DastProfilesListing', () => {
+describe('EE - DastProfilesList', () => {
   let wrapper;
 
   const createComponent = (options = {}) => {
