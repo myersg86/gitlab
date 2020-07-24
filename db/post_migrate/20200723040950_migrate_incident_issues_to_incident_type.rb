@@ -3,8 +3,8 @@
 class MigrateIncidentIssuesToIncidentType < ActiveRecord::Migration[6.0]
   DOWNTIME = false
 
-  INCIDENT_ISSUE_TYPE = 'incident'
-  ISSUE_ISSUE_TYPE = 'issue'
+  INCIDENT_ISSUE_TYPE = 1
+  ISSUE_ISSUE_TYPE = 0
 
   # Add each_batch functionality to Issue
   Issue.send(:include, 'EachBatch'.constantize)
