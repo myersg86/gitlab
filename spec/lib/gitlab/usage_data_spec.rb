@@ -21,6 +21,7 @@ RSpec.describe Gitlab::UsageData, :aggregate_failures do
         values = %i(issue_minimum_id issue_maximum_id
                     user_minimum_id user_maximum_id unique_visit_service
                     deployment_minimum_id deployment_maximum_id
+                    mr_minimum_id mr_maximum_id
                     approval_merge_request_rule_minimum_id
                     approval_merge_request_rule_maximum_id)
         values.each do |key|

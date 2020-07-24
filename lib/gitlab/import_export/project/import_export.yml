@@ -389,6 +389,9 @@ ee:
       - issues:
         - epic_issue:
           - :epic
+      - merge_requests:
+        - :approval_merge_request_rules
+        - :approval_merge_request_rules_sources
       - protected_branches:
         - :unprotect_access_levels
       - protected_environments:
