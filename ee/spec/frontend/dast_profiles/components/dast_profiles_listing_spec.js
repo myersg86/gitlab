@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { shallowMount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import { within } from '@testing-library/dom';
 import DastProfilesListing from 'ee/dast_profiles/components/dast_profiles_listing.vue';
 
@@ -11,7 +11,7 @@ describe('EE - DastProfilesListing', () => {
       profiles: [],
     };
 
-    wrapper = shallowMount(
+    wrapper = mount(
       DastProfilesListing,
       merge(
         {},
@@ -24,8 +24,9 @@ describe('EE - DastProfilesListing', () => {
   };
 
   const withinComponent = () => within(wrapper.element);
-  const getProfilesList = () => withinComponent().getByRole('list', { name: /site profiles/i });
-  const getAllProfilesListItems = () => within(getProfilesList()).getAllByRole('listitem');
+  const getProfilesTable = () => withinComponent().getByRole('table', { name: /site profiles/i });
+  const getProfilesTableBody = () => within(getProfilesTable()).getAllByRole('rowgroup')[1]; // `0` is thead
+  const getAllProfilesRows = () => within(getProfilesTableBody()).getAllByRole('row');
 
   afterEach(() => {
     wrapper.destroy();
@@ -35,6 +36,7 @@ describe('EE - DastProfilesListing', () => {
     beforeEach(() => {
       createComponent();
     });
+
     it('shows a message to indicate that no profiles exist', () => {
       const emptyStateMessage = withinComponent().getByText(/no profiles created yet/i);
 
@@ -63,12 +65,12 @@ describe('EE - DastProfilesListing', () => {
     });
 
     it('renders a list of profiles', () => {
-      expect(getProfilesList()).not.toBe(null);
-      expect(getAllProfilesListItems()).toHaveLength(mockProfiles.length);
+      expect(getProfilesTable()).not.toBe(null);
+      expect(getAllProfilesRows()).toHaveLength(mockProfiles.length);
     });
 
     it.each(mockProfiles)('renders list item %# correctly', profile => {
-      const { innerText } = getAllProfilesListItems()[mockProfiles.indexOf(profile)];
+      const { innerText } = getAllProfilesRows()[mockProfiles.indexOf(profile)];
 
       expect(innerText).toContain(profile.profileName);
       expect(innerText).toContain(profile.targetUrl);
