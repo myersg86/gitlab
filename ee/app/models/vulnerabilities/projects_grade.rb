@@ -6,7 +6,7 @@ module Vulnerabilities
 
     def initialize(vulnerable, letter_grade, project_ids = [])
       @vulnerable = vulnerable
-      @grade = ::Vulnerabilities::Statistic.letter_grades.key(letter_grade)
+      @grade = letter_grade
       @project_ids = project_ids
     end
 
@@ -16,13 +16,16 @@ module Vulnerabilities
       vulnerable.projects.where(id: project_ids)
     end
 
-    def self.grades_for(vulnerable)
-      vulnerable
-        .projects
-        .has_vulnerability_statistics
-        .select(:id, :letter_grade)
-        .group_by { |project| project.letter_grade }
-        .map { |letter_grade, projects| new(vulnerable, letter_grade, projects.map(&:id)) }
+    def self.grades_for(vulnerables)
+      ::Vulnerabilities::Statistic
+        .for_project(vulnerables.map(&:projects).reduce(&:or))
+        .group(:letter_grade)
+        .select(:letter_grade, 'array_agg(project_id) project_ids')
+        .flat_map do |statistics|
+          vulnerables.map do |vulnerable|
+            new(vulnerable, statistics.letter_grade, statistics.project_ids)
+          end
+        end
     end
   end
 end

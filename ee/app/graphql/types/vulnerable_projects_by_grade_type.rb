@@ -10,7 +10,8 @@ module Types
           description: "Grade based on the highest severity vulnerability present"
 
     field :projects, Types::ProjectType.connection_type, null: false,
-          description: 'Projects within this grade'
+          description: 'Projects within this grade',
+          authorize: :read_project
   end
   # rubocop: enable Graphql/AuthorizeTypes
 end

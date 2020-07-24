@@ -19,16 +19,16 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
   describe '.grades_for' do
     let(:compare_key) { ->(projects_grade) { [projects_grade.grade, projects_grade.project_ids] } }
 
-    subject(:projects_grades) { described_class.grades_for(vulnerable) }
+    subject(:projects_grades) { described_class.grades_for([vulnerable]) }
 
     context 'when the given vulnerable is a Group' do
       let(:vulnerable) { group }
       let(:expected_projects_grades) do
         [
-          described_class.new(vulnerable, 0, [project_1.id]),
-          described_class.new(vulnerable, 1, [project_2.id, project_3.id]),
-          described_class.new(vulnerable, 2, [project_4.id]),
-          described_class.new(vulnerable, 4, [project_5.id])
+          described_class.new(vulnerable, 'a', [project_1.id]),
+          described_class.new(vulnerable, 'b', [project_2.id, project_3.id]),
+          described_class.new(vulnerable, 'c', [project_4.id]),
+          described_class.new(vulnerable, 'f', [project_5.id])
         ]
       end
 
@@ -42,7 +42,7 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
       let(:vulnerable) { InstanceSecurityDashboard.new(user) }
       let(:expected_projects_grades) do
         [
-          described_class.new(vulnerable, 0, [project_1.id])
+          described_class.new(vulnerable, 'a', [project_1.id])
         ]
       end
 
@@ -58,13 +58,13 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
   end
 
   describe '#grade' do
-    ::Vulnerabilities::Statistic.letter_grades.each do |expected_letter, enum|
+    ::Vulnerabilities::Statistic.letter_grades.each do |letter|
       subject(:grade) { projects_grade.grade }
 
-      context "when providing enum value of #{enum}" do
-        let(:projects_grade) { described_class.new(nil, enum) }
+      context "when providing letter value of #{letter}" do
+        let(:projects_grade) { described_class.new(nil, letter) }
 
-        it { is_expected.to eq(expected_letter) }
+        it { is_expected.to eq(letter) }
       end
     end
   end
