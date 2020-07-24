@@ -5115,9 +5115,6 @@ msgstr ""
 msgid "ClusterIntegration|Choose which of your environments will use this cluster."
 msgstr ""
 
-msgid "ClusterIntegration|Choose which of your environments will use this cluster. %{environment_scope_start}More information%{environment_scope_end}"
-msgstr ""
-
 msgid "ClusterIntegration|Clear cluster cache"
 msgstr ""
 

@@ -9,12 +9,14 @@ describe('ClusterIntegrationForm', () => {
 
   const glToggle = () => wrapper.find(GlToggle);
   const toggleButton = () => glToggle().find('button');
-  const toggleInput = () => wrapper.find('input');
+  const toggleInput = () => wrapper.find('[data-testid="hidden-toggle-input"]');
+  const environmentScope = () => wrapper.find('[data-testid="hidden-environment-scope-input"]');
 
   const createWrapper = () => {
     store = createStore({
       enabled: 'true',
       editable: 'true',
+      environmentScope: "*",
     });
     wrapper = mount(IntegrationForm, { store });
     return wrapper.vm.$nextTick();
@@ -45,4 +47,11 @@ describe('ClusterIntegrationForm', () => {
       expect(toggleInput().attributes('value')).toBe('false');
     });
   });
+
+  it('creates the environment scope input', () => {
+    expect(wrapper.text()).toContain('Environment scope');
+    expect(environmentScope().attributes('value')).toBe('*');
+  });
+
+
 });

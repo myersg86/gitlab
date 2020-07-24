@@ -1,11 +1,13 @@
 <script>
-import { GlFormGroup, GlToggle, GlTooltipDirective } from '@gitlab/ui';
+import { GlFormGroup, GlFormInput, GlToggle, GlTooltipDirective, GlSprintf } from '@gitlab/ui';
 import { mapState } from 'vuex';
 
 export default {
   components: {
     GlFormGroup,
     GlToggle,
+    GlFormInput,
+    GlSprintf,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -13,19 +15,21 @@ export default {
   data() {
     return {
       toggleEnabled: true,
+      envScope: '*',
     };
   },
   computed: {
-    ...mapState(['enabled', 'editable']),
+    ...mapState(['enabled', 'editable', 'environmentScope']),
   },
   mounted() {
     this.toggleEnabled = this.enabled;
+    this.envScope = this.environmentScope;
   },
 };
 </script>
 
 <template>
-  <div class="d-flex align-items-center">
+  <div class="d-flex gl-flex-direction-column">
     <gl-form-group>
       <div class="gl-display-flex gl-align-items-center">
         <h4 class="gl-pr-3 gl-m-0 ">{{ s__('ClusterIntegration|GitLab Integration') }}</h4>
@@ -35,6 +39,7 @@ export default {
           type="hidden"
           :value="toggleEnabled"
           name="cluster[enabled]"
+          data-testid="hidden-toggle-input"
         />
         <div id="tooltipcontainer" class="js-cluster-enable-toggle-area">
           <gl-toggle
@@ -53,6 +58,25 @@ export default {
           />
         </div>
       </div>
+    </gl-form-group>
+
+    <gl-form-group
+      id="group-id"
+      :label="s__('ClusterIntegration|Environment scope')"
+      label-size="sm"
+      label-for="cluster_environment_scope"
+      :description="
+        s__('ClusterIntegration|Choose which of your environments will use this cluster.')
+      "
+    >
+      <input
+        id="cluster_environment_scope"
+        name="cluster[environment_scope]"
+        type="hidden"
+        :value="envScope"
+        data-testid="hidden-environment-scope-input"
+      />
+      <gl-form-input class="col-md-6" v-model="envScope" type="text" />
     </gl-form-group>
   </div>
 </template>

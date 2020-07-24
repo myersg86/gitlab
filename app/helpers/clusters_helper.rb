@@ -31,7 +31,8 @@ module ClustersHelper
   def js_cluster_form_data(cluster, can_edit)
     {
       enabled: cluster.enabled?.to_s,
-      editable: can_edit.to_s
+      editable: can_edit.to_s,
+      environment_scope: cluster.environment_scope
     }
   end
 
