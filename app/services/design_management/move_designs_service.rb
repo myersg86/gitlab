@@ -13,7 +13,7 @@ module DesignManagement
 
     def execute
       # TODO: move into RelativePositioning#move_between
-      return error(:CannotMove) unless current_user.can?(:move_designs, current_design)
+      return error(:CannotMove) unless current_user.can?(:move_design, current_design)
       return error(:NotDistinct) unless all_distinct?
       return error(:NotAdjacent) if any_in_gap?
       return error(:NotSameIssue) unless all_same_issue?

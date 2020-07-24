@@ -24,7 +24,7 @@ RSpec.describe DesignManagement::MoveDesignsService do
 
   before do
     # TODO: remove when this ability is implemented
-    allow(developer).to receive(:can?).with(:move_designs, current_design).and_return(true)
+    allow(developer).to receive(:can?).with(:move_design, current_design).and_return(true)
   end
 
   describe '#execute' do
