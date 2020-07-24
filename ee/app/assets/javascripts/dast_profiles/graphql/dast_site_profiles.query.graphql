@@ -1,0 +1,19 @@
+query DASTSiteProfiles($fullPath: ID!, $after: Int, $before: Int, $first: Int, $last: Int) {
+  project(fullPath: $fullPath) {
+    DASTSiteProfiles(after: $after, before: $before, first: $first, last: $last) {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        cursor
+        node {
+          id,
+          profileName,
+          targetUrl,
+          validationStatus
+        }
+      }
+    }
+  }
+}

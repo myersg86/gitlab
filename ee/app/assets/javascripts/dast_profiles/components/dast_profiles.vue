@@ -1,6 +1,7 @@
 <script>
 import { GlButton, GlTab, GlTabs } from '@gitlab/ui';
 import ProfilesListing from './dast_profiles_listing.vue';
+import dastSiteProfilesQuery from '../graphql/dast_site_profiles.query.graphql';
 
 export default {
   components: {
@@ -13,6 +14,37 @@ export default {
     newDastSiteProfilePath: {
       type: String,
       required: true,
+    },
+  },
+  data() {
+    return {
+      profiles: [
+        {
+          id: 1,
+          profileName: 'Profile 1',
+          targetUrl: 'http://example-1.com',
+          validationStatus: 'PENDING',
+        },
+        {
+          id: 2,
+          profileName: 'Profile 1',
+          targetUrl: 'http://example-1.com',
+          validationStatus: 'PENDING',
+        },
+      ],
+    };
+  },
+  apollo: {
+    profiles_TEMP_DISABLED: {
+      query: dastSiteProfilesQuery,
+      variables() {
+        return {
+          // @TODO - inject path
+          fullPath: '/inject-project/path/here',
+        };
+      },
+      // @TODO - error handling
+      error: () => {},
     },
   },
 };
@@ -48,7 +80,7 @@ export default {
           <span>{{ s__('DastProfiles|Site Profiles') }}</span>
         </template>
 
-        <profiles-listing />
+        <profiles-listing :profiles="profiles" />
       </gl-tab>
     </gl-tabs>
   </section>
