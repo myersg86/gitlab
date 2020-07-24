@@ -20,6 +20,10 @@ module Mutations
             null: true,
             description: "The current state of the collection"
 
+      def ready(*)
+        raise ::Gitlab::Graphql::Errors::ResourceNotAvailable unless ::Feature.enabled?(:reorder_designs)
+      end
+
       def resolve(**args)
         service = ::DesignManagement::MoveDesignsService.new(current_user, parameters(args))
 
