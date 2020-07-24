@@ -1292,6 +1292,7 @@ Example response:
 [
    {
       "active" : true,
+      "user_id" : 2,
       "scopes" : [
          "api"
       ],
@@ -1304,6 +1305,7 @@ Example response:
    },
    {
       "active" : false,
+      "user_id" : 2,
       "scopes" : [
          "read_user"
       ],
@@ -1343,6 +1345,7 @@ Example response:
 ```json
 {
    "active" : true,
+   "user_id" : 2,
    "scopes" : [
       "api"
    ],
@@ -1386,6 +1389,7 @@ Example response:
 {
    "id" : 2,
    "revoked" : false,
+   "user_id" : 2,
    "scopes" : [
       "api"
    ],
