@@ -653,6 +653,23 @@ RSpec.describe 'GFM autocomplete', :js do
         expect(find('.tribute-container ul', visible: true)).not_to have_content(user.username)
         expect(find('.tribute-container ul', visible: true)).to have_content(unassigned_user.username)
       end
+
+      it 'lists users who are currently not assigned to the issue when using /assign on the second line' do
+        visit project_issue_path(project, issue_assignee)
+
+        note = find('#note-body')
+        page.within '.timeline-content-form' do
+          note.native.send_keys('/assign @user2')
+          note.native.send_keys(:enter)
+          note.native.send_keys('/assign @')
+          note.native.send_keys(:right)
+        end
+
+        wait_for_requests
+
+        expect(find('.tribute-container ul', visible: true)).not_to have_content(user.username)
+        expect(find('.tribute-container ul', visible: true)).to have_content(unassigned_user.username)
+      end
     end
 
     context 'labels' do

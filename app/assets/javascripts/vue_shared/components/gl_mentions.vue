@@ -1,5 +1,5 @@
 <script>
-import { escape } from 'lodash';
+import { escape, last } from 'lodash';
 import Tribute from 'tributejs';
 import axios from '~/lib/utils/axios_utils';
 import { spriteIcon } from '~/lib/utils/common_utils';
@@ -10,16 +10,19 @@ const AutoComplete = {
   Members: 'members',
 };
 
+const doesLastLineStartWith = (fullString, searchString) =>
+  last(fullString.split('\n')).startsWith(searchString);
+
 const autoCompleteMap = {
   [AutoComplete.Labels]: {
     filterValues() {
       const fullText = this.$slots.default?.[0]?.elm?.value;
 
-      if (fullText.startsWith('/label ')) {
+      if (doesLastLineStartWith(fullText, '/label')) {
         return this.labels.filter(label => !label.set);
       }
 
-      if (fullText.startsWith('/unlabel ')) {
+      if (doesLastLineStartWith(fullText, '/unlabel')) {
         return this.labels.filter(label => label.set);
       }
 
@@ -40,11 +43,11 @@ const autoCompleteMap = {
           SidebarMediator.singleton?.store?.assignees?.map(assignee => assignee.username) || [];
       }
 
-      if (fullText.startsWith('/assign @')) {
+      if (doesLastLineStartWith(fullText, '/assign')) {
         return this.members.filter(member => !this.assignees.includes(member.username));
       }
 
-      if (fullText.startsWith('/unassign @')) {
+      if (doesLastLineStartWith(fullText, '/unassign')) {
         return this.members.filter(member => this.assignees.includes(member.username));
       }
 
