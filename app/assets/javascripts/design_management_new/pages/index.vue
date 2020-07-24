@@ -2,6 +2,7 @@
 import { GlLoadingIcon, GlButton, GlAlert } from '@gitlab/ui';
 import createFlash from '~/flash';
 import { s__, sprintf } from '~/locale';
+import VueDraggable from 'vuedraggable';
 import UploadButton from '../components/upload/button.vue';
 import DeleteButton from '../components/delete_button.vue';
 import Design from '../components/list/item.vue';
@@ -40,6 +41,7 @@ export default {
     DesignVersionDropdown,
     DeleteButton,
     DesignDropzone,
+    VueDraggable,
   },
   mixins: [allDesignsMixin],
   apollo: {
@@ -260,6 +262,10 @@ export default {
     this.selectedDesigns = [];
     next();
   },
+  dragOptions: {
+    animation: 200,
+    ghostClass: 'ghost',
+  },
 };
 </script>
 
@@ -313,15 +319,19 @@ export default {
       <gl-alert v-else-if="error" variant="danger" :dismissible="false">
         {{ __('An error occurred while loading designs. Please try again.') }}
       </gl-alert>
-      <ol v-else class="list-unstyled row">
-        <li :class="designDropzoneWrapperClass" data-testid="design-dropzone-wrapper">
-          <design-dropzone
-            :class="{ 'design-list-item design-list-item-new': !isDesignListEmpty }"
-            :has-designs="hasDesigns"
-            @change="onUploadDesign"
-          />
-        </li>
-        <li v-for="design in designs" :key="design.id" class="col-md-6 col-lg-3 gl-mb-3">
+      <vue-draggable
+        v-else
+        v-model="designs"
+        v-bind="$options.dragOptions"
+        tag="ol"
+        draggable=".design-tile"
+        class="list-unstyled row"
+      >
+        <li
+          v-for="design in designs"
+          :key="design.id"
+          class="col-md-6 col-lg-3 gl-mb-3 design-tile"
+        >
           <design-dropzone
             :has-designs="hasDesigns"
             @change="onExistingDesignDropzoneChange($event, design.filename)"
@@ -336,8 +346,23 @@ export default {
             @change="changeSelectedDesigns(design.filename)"
           />
         </li>
-      </ol>
+        <template #header>
+          <li :class="designDropzoneWrapperClass" data-testid="design-dropzone-wrapper">
+            <design-dropzone
+              :class="{ 'design-list-item design-list-item-new': !isDesignListEmpty }"
+              :has-designs="hasDesigns"
+              @change="onUploadDesign"
+            />
+          </li>
+        </template>
+      </vue-draggable>
     </div>
     <router-view :key="$route.fullPath" />
   </div>
 </template>
+
+<style scoped>
+.ghost {
+  visibility: hidden;
+}
+</style>
