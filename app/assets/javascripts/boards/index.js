@@ -369,7 +369,9 @@ export default () => {
   }
 
   toggleFocusMode(ModalStore, boardsStore);
-  toggleLabels();
+  if (!gon.features.boardConfigurationOptions) {
+    toggleLabels();
+  }
   toggleEpicsSwimlanes();
   mountMultipleBoardsSwitcher();
 };

@@ -63,7 +63,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['isShowingLabels']),
+    ...mapState(['isShowingLabels', 'configurationOptions']),
     numberOverLimit() {
       return this.issue.assignees.length - this.limitBeforeCounter;
     },
@@ -93,7 +93,9 @@ export default {
       return false;
     },
     showLabelFooter() {
-      return this.isShowingLabels && this.issue.labels.find(this.showLabel);
+      const hideLabels = this.isShowingLabels && !this.configurationOptions.hideLabels;
+
+      return hideLabels && this.issue.labels.find(this.showLabel);
     },
     issueReferencePath() {
       const { referencePath, groupId } = this.issue;
