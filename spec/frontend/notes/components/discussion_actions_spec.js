@@ -35,6 +35,11 @@ describe('DiscussionActions', () => {
         shouldShowJumpToNextDiscussion: true,
         ...props,
       },
+      provide: {
+        glFeatures: {
+          hideJumpToNextUnresolvedInThreads: true,
+        },
+      },
     });
   };
 
