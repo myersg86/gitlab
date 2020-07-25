@@ -28,10 +28,20 @@ export default {
       required: false,
       default: null,
     },
+    viewedFiles: {
+      type: Object,
+      required: false,
+      default: () => ({}),
+    },
   },
   computed: {
     showFileRowStats() {
       return !this.hideFileStats && this.file.type === 'blob';
+    },
+    fileClasses() {
+      return this.file.type === 'blob' && !this.viewedFiles[this.file.fileHash]
+        ? 'font-weight-bold'
+        : '';
     },
   },
 };
@@ -43,6 +53,7 @@ export default {
     v-bind="$attrs"
     :class="{ 'is-active': currentDiffFileId === file.fileHash }"
     class="diff-file-row"
+    :file-classes="fileClasses"
     v-on="$listeners"
   >
     <file-row-stats v-if="showFileRowStats" :file="file" class="mr-1" />
