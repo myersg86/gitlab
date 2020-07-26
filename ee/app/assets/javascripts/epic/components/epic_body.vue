@@ -44,29 +44,27 @@ export default {
 </script>
 
 <template>
-  <div class="issuable-details content-block">
-    <div class="detail-page-description">
-      <issuable-body
-        :endpoint="endpoint"
-        :update-endpoint="updateEndpoint"
-        :project-path="groupPath"
-        :markdown-preview-path="markdownPreviewPath"
-        :markdown-docs-path="markdownDocsPath"
-        :can-update="canUpdate"
-        :can-destroy="canDestroy"
-        :show-delete-button="canDestroy"
-        :initial-title-html="initialTitleHtml"
-        :initial-title-text="initialTitleText"
-        :lock-version="lockVersion"
-        :initial-description-html="initialDescriptionHtml"
-        :initial-description-text="initialDescriptionText"
-        :show-inline-edit-button="true"
-        :enable-autocomplete="true"
-        project-namespace
-        issuable-ref
-        issuable-type="epic"
-      />
-    </div>
+  <div class="issuable-details detail-page-description content-block">
+    <issuable-body
+      :endpoint="endpoint"
+      :update-endpoint="updateEndpoint"
+      :project-path="groupPath"
+      :markdown-preview-path="markdownPreviewPath"
+      :markdown-docs-path="markdownDocsPath"
+      :can-update="canUpdate"
+      :can-destroy="canDestroy"
+      :show-delete-button="canDestroy"
+      :initial-title-html="initialTitleHtml"
+      :initial-title-text="initialTitleText"
+      :lock-version="lockVersion"
+      :initial-description-html="initialDescriptionHtml"
+      :initial-description-text="initialDescriptionText"
+      :show-inline-edit-button="true"
+      :enable-autocomplete="true"
+      project-namespace
+      issuable-ref
+      issuable-type="epic"
+    />
     <issuable-sidebar
       v-if="isVueIssuableEpicSidebarEnabled"
       :signed-in="isUserSignedIn"
