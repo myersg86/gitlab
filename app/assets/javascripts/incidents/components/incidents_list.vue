@@ -8,7 +8,9 @@ import {
   GlAvatar,
   GlTooltipDirective,
   GlButton,
+  GlSearchBoxByType,
 } from '@gitlab/ui';
+import { debounce, trim } from 'lodash';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 import { s__ } from '~/locale';
 import { mergeUrlParams } from '~/lib/utils/url_utility';
@@ -52,6 +54,7 @@ export default {
     GlAvatar,
     GlButton,
     TimeAgoTooltip,
+    GlSearchBoxByType,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -62,6 +65,7 @@ export default {
       query: getIncidents,
       variables() {
         return {
+          searchTerm: this.searchTerm,
           projectPath: this.projectPath,
           labelNames: ['incident'],
         };
@@ -77,11 +81,12 @@ export default {
       errored: false,
       isErrorAlertDismissed: false,
       redirecting: false,
+      searchTerm: '',
     };
   },
   computed: {
     showErrorMsg() {
-      return this.errored && !this.isErrorAlertDismissed;
+      return this.errored && !this.isErrorAlertDismissed && !this.searchTerm;
     },
     loading() {
       return this.$apollo.queries.incidents.loading;
@@ -99,6 +104,12 @@ export default {
     },
   },
   methods: {
+    onInputChange: debounce(function debounceSearch(input) {
+      const trimmedInput = trim(input);
+      if (trimmedInput !== this.searchTerm) {
+        this.searchTerm = trimmedInput;
+      }
+    }, 500),
     hasAssignees(assignees) {
       return Boolean(assignees.nodes?.length);
     },
@@ -113,7 +124,7 @@ export default {
 
     <div class="gl-display-flex gl-justify-content-end">
       <gl-button
-        class="gl-mt-3 create-incident-button"
+        class="gl-mt-3 gl-mb-3 create-incident-button"
         data-testid="createIncidentBtn"
         :loading="redirecting"
         :disabled="redirecting"
@@ -124,6 +135,14 @@ export default {
       >
         {{ $options.i18n.createIncidentBtnLabel }}
       </gl-button>
+    </div>
+
+    <div class="gl-bg-gray-10 gl-p-5 gl-border-b-solid gl-border-b-1 gl-border-gray-100">
+      <gl-search-box-by-type
+        class="gl-bg-white"
+        :placeholder="$options.i18n.searchPlaceholder"
+        @input="onInputChange"
+      />
     </div>
 
     <h4 class="gl-display-block d-md-none my-3">
