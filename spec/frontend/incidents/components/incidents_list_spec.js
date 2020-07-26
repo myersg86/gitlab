@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils';
-import { GlAlert, GlLoadingIcon, GlTable, GlAvatar, GlSearchBoxByType } from '@gitlab/ui';
+import { GlAlert, GlLoadingIcon, GlTable, GlAvatar, GlSearchBoxByType, GlTab } from '@gitlab/ui';
 import IncidentsList from '~/incidents/components/incidents_list.vue';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
-import { I18N } from '~/incidents/constants';
+import { I18N, INCIDENT_STATUS_TABS } from '~/incidents/constants';
 import mockIncidents from '../mocks/incidents.json';
 
 describe('Incidents List', () => {
@@ -18,6 +18,7 @@ describe('Incidents List', () => {
   const findAssingees = () => wrapper.findAll('[data-testid="incident-assignees"]');
   const findCreateIncidentBtn = () => wrapper.find('[data-testid="createIncidentBtn"]');
   const findSearch = () => wrapper.find(GlSearchBoxByType);
+  const findStatusFilterTabs = () => wrapper.findAll(GlTab);
 
   function mountComponent({ data = { incidents: [] }, loading = false }) {
     wrapper = mount(IncidentsList, {
@@ -156,6 +157,26 @@ describe('Incidents List', () => {
       findSearch().vm.$emit('input', SEARCH_TERM);
 
       expect(wrapper.vm.$data.searchTerm).toBe(SEARCH_TERM);
+    });
+  });
+
+  describe('State Filter Tabs', () => {
+    beforeEach(() => {
+      mountComponent({
+        data: { incidents: mockIncidents },
+        loading: false,
+        stubs: {
+          GlTab: true,
+        },
+      });
+    });
+
+    it('should display filter tabs with incident count badge for each status', () => {
+      const tabs = findStatusFilterTabs().wrappers;
+
+      tabs.forEach((tab, i) => {
+        expect(tab.attributes('id')).toContain(INCIDENT_STATUS_TABS[i].status);
+      });
     });
   });
 });

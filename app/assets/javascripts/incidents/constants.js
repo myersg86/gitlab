@@ -8,3 +8,21 @@ export const I18N = {
   createIncidentBtnLabel: s__('IncidentManagement|Create incident'),
   searchPlaceholder: __('Search or filter results...'),
 };
+
+export const INCIDENT_STATUS_TABS = [
+  {
+    title: s__('IncidentManagement|Open'),
+    status: 'OPENED',
+    filters: 'opened',
+  },
+  {
+    title: s__('IncidentManagement|Closed'),
+    status: 'CLOSED',
+    filters: 'closed',
+  },
+  {
+    title: s__('IncidentManagement|All incidents'),
+    status: 'ALL',
+    filters: 'all',
+  },
+];

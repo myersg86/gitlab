@@ -1,8 +1,8 @@
 query getIncidents(
   $searchTerm: String
+  $state: IssuableState
   $projectPath: ID!
   $labelNames: [String]
-  $state: IssuableState
 ) {
   project(fullPath: $projectPath) {
     issues(search: $searchTerm, state: $state, labelName: $labelNames) {
@@ -10,6 +10,7 @@ query getIncidents(
         iid
         title
         createdAt
+        state
         labels {
           nodes {
             title

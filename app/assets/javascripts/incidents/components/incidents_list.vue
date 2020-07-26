@@ -9,13 +9,16 @@ import {
   GlTooltipDirective,
   GlButton,
   GlSearchBoxByType,
+  GlTabs,
+  GlTab,
+  GlBadge,
 } from '@gitlab/ui';
 import { debounce, trim } from 'lodash';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 import { s__ } from '~/locale';
 import { mergeUrlParams } from '~/lib/utils/url_utility';
 import getIncidents from '../graphql/queries/get_incidents.query.graphql';
-import { I18N } from '../constants';
+import { INCIDENT_STATUS_TABS, I18N } from '../constants';
 
 const tdClass =
   'table-col gl-display-flex d-md-table-cell gl-align-items-center gl-white-space-nowrap';
@@ -25,6 +28,7 @@ const bodyTrClass =
 
 export default {
   i18n: I18N,
+  statusTabs: INCIDENT_STATUS_TABS,
   fields: [
     {
       key: 'title',
@@ -55,6 +59,9 @@ export default {
     GlButton,
     TimeAgoTooltip,
     GlSearchBoxByType,
+    GlTabs,
+    GlTab,
+    GlBadge,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -66,6 +73,7 @@ export default {
       variables() {
         return {
           searchTerm: this.searchTerm,
+          state: this.statusFilter,
           projectPath: this.projectPath,
           labelNames: ['incident'],
         };
@@ -82,6 +90,7 @@ export default {
       isErrorAlertDismissed: false,
       redirecting: false,
       searchTerm: '',
+      statusFilter: '',
     };
   },
   computed: {
@@ -110,6 +119,10 @@ export default {
         this.searchTerm = trimmedInput;
       }
     }, 500),
+    filterIncidentsByState(tabIndex) {
+      const { filters } = this.$options.statusTabs[tabIndex];
+      this.statusFilter = filters;
+    },
     hasAssignees(assignees) {
       return Boolean(assignees.nodes?.length);
     },
@@ -122,9 +135,20 @@ export default {
       {{ $options.i18n.errorMsg }}
     </gl-alert>
 
-    <div class="gl-display-flex gl-justify-content-end">
+    <div class="gl-display-flex gl-justify-content-space-between">
+      <gl-tabs content-class="gl-p-0" @input="filterIncidentsByState">
+        <gl-tab v-for="tab in $options.statusTabs" :id="tab.status" :key="tab.status">
+          <template slot="title">
+            <span>{{ tab.title }}</span>
+            <gl-badge v-if="incidents" pill size="sm" class="gl-tab-counter-badge">
+              {{ incidents.length }}
+            </gl-badge>
+          </template>
+        </gl-tab>
+      </gl-tabs>
+
       <gl-button
-        class="gl-mt-3 gl-mb-3 create-incident-button"
+        class="gl-my-3 create-incident-button"
         data-testid="createIncidentBtn"
         :loading="redirecting"
         :disabled="redirecting"
