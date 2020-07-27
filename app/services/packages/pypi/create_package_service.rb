@@ -12,6 +12,10 @@ module Packages
             required_python: params[:requires_python]
           )
 
+          if created_package.package_files.with_file_name(file_params[:file_name]).exists?
+            raise ArgumentError, 'File already exists'
+          end
+
           ::Packages::CreatePackageFileService.new(created_package, file_params).execute
         end
       end
