@@ -9,10 +9,7 @@ module Gitlab
 
       def all
         {
-          nodes: nodes.map do |node|
-            attributes = node(node)
-            attributes.merge(node_metrics(node))
-          end.presence,
+          nodes: all_nodes_with_metrics.presence,
           node_connection_error: @node_connection_error,
           metrics_connection_error: @metrics_connection_error
         }
@@ -21,6 +18,13 @@ module Gitlab
       private
 
       attr_reader :cluster
+
+      def all_nodes_with_metrics
+        nodes.map do |node|
+          attributes = node(node)
+          attributes.merge(node_metrics(node))
+        end
+      end
 
       def nodes_from_cluster
         request = graceful_request { cluster.kubeclient.get_nodes }
