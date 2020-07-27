@@ -109,17 +109,19 @@ RSpec.describe Gitlab::UsageData, :aggregate_failures do
             user = create(:user)
             project = create(:project, :repository_private,
                              :test_repo, :remote_mirror, creator: user)
-            create(:merge_request, source_project: project)
+            merge_request = create(:merge_request, source_project: project)
             create(:deploy_key, user: user)
             create(:key, user: user)
             create(:project, creator: user, disable_overriding_approvers_per_merge_request: true)
             create(:project, creator: user, disable_overriding_approvers_per_merge_request: false)
             create(:remote_mirror, project: project)
             create(:snippet, author: user)
+            create(:diff_note_on_merge_request, project: project, noteable: merge_request)
           end
 
           expect(described_class.uncached_data[:usage_activity_by_stage][:create]).to include(
             deploy_keys: 2,
+            diff_note_user_count: 2,
             keys: 2,
             merge_requests: 2,
             projects_with_disable_overriding_approvers_per_merge_request: 2,
@@ -127,8 +129,10 @@ RSpec.describe Gitlab::UsageData, :aggregate_failures do
             remote_mirrors: 2,
             snippets: 2
           )
+
           expect(described_class.uncached_data[:usage_activity_by_stage_monthly][:create]).to include(
             deploy_keys: 1,
+            diff_note_user_count: 1,
             keys: 1,
             merge_requests: 1,
             projects_with_disable_overriding_approvers_per_merge_request: 1,
