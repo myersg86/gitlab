@@ -1,6 +1,6 @@
-query DASTSiteProfiles($fullPath: ID!, $after: Int, $before: Int, $first: Int, $last: Int) {
+query DASTSiteProfiles($fullPath: ID!, $after: String, $before: String, $first: Int, $last: Int) {
   project(fullPath: $fullPath) {
-    DASTSiteProfiles(after: $after, before: $before, first: $first, last: $last) {
+    siteProfiles: DASTSiteProfiles(after: $after, before: $before, first: $first, last: $last) {
       pageInfo {
         hasNextPage
         hasPreviousPage

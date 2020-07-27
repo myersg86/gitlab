@@ -18,33 +18,38 @@ export default {
   },
   data() {
     return {
-      profiles: [
-        {
-          id: 1,
-          profileName: 'Profile 1',
-          targetUrl: 'http://example-1.com',
-          validationStatus: 'Not validated',
-        },
-        {
-          id: 2,
-          profileName: 'Profile 1',
-          targetUrl: 'http://example-1.com',
-          validationStatus: 'Not validated',
-        },
-      ],
+      siteProfiles: {
+        list: [],
+        pageInfo: {},
+      },
     };
   },
   apollo: {
-    profiles_TEMP_DISABLED: {
+    siteProfiles: {
       query: dastSiteProfilesQuery,
       variables() {
         return {
           // @TODO - inject path
           fullPath: '/inject-project/path/here',
+          first: 10,
         };
       },
-      // @TODO - error handling
+      update({ project: { siteProfiles } }) {
+        const { edges = [], pageInfo = {} } = siteProfiles;
+        const list = edges.map(({ node }) => node);
+
+        return {
+          list,
+          pageInfo,
+        };
+      },
+      // @TODO - error handling / Sentry ?
       error: () => {},
+    },
+  },
+  computed: {
+    hasMoreSiteProfiles() {
+      return this.siteProfiles.pageInfo.hasNextPage;
     },
   },
 };
@@ -81,7 +86,7 @@ export default {
           <span>{{ s__('DastProfiles|Site Profiles') }}</span>
         </template>
 
-        <profiles-list :profiles="profiles" />
+        <profiles-list :profiles="siteProfiles.list" :has-more-pages="hasMoreSiteProfiles" />
       </gl-tab>
     </gl-tabs>
   </section>
