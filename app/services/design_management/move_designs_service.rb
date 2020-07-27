@@ -12,13 +12,15 @@ module DesignManagement
     end
 
     def execute
-      # TODO: move into RelativePositioning#move_between
+      return error(:CannotMove) unless ::Feature.enabled?(:reorder_designs)
       return error(:CannotMove) unless current_user.can?(:move_design, current_design)
+      return error(:NoFocus) unless current_design.present?
+      return error(:NoNeighbors) unless neighbors.present?
       return error(:NotDistinct) unless all_distinct?
       return error(:NotAdjacent) if any_in_gap?
       return error(:NotSameIssue) unless all_same_issue?
 
-      move!
+      current_design.move_between(previous_design, next_design)
       success
     end
 
@@ -32,12 +34,8 @@ module DesignManagement
 
     private
 
-    def move!
-      if previous_design || next_design
-        current_design.move_between(previous_design, next_design)
-      else
-        current_design.move_to_start
-      end
+    def neighbors
+      [previous_design, next_design].compact
     end
 
     def all_distinct?
@@ -55,11 +53,11 @@ module DesignManagement
     end
 
     def ids
-      @ids ||= [current_design, previous_design, next_design].compact.map(&:id)
+      @ids ||= [current_design, *neighbors].map(&:id)
     end
 
     def current_design
-      @current_design ||= params.fetch(:current_design)
+      params[:current_design]
     end
 
     def issue

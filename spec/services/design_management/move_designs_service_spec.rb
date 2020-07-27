@@ -21,6 +21,9 @@ RSpec.describe DesignManagement::MoveDesignsService do
   end
 
   let(:current_user) { developer }
+  let(:current_design) { nil }
+  let(:previous_design) { nil }
+  let(:next_design) { nil }
 
   before do
     # TODO: remove when this ability is implemented
@@ -30,10 +33,18 @@ RSpec.describe DesignManagement::MoveDesignsService do
   describe '#execute' do
     subject { service.execute }
 
+    context 'the feature is unavailable' do
+      before do
+        stub_feature_flags(reorder_designs: false)
+      end
+
+      it 'raises CannotMove' do
+        expect(subject).to be_error.and(have_attributes(message: :CannotMove))
+      end
+    end
+
     context 'the user cannot move designs' do
       let(:current_design) { designs.first }
-      let(:previous_design) { nil }
-      let(:next_design) { nil }
       let(:current_user) { build_stubbed(:user) }
 
       it 'raises CannotMove' do
@@ -44,7 +55,6 @@ RSpec.describe DesignManagement::MoveDesignsService do
     context 'the designs are not distinct' do
       let(:current_design) { designs.first }
       let(:previous_design) { designs.first }
-      let(:next_design) { nil }
 
       it 'raises NotDistinct' do
         expect(subject).to be_error.and(have_attributes(message: :NotDistinct))
@@ -54,10 +64,26 @@ RSpec.describe DesignManagement::MoveDesignsService do
     context 'the designs are not on the same issue' do
       let(:current_design) { designs.first }
       let(:previous_design) { create(:design) }
-      let(:next_design) { nil }
 
       it 'raises NotDistinct' do
         expect(subject).to be_error.and(have_attributes(message: :NotSameIssue))
+      end
+    end
+
+    context 'no focus is passed' do
+      let(:previous_design) { designs.second }
+      let(:next_design) { designs.third }
+
+      it 'raises NoFocus' do
+        expect(subject).to be_error.and(have_attributes(message: :NoFocus))
+      end
+    end
+
+    context 'no neighbours are passed' do
+      let(:current_design) { designs.first }
+
+      it 'raises NoNeighbors' do
+        expect(subject).to be_error.and(have_attributes(message: :NoNeighbors))
       end
     end
 
@@ -86,19 +112,6 @@ RSpec.describe DesignManagement::MoveDesignsService do
           .with(next_design).and_return(true)
 
         allow(current_design).to receive(:move_between).with(previous_design, next_design)
-
-        expect(subject).to be_success
-      end
-    end
-
-    context 'moving a design to start' do
-      let(:current_design) { designs.first }
-      let(:previous_design) { nil }
-      let(:next_design) { nil }
-
-      it 'calls move_to_start and is successful' do
-        # TODO: remove when the `relative_position` column has been implemented
-        allow(current_design).to receive(:move_to_start)
 
         expect(subject).to be_success
       end
