@@ -298,6 +298,18 @@ msgstr ""
 msgid "%{authorsName}'s thread"
 msgstr ""
 
+msgid "%{code_open}\"johnsmith@example.com\": \"@johnsmith\"%{code_close} will add \"By %{link_open}@johnsmith%{link_close}\" to all issues and comments originally created by johnsmith@example.com, and will set %{link_open}@johnsmith%{link_close} as the assignee on all issues originally assigned to johnsmith@example.com."
+msgstr ""
+
+msgid "%{code_open}\"johnsmith@example.com\": \"John Smith\"%{code_close} will add \"By John Smith\" to all issues and comments originally created by johnsmith@example.com."
+msgstr ""
+
+msgid "%{code_open}\"johnsmith@example.com\": \"johnsm...@example.com\"%{code_close} will add \"By johnsm...@example.com\" to all issues and comments originally created by johnsmith@example.com. The email address or username is masked to ensure the user's privacy."
+msgstr ""
+
+msgid "%{code_open}\"johnsmith@example.com\": \"johnsmith@example.com\"%{code_close} will add \"By %{link_open}johnsmith@example.com%{link_close}\" to all issues and comments originally created by johnsmith@example.com. By default, the email address or username is masked to ensure the user's privacy. Use this option if you want to show the full email address."
+msgstr ""
+
 msgid "%{code_open}Masked%{code_close} to prevent the values from being displayed in job logs (must match certain regexp requirements)."
 msgstr ""
 
@@ -1022,18 +1034,6 @@ msgstr ""
 msgid "< 1 hour"
 msgstr ""
 
-msgid "<code>\"johnsmith@example.com\": \"@johnsmith\"</code> will add \"By <a href=\"#\">@johnsmith</a>\" to all issues and comments originally created by johnsmith@example.com, and will set <a href=\"#\">@johnsmith</a> as the assignee on all issues originally assigned to johnsmith@example.com."
-msgstr ""
-
-msgid "<code>\"johnsmith@example.com\": \"John Smith\"</code> will add \"By John Smith\" to all issues and comments originally created by johnsmith@example.com."
-msgstr ""
-
-msgid "<code>\"johnsmith@example.com\": \"johnsm...@example.com\"</code> will add \"By johnsm...@example.com\" to all issues and comments originally created by johnsmith@example.com. The email address or username is masked to ensure the user's privacy."
-msgstr ""
-
-msgid "<code>\"johnsmith@example.com\": \"johnsmith@example.com\"</code> will add \"By <a href=\"#\">johnsmith@example.com</a>\" to all issues and comments originally created by johnsmith@example.com. By default, the email address or username is masked to ensure the user's privacy. Use this option if you want to show the full email address."
-msgstr ""
-
 msgid "<project name>"
 msgstr ""
 
@@ -1125,6 +1125,9 @@ msgid "A new impersonation token has been created."
 msgstr ""
 
 msgid "A plain HTML site that uses Netlify for CI/CD instead of GitLab, but still with all the other great GitLab features."
+msgstr ""
+
+msgid "A platform value can be web, mob or app."
 msgstr ""
 
 msgid "A project boilerplate for Salesforce App development with Salesforce Developer tools."
@@ -2842,6 +2845,9 @@ msgid "Any eligible user"
 msgstr ""
 
 msgid "Any encrypted tokens"
+msgstr ""
+
+msgid "Any files larger than this limit will not be indexed, and thus will not be searchable."
 msgstr ""
 
 msgid "Any label"
@@ -4647,10 +4653,10 @@ msgstr ""
 msgid "Child epic doesn't exist."
 msgstr ""
 
-msgid "Choose <strong>Create archive</strong> and wait for archiving to complete."
+msgid "Choose %{strong_open}Create archive%{strong_close} and wait for archiving to complete."
 msgstr ""
 
-msgid "Choose <strong>Next</strong> at the bottom of the page."
+msgid "Choose %{strong_open}Next%{strong_close} at the bottom of the page."
 msgstr ""
 
 msgid "Choose a branch/tag (e.g. %{master}) or enter a commit (e.g. %{sha}) to see what's changed or to create a merge request."
@@ -4896,10 +4902,10 @@ msgstr ""
 msgid "Clears weight."
 msgstr ""
 
-msgid "Click the <strong>Download</strong> button and wait for downloading to complete."
+msgid "Click the %{strong_open}Download%{strong_close} button and wait for downloading to complete."
 msgstr ""
 
-msgid "Click the <strong>Select none</strong> button on the right, since we only need \"Google Code Project Hosting\"."
+msgid "Click the %{strong_open}Select none%{strong_close} button on the right, since we only need \"Google Code Project Hosting\"."
 msgstr ""
 
 msgid "Click the button below to begin the install process by navigating to the Kubernetes page"
@@ -6779,6 +6785,9 @@ msgstr ""
 msgid "Copy source branch name"
 msgstr ""
 
+msgid "Copy the code below to implement tracking in your application:"
+msgstr ""
+
 msgid "Copy token"
 msgstr ""
 
@@ -6929,7 +6938,7 @@ msgstr ""
 msgid "Create an issue. Issues are created for each alert triggered."
 msgstr ""
 
-msgid "Create and provide your GitHub %{link_start}Personal Access Token%{link_end}. You will need to select the <code>repo</code> scope, so we can display a list of your public and private repositories which are available to import."
+msgid "Create and provide your GitHub %{link_start}Personal Access Token%{link_end}. You will need to select the %{code_open}repo%{code_close} scope, so we can display a list of your public and private repositories which are available to import."
 msgstr ""
 
 msgid "Create board"
@@ -10522,7 +10531,7 @@ msgstr ""
 msgid "Find the downloaded ZIP file and decompress it."
 msgstr ""
 
-msgid "Find the newly extracted <code>Takeout/Google Code Project Hosting/GoogleCodeProjectHosting.json</code> file."
+msgid "Find the newly extracted %{code_open}Takeout/Google Code Project Hosting/GoogleCodeProjectHosting.json%{code_close} file."
 msgstr ""
 
 msgid "Fingerprint"
@@ -13728,6 +13737,9 @@ msgstr ""
 msgid "Last edited by %{name}"
 msgstr ""
 
+msgid "Last item before this page loaded in your browser:"
+msgstr ""
+
 msgid "Last name"
 msgstr ""
 
@@ -14547,6 +14559,9 @@ msgid "Maximum duration of a session."
 msgstr ""
 
 msgid "Maximum field length"
+msgstr ""
+
+msgid "Maximum file size indexed (KiB)"
 msgstr ""
 
 msgid "Maximum file size is 2MB. Please select a smaller file."
@@ -16322,6 +16337,9 @@ msgstr ""
 msgid "Number of employees"
 msgstr ""
 
+msgid "Number of events for this project: %{total_count}."
+msgstr ""
+
 msgid "Number of files touched"
 msgstr ""
 
@@ -17822,6 +17840,9 @@ msgid "Private projects can be created in your personal namespace with:"
 msgstr ""
 
 msgid "Proceed"
+msgstr ""
+
+msgid "Product Analytics"
 msgstr ""
 
 msgid "Productivity"
@@ -20668,7 +20689,7 @@ msgstr ""
 msgid "Scroll down"
 msgstr ""
 
-msgid "Scroll down to <strong>Google Code Project Hosting</strong> and enable the switch on the right."
+msgid "Scroll down to %{strong_open}Google Code Project Hosting%{strong_close} and enable the switch on the right."
 msgstr ""
 
 msgid "Scroll left"
@@ -21369,7 +21390,7 @@ msgstr ""
 msgid "Selected levels cannot be used by non-admin users for groups, projects or snippets. If the public level is restricted, user profiles are only visible to logged in users."
 msgstr ""
 
-msgid "Selecting a GitLab user will add a link to the GitLab user in the descriptions of issues and comments (e.g. \"By <a href=\"#\">@johnsmith</a>\"). It will also associate and/or assign these issues and comments with the selected user."
+msgid "Selecting a GitLab user will add a link to the GitLab user in the descriptions of issues and comments (e.g. \"By %{link_open}@johnsmith%{link_close}\"). It will also associate and/or assign these issues and comments with the selected user."
 msgstr ""
 
 msgid "Selective synchronization"
@@ -21745,6 +21766,9 @@ msgid "Settings related to the use and experience of using GitLab's Package Regi
 msgstr ""
 
 msgid "Settings to prevent self-approval across all projects in the instance. Only an administrator can modify these settings."
+msgstr ""
+
+msgid "Setup"
 msgstr ""
 
 msgid "Severity"
@@ -22696,6 +22720,15 @@ msgstr ""
 msgid "Static Application Security Testing (SAST)"
 msgstr ""
 
+msgid "StaticSiteEditor|1. Add a clear title to describe the change."
+msgstr ""
+
+msgid "StaticSiteEditor|2. Add a description to explain why the change is being made."
+msgstr ""
+
+msgid "StaticSiteEditor|3. Assign a person to review and accept the merge request."
+msgstr ""
+
 msgid "StaticSiteEditor|An error occurred while submitting your changes."
 msgstr ""
 
@@ -22717,13 +22750,10 @@ msgstr ""
 msgid "StaticSiteEditor|Static site editor"
 msgstr ""
 
-msgid "StaticSiteEditor|Success!"
-msgstr ""
-
-msgid "StaticSiteEditor|Summary of changes"
-msgstr ""
-
 msgid "StaticSiteEditor|The Static Site Editor is currently configured to only edit Markdown content on pages generated from Middleman. Visit the documentation to learn more about configuring your site to use the Static Site Editor."
+msgstr ""
+
+msgid "StaticSiteEditor|To see your changes live you will need to do the following things:"
 msgstr ""
 
 msgid "StaticSiteEditor|Update %{sourcePath} file"
@@ -22732,19 +22762,7 @@ msgstr ""
 msgid "StaticSiteEditor|View documentation"
 msgstr ""
 
-msgid "StaticSiteEditor|View merge request"
-msgstr ""
-
-msgid "StaticSiteEditor|You added a commit:"
-msgstr ""
-
-msgid "StaticSiteEditor|You created a merge request:"
-msgstr ""
-
-msgid "StaticSiteEditor|You created a new branch:"
-msgstr ""
-
-msgid "StaticSiteEditor|Your changes have been submitted and a merge request has been created. The changes won’t be visible on the site until the merge request has been accepted."
+msgid "StaticSiteEditor|Your merge request has been created"
 msgstr ""
 
 msgid "Statistics"
@@ -23526,7 +23544,7 @@ msgstr ""
 msgid "The Advanced Global Search in GitLab is a powerful search service that saves you time. Instead of creating duplicate code and wasting time, you can now search for code within other teams that can help your own project."
 msgstr ""
 
-msgid "The CSV export will be created in the background. Once finished, it will be sent to <strong>%{email}</strong> in an attachment."
+msgid "The CSV export will be created in the background. Once finished, it will be sent to %{strong_open}%{email}%{strong_close} in an attachment."
 msgstr ""
 
 msgid "The Git LFS objects will <strong>not</strong> be synced."
@@ -23810,7 +23828,7 @@ msgstr ""
 msgid "The repository is being updated..."
 msgstr ""
 
-msgid "The repository must be accessible over <code>http://</code>, <code>https://</code> or <code>git://</code>."
+msgid "The repository must be accessible over %{code_open}http://%{code_close}, %{code_open}https://%{code_close} or %{code_open}git://%{code_close}."
 msgstr ""
 
 msgid "The repository must be accessible over <code>http://</code>, <code>https://</code>, <code>ssh://</code> or <code>git://</code>."
@@ -23870,7 +23888,7 @@ msgstr ""
 msgid "The user map has been saved. Continue by selecting the projects you want to import."
 msgstr ""
 
-msgid "The user map is a JSON document mapping the Google Code users that participated on your projects to the way their email addresses and usernames will be imported into GitLab. You can change this by changing the value on the right hand side of <code>:</code>. Be sure to preserve the surrounding double quotes, other punctuation and the email address or username on the left hand side."
+msgid "The user map is a JSON document mapping the Google Code users that participated on your projects to the way their email addresses and usernames will be imported into GitLab. You can change this by changing the value on the right hand side of %{code_open}:%{code_close}. Be sure to preserve the surrounding double quotes, other punctuation and the email address or username on the left hand side."
 msgstr ""
 
 msgid "The user map is a mapping of the FogBugz users that participated on your projects to the way their email address and usernames will be imported into GitLab. You can change this by populating the table below."
@@ -23889,6 +23907,9 @@ msgid "The vulnerability is no longer detected. Verify the vulnerability has bee
 msgstr ""
 
 msgid "The vulnerability is no longer detected. Verify the vulnerability has been remediated before changing its status."
+msgstr ""
+
+msgid "There are currently no events."
 msgstr ""
 
 msgid "There are no %{replicableTypeName} to show"
@@ -24497,6 +24518,9 @@ msgstr ""
 msgid "This page is unavailable because you are not allowed to read information across multiple projects."
 msgstr ""
 
+msgid "This page sends a payload. Go back to the events page to see a newly created event."
+msgstr ""
+
 msgid "This pipeline does not use the %{codeStart}needs%{codeEnd} keyword and can't be represented as a directed acyclic graph."
 msgstr ""
 
@@ -24945,7 +24969,7 @@ msgstr ""
 msgid "To add the entry manually, provide the following details to the application on your phone."
 msgstr ""
 
-msgid "To connect GitHub repositories, you can use a %{personal_access_token_link}. When you create your Personal Access Token, you will need to select the <code>repo</code> scope, so we can display a list of your public and private repositories which are available to connect."
+msgid "To connect GitHub repositories, you can use a %{personal_access_token_link}. When you create your Personal Access Token, you will need to select the %{code_open}repo%{code_close} scope, so we can display a list of your public and private repositories which are available to connect."
 msgstr ""
 
 msgid "To connect GitHub repositories, you first need to authorize GitLab to access the list of your GitHub repositories."
@@ -25659,6 +25683,9 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "Update %{sourcePath} file"
+msgstr ""
+
 msgid "Update all"
 msgstr ""
 
@@ -25758,7 +25785,7 @@ msgstr ""
 msgid "Upgrade your plan to improve Merge Requests."
 msgstr ""
 
-msgid "Upload <code>GoogleCodeProjectHosting.json</code> here:"
+msgid "Upload %{code_open}GoogleCodeProjectHosting.json%{code_close} here:"
 msgstr ""
 
 msgid "Upload CSV file"
@@ -26395,6 +26422,9 @@ msgstr ""
 msgid "View log"
 msgstr ""
 
+msgid "View merge request"
+msgstr ""
+
 msgid "View open merge request"
 msgstr ""
 
@@ -26638,9 +26668,6 @@ msgstr ""
 msgid "Vulnerability|Image"
 msgstr ""
 
-msgid "Vulnerability|Instances"
-msgstr ""
-
 msgid "Vulnerability|Links"
 msgstr ""
 
@@ -26837,6 +26864,9 @@ msgid "When this merge request is accepted"
 msgid_plural "When these merge requests are accepted"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "When using the %{code_open}http://%{code_close} or %{code_open}https://%{code_close} protocols, please provide the exact URL to the repository. HTTP redirects will not be followed."
+msgstr ""
 
 msgid "When using the <code>http://</code> or <code>https://</code> protocols, please provide the exact URL to the repository. HTTP redirects will not be followed."
 msgstr ""
