@@ -1,0 +1,5 @@
+mutation retryPipeline($retryPath: String) {
+  retryPipeline(input: { retryPath: $retryPath }) {
+    errors
+  }
+}

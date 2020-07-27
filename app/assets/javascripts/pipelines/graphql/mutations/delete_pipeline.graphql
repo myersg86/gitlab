@@ -1,0 +1,5 @@
+mutation deletePipeline($deletePath: String) {
+  deletePipeline(input: { deletePath: $deletePath }) {
+    errors
+  }
+}

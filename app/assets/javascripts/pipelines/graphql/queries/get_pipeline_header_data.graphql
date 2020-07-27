@@ -1,0 +1,13 @@
+# All data that we need:
+
+query getPipelineHeaderData($id: Int) {
+  details {
+    status
+  }
+  created_at
+  cancel_path
+  delete_path
+  retry_path
+  id
+  user
+}

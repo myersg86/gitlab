@@ -1,9 +1,13 @@
 <script>
 import { GlLoadingIcon, GlModal, GlModalDirective } from '@gitlab/ui';
+import { __ } from '~/locale';
 import ciHeader from '~/vue_shared/components/header_ci_component.vue';
 import LoadingButton from '~/vue_shared/components/loading_button.vue';
 import eventHub from '../event_hub';
-import { __ } from '~/locale';
+import pipelineQuery from '../graphql/queries/get_pipeline_header_data.graphql';
+import cancelPipelineMutation from '../graphql/mutations/cancel_pipeline.graphql';
+import deletePipelineMutation from '../graphql/mutations/delete_pipeline.graphql';
+import retryPipelineMutation from '../graphql/mutations/retry_pipeline.graphql';
 
 const DELETE_MODAL_ID = 'pipeline-delete-modal';
 
@@ -19,17 +23,35 @@ export default {
     GlModal: GlModalDirective,
   },
   props: {
-    pipeline: {
-      type: Object,
+    // TODO: This will get removed from the props and the component itself will fetch it right?
+    // pipeline: {
+    //   type: Object,
+    //   required: true,
+    // },
+    // isLoading: {
+    //   type: Boolean,
+    //   required: true,
+    // },
+    pipelineId: {
+      type: String,
       required: true,
     },
-    isLoading: {
-      type: Boolean,
-      required: true,
+  },
+  apollo: {
+    pipeline: {
+      query: pipelineQuery,
+      variables() {
+        return {
+          id: this.pipelineId,
+        };
+      },
+      pollInterval: 10000,
+      error(error) {},
     },
   },
   data() {
     return {
+      pipeline: Object,
       isCanceling: false,
       isRetrying: false,
       isDeleting: false,
@@ -51,17 +73,20 @@ export default {
   },
 
   methods: {
-    cancelPipeline() {
+    async cancelPipeline() {
       this.isCanceling = true;
-      eventHub.$emit('headerPostAction', this.pipeline.cancel_path);
+      // eventHub.$emit('headerPostAction', this.pipeline.cancel_path);
+      await this.$appolo.mutate(cancelPipelineMutation);
     },
-    retryPipeline() {
+    async retryPipeline() {
       this.isRetrying = true;
-      eventHub.$emit('headerPostAction', this.pipeline.retry_path);
+      // eventHub.$emit('headerPostAction', this.pipeline.retry_path);
+      await this.$appolo.mutate(retryPipelineMutation);
     },
-    deletePipeline() {
+    async deletePipeline() {
       this.isDeleting = true;
-      eventHub.$emit('headerDeleteAction', this.pipeline.delete_path);
+      // eventHub.$emit('headerDeleteAction', this.pipeline.delete_path);
+      await this.$appolo.mutate(deletePipelineMutation);
     },
   },
   DELETE_MODAL_ID,

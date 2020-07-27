@@ -1,7 +1,9 @@
 import Vue from 'vue';
+import VueApollo from 'vue-apollo';
 import Flash from '~/flash';
 import Translate from '~/vue_shared/translate';
 import { __ } from '~/locale';
+import createDefaultClient from '~/lib/graphql';
 import { setUrlFragment, redirectTo } from '~/lib/utils/url_utility';
 import pipelineGraph from './components/graph/graph_component.vue';
 import Dag from './components/dag/dag.vue';
@@ -13,6 +15,11 @@ import TestReports from './components/test_reports/test_reports.vue';
 import createTestReportsStore from './stores/test_reports';
 
 Vue.use(Translate);
+Vue.use(VueApollo);
+
+const apolloProvider = new VueApollo({
+  defaultClient: createDefaultClient(),
+});
 
 const createPipelinesDetailApp = mediator => {
   // eslint-disable-next-line no-new
@@ -53,6 +60,7 @@ const createPipelineHeaderApp = mediator => {
     components: {
       pipelineHeader,
     },
+    apolloProvider,
     data() {
       return {
         mediator,
@@ -84,8 +92,10 @@ const createPipelineHeaderApp = mediator => {
     render(createElement) {
       return createElement('pipeline-header', {
         props: {
-          isLoading: this.mediator.state.isLoading,
-          pipeline: this.mediator.store.state.pipeline,
+          pipelineId: 106, // TODO: How to get the ID? Do we get in in the URl?
+          // FIXME: We will base of `isLoading` on the apollo loading property?
+          // isLoading: this.mediator.state.isLoading,
+          // pipeline: this.mediator.store.state.pipeline,
         },
       });
     },

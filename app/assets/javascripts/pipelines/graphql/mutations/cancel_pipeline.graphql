@@ -1,0 +1,5 @@
+mutation cancelPipeline($cancelPath: String) {
+  cancelPipeline(input: { cancelPath: $cancelPath }) {
+    errors
+  }
+}
