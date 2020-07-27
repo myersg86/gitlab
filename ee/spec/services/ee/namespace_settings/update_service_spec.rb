@@ -9,6 +9,10 @@ RSpec.describe EE::NamespaceSettings::UpdateService do
   subject { described_class.new(user, group, params).execute }
 
   describe '#execute' do
+    before do
+      create(:namespace_settings, namespace: group, prevent_forking_outside_group: false)
+    end
+
     context 'as a normal user' do
       let(:params) { { prevent_forking_outside_group: true } }
 

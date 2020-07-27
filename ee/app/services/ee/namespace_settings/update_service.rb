@@ -14,19 +14,29 @@ module EE
       end
 
       def execute
-        if settings_params.key?(:prevent_forking_outside_group)
-          unless can_update_prevent_forking?
-            group.errors.add(:prevent_forking_outside_group, s_('GroupSettings|Prevent forking setting was not saved'))
-            return
-          end
+        unless valid?
+          group.errors.add(:prevent_forking_outside_group, s_('GroupSettings|Prevent forking setting was not saved'))
+          return
         end
 
-        group.namespace_settings ? group.namespace_settings.attributes = settings_params : group.build_namespace_settings(settings_params)
+        if group.namespace_settings
+          group.namespace_settings.attributes = settings_params
+        else
+          group.build_namespace_settings(settings_params)
+        end
       end
 
       private
 
       attr_reader :current_user, :group, :settings_params
+
+      def valid?
+        if settings_params.key?(:prevent_forking_outside_group)
+          can_update_prevent_forking?
+        else
+          true
+        end
+      end
 
       def can_update_prevent_forking?
         can?(current_user, :change_prevent_group_forking, group)

@@ -115,6 +115,7 @@ module EE
       def handle_settings_update
         settings_params = params.slice(:prevent_forking_outside_group)
         params.delete(:prevent_forking_outside_group)
+
         NamespaceSettings::UpdateService.new(current_user, group, settings_params).execute
       end
 
