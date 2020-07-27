@@ -31,6 +31,10 @@ const validate = ({ name }) => {
   return errors;
 };
 
+const hasCustomValueStream = vs => {
+  return vs.length > 1 || vs[0].name.toLowerCase().trim() !== 'default';
+};
+
 export default {
   components: {
     GlButton,
@@ -65,7 +69,7 @@ export default {
       return this.errors.name?.join('\n');
     },
     hasValueStreams() {
-      return Boolean(this.data.length);
+      return Boolean(this.data.length > 0 && hasCustomValueStream(this.data));
     },
     selectedValueStreamName() {
       return this.selectedValueStream?.name || '';
@@ -80,9 +84,7 @@ export default {
   },
   watch: {
     initialFormErrors(newErrors = {}) {
-      this.errors = {
-        ...newErrors,
-      };
+      this.errors = newErrors;
     },
   },
   mounted() {
