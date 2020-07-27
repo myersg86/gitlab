@@ -29,7 +29,7 @@ instance of the [GraphiQL explorer](https://gitlab.com/-/graphql-explorer):
    }
    ```
 
-1. Open the GraphiQL explorer tool in the following URL: `https://gitlab.com/-/graphql-explorer`.
+1. Open the [GraphiQL Explorer](https://gitlab.com/-/graphql-explorer) page.
 1. Paste the `query` listed above into the left window of your GraphiQL explorer tool.
 1. Click Play to get the result shown here:
 
