@@ -9,6 +9,9 @@ import typeDefs from './graphql/typedefs.graphql';
 
 Vue.use(VueApollo);
 
+const el = document.querySelector('.js-design-management-new');
+const { issueIid, projectPath } = el.dataset;
+
 const resolvers = {
   Mutation: {
     updateActiveDiscussion: (_, { id = null, source }, { cache }) => {
@@ -23,7 +26,7 @@ const resolvers = {
     designManagementMove(_, { id, from, to }, { cache }) {
       const data = cache.readQuery({
         query: designListQuery,
-        variables: { fullPath: 'h5bp/html5-boilerplate', iid: '43', atVersion: null },
+        variables: { fullPath: projectPath, iid: issueIid, atVersion: null },
       });
       const designs = data.project.issue.designCollection.designs.edges;
       designs.splice(to, 0, designs.splice(from, 1)[0]);

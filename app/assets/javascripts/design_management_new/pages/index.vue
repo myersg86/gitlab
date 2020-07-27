@@ -334,6 +334,7 @@ export default {
       <vue-draggable
         v-else
         :value="designs"
+        :disabled="!isLatestVersion"
         v-bind="$options.dragOptions"
         tag="ol"
         draggable=".design-tile"
