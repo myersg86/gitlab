@@ -1,5 +1,5 @@
 <script>
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import glFeatureFlagMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 import BoardColumn from 'ee_else_ce/boards/components/board_column.vue';
 import EpicsSwimlanes from 'ee_component/boards/components/epics_swimlanes.vue';
@@ -42,10 +42,22 @@ export default {
     },
   },
   computed: {
-    ...mapState(['isShowingEpicsSwimlanes']),
+    ...mapState(['isShowingEpicsSwimlanes', 'boardLists']),
     isSwimlanesOn() {
       return this.glFeatures.boardsWithSwimlanes && this.isShowingEpicsSwimlanes;
     },
+    boardListsToUse() {
+      return this.glFeatures.graphqlBoardLists ? this.boardLists : this.lists;
+    },
+  },
+  mounted() {
+    if (this.glFeatures.graphqlBoardLists) {
+      this.fetchLists();
+      this.showPromotionList();
+    }
+  },
+  methods: {
+    ...mapActions(['fetchLists', 'showPromotionList']),
   },
 };
 </script>
@@ -58,7 +70,7 @@ export default {
       data-qa-selector="boards_list"
     >
       <board-column
-        v-for="list in lists"
+        v-for="list in boardListsToUse"
         :key="list.id"
         ref="board"
         :can-admin-list="canAdminList"
@@ -73,7 +85,7 @@ export default {
     <epics-swimlanes
       v-else
       ref="swimlanes"
-      :lists="lists"
+      :lists="boardListsToUse"
       :can-admin-list="canAdminList"
       :disabled="disabled"
       :board-id="boardId"

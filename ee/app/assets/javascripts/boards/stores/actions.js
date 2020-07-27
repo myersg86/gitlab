@@ -1,4 +1,7 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import { __ } from '~/locale';
+import { parseBoolean } from '~/lib/utils/common_utils';
 import actionsCE from '~/boards/stores/actions';
 import boardsStoreEE from './boards_store_ee';
 import * as types from './mutation_types';
@@ -77,6 +80,22 @@ export default {
       list: {
         max_issue_count: maxIssueCount,
       },
+    });
+  },
+
+  showPromotionList: ({ state, dispatch }) => {
+    if (
+      !state.showPromotion ||
+      parseBoolean(Cookies.get('promotion_issue_board_hidden')) ||
+      state.disabled
+    ) {
+      return;
+    }
+    dispatch('addList', {
+      id: 'promotion',
+      list_type: 'promotion',
+      title: __('Improve Issue boards'),
+      position: 0,
     });
   },
 

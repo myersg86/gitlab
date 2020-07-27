@@ -129,10 +129,12 @@ RSpec.describe 'Issue Boards new issue', :js do
   end
 
   context 'group boards' do
-    let_it_be(:group) { create(:group, :public) }
-    let_it_be(:project) { create(:project, namespace: group) }
-    let_it_be(:group_board) { create(:board, group: group) }
-    let_it_be(:list) { create(:list, board: group_board, position: 0) }
+    let(:group) { create(:group, :public) }
+    let!(:project) { create(:project, :public, namespace: group) }
+    let(:group_board) { create(:board, group: group) }
+    let!(:project_label) { create(:label, project: project, name: 'label') }
+    let!(:list) { create(:list, board: group_board, label: project_label, position: 0) }
+    let!(:backlog_list) { create(:backlog_list, board: group_board) }
 
     context 'for unauthorized users' do
       before do

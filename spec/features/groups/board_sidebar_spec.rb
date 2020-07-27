@@ -16,6 +16,7 @@ RSpec.describe 'Group Issue Boards', :js do
   let!(:issue_2)         { create(:labeled_issue, project: project_2, relative_position: 2) }
   let(:board)            { create(:board, group: group) }
   let!(:list)            { create(:list, board: board, label: project_1_label, position: 0) }
+  let!(:backlog_list)    { create(:backlog_list, board: board) }
   let(:card)             { find('.board:nth-child(1)').first('.board-card') }
 
   before do

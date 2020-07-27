@@ -1,6 +1,7 @@
 import mutations from '~/boards/stores/mutations';
 import * as types from '~/boards/stores/mutation_types';
 import defaultState from '~/boards/stores/state';
+import { listObj, listObjDuplicate } from '../mock_data';
 
 const expectNotImplemented = action => {
   it('is not implemented', () => {
@@ -15,7 +16,7 @@ describe('Board Store Mutations', () => {
     state = defaultState();
   });
 
-  describe('SET_ENDPOINTS', () => {
+  describe('SET_INITIAL_BOARD_DATA', () => {
     it('Should set initial Boards data to state', () => {
       const endpoints = {
         boardsEndpoint: '/boards/',
@@ -25,10 +26,24 @@ describe('Board Store Mutations', () => {
         boardId: 1,
         fullPath: 'gitlab-org',
       };
+      const boardType = 'group';
+      const disabled = false;
 
-      mutations[types.SET_ENDPOINTS](state, endpoints);
+      mutations[types.SET_INITIAL_BOARD_DATA](state, { ...endpoints, boardType, disabled });
 
       expect(state.endpoints).toEqual(endpoints);
+      expect(state.boardType).toEqual(boardType);
+      expect(state.disabled).toEqual(disabled);
+    });
+  });
+
+  describe('RECEIVE_LISTS', () => {
+    it('Should set boardLists to state', () => {
+      const lists = [listObj, listObjDuplicate];
+
+      mutations[types.RECEIVE_LISTS](state, lists);
+
+      expect(state.boardLists).toEqual(lists);
     });
   });
 

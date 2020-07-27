@@ -59,6 +59,7 @@ RSpec.describe 'Labels Hierarchy', :js do
   context 'scoped boards' do
     context 'for group boards' do
       let(:board) { create(:board, group: parent) }
+      let!(:backlog_list) { create(:backlog_list, board: board) }
 
       before do
         visit group_board_path(parent, board)

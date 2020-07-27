@@ -81,7 +81,7 @@ const boardsStore = {
   showPage(page) {
     this.state.currentPage = page;
   },
-  addList(listObj) {
+  updateListPosition(listObj) {
     const listType = listObj.listType || listObj.list_type;
     let { position } = listObj;
     if (listType === ListType.closed) {
@@ -91,6 +91,10 @@ const boardsStore = {
     }
 
     const list = new List({ ...listObj, position });
+    return list;
+  },
+  addList(listObj) {
+    const list = this.updateListPosition(listObj);
     this.state.lists = sortBy([...this.state.lists, list], 'position');
     return list;
   },

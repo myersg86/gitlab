@@ -8,25 +8,48 @@ const expectNotImplemented = action => {
   });
 };
 
-describe('setEndpoints', () => {
-  it('sets endpoints object', () => {
-    const mockEndpoints = {
+describe('setInitialBoardData', () => {
+  it('sets data object', () => {
+    const mockData = {
       foo: 'bar',
       bar: 'baz',
     };
 
     return testAction(
-      actions.setEndpoints,
-      mockEndpoints,
+      actions.setInitialBoardData,
+      mockData,
       {},
-      [{ type: types.SET_ENDPOINTS, payload: mockEndpoints }],
+      [{ type: types.SET_INITIAL_BOARD_DATA, payload: mockData }],
       [],
     );
   });
 });
 
-describe('fetchLists', () => {
-  expectNotImplemented(actions.fetchLists);
+describe('showWelcomeList', () => {
+  it('should dispatch addList action', done => {
+    const state = {
+      endpoints: { fullPath: 'gitlab-org', boardId: '1' },
+      boardType: 'group',
+      disabled: false,
+      boardLists: [{ type: 'backlog' }, { type: 'closed' }],
+    };
+
+    const blankList = {
+      id: 'blank',
+      list_type: 'blank',
+      title: 'Welcome to your Issue Board!',
+      position: 0,
+    };
+
+    testAction(
+      actions.showWelcomeList,
+      {},
+      state,
+      [],
+      [{ type: 'addList', payload: blankList }],
+      done,
+    );
+  });
 });
 
 describe('generateDefaultLists', () => {

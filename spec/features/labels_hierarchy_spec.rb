@@ -198,6 +198,7 @@ RSpec.describe 'Labels Hierarchy', :js do
 
     context 'on group board issue sidebar' do
       let(:board) { create(:board, group: parent) }
+      let!(:backlog_list) { create(:backlog_list, board: board) }
 
       before do
         parent.add_developer(user)
@@ -257,6 +258,7 @@ RSpec.describe 'Labels Hierarchy', :js do
 
     context 'on group boards filter' do
       let(:board) { create(:board, group: parent) }
+      let!(:backlog_list) { create(:backlog_list, board: board) }
 
       before do
         parent.add_developer(user)
@@ -296,6 +298,7 @@ RSpec.describe 'Labels Hierarchy', :js do
       let(:board) { create(:board, group: parent) }
 
       before do
+        stub_feature_flags(graphql_board_lists: false)
         parent.add_developer(user)
         visit group_board_path(parent, board)
         find('.js-new-board-list').click

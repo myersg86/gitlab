@@ -65,6 +65,7 @@ describe('BoardSettingsSideBar', () => {
       setCurrentBoard: jest.fn(),
       findList: bs.findList,
       addList: bs.addList,
+      updateListPosition: bs.updateListPosition,
       removeList: bs.removeList,
       scopedLabels: {
         enabled: false,

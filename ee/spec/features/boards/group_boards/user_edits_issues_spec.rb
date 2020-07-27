@@ -12,6 +12,7 @@ RSpec.describe 'label issues', :js do
   let!(:development) { create(:label, project: project, name: 'Development') }
   let!(:issue) { create(:labeled_issue, project: project, labels: [development]) }
   let!(:list) { create(:list, board: board, label: development, position: 0) }
+  let!(:backlog_list) { create(:backlog_list, board: board) }
 
   before do
     stub_licensed_features(multiple_group_issue_boards: true)
