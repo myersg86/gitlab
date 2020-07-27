@@ -5756,6 +5756,7 @@ type InstanceSecurityDashboard {
 State of a GitLab issue or merge request
 """
 enum IssuableState {
+  all
   closed
   locked
   opened
@@ -6457,6 +6458,7 @@ enum IssueSort {
 State of a GitLab issue
 """
 enum IssueState {
+  all
   closed
   locked
   opened
@@ -7882,6 +7884,7 @@ type MergeRequestSetWipPayload {
 State of a GitLab merge request
 """
 enum MergeRequestState {
+  all
   closed
   locked
   merged

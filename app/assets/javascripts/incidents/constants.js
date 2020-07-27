@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export  */
 import { s__, __ } from '~/locale';
 
 export const I18N = {
