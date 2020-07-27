@@ -63,6 +63,7 @@ export default {
       },
       filesToBeSaved: [],
       selectedDesigns: [],
+      isDraggingDesign: false,
     };
   },
   computed: {
@@ -321,11 +322,13 @@ export default {
       </gl-alert>
       <vue-draggable
         v-else
-        v-model="designs"
+        :list="designs"
         v-bind="$options.dragOptions"
         tag="ol"
         draggable=".design-tile"
         class="list-unstyled row"
+        @start="isDraggingDesign = true"
+        @end="isDraggingDesign = false"
       >
         <li
           v-for="design in designs"
@@ -334,6 +337,7 @@ export default {
         >
           <design-dropzone
             :has-designs="hasDesigns"
+            :is-dragging-design="isDraggingDesign"
             @change="onExistingDesignDropzoneChange($event, design.filename)"
             ><design v-bind="design" :is-uploading="isDesignToBeSaved(design.filename)"
           /></design-dropzone>
@@ -349,6 +353,7 @@ export default {
         <template #header>
           <li :class="designDropzoneWrapperClass" data-testid="design-dropzone-wrapper">
             <design-dropzone
+              :is-dragging-design="isDraggingDesign"
               :class="{ 'design-list-item design-list-item-new': !isDesignListEmpty }"
               :has-designs="hasDesigns"
               @change="onUploadDesign"
