@@ -5,35 +5,24 @@ require 'spec_helper'
 RSpec.describe Gitlab::Kubernetes::Node do
   include KubernetesHelpers
 
-  let(:cluster) { create(:cluster, :provided_by_user, :group) }
-  let(:expected_nodes) { [kube_node.merge(kube_node_metrics)] }
-
   describe '#all' do
-    before do
-      stub_kubeclient_nodes_and_nodes_metrics(cluster.platform.api_url)
-    end
+    let(:cluster) { create(:cluster, :provided_by_user, :group) }
+    let(:empty_nodes) { nil }
+    let(:nodes) { [kube_node.merge(kube_node_metrics)] }
 
     subject { described_class.new(cluster).all }
 
     context 'when connection to the cluster is successful' do
-      it { is_expected.to eq(expected_nodes) }
-    end
-  end
+      let(:expected_nodes) { { nodes: nodes, metrics_connection_error: nil, node_connection_error: nil } }
 
-  describe '#all_with_errors' do
-    let(:empty_nodes) { [] }
-
-    subject { described_class.new(cluster).all_with_errors }
-
-    context 'when connection to the cluster is successful' do
       before do
         stub_kubeclient_nodes_and_nodes_metrics(cluster.platform.api_url)
       end
 
-      it { is_expected.to eq({ nodes: expected_nodes, connection_error: nil }) }
+      it { is_expected.to eq(expected_nodes) }
     end
 
-    context 'connection error' do
+    context 'when there is a connection error' do
       using RSpec::Parameterized::TableSyntax
 
       where(:error, :error_status) do
@@ -43,12 +32,25 @@ RSpec.describe Gitlab::Kubernetes::Node do
         Kubeclient::HttpError.new(408, "", nil) | :kubeclient_http_error
       end
 
-      with_them do
-        before do
-          allow(cluster.kubeclient).to receive(:get_nodes).and_raise(error)
-        end
+      context 'when there is an error while quiering nodes' do
+        with_them do
+          before do
+            allow(cluster.kubeclient).to receive(:get_nodes).and_raise(error)
+          end
 
-        it { is_expected.to eq({ nodes: empty_nodes, connection_error: error_status }) }
+          it { is_expected.to eq({ nodes: empty_nodes, node_connection_error: error_status, metrics_connection_error: nil }) }
+        end
+      end
+
+      context 'when there is an error while quiering metrics' do
+        with_them do
+          before do
+            allow(cluster.kubeclient).to receive(:get_nodes).and_return({ response: nodes })
+            allow(cluster.kubeclient).to receive(:metrics_client).and_raise(error)
+          end
+
+          it { is_expected.to eq({ nodes: nodes, node_connection_error: nil, metrics_connection_error: error_status }) }
+        end
       end
     end
 
@@ -58,7 +60,7 @@ RSpec.describe Gitlab::Kubernetes::Node do
           .and_raise(StandardError)
       end
 
-      it { is_expected.to eq({ nodes: empty_nodes, connection_error: :unknown_error }) }
+      it { is_expected.to eq({ nodes: empty_nodes, node_connection_error: :unknown_error, metrics_connection_error: nil }) }
 
       it 'notifies Sentry' do
         expect(Gitlab::ErrorTracking).to receive(:track_exception)
