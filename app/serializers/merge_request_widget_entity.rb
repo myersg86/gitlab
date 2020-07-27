@@ -74,6 +74,10 @@ class MergeRequestWidgetEntity < Grape::Entity
     SUGGEST_PIPELINE
   end
 
+  expose :is_dismissed_suggest_pipeline, if: -> (*) { Feature.enabled?(:suggest_pipeline) } do |merge_request|
+    current_user && current_user.dismissed_callout?(feature_name: SUGGEST_PIPELINE)
+  end
+
   expose :human_access do |merge_request|
     merge_request.project.team.human_max_access(current_user&.id)
   end
@@ -129,10 +133,7 @@ class MergeRequestWidgetEntity < Grape::Entity
   end
 
   def can_add_ci_config_path?(merge_request)
-    return false unless current_user
-
-    !current_user.dismissed_callout?(feature_name: SUGGEST_PIPELINE) &&
-      merge_request.open? &&
+    merge_request.open? &&
       merge_request.source_branch_exists? &&
       merge_request.source_project&.uses_default_ci_config? &&
       !merge_request.source_project.has_ci? &&

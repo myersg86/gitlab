@@ -1,4 +1,4 @@
-export const popoverProps = {
+export const suggestProps = {
   pipelinePath: '/foo/bar/add/pipeline/path',
   pipelineSvgPath: 'assets/illustrations/something.svg',
   humanAccess: 'maintainer',

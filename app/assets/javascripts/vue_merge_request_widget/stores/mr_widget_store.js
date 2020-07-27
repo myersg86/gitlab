@@ -196,6 +196,7 @@ export default class MergeRequestStore {
     this.newPipelinePath = data.new_project_pipeline_path;
     this.userCalloutsPath = data.user_callouts_path;
     this.suggestPipelineFeatureId = data.suggest_pipeline_feature_id;
+    this.isDismissedSuggestPipeline = data.is_dismissed_suggest_pipeline;
 
     // codeclimate
     const blobPath = data.blob_path || {};

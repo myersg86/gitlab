@@ -1,5 +1,3 @@
-import { __ } from '~/locale';
-
 export const SUCCESS = 'success';
 export const WARNING = 'warning';
 export const DANGER = 'danger';
@@ -12,7 +10,3 @@ export const MTWPS_MERGE_STRATEGY = 'add_to_merge_train_when_pipeline_succeeds';
 export const MT_MERGE_STRATEGY = 'merge_train';
 
 export const AUTO_MERGE_STRATEGIES = [MWPS_MERGE_STRATEGY, MTWPS_MERGE_STRATEGY, MT_MERGE_STRATEGY];
-
-export const CALLOUT_ERROR_MESSAGE = __(
-  'An error occurred while dismissing the notification. Refresh the page and try again.',
-);

@@ -115,162 +115,142 @@ RSpec.describe MergeRequestWidgetEntity do
   describe 'merge_request_add_ci_config_path' do
     let!(:project_auto_devops) { create(:project_auto_devops, :disabled, project: project) }
 
-    context 'when user is not logged in' do
-      let(:request) { double('request', current_user: nil, project: project) }
+    before do
+      project.add_role(user, role)
+    end
 
-      it 'returns a blank ci config path' do
+    context 'when there is a standard ci config file in the source project' do
+      let(:role) { :developer }
+
+      before do
+        project.repository.create_file(user, Gitlab::FileDetector::PATTERNS[:gitlab_ci], 'CONTENT', message: 'Add .gitlab-ci.yml', branch_name: 'master')
+      end
+
+      it 'no ci config path' do
         expect(subject[:merge_request_add_ci_config_path]).to be_nil
       end
     end
 
-    context 'when user is logged in' do
-      before do
-        project.add_role(user, role)
-      end
-
-      context 'when there is a standard ci config file in the source project' do
+    context 'when there is no standard ci config file in the source project' do
+      context 'when user has permissions' do
         let(:role) { :developer }
 
-        before do
-          project.repository.create_file(user, Gitlab::FileDetector::PATTERNS[:gitlab_ci], 'CONTENT', message: 'Add .gitlab-ci.yml', branch_name: 'master')
+        it 'has add ci config path' do
+          expected_path = "/#{resource.project.full_path}/-/new/#{resource.source_branch}?commit_message=Add+.gitlab-ci.yml&file_name=.gitlab-ci.yml&suggest_gitlab_ci_yml=true"
+
+          expect(subject[:merge_request_add_ci_config_path]).to eq(expected_path)
         end
 
-        it 'no ci config path' do
-          expect(subject[:merge_request_add_ci_config_path]).to be_nil
+        context 'when auto devops is enabled' do
+          before do
+            project_auto_devops.enabled = true
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when source project is missing' do
+          before do
+            resource.source_project = nil
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when there are no commits' do
+          before do
+            allow(resource).to receive(:commits_count).and_return(0)
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when ci_config_path is customized' do
+          it 'has no path if ci_config_path is not set to our default setting' do
+            project.ci_config_path = 'not_default'
+
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+
+          it 'has a path if ci_config_path unset' do
+            expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
+          end
+
+          it 'has a path if ci_config_path is an empty string' do
+            project.ci_config_path = ''
+
+            expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
+          end
+
+          it 'has a path if ci_config_path is set to our default file' do
+            project.ci_config_path = Gitlab::FileDetector::PATTERNS[:gitlab_ci]
+
+            expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
+          end
+        end
+
+        context 'when build feature is disabled' do
+          before do
+            project.project_feature.update(builds_access_level: ProjectFeature::DISABLED)
+          end
+
+          it 'has no path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when creating the pipeline is not allowed' do
+          before do
+            user.state = 'blocked'
+          end
+
+          it 'has no path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when merge request is merged' do
+          before do
+            resource.mark_as_merged!
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when merge request is closed' do
+          before do
+            resource.close!
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
+        end
+
+        context 'when source branch does not exist' do
+          before do
+            resource.source_project.repository.rm_branch(user, resource.source_branch)
+          end
+
+          it 'returns a blank ci config path' do
+            expect(subject[:merge_request_add_ci_config_path]).to be_nil
+          end
         end
       end
 
-      context 'when there is no standard ci config file in the source project' do
-        context 'when user has permissions' do
-          let(:role) { :developer }
+      context 'when user does not have permissions' do
+        let(:role) { :reporter }
 
-          it 'has add ci config path' do
-            expected_path = "/#{resource.project.full_path}/-/new/#{resource.source_branch}?commit_message=Add+.gitlab-ci.yml&file_name=.gitlab-ci.yml&suggest_gitlab_ci_yml=true"
-
-            expect(subject[:merge_request_add_ci_config_path]).to eq(expected_path)
-          end
-
-          context 'when the suggest pipeline has been dismissed' do
-            before do
-              create(:user_callout, user: user, feature_name: described_class::SUGGEST_PIPELINE)
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when auto devops is enabled' do
-            before do
-              project_auto_devops.enabled = true
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when source project is missing' do
-            before do
-              resource.source_project = nil
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when there are no commits' do
-            before do
-              allow(resource).to receive(:commits_count).and_return(0)
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when ci_config_path is customized' do
-            it 'has no path if ci_config_path is not set to our default setting' do
-              project.ci_config_path = 'not_default'
-
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-
-            it 'has a path if ci_config_path unset' do
-              expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
-            end
-
-            it 'has a path if ci_config_path is an empty string' do
-              project.ci_config_path = ''
-
-              expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
-            end
-
-            it 'has a path if ci_config_path is set to our default file' do
-              project.ci_config_path = Gitlab::FileDetector::PATTERNS[:gitlab_ci]
-
-              expect(subject[:merge_request_add_ci_config_path]).not_to be_nil
-            end
-          end
-
-          context 'when build feature is disabled' do
-            before do
-              project.project_feature.update(builds_access_level: ProjectFeature::DISABLED)
-            end
-
-            it 'has no path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when creating the pipeline is not allowed' do
-            before do
-              user.state = 'blocked'
-            end
-
-            it 'has no path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when merge request is merged' do
-            before do
-              resource.mark_as_merged!
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when merge request is closed' do
-            before do
-              resource.close!
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-
-          context 'when source branch does not exist' do
-            before do
-              resource.source_project.repository.rm_branch(user, resource.source_branch)
-            end
-
-            it 'returns a blank ci config path' do
-              expect(subject[:merge_request_add_ci_config_path]).to be_nil
-            end
-          end
-        end
-
-        context 'when user does not have permissions' do
-          let(:role) { :reporter }
-
-          it 'has add ci config path' do
-            expect(subject[:merge_request_add_ci_config_path]).to be_nil
-          end
+        it 'has add ci config path' do
+          expect(subject[:merge_request_add_ci_config_path]).to be_nil
         end
       end
     end
@@ -289,6 +269,28 @@ RSpec.describe MergeRequestWidgetEntity do
       it 'provides a valid value for suggest pipeline feature id' do
         expect(subject[:suggest_pipeline_feature_id]).to eq described_class::SUGGEST_PIPELINE
       end
+
+      it 'provides a valid value for if it is dismissed' do
+        expect(subject[:is_dismissed_suggest_pipeline]).to be(false)
+      end
+
+      context 'when the suggest pipeline has been dismissed' do
+        before do
+          create(:user_callout, user: user, feature_name: described_class::SUGGEST_PIPELINE)
+        end
+
+        it 'indicates suggest pipeline has been dismissed' do
+          expect(subject[:is_dismissed_suggest_pipeline]).to be(true)
+        end
+      end
+
+      context 'when user is not logged in' do
+        let(:request) { double('request', current_user: nil, project: project) }
+
+        it 'returns a blank is dismissed value' do
+          expect(subject[:is_dismissed_suggest_pipeline]).to be_nil
+        end
+      end
     end
 
     context 'when suggest pipeline feature is not enabled' do
@@ -302,6 +304,10 @@ RSpec.describe MergeRequestWidgetEntity do
 
       it 'provides no valid value for suggest pipeline feature id' do
         expect(subject[:suggest_pipeline_feature_id]).to be_nil
+      end
+
+      it 'provides no valid value for if it is dismissed' do
+        expect(subject[:is_dismissed_suggest_pipeline]).to be_nil
       end
     end
   end

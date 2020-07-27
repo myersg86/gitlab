@@ -1,10 +1,9 @@
 <script>
-import { GlLink, GlSprintf, GlButton, GlIcon } from '@gitlab/ui';
+import { GlLink, GlSprintf, GlButton } from '@gitlab/ui';
 import MrWidgetIcon from './mr_widget_icon.vue';
 import Tracking from '~/tracking';
 import { s__ } from '~/locale';
-import PersistentUserCallout from '~/persistent_user_callout';
-import { CALLOUT_ERROR_MESSAGE } from '../constants';
+import DismissibleContainer from '~/vue_shared/components/dismissible_container.vue';
 
 const trackingMixin = Tracking.mixin();
 const TRACK_LABEL = 'no_pipeline_noticed';
@@ -25,8 +24,8 @@ export default {
     GlLink,
     GlSprintf,
     GlButton,
-    GlIcon,
     MrWidgetIcon,
+    DismissibleContainer,
   },
   mixins: [trackingMixin],
   props: {
@@ -61,18 +60,17 @@ export default {
   },
   mounted() {
     this.track();
-    const callout = this.$refs['mr-pipeline-suggest-callout'];
-    PersistentUserCallout.factory(callout, {
-      dismissEndpoint: this.userCalloutsPath,
-      featureId: this.userCalloutFeatureId,
-      errorMessage: CALLOUT_ERROR_MESSAGE,
-    });
   },
 };
 </script>
 <template>
-  <div ref="mr-pipeline-suggest-callout" class="mr-widget-body mr-pipeline-suggest gl-mb-3">
-    <div class="gl-display-flex gl-align-items-center">
+  <dismissible-container
+    class="mr-widget-body mr-pipeline-suggest gl-mb-3"
+    :path="userCalloutsPath"
+    :feature-id="userCalloutFeatureId"
+    @dismiss="$emit('dismiss')"
+  >
+    <template #title>
       <mr-widget-icon :name="$options.iconName" />
       <div>
         <gl-sprintf
@@ -102,17 +100,7 @@ export default {
           </template>
         </gl-sprintf>
       </div>
-      <div class="ml-auto">
-        <button
-          :aria-label="__('Close')"
-          class="btn-blank js-close"
-          type="button"
-          data-testid="suggest-close"
-        >
-          <gl-icon name="close" aria-hidden="true" class="gl-text-gray-700" />
-        </button>
-      </div>
-    </div>
+    </template>
     <div class="row">
       <div class="col-md-5 order-md-last col-12 gl-mt-5 mt-md-n1 pt-md-1 svg-content svg-225">
         <img data-testid="pipeline-image" :src="pipelineSvgPath" />
@@ -151,5 +139,5 @@ export default {
         </div>
       </div>
     </div>
-  </div>
+  </dismissible-container>
 </template>

@@ -804,44 +804,59 @@ describe('mrWidgetOptions', () => {
       });
     });
 
-    it('should not suggest pipelines', () => {
-      vm.mr.mergeRequestAddCiConfigPath = null;
-
+    it('should not suggest pipelines when feature flag is not present', () => {
       expect(vm.shouldSuggestPipelines).toBeFalsy();
     });
   });
 
   describe('given suggestPipeline feature flag is enabled', () => {
+    const findSuggestPipeline = () => vm.$el.querySelector('[data-testid="mr-suggest-pipeline"]');
+
     beforeEach(() => {
       // This is needed because some grandchildren Bootstrap components throw warnings
       // https://gitlab.com/gitlab-org/gitlab/issues/208458
       jest.spyOn(console, 'warn').mockImplementation();
 
       gon.features = { suggestPipeline: true };
-      return createComponent();
+
+      createComponent();
+
+      vm.mr.hasCI = false;
     });
 
     it('should suggest pipelines when none exist', () => {
-      vm.mr.mergeRequestAddCiConfigPath = 'some/path';
-      vm.mr.userCalloutsPath = 'some/callout/path';
-      vm.mr.suggestPipelineFeatureId = 'suggest_pipeline';
-      vm.mr.hasCI = false;
-
       expect(vm.shouldSuggestPipelines).toBeTruthy();
+    });
+
+    it('suggest pipelines has dismissed state', () => {
+      vm.mr.isDismissedSuggestPipeline = true;
+
+      expect(vm.shouldSuggestPipelines).toBeFalsy();
     });
 
     it('should not suggest pipelines when they exist', () => {
       vm.mr.mergeRequestAddCiConfigPath = null;
-      vm.mr.hasCI = false;
 
       expect(vm.shouldSuggestPipelines).toBeFalsy();
     });
 
     it('should not suggest pipelines hasCI is true', () => {
-      vm.mr.mergeRequestAddCiConfigPath = 'some/path';
       vm.mr.hasCI = true;
 
       expect(vm.shouldSuggestPipelines).toBeFalsy();
+    });
+
+    it('should allow dismiss of the suggest pipeline message', () => {
+      expect(vm.mr.isDismissedSuggestPipeline).toBe(false);
+      expect(findSuggestPipeline()).not.toBeNull();
+      expect(vm.$el.textContent).toContain('Add the .gitlab-ci.yml file');
+
+      vm.dismissSuggestPipelines();
+
+      return vm.$nextTick().then(() => {
+        expect(vm.$el.textContent).not.toContain('Add the .gitlab-ci.yml file');
+        expect(findSuggestPipeline()).toBeNull();
+      });
     });
   });
 });

@@ -3,13 +3,14 @@ import { GlLink, GlSprintf } from '@gitlab/ui';
 import suggestPipelineComponent from '~/vue_merge_request_widget/components/mr_widget_suggest_pipeline.vue';
 import MrWidgetIcon from '~/vue_merge_request_widget/components/mr_widget_icon.vue';
 import { mockTracking, triggerEvent, unmockTracking } from 'helpers/tracking_helper';
-import { popoverProps, iconName } from './pipeline_tour_mock_data';
-import PersistentUserCallout from '~/persistent_user_callout';
-import { CALLOUT_ERROR_MESSAGE } from '~/vue_merge_request_widget/constants';
+import { suggestProps, iconName } from './pipeline_tour_mock_data';
+import axios from '~/lib/utils/axios_utils';
+import MockAdapter from 'axios-mock-adapter';
 
 describe('MRWidgetSuggestPipeline', () => {
   let wrapper;
   let trackingSpy;
+  let mockAxios;
 
   const mockTrackingOnWrapper = () => {
     unmockTracking();
@@ -17,12 +18,12 @@ describe('MRWidgetSuggestPipeline', () => {
   };
 
   beforeEach(() => {
+    mockAxios = new MockAdapter(axios);
     document.body.dataset.page = 'projects:merge_requests:show';
     trackingSpy = mockTracking('_category_', undefined, jest.spyOn);
-    jest.spyOn(PersistentUserCallout, 'factory').mockImplementation(() => {});
 
     wrapper = mount(suggestPipelineComponent, {
-      propsData: popoverProps,
+      propsData: suggestProps,
       stubs: {
         GlSprintf,
       },
@@ -32,6 +33,7 @@ describe('MRWidgetSuggestPipeline', () => {
   afterEach(() => {
     wrapper.destroy();
     unmockTracking();
+    mockAxios.restore();
   });
 
   describe('template', () => {
@@ -41,7 +43,7 @@ describe('MRWidgetSuggestPipeline', () => {
       const link = wrapper.find(GlLink);
 
       expect(link.exists()).toBe(true);
-      expect(link.attributes().href).toBe(popoverProps.pipelinePath);
+      expect(link.attributes().href).toBe(suggestProps.pipelinePath);
     });
 
     it('renders the expected text', () => {
@@ -66,7 +68,7 @@ describe('MRWidgetSuggestPipeline', () => {
 
       expect(button.exists()).toBe(true);
       expect(button.classes('btn-info')).toEqual(true);
-      expect(button.attributes('href')).toBe(popoverProps.pipelinePath);
+      expect(button.attributes('href')).toBe(suggestProps.pipelinePath);
     });
 
     it('renders the help link', () => {
@@ -80,14 +82,23 @@ describe('MRWidgetSuggestPipeline', () => {
       const button = wrapper.find('[data-testid="suggest-close"]');
 
       expect(button.exists()).toBe(true);
-      expect(button.classes()).toContain('btn-blank', 'js-close');
+      expect(button.classes()).toContain('btn-blank');
+    });
+
+    it('emits dismiss upon dismissal button click', () => {
+      mockAxios.onPost(suggestProps.userCalloutsPath).replyOnce(200);
+      const button = wrapper.find('[data-testid="suggest-close"]');
+
+      button.trigger('click');
+
+      expect(wrapper.emitted().dismiss).toBeTruthy();
     });
 
     it('renders the empty pipelines image', () => {
       const image = wrapper.find('[data-testid="pipeline-image"]');
 
       expect(image.exists()).toBe(true);
-      expect(image.attributes().src).toBe(popoverProps.pipelineSvgPath);
+      expect(image.attributes().src).toBe(suggestProps.pipelineSvgPath);
     });
 
     describe('tracking', () => {
@@ -97,7 +108,7 @@ describe('MRWidgetSuggestPipeline', () => {
 
         expect(trackingSpy).toHaveBeenCalledWith(expectedCategory, expectedAction, {
           label: wrapper.vm.$options.trackLabel,
-          property: popoverProps.humanAccess,
+          property: suggestProps.humanAccess,
         });
       });
 
@@ -108,7 +119,7 @@ describe('MRWidgetSuggestPipeline', () => {
 
         expect(trackingSpy).toHaveBeenCalledWith('_category_', 'click_link', {
           label: wrapper.vm.$options.trackLabel,
-          property: popoverProps.humanAccess,
+          property: suggestProps.humanAccess,
           value: '30',
         });
       });
@@ -120,20 +131,8 @@ describe('MRWidgetSuggestPipeline', () => {
 
         expect(trackingSpy).toHaveBeenCalledWith('_category_', 'click_button', {
           label: wrapper.vm.$options.trackLabel,
-          property: popoverProps.humanAccess,
+          property: suggestProps.humanAccess,
           value: '10',
-        });
-      });
-    });
-
-    describe('callout', () => {
-      it('initializes the callout', () => {
-        const container = wrapper.find({ ref: 'mr-pipeline-suggest-callout' });
-
-        expect(PersistentUserCallout.factory).toHaveBeenCalledWith(container.element, {
-          dismissEndpoint: popoverProps.userCalloutsPath,
-          featureId: popoverProps.userCalloutFeatureId,
-          errorMessage: CALLOUT_ERROR_MESSAGE,
         });
       });
     });

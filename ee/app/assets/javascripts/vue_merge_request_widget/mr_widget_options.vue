@@ -257,6 +257,7 @@ export default {
       :human-access="mr.humanAccess.toLowerCase()"
       :user-callouts-path="mr.userCalloutsPath"
       :user-callout-feature-id="mr.suggestPipelineFeatureId"
+      @dismiss="dismissSuggestPipelines"
     />
     <mr-widget-pipeline-container
       v-if="shouldRenderPipelines"
