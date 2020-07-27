@@ -494,10 +494,30 @@ export const fetchPanelPreview = ({ state, commit, dispatch }, panelPreviewYml) 
     });
 };
 
-export const fetchPanelPreviewMetrics = () => {
-  // TODO Use a axios mock instead of spy when backend is implemented
-  // https://gitlab.com/gitlab-org/gitlab/-/issues/228758
+export const fetchPanelPreviewMetrics = ({ state, commit }) => {
+  // TODO Copied from fetchDashboardData
+  // Time range params must be pre-calculated once for all metrics and options
+  // A subsequent call, may calculate a different time range
+  const defaultQueryParams = prometheusMetricQueryParams(state.timeRange);
 
-  // eslint-disable-next-line @gitlab/require-i18n-strings
-  throw new Error('Not implemented');
+  state.panelPreviewGraphData.metrics.forEach((metric, index) => {
+    commit(types.REQUEST_PANEL_PREVIEW_METRIC_RESULT, { index });
+
+    // TODO Copied!
+    const queryParams = { ...defaultQueryParams };
+    if (metric.step) {
+      queryParams.step = metric.step;
+    }
+    return getPrometheusQueryData(metric.prometheusEndpointPath, queryParams)
+      .then(data => {
+        commit(types.RECEIVE_PANEL_PREVIEW_METRIC_RESULT_SUCCESS, { index, data });
+      })
+      .catch(error => {
+        Sentry.captureException(error);
+
+        commit(types.RECEIVE_PANEL_PREVIEW_METRIC_RESULT_FAILURE, { index, error });
+        // Continue to throw error so the panel builder can notify using createFlash
+        throw error;
+      });
+  });
 };
