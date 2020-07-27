@@ -15,6 +15,8 @@ import { mergeUrlParams, joinPaths, visitUrl } from '~/lib/utils/url_utility';
 import getIncidents from '../graphql/queries/get_incidents.query.graphql';
 import { I18N } from '../constants';
 
+import { publishedCell } from 'ee_component/incidents/constants';
+
 const tdClass =
   'table-col gl-display-flex d-md-table-cell gl-align-items-center gl-white-space-nowrap';
 const thClass = 'gl-hover-bg-blue-50';
@@ -42,6 +44,7 @@ export default {
       thClass: 'gl-pointer-events-none',
       tdClass,
     },
+    publishedCell ?? {},
   ],
   components: {
     GlLoadingIcon,
@@ -52,6 +55,7 @@ export default {
     GlAvatar,
     GlButton,
     TimeAgoTooltip,
+    PublishedCell: () => import('ee_component/incidents/components/published_cell.vue'),
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -179,6 +183,13 @@ export default {
             {{ $options.i18n.unassigned }}
           </template>
         </div>
+      </template>
+
+      <template #cell(published)="{ item }">
+        <published-cell
+          :status-page-published-incident="item.statusPagePublishedIncident"
+          :un-published="$options.i18n.unPublished"
+        />
       </template>
 
       <template #table-busy>

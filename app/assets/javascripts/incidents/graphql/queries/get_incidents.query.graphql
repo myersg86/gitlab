@@ -19,6 +19,7 @@ query getIncidents($projectPath: ID!, $labelNames: [String], $state: IssuableSta
             webUrl
           }
         }
+        statusPagePublishedIncident
       }
     }
   }

@@ -97,6 +97,9 @@ module Types
 
     field :design_collection, Types::DesignManagement::DesignCollectionType, null: true,
           description: 'Collection of design images associated with this issue'
+
+    field :status_page_published_incident, GraphQL::BOOLEAN_TYPE, null: true,
+           description: 'Is a issue published to the status page'
   end
 end
 

@@ -6,4 +6,5 @@ export const I18N = {
   noIncidents: s__('IncidentManagement|No incidents to display.'),
   unassigned: s__('IncidentManagement|Unassigned'),
   createIncidentBtnLabel: s__('IncidentManagement|Create incident'),
+  unPublished: s__('IncidentManagement|Unpublished'),
 };
