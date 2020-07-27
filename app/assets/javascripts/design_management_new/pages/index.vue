@@ -10,6 +10,7 @@ import DesignDestroyer from '../components/design_destroyer.vue';
 import DesignVersionDropdown from '../components/upload/design_version_dropdown.vue';
 import DesignDropzone from '../components/upload/design_dropzone.vue';
 import uploadDesignMutation from '../graphql/mutations/upload_design.mutation.graphql';
+import moveDesignMutation from '../graphql/mutations/move_design.mutation.graphql';
 import permissionsQuery from '../graphql/queries/design_permissions.query.graphql';
 import getDesignListQuery from '../graphql/queries/get_design_list.query.graphql';
 import allDesignsMixin from '../mixins/all_designs';
@@ -258,6 +259,16 @@ export default {
     toggleOffPasteListener() {
       document.removeEventListener('paste', this.onDesignPaste);
     },
+    reorderDesigns({ moved: { oldIndex, newIndex, element } }) {
+      this.$apollo.mutate({
+        mutation: moveDesignMutation,
+        variables: {
+          id: element.id,
+          from: oldIndex,
+          to: newIndex,
+        },
+      });
+    },
   },
   beforeRouteUpdate(to, from, next) {
     this.selectedDesigns = [];
@@ -322,13 +333,14 @@ export default {
       </gl-alert>
       <vue-draggable
         v-else
-        :list="designs"
+        :value="designs"
         v-bind="$options.dragOptions"
         tag="ol"
         draggable=".design-tile"
         class="list-unstyled row"
         @start="isDraggingDesign = true"
         @end="isDraggingDesign = false"
+        @change="reorderDesigns"
       >
         <li
           v-for="design in designs"
