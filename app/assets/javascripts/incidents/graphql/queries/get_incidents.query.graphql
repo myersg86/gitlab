@@ -5,6 +5,7 @@ query getIncidents($projectPath: ID!, $labelNames: [String], $state: IssuableSta
         iid
         title
         createdAt
+        state
         labels {
           nodes {
             title

@@ -8,6 +8,7 @@ import {
   GlAvatar,
   GlTooltipDirective,
   GlButton,
+  GlIcon,
 } from '@gitlab/ui';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 import { s__ } from '~/locale';
@@ -52,6 +53,7 @@ export default {
     GlAvatar,
     GlButton,
     TimeAgoTooltip,
+    GlIcon,
   },
   directives: {
     GlTooltip: GlTooltipDirective,
@@ -144,7 +146,10 @@ export default {
       @row-clicked="navigateToIncidentDetails"
     >
       <template #cell(title)="{ item }">
-        <div class="gl-max-w-full text-truncate" :title="item.title">{{ item.title }}</div>
+        <div class="gl-display-flex gl-justify-content-center">
+          <div class="gl-max-w-full text-truncate" :title="item.title">{{ item.title }}</div>
+          <gl-icon v-if="item.state === 'closed'" name="issue-close" class="gl-fill-blue-500" />
+        </div>
       </template>
 
       <template #cell(createdAt)="{ item }">

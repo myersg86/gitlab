@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { GlAlert, GlLoadingIcon, GlTable, GlAvatar } from '@gitlab/ui';
+import { GlAlert, GlLoadingIcon, GlTable, GlAvatar, GlIcon } from '@gitlab/ui';
 import { visitUrl, joinPaths } from '~/lib/utils/url_utility';
 import IncidentsList from '~/incidents/components/incidents_list.vue';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
@@ -24,6 +24,7 @@ describe('Incidents List', () => {
   const findTimeAgo = () => wrapper.findAll(TimeAgoTooltip);
   const findAssingees = () => wrapper.findAll('[data-testid="incident-assignees"]');
   const findCreateIncidentBtn = () => wrapper.find('[data-testid="createIncidentBtn"]');
+  const findClosedIcon = () => wrapper.findAll(GlIcon);
 
   function mountComponent({ data = { incidents: [] }, loading = false }) {
     wrapper = mount(IncidentsList, {
@@ -125,6 +126,12 @@ describe('Incidents List', () => {
           .at(0)
           .trigger('click');
         expect(visitUrl).toHaveBeenCalledWith(joinPaths(`/project/isssues/`, mockIncidents[0].iid));
+      });
+
+      it('renders a closed icon for closed incidents', () => {
+        expect(findClosedIcon().length).toBe(
+          mockIncidents.filter(({ state }) => state === 'closed').length,
+        );
       });
     });
   });
