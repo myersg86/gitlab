@@ -1,5 +1,5 @@
 <script>
-import { GlFormGroup, GlFormTextarea, GlDeprecatedButton } from '@gitlab/ui';
+import { GlDrawer, GlFormGroup, GlFormTextarea, GlDeprecatedButton } from '@gitlab/ui';
 import { isEmpty } from 'lodash';
 import { __, sprintf } from '~/locale';
 
@@ -10,11 +10,16 @@ export default {
     limit: MAX_TITLE_LENGTH,
   }),
   components: {
+    GlDrawer,
     GlFormGroup,
     GlFormTextarea,
     GlDeprecatedButton,
   },
   props: {
+    drawerOpen: {
+      type: Boolean,
+      required: true,
+    },
     requirement: {
       type: Object,
       required: false,
@@ -33,7 +38,7 @@ export default {
   },
   computed: {
     fieldLabel() {
-      return this.isCreate ? __('New requirement') : __('Requirement');
+      return this.isCreate ? __('New Requirement') : __('Edit Requirement');
     },
     saveButtonLabel() {
       return this.isCreate ? __('Create requirement') : __('Save changes');
@@ -49,6 +54,16 @@ export default {
     },
   },
   methods: {
+    getDrawerHeaderHeight() {
+      let defaultHeight = 40;
+      const performanceBarEl = document.querySelector('#js-peek');
+
+      if (performanceBarEl) {
+        defaultHeight += performanceBarEl.clientHeight;
+      }
+
+      return `${defaultHeight}px`;
+    },
     handleSave() {
       if (this.isCreate) {
         this.$emit('save', this.title);
@@ -64,46 +79,50 @@ export default {
 </script>
 
 <template>
-  <div
-    class="requirement-form"
-    :class="{ 'p-3 border-bottom': isCreate, 'd-block d-sm-flex': !isCreate }"
-  >
-    <span v-if="!isCreate" class="text-muted mr-1">{{ reference }}</span>
-    <div class="requirement-form-container" :class="{ 'flex-grow-1 ml-sm-1 mt-1': !isCreate }">
-      <gl-form-group
-        :label="fieldLabel"
-        :invalid-feedback="$options.titleInvalidMessage"
-        :state="!titleInvalid"
-        class="gl-show-field-errors"
-        label-for="requirementTitle"
-      >
-        <gl-form-textarea
-          id="requirementTitle"
-          v-model.trim="title"
-          autofocus
-          resize
-          :disabled="requirementRequestActive"
-          :placeholder="__('Describe the requirement here')"
-          max-rows="25"
-          class="requirement-form-textarea"
-          :class="{ 'gl-field-error-outline': titleInvalid }"
-          @keyup.escape.exact="$emit('cancel')"
-        />
-      </gl-form-group>
-      <div class="d-flex requirement-form-actions">
-        <gl-deprecated-button
-          :disabled="disableSaveButton"
-          :loading="requirementRequestActive"
-          category="primary"
-          variant="success"
-          class="mr-auto js-requirement-save"
-          @click="handleSave"
-          >{{ saveButtonLabel }}</gl-deprecated-button
-        >
-        <gl-deprecated-button class="js-requirement-cancel" @click="$emit('cancel')">{{
-          __('Cancel')
-        }}</gl-deprecated-button>
+  <gl-drawer :open="drawerOpen" :header-height="getDrawerHeaderHeight()" @close="$emit('cancel')">
+    <template #header>
+      <h4 class="m-0">{{ fieldLabel }}</h4>
+    </template>
+    <template>
+      <div class="requirement-form">
+        <span v-if="!isCreate" class="text-muted">{{ reference }}</span>
+        <div class="requirement-form-container" :class="{ 'flex-grow-1 mt-1': !isCreate }">
+          <gl-form-group
+            :label="__('Title')"
+            :invalid-feedback="$options.titleInvalidMessage"
+            :state="!titleInvalid"
+            class="gl-show-field-errors"
+            label-for="requirementTitle"
+          >
+            <gl-form-textarea
+              id="requirementTitle"
+              v-model.trim="title"
+              autofocus
+              resize
+              :disabled="requirementRequestActive"
+              :placeholder="__('Describe the requirement here')"
+              max-rows="25"
+              class="requirement-form-textarea"
+              :class="{ 'gl-field-error-outline': titleInvalid }"
+              @keyup.escape.exact="$emit('cancel')"
+            />
+          </gl-form-group>
+          <div class="d-flex requirement-form-actions">
+            <gl-deprecated-button
+              :disabled="disableSaveButton"
+              :loading="requirementRequestActive"
+              category="primary"
+              variant="success"
+              class="mr-auto js-requirement-save"
+              @click="handleSave"
+              >{{ saveButtonLabel }}</gl-deprecated-button
+            >
+            <gl-deprecated-button class="js-requirement-cancel" @click="$emit('cancel')">
+              {{ __('Cancel') }}
+            </gl-deprecated-button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </gl-drawer>
 </template>

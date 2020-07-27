@@ -132,13 +132,13 @@ export default {
 <template>
   <li class="issue requirement" :class="{ 'disabled-content': stateChangeRequestActive }">
     <requirement-form
-      v-if="showUpdateForm"
+      :drawer-open="showUpdateForm"
       :requirement="requirement"
       :requirement-request-active="updateRequirementRequestActive"
       @save="handleUpdateRequirementSave"
       @cancel="$emit('updateCancel')"
     />
-    <div v-else class="issue-box">
+    <div class="issue-box">
       <div class="issuable-info-container">
         <span class="issuable-reference text-muted d-none d-sm-block mr-2">{{ reference }}</span>
         <div class="issuable-main-info">
@@ -181,7 +181,7 @@ export default {
             />
             <li v-if="canUpdate && !isArchived" class="requirement-edit d-sm-block">
               <gl-deprecated-button
-                v-gl-tooltip
+                v-gl-tooltip.hover
                 size="sm"
                 class="border-0"
                 :title="__('Edit')"
@@ -192,7 +192,7 @@ export default {
             </li>
             <li v-if="canArchive && !isArchived" class="requirement-archive d-sm-block">
               <gl-deprecated-button
-                v-gl-tooltip
+                v-gl-tooltip.hover
                 size="sm"
                 class="border-0"
                 :title="__('Archive')"

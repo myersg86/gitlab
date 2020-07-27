@@ -530,7 +530,7 @@ export default {
       @onSort="handleSortRequirements"
     />
     <requirement-form
-      v-if="showCreateForm"
+      :drawer-open="showCreateForm"
       :requirement-request-active="createRequirementRequestActive"
       @save="handleNewRequirementSave"
       @cancel="handleNewRequirementCancel"
