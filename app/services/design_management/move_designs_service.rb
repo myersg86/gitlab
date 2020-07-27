@@ -12,15 +12,12 @@ module DesignManagement
     end
 
     def execute
-      return error(:CannotMove) unless ::Feature.enabled?(:reorder_designs)
-      return error(:CannotMove) unless current_user.can?(:move_design, current_design)
       return error(:NoFocus) unless current_design.present?
       return error(:NoNeighbors) unless neighbors.present?
       return error(:NotDistinct) unless all_distinct?
       return error(:NotAdjacent) if any_in_gap?
       return error(:NotSameIssue) unless all_same_issue?
 
-      current_design.move_between(previous_design, next_design)
       success
     end
 
