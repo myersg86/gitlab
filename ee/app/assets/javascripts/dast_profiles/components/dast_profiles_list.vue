@@ -71,7 +71,9 @@ export default {
           <gl-button>Edit</gl-button>
         </template>
       </gl-table>
-      <p v-if="hasMorePages">I have more stuff to load!</p>
+      <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
+        <gl-button @click="$emit('loadMorePages')">Load more</gl-button>
+      </p>
     </div>
     <p v-else>{{ s__('DastProfiles|No profiles created yet') }}</p>
   </section>

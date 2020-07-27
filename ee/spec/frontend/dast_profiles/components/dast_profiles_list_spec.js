@@ -1,6 +1,6 @@
 import { merge } from 'lodash';
 import { mount } from '@vue/test-utils';
-import { within } from '@testing-library/dom';
+import { within, fireEvent } from '@testing-library/dom';
 import DastProfilesListing from 'ee/dast_profiles/components/dast_profiles_list.vue';
 
 describe('EE - DastProfilesList', () => {
@@ -9,6 +9,7 @@ describe('EE - DastProfilesList', () => {
   const createComponent = (options = {}) => {
     const defaultProps = {
       profiles: [],
+      hasMorePages: false,
     };
 
     wrapper = mount(
@@ -32,6 +33,7 @@ describe('EE - DastProfilesList', () => {
     return tableBody;
   };
   const getAllTableRows = () => within(getTableBody()).getAllByRole('row');
+  const loadMoreButton = () => withinComponent().queryByRole('button', { name: /load more/i });
 
   afterEach(() => {
     wrapper.destroy();
@@ -50,7 +52,7 @@ describe('EE - DastProfilesList', () => {
   });
 
   describe('with profiles data', () => {
-    const mockProfiles = [
+    const profiles = [
       {
         id: 1,
         profileName: 'Profile 1',
@@ -65,21 +67,45 @@ describe('EE - DastProfilesList', () => {
       },
     ];
 
-    beforeEach(() => {
-      createComponent({ propsData: { profiles: mockProfiles } });
+    describe('profiles list', () => {
+      beforeEach(() => {
+        createComponent({ propsData: { profiles } });
+      });
+
+      it('renders a list of profiles', () => {
+        expect(getTable()).not.toBe(null);
+        expect(getAllTableRows()).toHaveLength(profiles.length);
+      });
+
+      it.each(profiles)('renders list item %# correctly', profile => {
+        const { innerText } = getAllTableRows()[profiles.indexOf(profile)];
+
+        expect(innerText).toContain(profile.profileName);
+        expect(innerText).toContain(profile.targetUrl);
+        expect(innerText).toContain(profile.validationStatus);
+      });
     });
 
-    it('renders a list of profiles', () => {
-      expect(getTable()).not.toBe(null);
-      expect(getAllTableRows()).toHaveLength(mockProfiles.length);
-    });
+    describe('load more profiles', () => {
+      it('does not show that there are more projects to be loaded per default', () => {
+        createComponent({ propsData: { profiles } });
 
-    it.each(mockProfiles)('renders list item %# correctly', profile => {
-      const { innerText } = getAllTableRows()[mockProfiles.indexOf(profile)];
+        expect(loadMoreButton()).toBe(null);
+      });
 
-      expect(innerText).toContain(profile.profileName);
-      expect(innerText).toContain(profile.targetUrl);
-      expect(innerText).toContain(profile.validationStatus);
+      it('shows that there are more projects to be loaded', () => {
+        createComponent({ propsData: { profiles, hasMorePages: true } });
+
+        expect(loadMoreButton()).not.toBe(null);
+      });
+
+      it('emits "loadMore" when the load-more button is clicked', async () => {
+        expect(wrapper.emitted('loadMorePages')).toBe(undefined);
+
+        await fireEvent.click(loadMoreButton(), {});
+
+        expect(wrapper.emitted('loadMorePages')).toEqual(expect.any(Array));
+      });
     });
   });
 });
