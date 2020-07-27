@@ -617,11 +617,6 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
           /file-path/components-within-slashes/
           another/file-path/differeñt-lønguage.txt
 
-          print("Hello%World\"s")
-          print('Goodbye\'Moon')
-          print("Split" + "Double")
-          print('Single' + 'Separate')
-
           us-east-2
           bye
 
@@ -651,16 +646,6 @@ RSpec.describe Gitlab::Elastic::SearchResults, :elastic, :sidekiq_might_not_need
       it 'finds files with dashes' do
         expect(search_for('"us-east-2"')).to include(file_name)
         expect(search_for('bikes-3.4')).to include(file_name)
-      end
-
-      it 'finds files with double quotes' do
-        expect(search_for('Hello%World\"s')).to include(file_name)
-        expect(search_for('Double')).to include(file_name)
-      end
-
-      it 'finds files with single quotes' do
-        expect(search_for('Goodbye\'Moon')).to include(file_name)
-        expect(search_for('Single')).to include(file_name)
       end
 
       it 'finds files with dots' do
