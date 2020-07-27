@@ -1,6 +1,13 @@
 import { mount } from '@vue/test-utils';
+import {
+  GlAlert,
+  GlLoadingIcon,
+  GlTable,
+  GlAvatar,
+  GlPagination,
+  GlSearchBoxByType,
+} from '@gitlab/ui';
 import { visitUrl, joinPaths } from '~/lib/utils/url_utility';
-import { GlAlert, GlLoadingIcon, GlTable, GlAvatar, GlSearchBoxByType } from '@gitlab/ui';
 import IncidentsList from '~/incidents/components/incidents_list.vue';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 import { I18N } from '~/incidents/constants';
@@ -25,6 +32,7 @@ describe('Incidents List', () => {
   const findAssingees = () => wrapper.findAll('[data-testid="incident-assignees"]');
   const findCreateIncidentBtn = () => wrapper.find('[data-testid="createIncidentBtn"]');
   const findSearch = () => wrapper.find(GlSearchBoxByType);
+  const findPagination = () => wrapper.find(GlPagination);
 
   function mountComponent({ data = { incidents: [] }, loading = false }) {
     wrapper = mount(IncidentsList, {
@@ -69,7 +77,7 @@ describe('Incidents List', () => {
 
   it('shows empty state', () => {
     mountComponent({
-      data: { incidents: [] },
+      data: { incidents: { list: [] } },
       loading: false,
     });
     expect(findTable().text()).toContain(I18N.noIncidents);
@@ -77,7 +85,7 @@ describe('Incidents List', () => {
 
   it('shows error state', () => {
     mountComponent({
-      data: { incidents: [], errored: true },
+      data: { incidents: { list: [] }, errored: true },
       loading: false,
     });
     expect(findTable().text()).toContain(I18N.noIncidents);
@@ -87,7 +95,7 @@ describe('Incidents List', () => {
   describe('Incident Management list', () => {
     beforeEach(() => {
       mountComponent({
-        data: { incidents: mockIncidents },
+        data: { incidents: { list: mockIncidents } },
         loading: false,
       });
     });
@@ -133,7 +141,7 @@ describe('Incidents List', () => {
   describe('Create Incident', () => {
     beforeEach(() => {
       mountComponent({
-        data: { incidents: [] },
+        data: { incidents: { list: [] } },
         loading: false,
       });
     });
@@ -150,24 +158,72 @@ describe('Incidents List', () => {
     });
   });
 
-  describe('Search', () => {
+  describe('Pagination', () => {
     beforeEach(() => {
       mountComponent({
-        data: { incidents: mockIncidents },
+        data: {
+          incidents: {
+            list: mockIncidents,
+            pageInfo: { hasNextPage: true, hasPreviousPage: true },
+          },
+          errored: false,
+        },
         loading: false,
       });
     });
 
-    it('renders the search component for incidents', () => {
-      expect(findSearch().exists()).toBe(true);
+    describe('prevPage', () => {
+      it('returns prevPage number', () => {
+        findPagination().vm.$emit('input', 3);
+
+        return wrapper.vm.$nextTick(() => {
+          expect(wrapper.vm.prevPage).toBe(2);
+        });
+      });
+
+      it('returns 0 when it is the first page', () => {
+        findPagination().vm.$emit('input', 1);
+
+        return wrapper.vm.$nextTick(() => {
+          expect(wrapper.vm.prevPage).toBe(0);
+        });
+      });
     });
 
-    it('sets the `searchTerm` graphql variable', () => {
-      const SEARCH_TERM = 'Simple Incident';
+    describe('nextPage', () => {
+      it('returns `null` when currentPage is already last page', () => {
+        findPagination().vm.$emit('input', 1);
+        return wrapper.vm.$nextTick(() => {
+          expect(wrapper.vm.nextPage).toBeNull();
+        });
+      });
+    });
 
-      findSearch().vm.$emit('input', SEARCH_TERM);
+    describe('Search', () => {
+      beforeEach(() => {
+        mountComponent({
+          data: {
+            incidents: {
+              list: mockIncidents,
+              pageInfo: { hasNextPage: true, hasPreviousPage: true },
+            },
+            errored: false,
+          },
+          loading: false,
+        });
+      });
 
-      expect(wrapper.vm.$data.searchTerm).toBe(SEARCH_TERM);
+      it('renders the search component for incidents', () => {
+        expect(findSearch().exists()).toBe(true);
+      });
+
+      it('sets the `searchTerm` graphql variable', () => {
+        const SEARCH_TERM = 'Simple Incident';
+
+        findSearch().vm.$emit('input', SEARCH_TERM);
+
+        expect(wrapper.vm.$data.searchTerm).toBe(SEARCH_TERM);
+      });
     });
   });
 });
