@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { GlSkeletonLoading } from '@gitlab/ui';
+import { GlSkeletonLoading, GlIcon } from '@gitlab/ui';
 import MetricCard from 'ee/analytics/shared/components/metric_card.vue';
 
 const metrics = [
@@ -24,6 +24,9 @@ describe('MetricCard', () => {
         ...defaultProps,
         ...props,
       },
+      stubs: {
+        GlIcon: true,
+      },
     });
   };
 
@@ -35,6 +38,7 @@ describe('MetricCard', () => {
   const findLoadingIndicator = () => wrapper.find(GlSkeletonLoading);
   const findMetricsWrapper = () => wrapper.find({ ref: 'metricsWrapper' });
   const findMetricItem = () => wrapper.findAll({ ref: 'metricItem' });
+  const findTooltip = () => wrapper.find(GlIcon);
 
   describe('template', () => {
     it('renders the title', () => {
@@ -74,6 +78,27 @@ describe('MetricCard', () => {
         expect(findMetricItem()).toHaveLength(metrics.length);
       });
 
+      describe('with tooltip text', () => {
+        const tooltipMetric = {
+          key: 'fifth_metric',
+          value: '-',
+          label: 'Metric with tooltip',
+          unit: 'parsecs',
+          tooltipText: 'This is a tooltip',
+        };
+
+        beforeEach(() => {
+          factory({
+            isLoading: false,
+            metrics: [tooltipMetric],
+          });
+        });
+
+        it('will render a tooltip', () => {
+          expect(findTooltip().exists()).toBe(true);
+        });
+      });
+
       describe.each`
         columnIndex | label                          | value  | unit       | link
         ${0}        | ${'First metric'}              | ${10}  | ${' days'} | ${'some_link'}
@@ -84,8 +109,10 @@ describe('MetricCard', () => {
         it(`renders ${value}${unit} ${label} with URL ${link}`, () => {
           const allMetricItems = findMetricItem();
           const metricItem = allMetricItems.at(columnIndex);
+          const text = metricItem.text();
 
-          expect(metricItem.text()).toBe(`${value}${unit} ${label}`);
+          expect(text).toContain(`${value}${unit}`);
+          expect(text).toContain(label);
 
           if (link) {
             expect(metricItem.find('a').attributes('href')).toBe(link);

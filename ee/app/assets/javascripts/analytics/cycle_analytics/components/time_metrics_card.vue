@@ -6,6 +6,18 @@ import { slugify } from '~/lib/utils/text_utility';
 import MetricCard from '../../shared/components/metric_card.vue';
 import { removeFlash } from '../utils';
 
+const I18N_TEXT = {
+  'lead-time': __('Median time from issue created to issue closed.'),
+  'cycle-time': __('Median time from first commit to issue closed.'),
+};
+
+const tooltipText = key => {
+  if (I18N_TEXT[key]) {
+    return I18N_TEXT[key];
+  }
+  return '';
+};
+
 export default {
   name: 'TimeMetricsCard',
   components: {
@@ -42,11 +54,15 @@ export default {
       this.loading = true;
       return Api.cycleAnalyticsTimeSummaryData(this.groupPath, this.additionalParams)
         .then(({ data }) => {
-          this.data = data.map(({ title: label, ...rest }) => ({
-            ...rest,
-            label,
-            key: slugify(label),
-          }));
+          this.data = data.map(({ title: label, ...rest }) => {
+            const key = slugify(label);
+            return {
+              ...rest,
+              label,
+              key,
+              tooltipText: tooltipText(key),
+            };
+          });
         })
         .catch(() => {
           createFlash(

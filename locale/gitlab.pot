@@ -14633,6 +14633,12 @@ msgstr ""
 msgid "Median"
 msgstr ""
 
+msgid "Median time from first commit to issue closed."
+msgstr ""
+
+msgid "Median time from issue created to issue closed."
+msgstr ""
+
 msgid "Medium vulnerabilities present"
 msgstr ""
 
