@@ -4,6 +4,7 @@ module Vulnerabilities
   class ProjectsGrade
     attr_reader :vulnerable, :grade, :project_ids
 
+    # project_ids can contain IDs from projects that do not belong to vulnerable, they will be filtered out in `projects` method
     def initialize(vulnerable, letter_grade, project_ids = [])
       @vulnerable = vulnerable
       @grade = letter_grade
