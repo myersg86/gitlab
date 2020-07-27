@@ -30,6 +30,7 @@ class MigrateLicenseManagementArtifactsToLicenseScanning < ActiveRecord::Migrati
   end
 
   def down
-    # this one way migration as we're deleting duplicating artifacts and updating their file_type
+    # no-op
+    # we're deleting duplicating artifacts and updating file_type for license_management artifacts
   end
 end
