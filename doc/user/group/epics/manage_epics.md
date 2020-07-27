@@ -252,6 +252,7 @@ To move an issue to another epic:
 
 > - [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/3777) in [GitLab Ultimate](https://about.gitlab.com/pricing/) 11.6.
 > - [Moved](https://gitlab.com/gitlab-org/gitlab/-/issues/37081) to [GitLab Premium](https://about.gitlab.com/pricing/) in 12.8.
+> - In [GitLab Ultimate](https://about.gitlab.com/pricing/) 13.3 and later, promoting an issue already assigned to an epic [keeps its parent epic relationship](https://gitlab.com/gitlab-org/gitlab/-/issues/199878).
 
 If you have the necessary [permissions](../../permissions.md) to close an issue and create an
 epic in the immediate parent group, you can promote an issue to an epic with the `/promote`
