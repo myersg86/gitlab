@@ -52,6 +52,27 @@ export default {
       return this.siteProfiles.pageInfo.hasNextPage;
     },
   },
+  methods: {
+    fetchMoreProfiles() {
+      const {
+        siteProfiles: { pageInfo },
+      } = this;
+
+      this.$apollo.queries.siteProfiles.fetchMore({
+        variables: { after: pageInfo.endCursor },
+        // @TODO - check specs about `updateQuery` and clean up code below
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const newResult = { ...fetchMoreResult };
+          const previousEdges = previousResult.project.siteProfiles.edges;
+          const newEdges = newResult.project.siteProfiles.edges;
+
+          newResult.project.siteProfiles.edges = [...previousEdges, ...newEdges];
+
+          return newResult;
+        },
+      });
+    },
+  },
 };
 </script>
 
@@ -86,7 +107,11 @@ export default {
           <span>{{ s__('DastProfiles|Site Profiles') }}</span>
         </template>
 
-        <profiles-list :profiles="siteProfiles.list" :has-more-pages="hasMoreSiteProfiles" />
+        <profiles-list
+          @loadMorePages="fetchMoreProfiles"
+          :profiles="siteProfiles.list"
+          :has-more-pages="hasMoreSiteProfiles"
+        />
       </gl-tab>
     </gl-tabs>
   </section>

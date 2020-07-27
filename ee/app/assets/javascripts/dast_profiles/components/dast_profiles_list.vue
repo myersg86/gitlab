@@ -14,6 +14,11 @@ export default {
       required: true,
     },
     // @TODO - test behaviour
+    profilesPerPage: {
+      type: Number,
+      required: false,
+      default: 20,
+    },
     hasMorePages: {
       type: Boolean,
       required: false,
@@ -68,11 +73,11 @@ export default {
           </span>
         </template>
         <template #cell(actions)>
-          <gl-button>Edit</gl-button>
+          <gl-button>{{ __('Edit') }}</gl-button>
         </template>
       </gl-table>
       <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
-        <gl-button @click="$emit('loadMorePages')">Load more</gl-button>
+        <gl-button @click="$emit('loadMorePages')">{{ __('Load more') }}</gl-button>
       </p>
     </div>
     <p v-else>{{ s__('DastProfiles|No profiles created yet') }}</p>

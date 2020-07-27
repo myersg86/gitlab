@@ -4,6 +4,7 @@ query DASTSiteProfiles($fullPath: ID!, $after: String, $before: String, $first: 
       pageInfo {
         hasNextPage
         hasPreviousPage
+        endCursor
       }
       edges {
         cursor
