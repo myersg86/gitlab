@@ -3,7 +3,9 @@
 module Notes
   class UpdateService < BaseService
     def execute(note)
-      return note unless note.editable? && params.present?
+      raise ArgumentError, 'Params argument has to be provided.' if params.blank?
+
+      return note unless note.editable?
 
       old_mentioned_users = note.mentioned_users(current_user).to_a
 

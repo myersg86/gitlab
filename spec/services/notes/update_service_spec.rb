@@ -30,9 +30,21 @@ RSpec.describe Notes::UpdateService do
       @note.reload
     end
 
-    it 'does not update the note when params is blank' do
-      Timecop.freeze(1.day.from_now) do
-        expect { update_note({}) }.not_to change { note.reload.updated_at }
+    context 'when params is blank' do
+      subject { update_note({}) }
+
+      it 'raises an ArgumentError ' do
+        expect { subject }.to raise_error(ArgumentError, 'Params argument has to be provided.')
+      end
+    end
+
+    context 'with system note' do
+      before do
+        note.update_column(:system, true)
+      end
+
+      it 'does not update the note' do
+        expect { update_note(note: 'new text') }.not_to change { note.reload.note }
       end
     end
 
