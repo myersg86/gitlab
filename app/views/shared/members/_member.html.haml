@@ -113,10 +113,9 @@
 
         - if member.can_remove?
           - if current_user == user
-            = link_to icon('sign-out', text: _('Leave')), polymorphic_path([:leave, member.source, :members]),
-                      method: :delete,
-                      data: { confirm: leave_confirmation_message(member.source) },
-                      class: "btn btn-remove align-self-center m-0 #{'ml-sm-2' unless force_mobile_view}"
+            = link_to polymorphic_path([:leave, member.source, :members]), method: :delete, data: { confirm: leave_confirmation_message(member.source) }, class: "btn btn-remove gl-button btn-svg btn-danger align-self-center m-0 #{'ml-sm-2' unless force_mobile_view}" do
+              = sprite_icon('leave', size: 16, css_class: 'gl-icon')
+              = _('Leave')
           - else
             %button{ data: { member_path: member_path(member.member), message: remove_member_message(member), is_access_request: member.request?.to_s, qa_selector: 'delete_member_button' },
               class: "js-remove-member-button btn btn-remove align-self-center m-0 #{'ml-sm-2' unless force_mobile_view}",
