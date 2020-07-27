@@ -77,4 +77,12 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
 
     it { is_expected.to eq(expected_projects) }
   end
+
+  describe '#count' do
+    let(:projects_grade) { described_class.new(group, 1, [project_3.id, project_4.id]) }
+
+    subject(:projects) { projects_grade.count }
+
+    it { is_expected.to eq 2 }
+  end
 end

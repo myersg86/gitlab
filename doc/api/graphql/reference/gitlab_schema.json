@@ -45626,6 +45626,24 @@
           "description": "Represents vulnerability letter grades with associated projects",
           "fields": [
             {
+              "name": "count",
+              "description": "Number of projects within this grade",
+              "args": [
+
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "grade",
               "description": "Grade based on the highest severity vulnerability present",
               "args": [

@@ -15457,6 +15457,11 @@ Represents vulnerability letter grades with associated projects
 """
 type VulnerableProjectsByGrade {
   """
+  Number of projects within this grade
+  """
+  count: Int!
+
+  """
   Grade based on the highest severity vulnerability present
   """
   grade: VulnerabilityGrade!

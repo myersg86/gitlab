@@ -9,6 +9,9 @@ module Types
     field :grade, Types::VulnerabilityGradeEnum, null: false,
           description: "Grade based on the highest severity vulnerability present"
 
+    field :count, GraphQL::INT_TYPE, null: false,
+          description: 'Number of projects within this grade'
+
     field :projects, Types::ProjectType.connection_type, null: false,
           description: 'Projects within this grade',
           authorize: :read_project

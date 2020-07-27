@@ -10,6 +10,8 @@ module Vulnerabilities
       @project_ids = project_ids
     end
 
+    delegate :count, to: :projects
+
     def projects
       return vulnerable.projects.none if project_ids.blank?
 

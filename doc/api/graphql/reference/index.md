@@ -2400,4 +2400,5 @@ Represents vulnerability letter grades with associated projects
 
 | Name  | Type  | Description |
 | ---   |  ---- | ----------  |
+| `count` | Int! | Number of projects within this grade |
 | `grade` | VulnerabilityGrade! | Grade based on the highest severity vulnerability present |
