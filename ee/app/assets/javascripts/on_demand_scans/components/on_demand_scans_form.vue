@@ -178,7 +178,13 @@ export default {
       </p>
     </header>
 
-    <gl-alert v-if="showAlert" variant="danger" class="gl-mb-5" data-testid="on-demand-scan-error" @dismiss="dismissAlert">
+    <gl-alert
+      v-if="showAlert"
+      variant="danger"
+      class="gl-mb-5"
+      data-testid="on-demand-scan-error"
+      @dismiss="dismissAlert"
+    >
       {{ s__('OnDemandScans|Could not run the scan. Please try again.') }}
       <ul v-if="errors.length">
         <li v-for="error in errors" :key="error" v-text="error"></li>
@@ -230,6 +236,7 @@ export default {
               variant="success"
               category="secondary"
               size="small"
+              data-testid="manage-site-profiles-button"
             >
               {{ s__('OnDemandScans|Manage profiles') }}
             </gl-button>
@@ -278,7 +285,12 @@ export default {
             )
           }}
         </p>
-        <gl-button :href="newSiteProfilePath" variant="success" category="secondary">
+        <gl-button
+          :href="newSiteProfilePath"
+          variant="success"
+          category="secondary"
+          data-testid="create-site-profile-link"
+        >
           {{ s__('OnDemandScans|Create a new site profile') }}
         </gl-button>
       </template>

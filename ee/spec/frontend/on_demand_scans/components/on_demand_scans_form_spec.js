@@ -1,5 +1,4 @@
 import { mount, shallowMount } from '@vue/test-utils';
-import { within } from '@testing-library/dom';
 import { GlForm } from '@gitlab/ui';
 import { TEST_HOST } from 'helpers/test_constants';
 import OnDemandScansForm from 'ee/on_demand_scans/components/on_demand_scans_form.vue';
@@ -26,12 +25,12 @@ jest.mock('~/lib/utils/url_utility', () => ({
 describe('OnDemandScansApp', () => {
   let wrapper;
 
-  const withinComponent = () => within(wrapper.element);
-
   const findForm = () => wrapper.find(GlForm);
   const findSiteProfilesDropdown = () => wrapper.find('[data-testid="site-profiles-dropdown"]');
+  const findManageSiteProfilesButton = () =>
+    wrapper.find('[data-testid="manage-site-profiles-button"]');
   const findCreateNewSiteProfileLink = () =>
-    withinComponent().getByRole('link', { name: /create a new site profile/i });
+    wrapper.find('[data-testid="create-site-profile-link"]');
   const findAlert = () => wrapper.find('[data-testid="on-demand-scan-error"]');
   const submitForm = () => findForm().vm.$emit('submit', { preventDefault: () => {} });
 
@@ -184,14 +183,13 @@ describe('OnDemandScansApp', () => {
       });
 
       it('disables the link to manage site profiles', () => {
-        const button = withinComponent().getByRole('button', { name: /manage profiles/i });
-        expect(button.getAttribute('aria-disabled')).toBe('true');
+        expect(findManageSiteProfilesButton().props('disabled')).toBe(true);
       });
 
       it('shows a link to create a new site profile', () => {
         const link = findCreateNewSiteProfileLink();
-        expect(link).not.toBe(null);
-        expect(link.getAttribute('href')).toBe(newSiteProfilePath);
+        expect(link.exists()).toBe(true);
+        expect(link.attributes('href')).toBe(newSiteProfilePath);
       });
     });
 
