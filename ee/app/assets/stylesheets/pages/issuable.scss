@@ -95,3 +95,20 @@
     display: none;
   }
 }
+
+.status {
+  &-at-risk {
+    color: $red-500;
+    background-color: $red-100;
+  }
+
+  &-needs-attention {
+    color: $orange-700;
+    background-color: $orange-100;
+  }
+
+  &-on-track {
+    color: $green-600;
+    background-color: $green-100;
+  }
+}

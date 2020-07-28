@@ -23,6 +23,9 @@ import IssueAssignees from '~/vue_shared/components/issue/issue_assignees.vue';
 import { isScopedLabel } from '~/lib/utils/common_utils';
 import glFeatureFlagsMixin from '~/vue_shared/mixins/gl_feature_flags_mixin';
 
+import IssueHealthStatus from 'ee/related_items_tree/components/issue_health_status.vue';
+import { convertToCamelCase } from '~/lib/utils/text_utility';
+
 export default {
   i18n: {
     openedAgo: __('opened %{timeAgoString} by %{user}'),
@@ -34,6 +37,7 @@ export default {
     GlLabel,
     GlIcon,
     GlSprintf,
+    IssueHealthStatus
   },
   directives: {
     GlTooltip,
@@ -195,6 +199,9 @@ export default {
         },
       ];
     },
+    healthStatus() {
+      return convertToCamelCase(this.issuable.health_status);
+    }
   },
   mounted() {
     // TODO: Refactor user popover to use its own component instead of
@@ -340,6 +347,8 @@ export default {
             <i class="fa fa-calendar"></i>
             {{ dueDateWords }}
           </span>
+
+          <issue-health-status v-if="issuable.health_status" :health-status="healthStatus" />
 
           <gl-label
             v-for="label in issuable.labels"
