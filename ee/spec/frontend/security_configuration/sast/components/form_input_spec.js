@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { GlFormInput } from '@gitlab/ui';
+import { GlFormInput, GlLink } from '@gitlab/ui';
 import FormInput from 'ee/security_configuration/sast/components/form_input.vue';
 import { SCHEMA_TO_PROP_SIZE_MAP } from 'ee/security_configuration/sast/components/constants';
 
@@ -27,6 +27,7 @@ describe('FormInput component', () => {
   const findInput = () => wrapper.find('input');
   const findLabel = () => wrapper.find('label');
   const findInputComponent = () => wrapper.find(GlFormInput);
+  const findRestoreDefaultLink = () => wrapper.find(GlLink);
 
   afterEach(() => {
     wrapper.destroy();
@@ -85,7 +86,7 @@ describe('FormInput component', () => {
       });
 
       it('does not display the custom value message', () => {
-        expect(wrapper.text()).not.toMatch(customValueMessageRegExp);
+        expect(findRestoreDefaultLink().exists()).toBe(false);
       });
     });
 
@@ -99,8 +100,18 @@ describe('FormInput component', () => {
         });
       });
 
-      it('does not display the custom value message', () => {
-        expect(wrapper.text()).toMatch(customValueMessageRegExp);
+      it('displays the custom value message', () => {
+        expect(findRestoreDefaultLink().exists()).toBe(true);
+      });
+
+      describe('clicking on the restore default link', () => {
+        beforeEach(() => {
+          findRestoreDefaultLink().trigger('click');
+        });
+
+        it('emits an input event with the default value', () => {
+          expect(wrapper.emitted('input')).toEqual([[testProps.defaultValue]]);
+        });
       });
     });
   });
