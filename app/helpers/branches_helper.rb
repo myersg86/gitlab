@@ -8,6 +8,12 @@ module BranchesHelper
   def protected_branch?(project, branch)
     ProtectedBranch.protected?(project, branch.name)
   end
+
+  def access_levels_data(access_levels)
+    access_levels.map do |level|
+      { id: level.id, type: 'role', access_level: level.access_level }
+    end
+  end
 end
 
 BranchesHelper.prepend_if_ee('EE::BranchesHelper')
