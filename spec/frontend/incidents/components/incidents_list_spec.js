@@ -191,6 +191,24 @@ describe('Incidents List', () => {
     });
 
     describe('nextPage', () => {
+      it('returns nextPage number', () => {
+        mountComponent({
+          data: {
+            incidents: {
+              list: [...mockIncidents, ...mockIncidents, ...mockIncidents],
+              pageInfo: { hasNextPage: true, hasPreviousPage: true },
+            },
+            errored: false,
+          },
+          loading: false,
+        });
+        findPagination().vm.$emit('input', 1);
+
+        return wrapper.vm.$nextTick(() => {
+          expect(wrapper.vm.nextPage).toBe(2);
+        });
+      });
+
       it('returns `null` when currentPage is already last page', () => {
         findPagination().vm.$emit('input', 1);
         return wrapper.vm.$nextTick(() => {
