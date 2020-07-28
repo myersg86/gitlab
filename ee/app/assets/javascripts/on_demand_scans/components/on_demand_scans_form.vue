@@ -193,7 +193,7 @@ export default {
 
     <gl-card>
       <template #header>
-        <strong class="gl-font-lg">{{ s__('OnDemandScans|Scanner settings') }}</strong>
+        <h3 class="gl-font-lg gl-display-inline">{{ s__('OnDemandScans|Scanner settings') }}</h3>
       </template>
 
       <gl-form-group class="gl-mt-4">
@@ -227,7 +227,7 @@ export default {
       <template #header>
         <div class="row">
           <div class="col-7">
-            <strong class="gl-font-lg">{{ s__('OnDemandScans|Site profiles') }}</strong>
+            <h3 class="gl-font-lg gl-display-inline">{{ s__('OnDemandScans|Site profiles') }}</h3>
           </div>
           <div class="col-5 gl-text-right">
             <gl-button
