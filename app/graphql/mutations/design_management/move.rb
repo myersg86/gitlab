@@ -16,14 +16,14 @@ module Mutations
       argument :next, DesignID, required: false, as: :next_design,
                description: "ID of the immediately following design"
 
-      field :collection, Types::DesignManagement::DesignCollectionType,
+      field :design_collection, Types::DesignManagement::DesignCollectionType,
             null: true,
             description: "The current state of the collection"
 
       def resolve(**args)
         service = ::DesignManagement::MoveDesignsService.new(current_user, parameters(args))
 
-        { collection: service.collection, errors: service.execute.errors }
+        { design_collection: service.collection, errors: service.execute.errors }
       end
 
       def parameters(**args)
