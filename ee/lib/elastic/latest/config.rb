@@ -59,7 +59,7 @@ module Elastic
                   "(\\d+)",
                   "(?=([\\p{Lu}]+[\\p{L}]+))",
                   '\.([^.]+)(?=\.|\s|\Z)', # separate terms on periods
-                  '([\p{L}|\p{N}_.-]+)', # some common chars in file names to keep the whole filename intact (eg. my_file-name-01.txt)
+                  '([\p{L}\p{N}_.-]+)', # some common chars in file names to keep the whole filename intact (eg. my_file-name-01.txt)
                   '([\p{L}\d_]+)' # letters, numbers and underscores are the most common tokens in programming. Always capture them greedily regardless of context.
                 ]
               }
