@@ -51,6 +51,9 @@ export default {
     hasMoreSiteProfiles() {
       return this.siteProfiles.pageInfo.hasNextPage;
     },
+    isLoadingSiteProfiles() {
+      return this.$apollo.queries.siteProfiles.loading;
+    },
   },
   methods: {
     fetchMoreProfiles() {
@@ -108,9 +111,10 @@ export default {
         </template>
 
         <profiles-list
-          @loadMorePages="fetchMoreProfiles"
-          :profiles="siteProfiles.list"
           :has-more-pages="hasMoreSiteProfiles"
+          :is-loading="isLoadingSiteProfiles"
+          :profiles="siteProfiles.list"
+          @loadMorePages="fetchMoreProfiles"
         />
       </gl-tab>
     </gl-tabs>

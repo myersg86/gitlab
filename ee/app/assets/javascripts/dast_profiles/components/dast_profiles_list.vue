@@ -1,10 +1,11 @@
 <script>
-import { GlButton, GlTable, GlTruncate, GlIcon } from '@gitlab/ui';
+import { GlButton, GlIcon, GlSkeletonLoading, GlTable, GlTruncate } from '@gitlab/ui';
 
 export default {
   components: {
     GlButton,
     GlIcon,
+    GlSkeletonLoading,
     GlTable,
     GlTruncate,
   },
@@ -14,10 +15,16 @@ export default {
       required: true,
     },
     // @TODO - test behaviour
+    isLoading: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    // @TODO - test behaviour
     profilesPerPage: {
       type: Number,
       required: false,
-      default: 20,
+      default: 10,
     },
     hasMorePages: {
       type: Boolean,
@@ -28,6 +35,9 @@ export default {
   computed: {
     hasProfiles() {
       return this.profiles.length > 0;
+    },
+    isLoadingInitialProfiles() {
+      return this.isLoading && !this.hasProfiles;
     },
   },
   fields: [
@@ -48,8 +58,9 @@ export default {
 </script>
 <template>
   <section>
-    <div v-if="hasProfiles">
+    <div v-if="isLoadingInitialProfiles || hasProfiles">
       <gl-table
+        :busy="isLoadingInitialProfiles"
         stacked="sm"
         :fields="$options.fields"
         :items="profiles"
@@ -75,9 +86,20 @@ export default {
         <template #cell(actions)>
           <gl-button>{{ __('Edit') }}</gl-button>
         </template>
+
+        <template #table-busy>
+          <gl-skeleton-loading
+            v-for="i in profilesPerPage"
+            :key="i"
+            class="m-2 js-skeleton-loader"
+            :lines="2"
+          />
+        </template>
       </gl-table>
       <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
-        <gl-button @click="$emit('loadMorePages')">{{ __('Load more') }}</gl-button>
+        <gl-button :loading="isLoading" @click="$emit('loadMorePages')">{{
+          __('Load more')
+        }}</gl-button>
       </p>
     </div>
     <p v-else>{{ s__('DastProfiles|No profiles created yet') }}</p>
