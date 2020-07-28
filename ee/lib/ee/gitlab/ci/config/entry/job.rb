@@ -19,6 +19,13 @@ module EE
               entry :secrets, ::Gitlab::Ci::Config::Entry::Secrets,
                 description: 'Configured secrets for this job',
                 inherit: false
+                
+              # TODO: implement as DSL?
+              # entries :secrets, [Entry::Secret], 
+              #   description: 'Configured secrets for this job', 
+              #   inherit: false
+              #   entry_class: :hash, 
+              #   entry_description: '%s secret definition'
             end
 
             override :value

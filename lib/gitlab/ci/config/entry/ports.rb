@@ -9,11 +9,24 @@ module Gitlab
         #
         class Ports < ::Gitlab::Config::Entry::Node
           include ::Gitlab::Config::Entry::Validatable
+          # include ::Gitlab::Ci::Config::Entry::Composable
 
           validations do
             validates :config, type: Array
             validates :config, port_name_present_and_unique: true
             validates :config, port_unique: true
+          end
+
+          def self.description
+            "port definition."
+          end
+
+          def self.key
+            "port"
+          end
+
+          def self.node_type
+            Entry::Port
           end
 
           def compose!(deps = nil)

@@ -8,6 +8,7 @@ module Gitlab
         # Entry that represents a set of needs dependencies.
         #
         class Needs < ::Gitlab::Config::Entry::Node
+          include ::Gitlab::Ci::Config::Entry::Composable
           include ::Gitlab::Config::Entry::Validatable
 
           validations do
@@ -29,19 +30,16 @@ module Gitlab
             end
           end
 
-          def compose!(deps = nil)
-            super(deps) do
-              [@config].flatten.each_with_index do |need, index|
-                @entries[index] = ::Gitlab::Config::Entry::Factory.new(Entry::Need)
-                  .value(need)
-                  .with(key: "need", parent: self, description: "need definition.") # rubocop:disable CodeReuse/ActiveRecord
-                  .create!
-              end
+          def self.description
+            "need definition."
+          end
 
-              @entries.each_value do |entry|
-                entry.compose!(deps)
-              end
-            end
+          def self.key
+            "need"
+          end
+
+          def self.node_type
+            Entry::Need
           end
 
           def value
