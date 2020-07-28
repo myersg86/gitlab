@@ -30,7 +30,7 @@ export default {
 
 <template>
   <li :class="headerClasses">
-    <span class="stage-name gl-vetical-align-middle gl-font-weight-bold">{{ title }}</span>
+    <span class="stage-name gl-font-weight-bold">{{ title }}</span>
     <gl-icon
       v-gl-tooltip
       class="gl-vertical-align-middle"

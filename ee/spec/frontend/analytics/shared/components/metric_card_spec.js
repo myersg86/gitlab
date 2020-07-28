@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
-import { GlSkeletonLoading, GlIcon } from '@gitlab/ui';
+import { GlSkeletonLoading } from '@gitlab/ui';
+import { createMockDirective, getBinding } from 'helpers/vue_mock_directive';
 import MetricCard from 'ee/analytics/shared/components/metric_card.vue';
 
 const metrics = [
@@ -24,8 +25,8 @@ describe('MetricCard', () => {
         ...defaultProps,
         ...props,
       },
-      stubs: {
-        GlIcon: true,
+      directives: {
+        GlTooltip: createMockDirective(),
       },
     });
   };
@@ -38,7 +39,7 @@ describe('MetricCard', () => {
   const findLoadingIndicator = () => wrapper.find(GlSkeletonLoading);
   const findMetricsWrapper = () => wrapper.find({ ref: 'metricsWrapper' });
   const findMetricItem = () => wrapper.findAll({ ref: 'metricItem' });
-  const findTooltip = () => wrapper.find(GlIcon);
+  const findTooltip = () => wrapper.find('[data-testid="tooltip"]');
 
   describe('template', () => {
     it('renders the title', () => {
@@ -79,12 +80,13 @@ describe('MetricCard', () => {
       });
 
       describe('with tooltip text', () => {
+        const tooltipText = 'This is a tooltip';
         const tooltipMetric = {
           key: 'fifth_metric',
           value: '-',
           label: 'Metric with tooltip',
           unit: 'parsecs',
-          tooltipText: 'This is a tooltip',
+          tooltipText,
         };
 
         beforeEach(() => {
@@ -95,7 +97,8 @@ describe('MetricCard', () => {
         });
 
         it('will render a tooltip', () => {
-          expect(findTooltip().exists()).toBe(true);
+          const tt = getBinding(findTooltip().element, 'gl-tooltip');
+          expect(tt.value.title).toEqual(tooltipText);
         });
       });
 

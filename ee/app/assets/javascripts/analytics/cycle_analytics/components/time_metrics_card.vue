@@ -1,21 +1,14 @@
 <script>
 import Api from 'ee/api';
-import { __ } from '~/locale';
+import { __, s__ } from '~/locale';
 import createFlash from '~/flash';
 import { slugify } from '~/lib/utils/text_utility';
 import MetricCard from '../../shared/components/metric_card.vue';
 import { removeFlash } from '../utils';
 
 const I18N_TEXT = {
-  'lead-time': __('Median time from issue created to issue closed.'),
-  'cycle-time': __('Median time from first commit to issue closed.'),
-};
-
-const tooltipText = key => {
-  if (I18N_TEXT[key]) {
-    return I18N_TEXT[key];
-  }
-  return '';
+  'lead-time': s__('ValueStreamAnalytics|Median time from issue created to issue closed.'),
+  'cycle-time': s__('ValueStreamAnalytics|Median time from first commit to issue closed.'),
 };
 
 export default {
@@ -60,7 +53,7 @@ export default {
               ...rest,
               label,
               key,
-              tooltipText: tooltipText(key),
+              tooltipText: I18N_TEXT[key] || '',
             };
           });
         })

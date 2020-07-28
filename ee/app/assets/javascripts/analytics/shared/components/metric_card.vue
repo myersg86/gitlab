@@ -58,11 +58,11 @@ export default {
             {{ metric.label }}
             <span v-if="tooltipText.length"
               >&nbsp;<gl-icon
-                v-gl-tooltip
+                v-gl-tooltip="{ title: tooltipText }"
                 :size="14"
                 class="gl-vertical-align-middle"
                 name="question"
-                :title="tooltipText"
+                data-testid="tooltip"
             /></span>
           </p>
         </div>

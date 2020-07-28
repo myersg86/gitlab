@@ -14633,12 +14633,6 @@ msgstr ""
 msgid "Median"
 msgstr ""
 
-msgid "Median time from first commit to issue closed."
-msgstr ""
-
-msgid "Median time from issue created to issue closed."
-msgstr ""
-
 msgid "Medium vulnerabilities present"
 msgstr ""
 
@@ -26377,6 +26371,12 @@ msgid "Value Stream Name"
 msgstr ""
 
 msgid "ValueStreamAnalytics|%{days}d"
+msgstr ""
+
+msgid "ValueStreamAnalytics|Median time from first commit to issue closed."
+msgstr ""
+
+msgid "ValueStreamAnalytics|Median time from issue created to issue closed."
 msgstr ""
 
 msgid "Variable"
