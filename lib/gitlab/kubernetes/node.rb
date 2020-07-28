@@ -9,7 +9,7 @@ module Gitlab
 
       def all
         {
-          nodes: all_nodes_with_metrics.presence,
+          nodes: metadata.presence,
           node_connection_error: @node_connection_error,
           metrics_connection_error: @metrics_connection_error
         }
@@ -19,7 +19,7 @@ module Gitlab
 
       attr_reader :cluster
 
-      def all_nodes_with_metrics
+      def metadata
         nodes.map do |node|
           attributes = node(node)
           attributes.merge(node_metrics(node))

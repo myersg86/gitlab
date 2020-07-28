@@ -413,7 +413,8 @@ module Clusters
 
     def connection_data
       result = ::Gitlab::Kubernetes::KubeClient.graceful_request(id) { kubeclient.core_client.discover }
-      { connection_status: result[:status], connection_error: result[:connection_error] }
+
+      result[:status] == :connected ? { connection_status: result[:status] } : { connection_status: result[:status], connection_error: result[:connection_error] }
     end
 
     # To keep backward compatibility with AUTO_DEVOPS_DOMAIN

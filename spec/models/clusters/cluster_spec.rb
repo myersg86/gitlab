@@ -1153,6 +1153,57 @@ RSpec.describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
     end
   end
 
+  describe '#connection_error' do
+    let(:cluster) { create(:cluster) }
+    let(:error) { :unknown_error }
+
+    subject { cluster.connection_error }
+
+    it { is_expected.to be_nil }
+
+    context 'with a cached status' do
+      before do
+        stub_reactive_cache(cluster, connection_error: error)
+      end
+
+      it { is_expected.to eq(error) }
+    end
+  end
+
+  describe '#node_connection_error' do
+    let(:cluster) { create(:cluster) }
+    let(:error) { :unknown_error }
+
+    subject { cluster.node_connection_error }
+
+    it { is_expected.to be_nil }
+
+    context 'with a cached status' do
+      before do
+        stub_reactive_cache(cluster, node_connection_error: error)
+      end
+
+      it { is_expected.to eq(error) }
+    end
+  end
+
+  describe '#metrics_connection_error' do
+    let(:cluster) { create(:cluster) }
+    let(:error) { :unknown_error }
+
+    subject { cluster.metrics_connection_error }
+
+    it { is_expected.to be_nil }
+
+    context 'with a cached status' do
+      before do
+        stub_reactive_cache(cluster, metrics_connection_error: error)
+      end
+
+      it { is_expected.to eq(error) }
+    end
+  end
+
   describe '#nodes' do
     let(:cluster) { create(:cluster) }
 
@@ -1196,7 +1247,7 @@ RSpec.describe Clusters::Cluster, :use_clean_rails_memory_store_caching do
 
       context 'connection to the cluster is successful' do
         let(:expected_nodes) { { nodes: [kube_node.merge(kube_node_metrics)] } }
-        let(:connection_status) { { connection_status: :connected, connection_error: nil } }
+        let(:connection_status) { { connection_status: :connected } }
 
         before do
           allow(gl_k8s_node_double).to receive(:all).and_return(expected_nodes)
