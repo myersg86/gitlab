@@ -232,44 +232,37 @@ RSpec.describe API::Helpers do
   end
 
   describe '#destroy_conditionally!' do
-
-    context 'valid if_unmodified_since'
+    context 'valid if_unmodified_since' do
       let(:project) { create(:project) }
+
       it 'returns 204' do
-        puts "not working yet"
-       # subject.destroy_conditionally!(project)
+        expect(subject).to receive(:status).with(204)
+        expect(subject).to receive(:body).with(false)
 
-        #expect { subject.destroy_conditionally!(project) }.to raise_error('status 204')
+        subject.destroy_conditionally!(project)
       end
-
+    end
   end
 
   describe "#check_unmodified_since!" do
     context 'valid if_unmodified_since' do
       let(:project) { create(:project) }
-      it 'does the thing ' do
+      it 'returns nil' do
         last_modified = Time.now
-        puts last_modified
-        res = subject.check_unmodified_since!(last_modified)
 
-        expect(res).to eq(nil)
+        expect(subject.check_unmodified_since!(last_modified)).to be(nil)
       end
-
     end
+
     context 'invalid if_unmodified_since' do
       it 'returns 412' do
+        allow(subject).to receive(:env).and_return({})
+        allow(subject).to receive(:header).and_return({})
+        expect(subject).to receive(:headers).and_return({'If-Unmodified-Since'=>'20170303T133952Z'})
+        expect(subject).to receive(:error!).with({'message'=>'412 Precondition Failed'}, 412, anything)
         last_modified = Time.now
-        res = ""
 
-        travel_to(Time.parse('20170303T133952Z')) do
-          res = subject.check_unmodified_since!(last_modified)
-        end
-
-        expect(res).to eq('412)')
-
-
-
-
+        subject.check_unmodified_since!(last_modified)
       end
     end
 
