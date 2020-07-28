@@ -200,6 +200,29 @@ RSpec.describe ApplicationSetting do
     end
   end
 
+  describe '#should_enforce_namespace_storage_limit?' do
+    where(:enforce_namespace_storage_limit_column, :test_env, :gl_com, :result) do
+      true  | true  | true  | true
+      true  | true  | false | true
+      true  | false | true  | true
+      true  | false | false | false
+      false | true  | true  | false
+      false | true  | false | false
+      false | false | true  | false
+      false | false | false | false
+    end
+
+    with_them do
+      before do
+        stub_application_setting(enforce_namespace_storage_limit: enforce_namespace_storage_limit_column)
+        allow(::Gitlab).to receive(:dev_env_or_com?) { gl_com }
+        allow(Rails.env).to receive(:test?).and_return(test_env)
+      end
+
+      it { expect(setting.should_enforce_namespace_storage_limit?).to eq(result) }
+    end
+  end
+
   describe '#repository_size_limit column' do
     it 'support values up to 8 exabytes' do
       setting.update_column(:repository_size_limit, 8.exabytes - 1)

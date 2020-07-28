@@ -375,3 +375,4 @@ are listed in the descriptions of the relevant settings.
 | `issues_create_limit`                    | integer          | no                                   | Max number of issue creation requests per minute per user. Disabled by default.|
 | `raw_blob_request_limit`                 | integer          | no                                   | Max number of requests per minute for each raw path. Default: 300. To disable throttling set to 0.|
 | `wiki_page_max_content_bytes`            | integer          | no                                   | Max wiki page content size in **bytes**. Default: 52428800 Bytes (50MB).|
+| `enforce_namespace_storage_limit`        | boolean          | no                                   | **(PREMIUM)** Enabling this will permit enforcement of namespace storage limits. |

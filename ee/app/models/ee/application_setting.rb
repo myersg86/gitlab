@@ -127,7 +127,8 @@ module EE
           slack_app_verification_token: nil,
           custom_project_templates_group_id: nil,
           geo_node_allowed_ips: '0.0.0.0/0, ::/0',
-          seat_link_enabled: Settings.gitlab['seat_link_enabled']
+          seat_link_enabled: Settings.gitlab['seat_link_enabled'],
+          enforce_namespace_storage_limit: false
         )
       end
     end
@@ -203,6 +204,10 @@ module EE
 
     def should_check_namespace_plan?
       check_namespace_plan? && (Rails.env.test? || ::Gitlab.dev_env_org_or_com?)
+    end
+
+    def should_enforce_namespace_storage_limit?
+      enforce_namespace_storage_limit? && (Rails.env.test? || ::Gitlab.dev_env_or_com?)
     end
 
     def elasticsearch_indexing
