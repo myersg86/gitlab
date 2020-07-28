@@ -96,8 +96,8 @@ describe('deploy freeze store actions', () => {
         {},
         state,
         [
-          { type: 'REQUEST_FREEZE_PERIODS' },
-          { type: 'RECEIVE_FREEZE_PERIODS_SUCCESS', payload: mockFreezePeriods },
+          { type: types.REQUEST_FREEZE_PERIODS },
+          { type: types.RECEIVE_FREEZE_PERIODS_SUCCESS, payload: mockFreezePeriods },
         ],
         [],
       );
@@ -110,7 +110,7 @@ describe('deploy freeze store actions', () => {
         actions.fetchFreezePeriods,
         {},
         state,
-        [{ type: 'REQUEST_FREEZE_PERIODS' }],
+        [{ type: types.REQUEST_FREEZE_PERIODS }],
         [],
         () =>
           expect(createFlash).toHaveBeenCalledWith(
