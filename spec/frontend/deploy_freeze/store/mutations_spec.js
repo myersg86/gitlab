@@ -26,27 +26,16 @@ describe('Deploy freeze mutations', () => {
 
   describe('RECEIVE_FREEZE_PERIODS_SUCCESS', () => {
     it('should set freeze periods and format timezones from identifiers to names', () => {
-      const timezoneIdentifiers = ['America/New_York', 'Etc/UTC', 'Europe/Berlin'];
       const timezoneNames = ['Eastern Time (US & Canada)', 'UTC', 'Berlin'];
-
-      mockFreezePeriods.forEach((period, index) => {
-        expect(period.cron_timezone).toBe(timezoneIdentifiers[index]);
-      });
 
       mutations[types.RECEIVE_FREEZE_PERIODS_SUCCESS](stateCopy, mockFreezePeriods);
 
-      const expectedFreezePeriods = mockFreezePeriods.map((freezePeriod, index) => {
-        return {
-          ...convertObjectPropsToCamelCase(freezePeriod),
-          cronTimezone: timezoneNames[index],
-        };
-      });
+      const expectedFreezePeriods = mockFreezePeriods.map((freezePeriod, index) => ({
+        ...convertObjectPropsToCamelCase(freezePeriod),
+        cronTimezone: timezoneNames[index],
+      }));
 
       expect(stateCopy.freezePeriods).toMatchObject(expectedFreezePeriods);
-
-      stateCopy.freezePeriods.forEach((period, index) => {
-        expect(period.cronTimezone).toBe(timezoneNames[index]);
-      });
     });
   });
 
