@@ -259,13 +259,13 @@ export default {
     toggleOffPasteListener() {
       document.removeEventListener('paste', this.onDesignPaste);
     },
-    reorderDesigns({ moved: { oldIndex, newIndex, element } }) {
+    reorderDesigns({ moved: { newIndex, element } }) {
       this.$apollo.mutate({
         mutation: moveDesignMutation,
         variables: {
           id: element.id,
-          from: oldIndex,
-          to: newIndex,
+          previous: newIndex > 0 ? this.designs[newIndex - 1].id : null,
+          next: newIndex < this.designs.length - 1 ? this.designs[newIndex + 1].id : null,
         },
       });
     },
@@ -333,7 +333,7 @@ export default {
       </gl-alert>
       <vue-draggable
         v-else
-        :value="designs"
+        :list="designs"
         :disabled="!isLatestVersion"
         v-bind="$options.dragOptions"
         tag="ol"

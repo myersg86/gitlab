@@ -1,18 +1,16 @@
 #import "../fragments/design_list.fragment.graphql"
 
-# We would need to change variables when we have a real mutation:
-# https://gitlab.com/gitlab-org/gitlab/-/merge_requests/37603
-# This calculation will be later moved to mutation optimistic response
-
-mutation DesignManagementMove($id: DesignID!, $from: Int, $to: Int) {
-  designManagementMove(id: $id, from: $from, to: $to) @client {
-    designCollection {
+mutation DesignManagementMove(
+  $id: DesignManagementDesignID!
+  $previous: DesignManagementDesignID
+  $next: DesignManagementDesignID
+) {
+  designManagementMove(input: { id: $id, previous: $previous, next: $next }) {
+    collection {
       designs {
-        nodes {
-          edges {
-            node {
-              ...DesignListItem
-            }
+        edges {
+          node {
+            ...DesignListItem
           }
         }
       }
