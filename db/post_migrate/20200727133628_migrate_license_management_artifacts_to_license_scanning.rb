@@ -22,7 +22,8 @@ class MigrateLicenseManagementArtifactsToLicenseScanning < ActiveRecord::Migrati
   # But before that we need to delete "rogue" artifacts for CI builds that have associated with them
   # both license_scanning and license_management artifacts. It's an edge case and usually, we don't have
   # such builds in the database.
-  def up
+def up
+    return unless Gitlab.ee?
     JobArtifact.license_compliance.where.not(id: JobArtifact.license_compliance.original_reports).delete_all
     JobArtifact.where(file_type: 10).each_batch do |relation|
       relation.update_all(file_type: 101)
