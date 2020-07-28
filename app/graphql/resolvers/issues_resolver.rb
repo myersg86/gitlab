@@ -49,6 +49,9 @@ module Resolvers
               description: 'Sort issues by this criteria',
               required: false,
               default_value: 'created_desc'
+    argument :issue_types, [Types::IssueTypeEnum],
+              description: 'Filter issues by the given issue types',
+              required: false
 
     type Types::IssueType, null: true
 

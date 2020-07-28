@@ -4321,6 +4321,11 @@ type EpicIssue implements Noteable {
   iid: ID!
 
   """
+  Issue type of the issue
+  """
+  issueType: IssueIssueType
+
+  """
   Iteration of the issue
   """
   iteration: Iteration
@@ -5184,6 +5189,11 @@ type Group {
     iids: [String!]
 
     """
+    Filter issues by the given issue types
+    """
+    issueTypes: [IssueIssueType!]
+
+    """
     Iterations applied to the issue
     """
     iterationId: [ID]
@@ -5943,6 +5953,11 @@ type Issue implements Noteable {
   iid: ID!
 
   """
+  Issue type of the issue
+  """
+  issueType: IssueIssueType
+
+  """
   Iteration of the issue
   """
   iteration: Iteration
@@ -6151,6 +6166,21 @@ type IssueEdge {
   The item at the end of the edge.
   """
   node: Issue
+}
+
+"""
+Issue types
+"""
+enum IssueIssueType {
+  """
+  Incident issue type
+  """
+  INCIDENT
+
+  """
+  Issue issue type
+  """
+  ISSUE
 }
 
 """
@@ -9403,6 +9433,11 @@ type Project {
     iids: [String!]
 
     """
+    Filter issues by the given issue types
+    """
+    issueTypes: [IssueIssueType!]
+
+    """
     Iterations applied to the issue
     """
     iterationId: [ID]
@@ -9501,6 +9536,11 @@ type Project {
     List of IIDs of issues. For example, [1, 2]
     """
     iids: [String!]
+
+    """
+    Filter issues by the given issue types
+    """
+    issueTypes: [IssueIssueType!]
 
     """
     Iterations applied to the issue

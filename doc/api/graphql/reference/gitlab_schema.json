@@ -12082,6 +12082,20 @@
               "deprecationReason": null
             },
             {
+              "name": "issueType",
+              "description": "Issue type of the issue",
+              "args": [
+
+              ],
+              "type": {
+                "kind": "ENUM",
+                "name": "IssueIssueType",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "iteration",
               "description": "Iteration of the issue",
               "args": [
@@ -14450,6 +14464,24 @@
                   "defaultValue": "created_desc"
                 },
                 {
+                  "name": "issueTypes",
+                  "description": "Filter issues by the given issue types",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "IssueIssueType",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
                   "name": "iterationId",
                   "description": "Iterations applied to the issue",
                   "type": {
@@ -16376,6 +16408,20 @@
               "deprecationReason": null
             },
             {
+              "name": "issueType",
+              "description": "Issue type of the issue",
+              "args": [
+
+              ],
+              "type": {
+                "kind": "ENUM",
+                "name": "IssueIssueType",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "iteration",
               "description": "Iteration of the issue",
               "args": [
@@ -16991,6 +17037,29 @@
 
           ],
           "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "ENUM",
+          "name": "IssueIssueType",
+          "description": "Issue types",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": [
+            {
+              "name": "ISSUE",
+              "description": "Issue issue type",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "INCIDENT",
+              "description": "Incident issue type",
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
           "possibleTypes": null
         },
         {
@@ -28118,6 +28187,24 @@
                   "defaultValue": "created_desc"
                 },
                 {
+                  "name": "issueTypes",
+                  "description": "Filter issues by the given issue types",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "IssueIssueType",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
                   "name": "iterationId",
                   "description": "Iterations applied to the issue",
                   "type": {
@@ -28309,6 +28396,24 @@
                     "ofType": null
                   },
                   "defaultValue": "created_desc"
+                },
+                {
+                  "name": "issueTypes",
+                  "description": "Filter issues by the given issue types",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "IssueIssueType",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
                 },
                 {
                   "name": "iterationId",
