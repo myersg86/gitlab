@@ -12,6 +12,11 @@
           = link_to group_security_dashboard_path(@group), title: _('Security'), data: { qa_selector: 'security_dashboard_link' } do
             %span= _('Security')
 
+      - if group_level_security_dashboard_available?(@group)
+        = nav_link(path: 'vulnerabilites#index') do
+          = link_to group_security_vulnerabilities_path(@group), title: _('Vulnerability Report')  do
+            %span= _('Vulnerability Report')
+
       - if group_level_compliance_dashboard_available?(@group)
         = nav_link(path: 'compliance_dashboards#show') do
           = link_to group_security_compliance_dashboard_path(@group), title: _('Compliance') do
