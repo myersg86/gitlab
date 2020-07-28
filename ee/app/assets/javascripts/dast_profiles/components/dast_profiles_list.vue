@@ -40,7 +40,7 @@ export default {
       return this.isLoading && !this.hasProfiles;
     },
   },
-  fields: [
+  tableFields: [
     {
       key: 'profileName',
     },
@@ -62,7 +62,7 @@ export default {
       <gl-table
         :busy="isLoadingInitialProfiles"
         stacked="sm"
-        :fields="$options.fields"
+        :fields="$options.tableFields"
         :items="profiles"
         :aria-label="s__('DastProfiles|Site Profiles')"
         thead-class="gl-display-none"
@@ -70,9 +70,11 @@ export default {
         <template #cell(profileName)="{ value }">
           <strong>{{ value }}</strong>
         </template>
+
         <template #cell(targetUrl)="{ value }">
           <gl-truncate :text="value" />
         </template>
+
         <template #cell(validationStatus)="{ value }">
           <span>
             <gl-icon
@@ -83,6 +85,7 @@ export default {
             {{ value }}
           </span>
         </template>
+
         <template #cell(actions)>
           <gl-button>{{ __('Edit') }}</gl-button>
         </template>
@@ -96,12 +99,14 @@ export default {
           />
         </template>
       </gl-table>
+
       <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
         <gl-button :loading="isLoading" @click="$emit('loadMorePages')">{{
           __('Load more')
         }}</gl-button>
       </p>
     </div>
+
     <p v-else>{{ s__('DastProfiles|No profiles created yet') }}</p>
   </section>
 </template>
