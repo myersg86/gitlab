@@ -3,7 +3,7 @@ import { mapActions } from 'vuex';
 import Translate from '~/vue_shared/translate';
 import { identity } from 'lodash';
 import ide from './components/ide.vue';
-import { createStore } from './stores';
+import { createStore as createIdeStore } from './stores';
 import { createRouter } from './ide_router';
 import { parseBoolean } from '../lib/utils/common_utils';
 import { resetServiceWorkersPublicPath } from '../lib/utils/webpack';
@@ -31,7 +31,8 @@ Vue.use(Translate);
 export function initIde(el, options = {}) {
   if (!el) return null;
 
-  const { rootComponent = ide, extendStore = identity } = options;
+  const { rootComponent = ide, extendStore = identity, createStore = createIdeStore } = options;
+
   const store = createStore();
   const router = createRouter(store);
 

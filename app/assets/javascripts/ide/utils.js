@@ -75,8 +75,8 @@ export function registerLanguages(def, ...defs) {
   languages.setLanguageConfiguration(languageId, def.conf);
 }
 
-export function registerSchemas({ language, options }, ...schemas) {
-  schemas.forEach(schema => registerSchemas(schema));
+export function registerSchemas({ language, options: { schemas, ...otherOptions } }, ...settings) {
+  settings.forEach(setting => registerSchemas(setting));
 
   const defaults = {
     json: languages.json.jsonDefaults,
@@ -84,7 +84,10 @@ export function registerSchemas({ language, options }, ...schemas) {
   };
 
   if (defaults[language]) {
-    defaults[language].setDiagnosticsOptions(options);
+    defaults[language].setDiagnosticsOptions({
+      schemas: [...defaults[language].diagnosticsOptions.schemas, ...schemas],
+      ...otherOptions,
+    });
   }
 }
 

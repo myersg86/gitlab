@@ -1,0 +1,31 @@
+<script>
+import Ide from '~/ide/components/ide.vue';
+import { mapActions, mapGetters } from 'vuex';
+
+export default {
+  // name: 'EEIde' is a false positive: https://gitlab.com/gitlab-org/frontend/eslint-plugin-i18n/issues/25
+  // eslint-disable-next-line @gitlab/require-i18n-strings
+  name: 'EEIde',
+  components: {
+    Ide,
+  },
+  computed: {
+    ...mapGetters(['currentTreeLoaded']),
+  },
+  watch: {
+    currentTreeLoaded(val) {
+      if (val && gon.features?.ideSchemaConfig)
+        this.fetchConfig()
+          .then(() => this.registerSchemasFromConfig())
+          .catch(() => {});
+    },
+  },
+  methods: {
+    ...mapActions(['fetchConfig', 'registerSchemasFromConfig']),
+  },
+};
+</script>
+
+<template>
+  <ide />
+</template>
