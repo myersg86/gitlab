@@ -507,3 +507,6 @@ gem 'json', '~> 2.3.0'
 gem 'json-schema', '~> 2.8.0'
 gem 'oj', '~> 3.10.6'
 gem 'multi_json', '~> 1.14.1'
+
+# Consul HTTP API client
+gem 'diplomat', '~> 2.0', '>= 2.0.2', require: false

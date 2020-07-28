@@ -78,10 +78,10 @@ module Gitlab
       end
 
       def with_prometheus_client(fallback: nil)
-        return fallback unless Gitlab::Prometheus::Internal.prometheus_enabled?
+        prometheus_api_url = prometheus_service_discover
+        return fallback unless prometheus_api_url
 
-        prometheus_address = Gitlab::Prometheus::Internal.uri
-        yield Gitlab::PrometheusClient.new(prometheus_address, allow_local_requests: true)
+        yield Gitlab::PrometheusClient.new(prometheus_api_url, allow_local_requests: true)
       end
 
       def measure_duration
@@ -97,6 +97,30 @@ module Gitlab
       end
 
       private
+
+      def prometheus_service_discover
+        if Gitlab::Prometheus::Internal.prometheus_enabled?
+          Gitlab::Prometheus::Internal.uri
+        else
+          consul_service_discover(service_name: 'prometheus')
+        end
+      end
+
+      # Discover Consul service by service name
+      # Return service uri: http://service_address:service_port
+      def consul_service_discover(service_name:)
+        return unless service_name
+
+        require 'diplomat'
+
+        service = Diplomat::Service.get(service_name)
+        service_address = service.dig(:ServiceAddress) || service.dig(:Address)
+        service_port = service.dig(:ServicePort)
+
+        return unless service_address && service_port
+
+        "http://#{service_address}:#{service_port}"
+      end
 
       def redis_usage_counter
         yield
