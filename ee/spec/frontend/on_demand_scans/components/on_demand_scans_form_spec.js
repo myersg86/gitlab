@@ -256,6 +256,10 @@ describe('OnDemandScansApp', () => {
       it('redirects to the URL provided in the response', () => {
         expect(redirectTo).toHaveBeenCalledWith(pipelineUrl);
       });
+
+      it('does not show an alert', () => {
+        expect(findAlert().exists()).toBe(false);
+      });
     });
 
     describe('on top-level error', () => {
