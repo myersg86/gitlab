@@ -10,8 +10,8 @@ import {
   GlFormGroup,
   GlIcon,
   GlLink,
-  GlNewDropdown,
-  GlNewDropdownItem,
+  GlNewDropdown as GlDropdown,
+  GlNewDropdownItem as GlDropdownItem,
   GlSprintf,
   GlTooltipDirective,
 } from '@gitlab/ui';
@@ -33,8 +33,8 @@ export default {
     GlFormGroup,
     GlIcon,
     GlLink,
-    GlNewDropdown,
-    GlNewDropdownItem,
+    GlDropdown,
+    GlDropdownItem,
     GlSprintf,
   },
   directives: {
@@ -247,13 +247,13 @@ export default {
         <template #label>
           {{ s__('OnDemandScans|Use existing site profile') }}
         </template>
-        <gl-new-dropdown
+        <gl-dropdown
           v-model="form.siteProfile.value"
           :text="siteProfileText"
           class="mw-460"
           data-testid="site-profiles-dropdown"
         >
-          <gl-new-dropdown-item
+          <gl-dropdown-item
             v-for="siteProfile in siteProfiles"
             :key="siteProfile.id"
             :is-checked="form.siteProfile.value === siteProfile.id"
@@ -261,8 +261,8 @@ export default {
             @click="setSiteProfile(siteProfile)"
           >
             {{ siteProfile.name }}
-          </gl-new-dropdown-item>
-        </gl-new-dropdown>
+          </gl-dropdown-item>
+        </gl-dropdown>
         <template v-if="selectedSiteProfile">
           <hr />
           <div class="row" data-testid="site-profile-summary">
