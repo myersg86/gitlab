@@ -102,6 +102,7 @@ export default {
       redirecting: false,
       searchTerm: '',
       pagination: initialPaginationState,
+      incidents: {},
     };
   },
   computed: {
@@ -207,7 +208,7 @@ export default {
       {{ s__('IncidentManagement|Incidents') }}
     </h4>
     <gl-table
-      :items="incidents ? incidents.list : []"
+      :items="incidents.list || []"
       :fields="$options.fields"
       :show-empty="true"
       :busy="loading"

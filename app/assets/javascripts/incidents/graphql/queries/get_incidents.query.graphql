@@ -6,6 +6,7 @@ query getIncidents(
   $lastPageSize: Int
   $prevPageCursor: String = ""
   $nextPageCursor: String = ""
+  $searchTerm: String
 ) {
   project(fullPath: $projectPath) {
     issues(

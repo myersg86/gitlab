@@ -172,7 +172,24 @@ describe('Incidents List', () => {
       });
     });
 
+    it('should render pagination', () => {
+      expect(wrapper.find(GlPagination).exists()).toBe(true);
+    });
+
     describe('prevPage', () => {
+      it('returns prevPage button', () => {
+        findPagination().vm.$emit('input', 3);
+
+        return wrapper.vm.$nextTick(() => {
+          expect(
+            findPagination()
+              .findAll('.page-item')
+              .at(0)
+              .text(),
+          ).toBe('Prev');
+        });
+      });
+
       it('returns prevPage number', () => {
         findPagination().vm.$emit('input', 3);
 
@@ -191,6 +208,19 @@ describe('Incidents List', () => {
     });
 
     describe('nextPage', () => {
+      it('returns nextPage button', () => {
+        findPagination().vm.$emit('input', 3);
+
+        return wrapper.vm.$nextTick(() => {
+          expect(
+            findPagination()
+              .findAll('.page-item')
+              .at(1)
+              .text(),
+          ).toBe('Next');
+        });
+      });
+
       it('returns nextPage number', () => {
         mountComponent({
           data: {
