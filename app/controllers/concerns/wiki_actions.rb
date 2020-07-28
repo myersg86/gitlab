@@ -107,9 +107,10 @@ module WikiActions
 
   # rubocop:disable Gitlab/ModuleWithInstanceVariables
   def create
-    @page = WikiPages::CreateService.new(container: container, current_user: current_user, params: wiki_params).execute
+    service_response = WikiPages::CreateService.new(container: container, current_user: current_user, params: wiki_params).execute
+    page = serviceresponse.payload(:page)
 
-    if page.persisted?
+    if service_response.success?
       redirect_to(
         wiki_page_path(wiki, page),
         notice: _('Wiki was successfully updated.')

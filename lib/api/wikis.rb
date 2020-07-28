@@ -61,9 +61,10 @@ module API
         post ':id/wikis' do
           authorize! :create_wiki, container
 
-          page = WikiPages::CreateService.new(container: container, current_user: current_user, params: params).execute
+          service_response = WikiPages::CreateService.new(container: container, current_user: current_user, params: params).execute
+          page = serviceresponse.payload.payload(:page)
 
-          if page.valid?
+          if service_response.success?
             present page, with: Entities::WikiPage
           else
             render_validation_error!(page)
