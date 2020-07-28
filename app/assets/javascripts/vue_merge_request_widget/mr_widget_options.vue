@@ -173,7 +173,18 @@ export default {
       );
   },
   beforeDestroy() {
+    eventHub.$off('MRWidgetUpdateRequested');
+    eventHub.$off('MRWidgetRebaseSuccess');
+    eventHub.$off('SetBranchRemoveFlag');
+    eventHub.$off('FailedToMerge');
+    eventHub.$off('UpdateWidgetData');
+    eventHub.$off('FetchActionsContent');
+    eventHub.$off('EnablePolling');
+    eventHub.$off('DisablePolling');
     eventHub.$off('mr.discussion.updated', this.checkStatus);
+
+    console.log('before destroy');
+
     if (this.pollingInterval) {
       this.pollingInterval.destroy();
     }
@@ -339,6 +350,7 @@ export default {
       this.pollingInterval.stopTimer();
     },
     bindEventHubListeners() {
+      console.log('event hub', eventHub.$_all);
       eventHub.$on('MRWidgetUpdateRequested', cb => {
         this.checkStatus(cb);
       });

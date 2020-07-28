@@ -10,8 +10,8 @@ import sast from './modules/sast';
 
 Vue.use(Vuex);
 
-export default () =>
-  new Vuex.Store({
+export default () => {
+  const store = new Vuex.Store({
     modules: {
       sast,
     },
@@ -21,3 +21,8 @@ export default () =>
     state: state(),
     plugins: [configureMediator],
   });
+
+  console.log('store', store.state.hasError);
+
+  return store;
+};

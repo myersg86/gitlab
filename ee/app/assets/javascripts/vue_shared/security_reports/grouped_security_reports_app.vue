@@ -190,6 +190,7 @@ export default {
       'isCreatingIssue',
       'isDismissingVulnerability',
       'isCreatingMergeRequest',
+      'hasError',
     ]),
     ...mapGetters([
       'groupedSummaryText',
@@ -270,6 +271,8 @@ export default {
     this.setPipelineId(this.pipelineId);
 
     const sastDiffEndpoint = gl?.mrWidgetData?.sast_comparison_path;
+
+    console.log('this.$store.state.sast.hasError', this.$store.state.sast.hasError);
 
     if (sastDiffEndpoint && this.hasSastReports) {
       this.setSastDiffEndpoint(sastDiffEndpoint);

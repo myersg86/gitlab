@@ -17,6 +17,8 @@ export const receiveDiffError = ({ commit }, response) =>
 export const fetchDiff = ({ state, rootState, dispatch }) => {
   dispatch('requestDiff');
 
+  console.log('in fetchDiff', state.hasError, rootState.hasError);
+
   return fetchDiffData(rootState, state.paths.diffEndpoint, 'sast')
     .then(data => {
       dispatch('receiveDiffSuccess', data);

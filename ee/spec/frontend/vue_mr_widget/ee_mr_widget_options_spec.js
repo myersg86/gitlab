@@ -1,10 +1,12 @@
 import Vue from 'vue';
+import Vuex from 'vuex';
 import MockAdapter from 'axios-mock-adapter';
 import mrWidgetOptions from 'ee/vue_merge_request_widget/mr_widget_options.vue';
 import mountComponent from 'helpers/vue_mount_component_helper';
 import { TEST_HOST } from 'helpers/test_constants';
 import waitForPromises from 'helpers/wait_for_promises';
 import { trimText } from 'helpers/text_helper';
+import { mount, createLocalVue } from '@vue/test-utils';
 
 import mockData, {
   baseBrowserPerformance,
@@ -26,17 +28,20 @@ import {
   coverageFuzzingDiffSuccessMock,
 } from 'ee_jest/vue_shared/security_reports/mock_data';
 
-const SAST_SELECTOR = '.js-sast-widget';
 const DAST_SELECTOR = '.js-dast-widget';
 const DEPENDENCY_SCANNING_SELECTOR = '.js-dependency-scanning-widget';
 const CONTAINER_SCANNING_SELECTOR = '.js-container-scanning';
 const SECRET_SCANNING_SELECTOR = '.js-secret-scanning';
 const COVERAGE_FUZZING_SELECTOR = '.js-coverage-fuzzing-widget';
 
+const mock = new MockAdapter(axios);
+const localVue = createLocalVue();
+localVue.use(Vuex);
+
 describe('ee merge request widget options', () => {
   let vm;
-  let mock;
   let Component;
+  let wrapper;
 
   const DEFAULT_BROWSER_PERFORMANCE = {
     head_path: 'head.json',
@@ -50,32 +55,33 @@ describe('ee merge request widget options', () => {
 
   beforeEach(() => {
     delete mrWidgetOptions.extends.el; // Prevent component mounting
+    gon.features = { asyncMrWidget: true }; // TODO: needed?
 
-    gon.features = { asyncMrWidget: true };
-
-    Component = Vue.extend(mrWidgetOptions);
-    mock = new MockAdapter(axios);
-
-    mock.onGet(mockData.merge_request_widget_path).reply(() => [200, gl.mrWidgetData]);
-    mock.onGet(mockData.merge_request_cached_widget_path).reply(() => [200, gl.mrWidgetData]);
+    mock.onGet(mockData.merge_request_widget_path).replyOnce(() => [200, gl.mrWidgetData]);
+    mock.onGet(mockData.merge_request_cached_widget_path).replyOnce(() => [200, gl.mrWidgetData]);
   });
 
   afterEach(() => {
+    wrapper.destroy();
+    mock.reset();
+    gon.features = {}; // TODO: needed?
+    console.log('after each');
+
     // This is needed because the `fetchInitialData` is triggered while
     // the `mock.restore` is trying to clean up, causing a bunch of
     // unmocked requests...
     // This is not ideal and will be cleaned up in
     // https://gitlab.com/gitlab-org/gitlab/-/issues/214032
-    return waitForPromises().then(() => {
-      vm.$destroy();
-      mock.restore();
-      gon.features = {};
-    });
+    // return waitForPromises().then(() => {
+    //   gon.features = {};
+    // });
   });
 
   const findBrowserPerformanceWidget = () => vm.$el.querySelector('.js-browser-performance-widget');
   const findLoadPerformanceWidget = () => vm.$el.querySelector('.js-load-performance-widget');
   const findSecurityWidget = () => vm.$el.querySelector('.js-security-widget');
+
+  const securityWidget = () => wrapper.find('.js-security-widget');
 
   const setBrowserPerformance = (data = {}) => {
     const browserPerformance = { ...DEFAULT_BROWSER_PERFORMANCE, ...data };
@@ -91,94 +97,59 @@ describe('ee merge request widget options', () => {
 
   const VULNERABILITY_FEEDBACK_ENDPOINT = 'vulnerability_feedback_path';
 
-  describe('SAST', () => {
+  describe.only('SAST', () => {
     const SAST_DIFF_ENDPOINT = 'sast_diff_endpoint';
+    const sastWidget = () => securityWidget().find('.js-sast-widget');
+    const sastDescription = () =>
+      sastWidget()
+        .find('.report-block-list-issue-description')
+        .text();
+    const mountWidget = () => {
+      wrapper = mount(mrWidgetOptions, { propsData: { mrData: gl.mrWidgetData } });
+    };
 
     beforeEach(() => {
       gl.mrWidgetData = {
         ...mockData,
-        enabled_reports: {
-          sast: true,
-        },
+        enabled_reports: { sast: true },
         sast_comparison_path: SAST_DIFF_ENDPOINT,
         vulnerability_feedback_path: VULNERABILITY_FEEDBACK_ENDPOINT,
       };
     });
 
-    describe('when it is loading', () => {
-      it('should render loading indicator', () => {
-        mock.onGet(SAST_DIFF_ENDPOINT).reply(200, sastDiffSuccessMock);
-        mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).reply(200, []);
+    it('should render provided data when the request is successful', async () => {
+      mock.onGet(SAST_DIFF_ENDPOINT).replyOnce(200, sastDiffSuccessMock);
+      mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).replyOnce(200, []);
+      mountWidget();
+      await axios.waitForAll();
 
-        vm = mountComponent(Component, { mrData: gl.mrWidgetData });
-
-        expect(
-          findSecurityWidget()
-            .querySelector(SAST_SELECTOR)
-            .textContent.trim(),
-        ).toContain('SAST is loading');
-      });
+      console.log('doing expect');
+      expect(sastDescription()).toBe('SAST detected 1 new critical severity vulnerability.');
     });
 
-    describe('with successful request', () => {
-      beforeEach(() => {
-        mock.onGet(SAST_DIFF_ENDPOINT).reply(200, sastDiffSuccessMock);
-        mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).reply(200, []);
-        vm = mountComponent(Component, { mrData: gl.mrWidgetData });
-      });
+    it('should render provided data when the request returns empty data', async () => {
+      mock.onGet(SAST_DIFF_ENDPOINT).replyOnce(200, { added: [], existing: [] });
+      mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).replyOnce(200, []);
+      mountWidget();
+      await axios.waitForAll();
 
-      it('should render provided data', done => {
-        setImmediate(() => {
-          expect(
-            trimText(
-              findSecurityWidget().querySelector(
-                `${SAST_SELECTOR} .report-block-list-issue-description`,
-              ).textContent,
-            ),
-          ).toEqual('SAST detected 1 new critical severity vulnerability.');
-          done();
-        });
-      });
+      console.log('doing expect');
+      expect(sastDescription()).toBe('SAST detected no new vulnerabilities.');
     });
 
-    describe('with empty successful request', () => {
-      beforeEach(() => {
-        mock.onGet(SAST_DIFF_ENDPOINT).reply(200, { added: [], existing: [] });
-        mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).reply(200, []);
+    it('should render error indicator when the request fails', async () => {
+      mountWidget();
+      await axios.waitForAll();
 
-        vm = mountComponent(Component, { mrData: gl.mrWidgetData });
-      });
-
-      it('should render provided data', done => {
-        setImmediate(() => {
-          expect(
-            trimText(
-              findSecurityWidget().querySelector(
-                `${SAST_SELECTOR} .report-block-list-issue-description`,
-              ).textContent,
-            ).trim(),
-          ).toEqual('SAST detected no new vulnerabilities.');
-          done();
-        });
-      });
+      console.log('doing expect');
+      expect(sastDescription()).toBe('SAST: Loading resulted in an error');
     });
 
-    describe('with failed request', () => {
-      beforeEach(() => {
-        mock.onGet(SAST_DIFF_ENDPOINT).reply(500, {});
-        mock.onGet(VULNERABILITY_FEEDBACK_ENDPOINT).reply(500, []);
+    it('should render loading indicator when it is loading', async () => {
+      mountWidget();
 
-        vm = mountComponent(Component, { mrData: gl.mrWidgetData });
-      });
-
-      it('should render error indicator', done => {
-        setImmediate(() => {
-          expect(trimText(findSecurityWidget().querySelector(SAST_SELECTOR).textContent)).toContain(
-            'SAST: Loading resulted in an error',
-          );
-          done();
-        });
-      });
+      console.log('doing expect');
+      expect(sastWidget().text()).toContain('SAST is loading');
     });
   });
 

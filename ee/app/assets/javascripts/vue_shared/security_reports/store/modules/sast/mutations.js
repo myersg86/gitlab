@@ -26,7 +26,8 @@ export default {
 
   [types.RECEIVE_DIFF_ERROR](state) {
     state.isLoading = false;
-    state.hasError = true;
+    console.log('receive diff error, setting hasError to bananas');
+    state.hasError = 'bananas';
   },
 
   [types.UPDATE_VULNERABILITY](state, issue) {

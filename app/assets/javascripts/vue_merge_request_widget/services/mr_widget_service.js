@@ -79,9 +79,15 @@ export default class MRWidgetService {
   }
 
   static fetchInitialData() {
+    console.log('fetchInitialData start');
     return Promise.all([
       axios.get(window.gl.mrWidgetData.merge_request_cached_widget_path),
       axios.get(window.gl.mrWidgetData.merge_request_widget_path),
-    ]).then(axios.spread((res, cachedRes) => ({ data: Object.assign(res.data, cachedRes.data) })));
+    ]).then(
+      axios.spread((res, cachedRes) => {
+        console.log('fetchInitialData end');
+        return { data: Object.assign(res.data, cachedRes.data) };
+      }),
+    );
   }
 }
