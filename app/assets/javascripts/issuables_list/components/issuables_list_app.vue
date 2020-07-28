@@ -370,9 +370,10 @@ export default {
         :class="{ 'manual-ordering': isManualOrdering }"
       >
         <issuable
-          v-for="issuable in issuables"
+          v-for="(issuable, index) in issuables"
           :key="issuable.id"
           class="pr-3"
+          :index="index"
           :class="{ 'user-can-drag': isManualOrdering }"
           :issuable="issuable"
           :is-bulk-editing="isBulkEditing"
