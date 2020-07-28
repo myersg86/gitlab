@@ -2871,7 +2871,7 @@ type DesignManagementMovePayload {
   """
   The current state of the collection
   """
-  collection: DesignCollection
+  designCollection: DesignCollection
 
   """
   Errors encountered during execution of the mutation.

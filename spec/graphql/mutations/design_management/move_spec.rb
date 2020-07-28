@@ -65,7 +65,7 @@ RSpec.describe Mutations::DesignManagement::Move do
         let(:service_result) { ServiceResponse.error(message: 'bang!') }
 
         it 'reports the service-level error' do
-          expect(resolve).to include(errors: ['bang!'], collection: eq(issue.design_collection))
+          expect(resolve).to include(errors: ['bang!'], design_collection: eq(issue.design_collection))
         end
       end
 
@@ -73,7 +73,7 @@ RSpec.describe Mutations::DesignManagement::Move do
         let(:service_result) { ServiceResponse.success }
 
         it 'reports the service-level error' do
-          expect(resolve).to include(errors: be_empty, collection: eq(issue.design_collection))
+          expect(resolve).to include(errors: be_empty, design_collection: eq(issue.design_collection))
         end
       end
     end

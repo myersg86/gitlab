@@ -7842,7 +7842,7 @@
               "deprecationReason": null
             },
             {
-              "name": "collection",
+              "name": "designCollection",
               "description": "The current state of the collection",
               "args": [
 
