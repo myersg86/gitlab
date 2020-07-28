@@ -259,7 +259,7 @@ describe('OnDemandScansApp', () => {
     });
 
     describe('on top-level error', () => {
-      beforeEach(async () => {
+      beforeEach(() => {
         jest.spyOn(wrapper.vm.$apollo, 'mutate').mockRejectedValue();
         findSiteProfilesDropdown().vm.$emit('input', siteProfiles[0]);
         submitForm();
@@ -277,7 +277,7 @@ describe('OnDemandScansApp', () => {
     describe('on errors as data', () => {
       const errors = ['error#1', 'error#2', 'error#3'];
 
-      beforeEach(async () => {
+      beforeEach(() => {
         jest
           .spyOn(wrapper.vm.$apollo, 'mutate')
           .mockResolvedValue({ data: { runDastScan: { pipelineUrl: null, errors } } });
