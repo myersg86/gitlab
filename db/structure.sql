@@ -19369,6 +19369,8 @@ CREATE UNIQUE INDEX index_design_management_designs_on_issue_id_and_filename ON 
 
 CREATE INDEX index_design_management_designs_on_project_id ON public.design_management_designs USING btree (project_id);
 
+CREATE INDEX index_design_management_designs_on_relative_position_and_id ON public.design_management_designs USING btree (relative_position, id);
+
 CREATE INDEX index_design_management_designs_versions_on_design_id ON public.design_management_designs_versions USING btree (design_id);
 
 CREATE INDEX index_design_management_designs_versions_on_event ON public.design_management_designs_versions USING btree (event);
