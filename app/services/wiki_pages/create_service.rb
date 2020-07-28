@@ -11,6 +11,7 @@ module WikiPages
       end
 
       page
+      ServiceResponse.new(message: "Create service", payload: page)
     end
 
     def usage_counter_action
