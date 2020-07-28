@@ -8,20 +8,22 @@ export const I18N = {
   searchPlaceholder: __('Search or filter results...'),
 };
 
-export const INCIDENT_STATUS_TABS = [
+export const INCIDENT_STATE_TABS = [
   {
     title: s__('IncidentManagement|Open'),
-    status: 'OPENED',
+    state: 'OPENED',
     filters: 'opened',
   },
   {
     title: s__('IncidentManagement|Closed'),
-    status: 'CLOSED',
+    state: 'CLOSED',
     filters: 'closed',
   },
   {
     title: s__('IncidentManagement|All incidents'),
-    status: 'ALL',
+    state: 'ALL',
     filters: 'all',
   },
 ];
+
+export const INCIDENT_SEARCH_DELAY = 300;

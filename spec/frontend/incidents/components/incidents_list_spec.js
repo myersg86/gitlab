@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { GlAlert, GlLoadingIcon, GlTable, GlAvatar, GlSearchBoxByType, GlTab } from '@gitlab/ui';
 import IncidentsList from '~/incidents/components/incidents_list.vue';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
-import { I18N, INCIDENT_STATUS_TABS } from '~/incidents/constants';
+import { I18N, INCIDENT_STATE_TABS } from '~/incidents/constants';
 import mockIncidents from '../mocks/incidents.json';
 
 describe('Incidents List', () => {
@@ -171,11 +171,11 @@ describe('Incidents List', () => {
       });
     });
 
-    it('should display filter tabs with incident count badge for each status', () => {
+    it('should display filter tabs', () => {
       const tabs = findStatusFilterTabs().wrappers;
 
       tabs.forEach((tab, i) => {
-        expect(tab.attributes('id')).toContain(INCIDENT_STATUS_TABS[i].status);
+        expect(tab.attributes('data-testid')).toContain(INCIDENT_STATE_TABS[i].state);
       });
     });
   });

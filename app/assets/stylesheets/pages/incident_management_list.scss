@@ -90,6 +90,10 @@
   }
 
   @include media-breakpoint-down(xs) {
+    .incident-management-list-header {
+      display: block;
+    };
+
     .create-incident-button {
       @include gl-w-full;
     }
