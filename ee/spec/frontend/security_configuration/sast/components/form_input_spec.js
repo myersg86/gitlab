@@ -14,7 +14,6 @@ describe('FormInput component', () => {
     value: 'defaultValue',
   };
   const newValue = 'foo';
-  const customValueMessageRegExp = /using custom settings/i;
 
   const createComponent = ({ props = {} } = {}) => {
     wrapper = mount(FormInput, {
