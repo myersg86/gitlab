@@ -106,7 +106,7 @@ describe('FormInput component', () => {
   });
 
   // TODO: unskip once
-  // https://gitlab.com/gitlab-org/gitlab-ui/-/merge_requests/1605 merges.
+  // https://gitlab.com/gitlab-org/gitlab-ui/-/merge_requests/1604 merges.
   describe.skip('size prop', () => {
     it.each(Object.entries(SCHEMA_TO_PROP_SIZE_MAP))(
       'maps the %p size prop to %p',
