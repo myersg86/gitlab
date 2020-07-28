@@ -113,7 +113,7 @@ export default {
     siteProfileText() {
       const { selectedSiteProfile } = this;
       return selectedSiteProfile
-        ? `${selectedSiteProfile.name}: ${selectedSiteProfile.targetUrl}`
+        ? `${selectedSiteProfile.profileName}: ${selectedSiteProfile.targetUrl}`
         : s__('OnDemandScans|Select one of the existing profiles');
     },
   },
@@ -260,7 +260,7 @@ export default {
             is-check-item
             @click="setSiteProfile(siteProfile)"
           >
-            {{ siteProfile.name }}
+            {{ siteProfile.profileName }}
           </gl-dropdown-item>
         </gl-dropdown>
         <template v-if="selectedSiteProfile">

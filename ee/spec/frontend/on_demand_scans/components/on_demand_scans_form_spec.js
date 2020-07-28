@@ -12,8 +12,8 @@ const profilesLibraryPath = `${TEST_HOST}/${projectPath}/-/on_demand_scans/profi
 const newSiteProfilePath = `${TEST_HOST}/${projectPath}/-/on_demand_scans/profiles`;
 
 const siteProfiles = [
-  { id: 1, name: 'My first site profile', targetUrl: 'https://example.com' },
-  { id: 2, name: 'My second site profile', targetUrl: 'https://foo.bar' },
+  { id: 1, profileName: 'My first site profile', targetUrl: 'https://example.com' },
+  { id: 2, profileName: 'My second site profile', targetUrl: 'https://foo.bar' },
 ];
 const pipelineUrl = `${TEST_HOST}/${projectPath}/pipelines/123`;
 
