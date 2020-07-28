@@ -32,6 +32,7 @@ describe('OnDemandScansApp', () => {
   const findCreateNewSiteProfileLink = () =>
     wrapper.find('[data-testid="create-site-profile-link"]');
   const findAlert = () => wrapper.find('[data-testid="on-demand-scan-error"]');
+  const findCancelButton = () => wrapper.find('[data-testid="on-demand-scan-cancel-button"]');
   const submitForm = () => findForm().vm.$emit('submit', { preventDefault: () => {} });
 
   const wrapperFactory = (mountFn = shallowMount) => (options = {}) => {
@@ -301,6 +302,15 @@ describe('OnDemandScansApp', () => {
           expect(alert.text()).toContain(error);
         });
       });
+    });
+  });
+
+  describe('cancel', () => {
+    it('emits cancel event on click', () => {
+      jest.spyOn(wrapper.vm, '$emit');
+      findCancelButton().vm.$emit('click');
+
+      expect(wrapper.vm.$emit).toHaveBeenCalledWith('cancel');
     });
   });
 });

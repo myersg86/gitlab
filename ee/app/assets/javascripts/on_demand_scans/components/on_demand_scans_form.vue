@@ -306,7 +306,7 @@ export default {
       >
         {{ s__('OnDemandScans|Run scan') }}
       </gl-button>
-      <gl-button @click="$emit('cancel')">
+      <gl-button data-testid="on-demand-scan-cancel-button" @click="$emit('cancel')">
         {{ __('Cancel') }}
       </gl-button>
     </div>
