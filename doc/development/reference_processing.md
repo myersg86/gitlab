@@ -110,7 +110,7 @@ reference filter.
 
 #### Filtering nodes optimization
 
-Each `ReferenceFilter` would iterate over all <a> and text() nodes in a document.
+Each `ReferenceFilter` would iterate over all `<a>` and `text()` nodes in a document.
 
 Not all nodes are processed, document is filtered only for nodes that we want to process.
 We are skipping:
@@ -119,13 +119,10 @@ We are skipping:
 - Nodes with the ancestor node that we want to ignore (`ignore_ancestor_query`)
 - Empty lines
 - Link tags with the empty "href" attribute.
-- ...
 
-Instead of filtering the whole document (skipping such nodes for each filter), those filtered `nodes` are stored in `Banzai` pipeline `result` Hash as `result[:reference_filter_nodes]`.
+To avoid filtering such nodes for each ReferenceFilter, we do it only once and store the result in the result Hash of the pipeline as result[:reference_filter_nodes].
 
 Pipeline `result` is passed to each filter for modification, so every time when `ReferenceFilter` replaces text or link tag, filtered list (`reference_filter_nodes`) will be updated for the next filter to use.
-
-This allows filtering the whole document only once, instead of every time for each `ReferenceFilter`.
 
 ## Reference parsers
 
