@@ -14,7 +14,7 @@ module Elastic
 
         query_hash = basic_query_hash(%w[note], query)
         query_hash = project_ids_filter(query_hash, options)
-        query_hash = confidentiality_filter(query_hash, options[:current_user])
+        query_hash = confidentiality_filter(query_hash, options)
 
         query_hash[:sort] = [
           { updated_at: { order: :desc } },
@@ -28,7 +28,10 @@ module Elastic
 
       private
 
-      def confidentiality_filter(query_hash, current_user)
+      def confidentiality_filter(query_hash, options)
+        current_user = options[:current_user]
+        project_ids = options.fetch(:project_ids, [])
+
         return query_hash if current_user&.can_read_all_resources?
 
         filter = {
@@ -48,7 +51,7 @@ module Elastic
                     bool: {
                     should: [
                       { bool: { must_not: [{ exists: { field: :confidential } }] } },
-                      { term: { "confidential" => false } }
+                      { term: { confidential: false } }
                     ]
                     }
                   }
@@ -59,6 +62,9 @@ module Elastic
         }
 
         if current_user
+          authorized_projects_ids = current_user.authorized_projects(Gitlab::Access::REPORTER).pluck_primary_key
+          authorized_projects_ids &= project_ids if project_ids.any?
+
           filter[:bool][:should] << {
             bool: {
               must: [
@@ -66,7 +72,7 @@ module Elastic
                   bool: {
                     should: [
                       { term: { "issue.confidential" => true } },
-                      { term: { "confidential" => true } }
+                      { term: { confidential: true } }
                     ]
                   }
                 },
@@ -75,7 +81,7 @@ module Elastic
                     should: [
                       { term: { "issue.author_id" => current_user.id } },
                       { term: { "issue.assignee_id" => current_user.id } },
-                      { terms: { "project_id" => current_user.authorized_projects(Gitlab::Access::REPORTER).pluck_primary_key } }
+                      { terms: { project_id: authorized_projects_ids } }
                     ]
                   }
                 }

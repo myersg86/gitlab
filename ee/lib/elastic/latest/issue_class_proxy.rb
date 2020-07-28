@@ -13,19 +13,29 @@ module Elastic
 
         options[:features] = 'issues'
         query_hash = project_ids_filter(query_hash, options)
-        query_hash = confidentiality_filter(query_hash, options[:current_user])
+        query_hash = confidentiality_filter(query_hash, options)
 
         search(query_hash, options)
       end
 
       private
 
-      def confidentiality_filter(query_hash, current_user)
+      def confidentiality_filter(query_hash, options)
+        current_user = options[:current_user]
+        project_ids = options.fetch(:project_ids, [])
+
         return query_hash if current_user && current_user.can_read_all_resources?
 
-        filter =
-          if current_user
-            {
+        filter = { term: { confidential: false } }
+
+        if current_user
+          authorized_projects_ids = current_user.authorized_projects(Gitlab::Access::REPORTER).pluck_primary_key
+
+          # if the current search is limited to a subset of projects, we should do
+          # confidentiality check for these projects.
+          authorized_projects_ids &= project_ids if project_ids.any?
+
+          filter = {
               bool: {
                 should: [
                   { term: { confidential: false } },
@@ -38,7 +48,7 @@ module Elastic
                             should: [
                               { term: { author_id: current_user.id } },
                               { term: { assignee_id: current_user.id } },
-                              { terms: { project_id: current_user.authorized_projects(Gitlab::Access::REPORTER).pluck_primary_key } }
+                              { terms: { project_id: authorized_projects_ids } }
                             ]
                           }
                         }
@@ -48,9 +58,7 @@ module Elastic
                 ]
               }
             }
-          else
-            { term: { confidential: false } }
-          end
+        end
 
         query_hash[:query][:bool][:filter] << filter
         query_hash

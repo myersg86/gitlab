@@ -12,11 +12,10 @@ module Gitlab
       delegate :limited_users_count, to: :generic_search_results
 
       def initialize(current_user, query, project, repository_ref = nil)
-        @current_user = current_user
         @project = project
         @repository_ref = repository_ref.presence || project.default_branch
-        @query = query
-        @public_and_internal_projects = false
+
+        super(current_user, query, [project.id], [project], false)
       end
 
       def generic_search_results
@@ -85,10 +84,6 @@ module Gitlab
             )
           end
         end
-      end
-
-      def limit_project_ids
-        [project.id]
       end
 
       def root_ref?
