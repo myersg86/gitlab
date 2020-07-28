@@ -4,13 +4,9 @@ import { uniqueId } from 'lodash';
 import { defaultDataIdFromObject } from 'apollo-cache-inmemory';
 import createDefaultClient from '~/lib/graphql';
 import activeDiscussionQuery from './graphql/queries/active_discussion.query.graphql';
-import designListQuery from './graphql/queries/get_design_list.query.graphql';
 import typeDefs from './graphql/typedefs.graphql';
 
 Vue.use(VueApollo);
-
-const el = document.querySelector('.js-design-management-new');
-const { issueIid, projectPath } = el.dataset;
 
 const resolvers = {
   Mutation: {
@@ -22,19 +18,6 @@ const resolvers = {
         source,
       };
       cache.writeQuery({ query: activeDiscussionQuery, data });
-    },
-    designManagementMove(_, { id, from, to }, { cache }) {
-      const data = cache.readQuery({
-        query: designListQuery,
-        variables: { fullPath: projectPath, iid: issueIid, atVersion: null },
-      });
-      const designs = data.project.issue.designCollection.designs.edges;
-      designs.splice(to, 0, designs.splice(from, 1)[0]);
-      cache.writeQuery({
-        query: designListQuery,
-        variables: { fullPath: 'h5bp/html5-boilerplate', iid: '43', atVersion: null },
-        data,
-      });
     },
   },
 };
