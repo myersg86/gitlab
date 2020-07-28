@@ -257,6 +257,7 @@ class GeoNode < ApplicationRecord
   end
 
   def container_repositories
+    return ContainerRepository.none unless Geo::ContainerRepositoryRegistry.replication_enabled?
     return ContainerRepository.all unless selective_sync?
 
     ContainerRepository.project_id_in(projects)
@@ -430,9 +431,5 @@ class GeoNode < ApplicationRecord
 
   def project_model
     Project
-  end
-
-  def uploads_model
-    Upload
   end
 end

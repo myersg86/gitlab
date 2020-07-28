@@ -14,10 +14,6 @@ module Gitlab
         ::Feature.enabled?(:ci_job_heartbeats_runner, project, default_enabled: true)
       end
 
-      def self.pipeline_fixed_notifications?
-        ::Feature.enabled?(:ci_pipeline_fixed_notifications, default_enabled: true)
-      end
-
       def self.instance_variables_ui_enabled?
         ::Feature.enabled?(:ci_instance_variables_ui, default_enabled: true)
       end
@@ -76,6 +72,10 @@ module Gitlab
 
       def self.allow_to_create_merge_request_pipelines_in_target_project?(target_project)
         ::Feature.enabled?(:ci_allow_to_create_merge_request_pipelines_in_target_project, target_project)
+      end
+
+      def self.ci_plan_needs_size_limit?(project)
+        ::Feature.enabled?(:ci_plan_needs_size_limit, project)
       end
 
       def self.job_entry_matches_all_keys?

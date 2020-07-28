@@ -13,10 +13,9 @@ module Geo
     end
 
     def handle_after_create_commit
+      return unless self.class.enabled?
+
       publish(:created, **created_params)
-
-      return unless Feature.enabled?(:geo_self_service_framework_replication, default_enabled: true)
-
       schedule_checksum_calculation if needs_checksum?
     end
 
@@ -28,6 +27,8 @@ module Geo
     end
 
     def handle_after_destroy
+      return unless self.class.enabled?
+
       publish(:deleted, **deleted_params)
     end
 

@@ -9247,6 +9247,7 @@ CREATE TABLE public.application_settings (
     maintenance_mode boolean DEFAULT false NOT NULL,
     maintenance_mode_message text,
     wiki_page_max_content_bytes bigint DEFAULT 52428800 NOT NULL,
+    elasticsearch_indexed_file_size_limit_kb integer DEFAULT 1024 NOT NULL,
     CONSTRAINT check_51700b31b5 CHECK ((char_length(default_branch_name) <= 255)),
     CONSTRAINT check_9c6c447a13 CHECK ((char_length(maintenance_mode_message) <= 255)),
     CONSTRAINT check_d03919528d CHECK ((char_length(container_registry_vendor) <= 255)),
@@ -13425,7 +13426,8 @@ CREATE TABLE public.notification_settings (
     new_epic boolean,
     notification_email character varying,
     fixed_pipeline boolean,
-    new_release boolean
+    new_release boolean,
+    moved_project boolean DEFAULT true NOT NULL
 );
 
 CREATE SEQUENCE public.notification_settings_id_seq
@@ -14028,7 +14030,8 @@ CREATE TABLE public.plan_limits (
     ci_max_artifact_size_requirements integer DEFAULT 0 NOT NULL,
     ci_max_artifact_size_coverage_fuzzing integer DEFAULT 0 NOT NULL,
     ci_max_artifact_size_browser_performance integer DEFAULT 0 NOT NULL,
-    ci_max_artifact_size_load_performance integer DEFAULT 0 NOT NULL
+    ci_max_artifact_size_load_performance integer DEFAULT 0 NOT NULL,
+    ci_needs_size_limit integer DEFAULT 50 NOT NULL
 );
 
 CREATE SEQUENCE public.plan_limits_id_seq
@@ -15276,7 +15279,6 @@ CREATE TABLE public.service_desk_settings (
 CREATE TABLE public.services (
     id integer NOT NULL,
     type character varying,
-    title character varying,
     project_id integer,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
@@ -15296,7 +15298,6 @@ CREATE TABLE public.services (
     job_events boolean DEFAULT false NOT NULL,
     confidential_note_events boolean DEFAULT true,
     deployment_events boolean DEFAULT false NOT NULL,
-    description character varying(500),
     comment_on_event_enabled boolean DEFAULT true NOT NULL,
     template boolean DEFAULT false,
     instance boolean DEFAULT false NOT NULL,
@@ -16164,6 +16165,25 @@ CREATE SEQUENCE public.vulnerabilities_id_seq
     CACHE 1;
 
 ALTER SEQUENCE public.vulnerabilities_id_seq OWNED BY public.vulnerabilities.id;
+
+CREATE TABLE public.vulnerability_export_verification_status (
+    vulnerability_export_id bigint NOT NULL,
+    verification_retry_at timestamp with time zone,
+    verified_at timestamp with time zone,
+    verification_retry_count smallint,
+    verification_checksum bytea,
+    verification_failure text,
+    CONSTRAINT check_48fdf48546 CHECK ((char_length(verification_failure) <= 255))
+);
+
+CREATE SEQUENCE public.vulnerability_export_verification_s_vulnerability_export_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.vulnerability_export_verification_s_vulnerability_export_id_seq OWNED BY public.vulnerability_export_verification_status.vulnerability_export_id;
 
 CREATE TABLE public.vulnerability_exports (
     id bigint NOT NULL,
@@ -17232,6 +17252,8 @@ ALTER TABLE ONLY public.users_star_projects ALTER COLUMN id SET DEFAULT nextval(
 ALTER TABLE ONLY public.users_statistics ALTER COLUMN id SET DEFAULT nextval('public.users_statistics_id_seq'::regclass);
 
 ALTER TABLE ONLY public.vulnerabilities ALTER COLUMN id SET DEFAULT nextval('public.vulnerabilities_id_seq'::regclass);
+
+ALTER TABLE ONLY public.vulnerability_export_verification_status ALTER COLUMN vulnerability_export_id SET DEFAULT nextval('public.vulnerability_export_verification_s_vulnerability_export_id_seq'::regclass);
 
 ALTER TABLE ONLY public.vulnerability_exports ALTER COLUMN id SET DEFAULT nextval('public.vulnerability_exports_id_seq'::regclass);
 
@@ -18515,6 +18537,9 @@ ALTER TABLE ONLY public.users_statistics
 ALTER TABLE ONLY public.vulnerabilities
     ADD CONSTRAINT vulnerabilities_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.vulnerability_export_verification_status
+    ADD CONSTRAINT vulnerability_export_verification_status_pkey PRIMARY KEY (vulnerability_export_id);
+
 ALTER TABLE ONLY public.vulnerability_exports
     ADD CONSTRAINT vulnerability_exports_pkey PRIMARY KEY (id);
 
@@ -18996,8 +19021,6 @@ CREATE INDEX index_boards_on_milestone_id ON public.boards USING btree (mileston
 CREATE INDEX index_boards_on_project_id ON public.boards USING btree (project_id);
 
 CREATE INDEX index_broadcast_message_on_ends_at_and_broadcast_type_and_id ON public.broadcast_messages USING btree (ends_at, broadcast_type, id);
-
-CREATE INDEX index_chat_names_on_service_id ON public.chat_names USING btree (service_id);
 
 CREATE UNIQUE INDEX index_chat_names_on_service_id_and_team_id_and_chat_id ON public.chat_names USING btree (service_id, team_id, chat_id);
 
@@ -20219,6 +20242,8 @@ CREATE INDEX index_project_statistics_on_wiki_size_and_project_id ON public.proj
 
 CREATE UNIQUE INDEX index_project_tracing_settings_on_project_id ON public.project_tracing_settings USING btree (project_id);
 
+CREATE INDEX index_projects_aimed_for_deletion ON public.projects USING btree (marked_for_deletion_at) WHERE ((marked_for_deletion_at IS NOT NULL) AND (pending_delete = false));
+
 CREATE INDEX index_projects_api_created_at_id_desc ON public.projects USING btree (created_at, id DESC);
 
 CREATE INDEX index_projects_api_created_at_id_for_archived ON public.projects USING btree (created_at, id) WHERE ((archived = true) AND (pending_delete = false));
@@ -20268,8 +20293,6 @@ CREATE INDEX index_projects_on_last_repository_check_failed ON public.projects U
 CREATE INDEX index_projects_on_last_repository_updated_at ON public.projects USING btree (last_repository_updated_at);
 
 CREATE INDEX index_projects_on_lower_name ON public.projects USING btree (lower((name)::text));
-
-CREATE INDEX index_projects_on_marked_for_deletion_at ON public.projects USING btree (marked_for_deletion_at) WHERE (marked_for_deletion_at IS NOT NULL);
 
 CREATE INDEX index_projects_on_marked_for_deletion_by_user_id ON public.projects USING btree (marked_for_deletion_by_user_id) WHERE (marked_for_deletion_by_user_id IS NOT NULL);
 
@@ -20759,6 +20782,8 @@ CREATE INDEX index_vulnerabilities_on_start_date_sourcing_milestone_id ON public
 
 CREATE INDEX index_vulnerabilities_on_updated_by_id ON public.vulnerabilities USING btree (updated_by_id);
 
+CREATE INDEX index_vulnerability_export_verification_status_on_export_id ON public.vulnerability_export_verification_status USING btree (vulnerability_export_id);
+
 CREATE INDEX index_vulnerability_exports_on_author_id ON public.vulnerability_exports USING btree (author_id);
 
 CREATE INDEX index_vulnerability_exports_on_file_store ON public.vulnerability_exports USING btree (file_store);
@@ -20776,6 +20801,8 @@ CREATE INDEX index_vulnerability_feedback_on_issue_id ON public.vulnerability_fe
 CREATE INDEX index_vulnerability_feedback_on_merge_request_id ON public.vulnerability_feedback USING btree (merge_request_id);
 
 CREATE INDEX index_vulnerability_feedback_on_pipeline_id ON public.vulnerability_feedback USING btree (pipeline_id);
+
+CREATE INDEX index_vulnerability_historical_statistics_on_date_and_id ON public.vulnerability_historical_statistics USING btree (date, id);
 
 CREATE UNIQUE INDEX index_vulnerability_identifiers_on_project_id_and_fingerprint ON public.vulnerability_identifiers USING btree (project_id, fingerprint);
 
@@ -20902,6 +20929,10 @@ CREATE INDEX tmp_index_for_email_unconfirmation_migration ON public.emails USING
 CREATE UNIQUE INDEX unique_merge_request_metrics_by_merge_request_id ON public.merge_request_metrics USING btree (merge_request_id);
 
 CREATE UNIQUE INDEX users_security_dashboard_projects_unique_index ON public.users_security_dashboard_projects USING btree (project_id, user_id);
+
+CREATE INDEX vulnerability_exports_verification_checksum_partial ON public.vulnerability_export_verification_status USING btree (verification_checksum) WHERE (verification_checksum IS NOT NULL);
+
+CREATE INDEX vulnerability_exports_verification_failure_partial ON public.vulnerability_export_verification_status USING btree (verification_failure) WHERE (verification_failure IS NOT NULL);
 
 CREATE UNIQUE INDEX vulnerability_feedback_unique_idx ON public.vulnerability_feedback USING btree (project_id, category, feedback_type, project_fingerprint);
 
@@ -21779,6 +21810,9 @@ ALTER TABLE ONLY public.approval_merge_request_rules
 
 ALTER TABLE ONLY public.namespace_statistics
     ADD CONSTRAINT fk_rails_0062050394 FOREIGN KEY (namespace_id) REFERENCES public.namespaces(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.vulnerability_export_verification_status
+    ADD CONSTRAINT fk_rails_00a22ee64f FOREIGN KEY (vulnerability_export_id) REFERENCES public.vulnerability_exports(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.clusters_applications_elastic_stacks
     ADD CONSTRAINT fk_rails_026f219f46 FOREIGN KEY (cluster_id) REFERENCES public.clusters(id) ON DELETE CASCADE;

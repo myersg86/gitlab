@@ -1977,8 +1977,8 @@ This example creates four paths of execution:
   - For GitLab.com, the limit is ten. For more information, see our
     [infrastructure issue](https://gitlab.com/gitlab-com/gl-infra/infrastructure/-/issues/7541).
   - For self-managed instances, the limit is:
-    - 10, if the `ci_dag_limit_needs` feature flag is enabled (default).
-    - 50, if the `ci_dag_limit_needs` feature flag is disabled.
+    - 10, if the `ci_plan_needs_size_limit` feature flag is disabled (default).
+    - 50, if the `ci_plan_needs_size_limit` feature flag is enabled. This limit [can be changed](#changing-the-needs-job-limit).
 - If `needs:` refers to a job that is marked as `parallel:`.
   the current job will depend on all parallel jobs created.
 - `needs:` is similar to `dependencies:` in that it needs to use jobs from prior stages,
@@ -1989,20 +1989,25 @@ This example creates four paths of execution:
 
 ##### Changing the `needs:` job limit
 
-The maximum number of jobs that can be defined within `needs:` defaults to 10, but
-can be changed to 50 via a feature flag. To change the limit to 50,
-[start a Rails console session](../../administration/troubleshooting/debug.md#starting-a-rails-console-session)
-and run:
+The maximum number of jobs that can be defined within `needs:` defaults to 10.
+
+To change this limit to 50 on a self-managed installation, a GitLab administrator
+with [access to the GitLab Rails console](../../administration/feature_flags.md)
+can enable the `:ci_plan_needs_size_limit` feature flag:
 
 ```ruby
-Feature::disable(:ci_dag_limit_needs)
+Feature::enable(:ci_plan_needs_size_limit)
 ```
 
-To set it back to 10, run the opposite command:
+After the feature flag is enabled, you can choose a custom limit. For example, to
+set the limit to 100:
 
 ```ruby
-Feature::enable(:ci_dag_limit_needs)
+Plan.default.actual_limits.update!(ci_needs_size_limit: 100)
 ```
+
+NOTE: **Note:**
+To disable the ability to use DAG, set the limit to `0`.
 
 #### Artifact downloads with `needs`
 
@@ -3690,7 +3695,7 @@ Once an uninterruptible job is running, the pipeline will never be canceled, reg
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/15536) in GitLab 12.7.
 
-Sometimes running multiples jobs or pipelines at the same time in an environment
+Sometimes running multiple jobs or pipelines at the same time in an environment
 can lead to errors during the deployment.
 
 To avoid these errors, the `resource_group` attribute can be used to ensure that
@@ -3729,8 +3734,7 @@ For more information, see [Deployments Safety](../environments/deployment_safety
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/merge_requests/19298) in GitLab 13.2.
 
-`release` indicates that the job creates a [Release](../../user/project/releases/index.md),
-and optionally includes URLs for Release assets.
+`release` indicates that the job creates a [Release](../../user/project/releases/index.md).
 
 These methods are supported:
 
@@ -3863,7 +3867,7 @@ tags. These options cannot be used together, so choose one:
                                             # or can use a variable.
   ```
 
-- To create a release automatically when changes are pushed to the default branch,
+- To create a release automatically when commits are pushed or merged to the default branch,
   using a new Git tag that is defined with variables:
 
   ```yaml
@@ -3873,7 +3877,7 @@ tags. These options cannot be used together, so choose one:
     rules:
       - if: $CI_COMMIT_TAG
         when: never                                 # Do not run this job when a tag is created manually
-      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run this job when the default branch changes
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Run this job when commits are pushed or merged to the default branch
     script:
       - echo 'running release_job'
     release:
