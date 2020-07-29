@@ -53,6 +53,13 @@ module EE
               resolver: ::Resolvers::ComplianceFrameworksResolver,
               null: true
 
+        field :security_dashboard_url, GraphQL::STRING_TYPE,
+          description: 'URL leading to project security dashboard',
+          null: true,
+          resolve: -> (project, args, ctx) do
+            Rails.application.routes.url_helpers.project_security_dashboard_index_url(project)
+          end
+
         def self.requirements_available?(project, user)
           ::Feature.enabled?(:requirements_management, project, default_enabled: true) && Ability.allowed?(user, :read_requirement, project)
         end
