@@ -9,9 +9,9 @@ query DASTSiteProfiles($fullPath: ID!, $after: String, $before: String, $first: 
       edges {
         cursor
         node {
-          id,
-          profileName,
-          targetUrl,
+          id
+          profileName
+          targetUrl
           validationStatus
         }
       }
