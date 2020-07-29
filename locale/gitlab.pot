@@ -16747,10 +16747,19 @@ msgstr ""
 msgid "Package was removed"
 msgstr ""
 
+msgid "PackageRegistry|%{name} version %{version} was created on %{date} at %{time}"
+msgstr ""
+
+msgid "PackageRegistry|%{name} version %{version} was updated at %{date} at %{time}"
+msgstr ""
+
 msgid "PackageRegistry|Add Conan Remote"
 msgstr ""
 
 msgid "PackageRegistry|Add NuGet Source"
+msgstr ""
+
+msgid "PackageRegistry|Commit %{link} on branch %{branch} posted on %{date} at %{time}"
 msgstr ""
 
 msgid "PackageRegistry|Composer"
@@ -16868,6 +16877,12 @@ msgid "PackageRegistry|Pip Command"
 msgstr ""
 
 msgid "PackageRegistry|Pipeline %{linkStart}%{linkEnd} triggered %{timestamp} by %{author}"
+msgstr ""
+
+msgid "PackageRegistry|Pipeline %{link} triggered on %{date} at %{time} by %{author}"
+msgstr ""
+
+msgid "PackageRegistry|Published to the %{project} Package Registry on %{date} at %{time}"
 msgstr ""
 
 msgid "PackageRegistry|Published to the repository at %{timestamp}"
