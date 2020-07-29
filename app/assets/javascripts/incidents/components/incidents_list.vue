@@ -12,8 +12,9 @@ import {
   GlIcon,
   GlPagination,
 } from '@gitlab/ui';
-import { debounce } from 'lodash';
+import { debounce, trim } from 'lodash';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
+import { convertToSnakeCase } from '~/lib/utils/text_utility';
 import { s__ } from '~/locale';
 import { mergeUrlParams, joinPaths, visitUrl } from '~/lib/utils/url_utility';
 import getIncidents from '../graphql/queries/get_incidents.query.graphql';
@@ -45,8 +46,9 @@ export default {
     {
       key: 'createdAt',
       label: s__('IncidentManagement|Date created'),
-      thClass: `${thClass} gl-pointer-events-none`,
+      thClass,
       tdClass,
+      sortable: true,
     },
     {
       key: 'assignees',
@@ -80,6 +82,7 @@ export default {
           searchTerm: this.searchTerm,
           projectPath: this.projectPath,
           labelNames: ['incident'],
+          sort: this.sort,
           firstPageSize: this.pagination.firstPageSize,
           lastPageSize: this.pagination.lastPageSize,
           prevPageCursor: this.pagination.prevPageCursor,
@@ -105,6 +108,10 @@ export default {
       searchTerm: '',
       pagination: initialPaginationState,
       incidents: {},
+      sort: 'created_desc',
+      sortBy: 'startedAt',
+      sortDesc: true,
+      sortDirection: 'desc',
     };
   },
   computed: {
@@ -138,14 +145,13 @@ export default {
       return mergeUrlParams({ issuable_template: this.incidentTemplateName }, this.newIssuePath);
     },
   },
-  watch: {
-    searchTerm: debounce(function debounceSearch(input) {
-      if (input !== this.searchTerm) {
-        this.searchTerm = input;
+  methods: {
+    onInputChange: debounce(function debounceSearch(input) {
+      const trimmedInput = trim(input);
+      if (trimmedInput !== this.searchTerm) {
+        this.searchTerm = trimmedInput;
       }
     }, INCIDENT_SEARCH_DELAY),
-  },
-  methods: {
     hasAssignees(assignees) {
       return Boolean(assignees.nodes?.length);
     },
@@ -174,6 +180,14 @@ export default {
     resetPagination() {
       this.pagination = initialPaginationState;
     },
+    fetchSortedData({ sortBy, sortDesc }) {
+      const sortingDirection = sortDesc ? 'desc' : 'asc';
+      const sortingColumn = convertToSnakeCase(sortBy)
+        .split('_')[0]
+        .toLowerCase();
+
+      this.sort = `${sortingColumn}_${sortingDirection}`;
+    },
   },
 };
 </script>
@@ -200,9 +214,9 @@ export default {
 
     <div class="gl-bg-gray-10 gl-p-5 gl-border-b-solid gl-border-b-1 gl-border-gray-100">
       <gl-search-box-by-type
-        v-model.trim="searchTerm"
         class="gl-bg-white"
         :placeholder="$options.i18n.searchPlaceholder"
+        @input="onInputChange"
       />
     </div>
 
@@ -217,16 +231,20 @@ export default {
       stacked="md"
       :tbody-tr-class="tbodyTrClass"
       :no-local-sorting="true"
+      :sort-direction="sortDirection"
+      :sort-desc.sync="sortDesc"
+      :sort-by.sync="sortBy"
       fixed
       @row-clicked="navigateToIncidentDetails"
+      @sort-changed="fetchSortedData"
     >
       <template #cell(title)="{ item }">
-        <div class="gl-display-flex gl-justify-content-center">
+        <div class="gl-display-flex gl-align-items-center">
           <div class="gl-max-w-full text-truncate" :title="item.title">{{ item.title }}</div>
           <gl-icon
             v-if="item.state === 'closed'"
             name="issue-close"
-            class="gl-fill-blue-500"
+            class="gl-ml-1 gl-fill-blue-500"
             data-testid="incident-closed"
           />
         </div>

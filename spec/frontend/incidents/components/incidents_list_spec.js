@@ -29,9 +29,10 @@ describe('Incidents List', () => {
   const findAlert = () => wrapper.find(GlAlert);
   const findLoader = () => wrapper.find(GlLoadingIcon);
   const findTimeAgo = () => wrapper.findAll(TimeAgoTooltip);
+  const findDateColumnHeader = () => wrapper.findAll('th').at(1);
+  const findSearch = () => wrapper.find(GlSearchBoxByType);
   const findAssingees = () => wrapper.findAll('[data-testid="incident-assignees"]');
   const findCreateIncidentBtn = () => wrapper.find('[data-testid="createIncidentBtn"]');
-  const findSearch = () => wrapper.find(GlSearchBoxByType);
   const findClosedIcon = () => wrapper.findAll("[data-testid='incident-closed']");
   const findPagination = () => wrapper.find(GlPagination);
 
@@ -279,6 +280,25 @@ describe('Incidents List', () => {
 
         expect(wrapper.vm.$data.searchTerm).toBe(SEARCH_TERM);
       });
+    });
+  });
+
+  describe('sorting the incident list by column', () => {
+    beforeEach(() => {
+      mountComponent({
+        data: { incidents: mockIncidents },
+        loading: false,
+      });
+    });
+
+    it('updates sort with new direction and column key', () => {
+      findDateColumnHeader().trigger('click');
+
+      expect(wrapper.vm.$data.sort).toBe('created_desc');
+
+      findDateColumnHeader().trigger('click');
+
+      expect(wrapper.vm.$data.sort).toBe('created_asc');
     });
   });
 });

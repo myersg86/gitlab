@@ -1,5 +1,6 @@
 query getIncidents(
   $projectPath: ID!
+  $sort: IssueSort
   $labelNames: [String]
   $state: IssuableState
   $firstPageSize: Int
@@ -12,6 +13,7 @@ query getIncidents(
     issues(
       search: $searchTerm
       state: $state
+      sort: $sort
       labelName: $labelNames
       first: $firstPageSize
       last: $lastPageSize
