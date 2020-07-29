@@ -15,6 +15,10 @@ export default {
       type: String,
       required: true,
     },
+    projectFullPath: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
@@ -29,8 +33,7 @@ export default {
       query: dastSiteProfilesQuery,
       variables() {
         return {
-          // @TODO - inject path
-          fullPath: '/inject-project/path/here',
+          fullPath: this.projectFullPath,
           first: 10,
         };
       },

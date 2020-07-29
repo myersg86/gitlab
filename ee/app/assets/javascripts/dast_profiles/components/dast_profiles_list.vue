@@ -87,6 +87,7 @@ export default {
         </template>
 
         <template #cell(actions)>
+          <!-- @TODO: Add tooltip to explain its not available yet (even show it for MVC) -->
           <gl-button>{{ __('Edit') }}</gl-button>
         </template>
 

@@ -3,6 +3,7 @@ import { within } from '@testing-library/dom';
 import DastProfiles from 'ee/dast_profiles/components/dast_profiles.vue';
 
 const TEST_NEW_DAST_SITE_PROFILE_PATH = '/-/on_demand_scans/site_profiles/new';
+const TEST_PROJECT_FULL_PATH = '/namespace/project';
 
 describe('EE - DastProfiles', () => {
   let wrapper;
@@ -10,6 +11,7 @@ describe('EE - DastProfiles', () => {
   const createComponent = () => {
     const defaultProps = {
       newDastSiteProfilePath: TEST_NEW_DAST_SITE_PROFILE_PATH,
+      projectFullPath: TEST_PROJECT_FULL_PATH,
     };
 
     const apolloMock = {
