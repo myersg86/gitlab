@@ -1,4 +1,4 @@
-import { pickBy, mapKeys } from 'lodash';
+import { omit, pickBy, mapKeys } from 'lodash';
 import {
   queryToObject,
   mergeUrlParams,
@@ -10,6 +10,7 @@ import {
   timeRangeParamNames,
   timeRangeFromParams,
   timeRangeToParams,
+  isEqualTimeRanges,
 } from '~/lib/utils/datetime_range';
 import { VARIABLE_PREFIX } from './constants';
 
@@ -263,6 +264,21 @@ export const timeRangeToUrl = (timeRange, url = window.location.href) => {
   const toUrl = removeTimeRangeParams(url);
   const params = timeRangeToParams(timeRange);
   return mergeUrlParams(params, toUrl);
+};
+
+// TODO Add jsdoc and tests here
+export const timeRangeToQuery = (timeRange, query = {}, defaultTimeRange = null) => {
+  const otherParameters = omit(query, timeRangeParamNames);
+  if (isEqualTimeRanges(timeRange, defaultTimeRange)) {
+    return otherParameters;
+  }
+
+  console.log(timeRange, timeRangeToParams(timeRange));
+  const timeRangeParams = timeRangeToParams(timeRange);
+  return {
+    ...otherParameters,
+    ...timeRangeParams,
+  };
 };
 
 /**

@@ -31,7 +31,7 @@ import CreateDashboardModal from './create_dashboard_modal.vue';
 import DuplicateDashboardModal from './duplicate_dashboard_modal.vue';
 
 import TrackEventDirective from '~/vue_shared/directives/track_event';
-import { getAddMetricTrackingOptions, timeRangeToUrl } from '../utils';
+import { getAddMetricTrackingOptions } from '../utils';
 import { timeRanges } from '~/vue_shared/constants';
 import { timezones } from '../format_date';
 
@@ -103,10 +103,6 @@ export default {
       type: Boolean,
       required: true,
     },
-    selectedTimeRange: {
-      type: Object,
-      required: true,
-    },
     addDashboardDocumentationPath: {
       type: String,
       required: true,
@@ -120,6 +116,7 @@ export default {
   computed: {
     ...mapState('monitoringDashboard', [
       'emptyState',
+      'timeRange',
       'environmentsLoading',
       'currentEnvironmentName',
       'isUpdatingStarredValue',
@@ -163,7 +160,12 @@ export default {
     },
   },
   methods: {
-    ...mapActions('monitoringDashboard', ['filterEnvironments', 'toggleStarredValue']),
+    ...mapActions('monitoringDashboard', [
+      'setTimeRange',
+      'fetchData',
+      'filterEnvironments',
+      'toggleStarredValue',
+    ]),
     selectDashboard(dashboard) {
       // Once the sidebar See metrics link is updated to the new URL,
       // this sort of hardcoding will not be necessary.
@@ -178,7 +180,11 @@ export default {
       this.filterEnvironments(searchTerm);
     }, 500),
     onDateTimePickerInput(timeRange) {
-      redirectTo(timeRangeToUrl(timeRange));
+      // Note: `catch` is not needed as error handling is done in fetchData
+      // eslint-disable-next-line promise/catch-or-return
+      this.setTimeRange(timeRange).then(() => {
+        this.fetchData();
+      });
     },
     onDateTimePickerInvalid() {
       this.$emit('dateTimePickerInvalid');
@@ -282,7 +288,7 @@ export default {
         ref="dateTimePicker"
         class="flex-grow-1 show-last-dropdown"
         data-qa-selector="range_picker_dropdown"
-        :value="selectedTimeRange"
+        :value="timeRange"
         :options="$options.timeRanges"
         :utc="displayUtc"
         @input="onDateTimePickerInput"

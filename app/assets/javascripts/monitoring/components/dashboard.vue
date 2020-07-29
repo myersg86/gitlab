@@ -8,7 +8,7 @@ import DashboardPanel from './dashboard_panel.vue';
 import { s__ } from '~/locale';
 import createFlash from '~/flash';
 import { ESC_KEY, ESC_KEY_IE11 } from '~/lib/utils/keys';
-import { mergeUrlParams, updateHistory } from '~/lib/utils/url_utility';
+import { updateHistory } from '~/lib/utils/url_utility';
 import invalidUrl from '~/lib/utils/invalid_url';
 import Icon from '~/vue_shared/components/icon.vue';
 
@@ -20,7 +20,6 @@ import LinksSection from './links_section.vue';
 
 import TrackEventDirective from '~/vue_shared/directives/track_event';
 import {
-  timeRangeFromUrl,
   panelToUrl,
   expandedPanelPayloadFromUrl,
   convertVariablesForURL,
@@ -151,7 +150,6 @@ export default {
   },
   data() {
     return {
-      selectedTimeRange: timeRangeFromUrl() || defaultTimeRange,
       isRearrangingPanels: false,
       originalDocumentTitle: document.title,
       hoveredPanel: '',
@@ -159,6 +157,7 @@ export default {
   },
   computed: {
     ...mapState('monitoringDashboard', [
+      'timeRange',
       'dashboard',
       'emptyState',
       'expandedPanel',
@@ -234,7 +233,6 @@ export default {
     if (!this.hasMetrics) {
       this.setGettingStartedEmptyState();
     } else {
-      this.setTimeRange(this.selectedTimeRange);
       this.fetchData();
     }
   },
@@ -303,14 +301,7 @@ export default {
       }
     },
     onTimeRangeZoom({ start, end }) {
-      updateHistory({
-        url: mergeUrlParams({ start, end }, window.location.href),
-        title: document.title,
-      });
-      this.selectedTimeRange = { start, end };
-      // keep the current dashboard time range
-      // in sync with the Vuex store
-      this.setTimeRange(this.selectedTimeRange);
+      this.setTimeRange({ start, end });
     },
     onExpandPanel(group, panel) {
       this.setExpandedPanel({ group, panel });
@@ -334,7 +325,7 @@ export default {
         ),
       );
       // As a fallback, switch to default time range instead
-      this.selectedTimeRange = defaultTimeRange;
+      this.setTimeRange(defaultTimeRange);
     },
     isPanelHalfWidth(panelIndex, totalPanels) {
       /**
@@ -418,7 +409,7 @@ export default {
       :external-dashboard-url="externalDashboardUrl"
       :has-metrics="hasMetrics"
       :is-rearranging-panels="isRearrangingPanels"
-      :selected-time-range="selectedTimeRange"
+      :selected-time-range="timeRange"
       @dateTimePickerInvalid="onDateTimePickerInvalid"
       @setRearrangingPanels="onSetRearrangingPanels"
     />
