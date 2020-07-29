@@ -606,58 +606,38 @@ Pages server.
 
 > [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/217912) in GitLab 13.3.
 
-A new configuration flag is available in `/etc/gitlab/gitlab.rb`:
+GitLab Pages can use different sources to get domain configuration.
+The default value is `nil`; however, GitLab Pages will default to `disk`.
+
+   ```ruby
+   gitlab_pages['domain_config_source'] = nil
+   ```
+
+You can specify `gitlab` to enable [API-based configuration](#hitLab-api-based-configuration).
+
+For more details see this [blog post](https://pages-config-blog.about.gitlab-review.app/blog/2020/07/29/how-gitlab-pages-uses-the-gitlab-api-to-serve-content/index.html).
+
+### GitLab API-based configuration
+
+GitLab Pages can use an API-based configuration. This replaces disk source configuration, which
+was used prior to GitLab 13.0. Follow these steps to enable it:
+
+1. Add the following to your `/etc/gitlab/gitlab.erb` file:
+
+   ```ruby
+   gitlab_pages['domain_config_source'] = "gitlab"
+   ```
+
+1. [Reconfigure GitLab](../restart_gitlab.md#omnibus-gitlab-reconfigure) for the changes to take effect.
+
+If you encounter an issue, you can disable it by choosing `disk` or `nil`:
 
 ```ruby
 gitlab_pages['domain_config_source'] = nil
 ```
 
-The default value is `nil`, however, GitLab Pages will default to using `disk`.
-This is the only available value before [GitLab API-based configuration](#gitlab-api-based-configuration)
-is officially supported.
-
-When `domain_config_source` is set to `nil` or `disk`, the Pages daemon will look in the [shared pages directory](#change-storage-path)
-for the requested domain and will read the configuration from the `config.json` file inside the project's directory.
-
-For example, to source the domain configuration for `example.gitlab.io`,
-GitLab Pages will look for the `config.json` file under `/path/to/shared/pages/example/example.gitlab.io/config.json`.
-The file contains information about the
-[domain and custom domain configurations](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/internal/source/disk/config.go#L21)
-(if any).
-
-For self-managed instances, all the configured domains are loaded when the
-[Pages daemon starts](https://gitlab.com/gitlab-org/gitlab-pages/-/blob/master/app.go#L439).
-However, this is not efficient. In [GitLab Pages Architecture Updates](https://gitlab.com/groups/gitlab-org/-/epics/1316)
-we are currently working on improving this and other features.
-
-### GitLab API-based configuration
-
-> [Introduced](https://gitlab.com/gitlab-org/gitlab-pages/-/issues/282) in GitLab 12.10
-
-On [`gitlab.com`](https://gitlab.com), the Pages daemon sources the domain configuration via an internal API endpoint
-`/api/v4/internal/pages?domain=example.gitlab.io`. This is done on demand per domain and the configuration is cached
-in the daemon for some time to speed up serving content from that Pages node.
-
-For self-managed instances, this mechanism will be officially supported when
-[source domain configuration from the GitLab API](https://gitlab.com/gitlab-org/gitlab/-/issues/218357)
-is delivered.
-
-If you would like to try using the API, this issue contains a
-[potential guide](https://gitlab.com/gitlab-org/gitlab/-/issues/28298#potential-workaround)
-on how to enable API-based configuration.
-
-### GitLab API status polling
-
-> [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/217912) in GitLab 13.3.
-
-GitLab Pages uses a [polling mechanism](https://gitlab.com/gitlab-org/gitlab-pages/-/merge_requests/304)
-to get the status of the internal Pages API by calling the `/api/v4/internal/pages/status` endpoint.
-
-This will help you [troubleshoot connections](#failed-to-connect-to-the-gitlab-api) between GitLab Pages and the GitLab API.
-
-Ensuring that the API is available to GitLab Pages will allow you to
-[source domain configuration from the GitLab API](https://gitlab.com/gitlab-org/gitlab/-/issues/218357)
-in the future.
+For other common issues, see the [troubleshooting section](#failed-to-connect-to-the-internal-gitlab-api)
+or report an issue.
 
 ## Backup
 
@@ -755,18 +735,24 @@ date > /var/opt/gitlab/gitlab-rails/shared/pages/.update
 
 If you've customized the Pages storage path, adjust the command above to use your custom path.
 
-### Failed to connect to the GitLab API
+### Failed to connect to the internal GitLab API
 
-If [GitLab API status polling](#gitlab-api-status-polling) is available,
-you are [Running GitLab Pages on a separate server](#running-gitlab-pages-on-a-separate-server),
-and you see the following error message
+If you have enabled [API-based configuration](#gitlab-api-based-configuration) and see the following error:
 
 ```plaintext
-ERRO[0026] failed to connect to the GitLab API           error="polling failed after 10 tries every 30.000000s: failed to connect to internal Pages API: Get \"https://gitlab.example.com/api/v4/internal/pages/status\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)"
+ERRO[0010] Failed to connect to the internal GitLab API after 0.50s  error="failed to connect to internal Pages API: HTTP status: 401"
+
 ```
 
+If you are [Running GitLab Pages on a separate server](#running-gitlab-pages-on-a-separate-server)
 you will need to have copied the `/etc/gitlab/gitlab-secrets.json` file
 from the **GitLab server** to the **Pages server** after upgrading to GitLab 13.3,
-as described in the
-[Running GitLab Pages on a separate server](#running-gitlab-pages-on-a-separate-server)
-section.
+as described in that section.
+
+Other reasons may include network connectivity issues between your
+**GitLab server** and your **Pages server** such as firewall configurations or closed ports.
+For example, if there is a connection timeout:
+
+```plaintext
+error="failed to connect to internal Pages API: Get \"https://gitlab.example.com:3000/api/v4/internal/pages/status\": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"
+```
