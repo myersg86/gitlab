@@ -1,5 +1,13 @@
 <script>
-import { GlAlert, GlButton, GlIcon, GlSkeletonLoading, GlTable, GlTruncate } from '@gitlab/ui';
+import {
+  GlAlert,
+  GlButton,
+  GlIcon,
+  GlSkeletonLoading,
+  GlTable,
+  GlTooltipDirective,
+  GlTruncate,
+} from '@gitlab/ui';
 
 export default {
   components: {
@@ -9,6 +17,9 @@ export default {
     GlSkeletonLoading,
     GlTable,
     GlTruncate,
+  },
+  directives: {
+    GlTooltip: GlTooltipDirective,
   },
   props: {
     profiles: {
@@ -99,8 +110,16 @@ export default {
         </template>
 
         <template #cell(actions)>
-          <!-- @TODO: Add tooltip to explain its not available yet (even show it for MVC) -->
-          <gl-button>{{ __('Edit') }}</gl-button>
+          <span
+            v-gl-tooltip.hover
+            :title="
+              s__(
+                'DastProfiles|Edit feature will come soon. Please create a new profile if changes needed',
+              )
+            "
+          >
+            <gl-button disabled>{{ __('Edit') }}</gl-button>
+          </span>
         </template>
 
         <template #table-busy>
