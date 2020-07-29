@@ -47,10 +47,10 @@ export default {
       return this.formatDate(this.packageEntity.updated_at);
     },
     pipelineTime() {
-      return this.formatTime(this.packageEntity.pipeline?.created_at);
+      return this.formatTime(this.packagePipeline?.created_at);
     },
     pipelineDate() {
-      return this.formatDate(this.packageEntity.pipeline?.created_at);
+      return this.formatDate(this.packagePipeline?.created_at);
     },
   },
   methods: {
@@ -68,9 +68,7 @@ export default {
     updatedAtText: s__(
       'PackageRegistry|%{name} version %{version} was updated at %{date} at %{time}',
     ),
-    commitText: s__(
-      'PackageRegistry|Commit %{link} on branch %{branch} posted on %{date} at %{time}',
-    ),
+    commitText: s__('PackageRegistry|Commit %{link} on branch %{branch}'),
     pipelineText: s__(
       'PackageRegistry|Pipeline %{link} triggered on %{date} at %{time} by %{author}',
     ),
@@ -83,6 +81,7 @@ export default {
 
 <template>
   <div class="issuable-discussion">
+    <h3 class="gl-ml-6">{{ __('History') }}</h3>
     <ul class="timeline main-notes-list notes gl-my-4">
       <history-element icon="clock">
         <gl-sprintf :message="$options.i18n.createOnText">
@@ -123,6 +122,9 @@ export default {
               <gl-link :href="`../../commit/${packagePipeline.sha}`">
                 {{ packagePipeline.sha }}
               </gl-link>
+            </template>
+            <template #branch>
+              <strong>{{ packagePipeline.ref }}</strong>
             </template>
           </gl-sprintf>
         </history-element>

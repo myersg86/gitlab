@@ -16759,7 +16759,7 @@ msgstr ""
 msgid "PackageRegistry|Add NuGet Source"
 msgstr ""
 
-msgid "PackageRegistry|Commit %{link} on branch %{branch} posted on %{date} at %{time}"
+msgid "PackageRegistry|Commit %{link} on branch %{branch}"
 msgstr ""
 
 msgid "PackageRegistry|Composer"
