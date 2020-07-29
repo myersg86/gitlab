@@ -133,6 +133,8 @@ export const fetchCycleAnalyticsData = ({ dispatch }) => {
 export const requestGroupStages = ({ commit }) => commit(types.REQUEST_GROUP_STAGES);
 
 export const receiveGroupStagesError = ({ commit }, error) => {
+  console.log('receiveGroupStagesError::Error', error);
+
   commit(types.RECEIVE_GROUP_STAGES_ERROR, error);
   createFlash(__('There was an error fetching value stream analytics stages.'));
 };

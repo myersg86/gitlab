@@ -56,6 +56,7 @@ const defaultFeatureFlags = {
   hasCreateMultipleValueStreams: false,
 };
 
+const [selectedValueStream] = mockData.valueStreams;
 const initialCycleAnalyticsState = {
   createdAfter: mockData.startDate,
   createdBefore: mockData.endDate,
@@ -101,6 +102,9 @@ function createComponent({
   comp.vm.$store.dispatch('initializeCycleAnalytics', {
     createdAfter: mockData.startDate,
     createdBefore: mockData.endDate,
+    valueStreams: mockData.valueStreams,
+    selectedValueStream,
+
     featureFlags: {
       ...defaultFeatureFlags,
       ...featureFlags,
@@ -633,7 +637,7 @@ describe('Cycle Analytics component', () => {
       return selectGroupAndFindError('There was an error fetching value stream analytics stages.');
     });
 
-    it('will display an error if the fetchStageData request fails', () => {
+    it.only('will display an error if the fetchStageData request fails', () => {
       expect(findFlashError()).toBeNull();
 
       mockRequestCycleAnalyticsData({
