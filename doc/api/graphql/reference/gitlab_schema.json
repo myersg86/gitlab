@@ -12083,7 +12083,7 @@
             },
             {
               "name": "issueType",
-              "description": "Issue type of the issue",
+              "description": "Type of the issue",
               "args": [
 
               ],
@@ -16409,7 +16409,7 @@
             },
             {
               "name": "issueType",
-              "description": "Issue type of the issue",
+              "description": "Type of the issue",
               "args": [
 
               ],
@@ -17042,7 +17042,7 @@
         {
           "kind": "ENUM",
           "name": "IssueIssueType",
-          "description": "Issue types",
+          "description": "Issue type",
           "fields": null,
           "inputFields": null,
           "interfaces": null,

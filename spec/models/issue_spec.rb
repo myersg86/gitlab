@@ -130,7 +130,7 @@ RSpec.describe Issue do
 
   describe '.with_issue_type' do
     let_it_be(:project) { create(:project) }
-    let_it_be!(:issue) { create(:issue, project: project) }
+    let_it_be(:issue) { create(:issue, project: project) }
     let_it_be(:incident) { create(:incident, project: project) }
 
     it 'gives issues with the given issue type' do

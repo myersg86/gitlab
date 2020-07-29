@@ -1,5 +1,5 @@
 ---
-title: Add issue type filter to Issue GraphQL query
+title: Add the ability to filter Issues in GraphQL by type of Issue
 merge_request: 38017
 author:
 type: added

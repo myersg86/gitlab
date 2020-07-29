@@ -4321,7 +4321,7 @@ type EpicIssue implements Noteable {
   iid: ID!
 
   """
-  Issue type of the issue
+  Type of the issue
   """
   issueType: IssueIssueType
 
@@ -5953,7 +5953,7 @@ type Issue implements Noteable {
   iid: ID!
 
   """
-  Issue type of the issue
+  Type of the issue
   """
   issueType: IssueIssueType
 
@@ -6169,7 +6169,7 @@ type IssueEdge {
 }
 
 """
-Issue types
+Issue type
 """
 enum IssueIssueType {
   """

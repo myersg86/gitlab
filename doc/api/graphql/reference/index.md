@@ -734,7 +734,7 @@ Relationship between an epic and an issue
 | `healthStatus` | HealthStatus | Current health status. Returns null if `save_issuable_health_status` feature flag is disabled. |
 | `id` | ID | Global ID of the epic-issue relation |
 | `iid` | ID! | Internal ID of the issue |
-| `issueType` | IssueIssueType | Issue type of the issue |
+| `issueType` | IssueIssueType | Type of the issue |
 | `iteration` | Iteration | Iteration of the issue |
 | `milestone` | Milestone | Milestone of the issue |
 | `reference` | String! | Internal reference of the issue. Returned in shortened format by default |
@@ -895,7 +895,7 @@ Represents a Group Member
 | `healthStatus` | HealthStatus | Current health status. Returns null if `save_issuable_health_status` feature flag is disabled. |
 | `id` | ID! | ID of the issue |
 | `iid` | ID! | Internal ID of the issue |
-| `issueType` | IssueIssueType | Issue type of the issue |
+| `issueType` | IssueIssueType | Type of the issue |
 | `iteration` | Iteration | Iteration of the issue |
 | `milestone` | Milestone | Milestone of the issue |
 | `reference` | String! | Internal reference of the issue. Returned in shortened format by default |
