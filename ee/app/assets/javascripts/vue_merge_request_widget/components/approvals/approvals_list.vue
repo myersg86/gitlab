@@ -97,6 +97,7 @@ export default {
         <th class="w-25">{{ s__('MRApprovals|Approvers') }}</th>
         <th class="w-50"></th>
         <th>{{ s__('MRApprovals|Approvals') }}</th>
+        <th>{{ s__('MRApprovals|Commented by') }}</th>
         <th>{{ s__('MRApprovals|Approved by') }}</th>
       </tr>
     </thead>
@@ -162,6 +163,9 @@ export default {
         </td>
         <td class="w-0 d-none d-sm-table-cell text-nowrap js-pending">
           {{ pendingApprovalsText(rule) }}
+        </td>
+        <td class="d-none d-sm-table-cell">
+          <user-avatar-list :items="rule.approvers" :img-size="24" />
         </td>
         <td class="d-none d-sm-table-cell js-approved-by">
           <user-avatar-list :items="rule.approved_by" :img-size="24" />
