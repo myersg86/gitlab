@@ -247,6 +247,7 @@ RSpec.describe API::Helpers do
   describe "#check_unmodified_since!" do
     context 'valid if_unmodified_since' do
       let(:project) { create(:project) }
+
       it 'returns nil' do
         last_modified = Time.now
 
@@ -258,13 +259,12 @@ RSpec.describe API::Helpers do
       it 'returns 412' do
         allow(subject).to receive(:env).and_return({})
         allow(subject).to receive(:header).and_return({})
-        expect(subject).to receive(:headers).and_return({'If-Unmodified-Since'=>'20170303T133952Z'})
-        expect(subject).to receive(:error!).with({'message'=>'412 Precondition Failed'}, 412, anything)
+        expect(subject).to receive(:headers).and_return({ 'If-Unmodified-Since' => '20170303T133952Z' })
+        expect(subject).to receive(:error!).with({ 'message' => '412 Precondition Failed' }, 412, anything)
         last_modified = Time.now
 
         subject.check_unmodified_since!(last_modified)
       end
     end
-
   end
 end
