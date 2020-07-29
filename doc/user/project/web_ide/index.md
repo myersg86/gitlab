@@ -53,7 +53,7 @@ If you are missing Syntax Highlighting support for any language, we prepared a s
 NOTE: **Note:**
 Single file editing is based on the [Ace Editor](https://ace.c9.io).
 
-### Schema-based validation
+### Schema based validation
 
 > - Support for `.gitlab.ci.yml` validation [introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/218472) in GitLab 13.2.
 > - It was deployed behind a feature flag, disabled by default.
