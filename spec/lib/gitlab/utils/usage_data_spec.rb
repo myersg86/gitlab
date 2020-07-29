@@ -76,7 +76,7 @@ RSpec.describe Gitlab::Utils::UsageData do
   end
 
   describe '#with_prometheus_client' do
-    shared_examples 'yields a client instance and returns the block result' do
+    shared_examples 'query data from Prometheus' do
       it 'yields a client instance and returns the block result' do
         result = described_class.with_prometheus_client { |client| client }
 
@@ -90,7 +90,7 @@ RSpec.describe Gitlab::Utils::UsageData do
         expect(Gitlab::Prometheus::Internal).to receive(:uri).and_return('http://prom:9090')
       end
 
-      it_behaves_like 'yields a client instance and returns the block result'
+      it_behaves_like 'query data from Prometheus'
     end
 
     context 'when Prometheus is available from Consul service discovery' do
@@ -101,7 +101,7 @@ RSpec.describe Gitlab::Utils::UsageData do
             .and_return(OpenStruct.new(ServiceAddress: 'prom.net', ServicePort: 9090))
       end
 
-      it_behaves_like 'yields a client instance and returns the block result'
+      it_behaves_like 'query data from Prometheus'
     end
 
     context 'when Prometheus is not available' do
