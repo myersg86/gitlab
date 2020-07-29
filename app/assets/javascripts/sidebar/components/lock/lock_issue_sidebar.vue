@@ -4,7 +4,6 @@ import tooltip from '~/vue_shared/directives/tooltip';
 import Icon from '~/vue_shared/components/icon.vue';
 import eventHub from '~/sidebar/event_hub';
 import editForm from './edit_form.vue';
-// Note: this is the Vuex store of "notes"/"mr_notes" depending on the issuable type.
 import { mapGetters } from 'vuex';
 
 export default {

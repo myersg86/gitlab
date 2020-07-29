@@ -84,23 +84,22 @@ function mountLockComponent() {
   const el = document.getElementById('js-lock-entry-point');
   const { fullPath } = getSidebarOptions();
 
-  if (!el) return;
-
   const dataNode = document.getElementById('js-lock-issue-data');
   const initialData = JSON.parse(dataNode.innerHTML);
 
-  // eslint-disable-next-line no-new
-  new Vue({
-    el,
-    store: isInIssuePage() ? store : mergeRequestStore,
-    render: createElement =>
-      createElement(LockIssueSidebar, {
-        props: {
-          fullPath,
-          isEditable: initialData.is_editable,
-        },
-      }),
-  });
+  return el
+    ? undefined
+    : new Vue({
+        el,
+        store: isInIssuePage() ? store : mergeRequestStore,
+        render: createElement =>
+          createElement(LockIssueSidebar, {
+            props: {
+              fullPath,
+              isEditable: initialData.is_editable,
+            },
+          }),
+      });
 }
 
 function mountParticipantsComponent(mediator) {
