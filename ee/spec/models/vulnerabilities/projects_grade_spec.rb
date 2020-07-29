@@ -24,16 +24,18 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
     context 'when the given vulnerable is a Group' do
       let(:vulnerable) { group }
       let(:expected_projects_grades) do
-        [
-          described_class.new(vulnerable, 'a', [project_1.id]),
-          described_class.new(vulnerable, 'b', [project_2.id, project_3.id]),
-          described_class.new(vulnerable, 'c', [project_4.id]),
-          described_class.new(vulnerable, 'f', [project_5.id])
-        ]
+        {
+          vulnerable => [
+            described_class.new(vulnerable, 'a', [project_1.id]),
+            described_class.new(vulnerable, 'b', [project_2.id, project_3.id]),
+            described_class.new(vulnerable, 'c', [project_4.id]),
+            described_class.new(vulnerable, 'f', [project_5.id])
+          ]
+        }
       end
 
       it 'returns the letter grades for given vulnerable' do
-        expect(projects_grades.map(&compare_key)).to match_array(expected_projects_grades.map(&compare_key))
+        expect(projects_grades[vulnerable].map(&compare_key)).to match_array(expected_projects_grades[vulnerable].map(&compare_key))
       end
     end
 
@@ -41,9 +43,9 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
       let(:user) { create(:user) }
       let(:vulnerable) { InstanceSecurityDashboard.new(user) }
       let(:expected_projects_grades) do
-        [
-          described_class.new(vulnerable, 'a', [project_1.id])
-        ]
+        {
+          vulnerable => [described_class.new(vulnerable, 'a', [project_1.id])]
+        }
       end
 
       before do
@@ -52,7 +54,7 @@ RSpec.describe Vulnerabilities::ProjectsGrade do
       end
 
       it 'returns the letter grades for given vulnerable' do
-        expect(projects_grades.map(&compare_key)).to match_array(expected_projects_grades.map(&compare_key))
+        expect(projects_grades[vulnerable].map(&compare_key)).to match_array(expected_projects_grades[vulnerable].map(&compare_key))
       end
     end
   end

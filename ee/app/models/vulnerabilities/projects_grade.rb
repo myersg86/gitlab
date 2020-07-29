@@ -24,9 +24,9 @@ module Vulnerabilities
         .for_project(vulnerables.map(&:projects).reduce(&:or))
         .group(:letter_grade)
         .select(:letter_grade, 'array_agg(project_id) project_ids')
-        .flat_map do |statistics|
-          vulnerables.map do |vulnerable|
-            new(vulnerable, statistics.letter_grade, statistics.project_ids)
+        .then do |statistics|
+          vulnerables.each_with_object({}) do |vulnerable, hash|
+            hash[vulnerable] = statistics.map { |statistic| new(vulnerable, statistic.letter_grade, statistic.project_ids) }
           end
         end
     end
