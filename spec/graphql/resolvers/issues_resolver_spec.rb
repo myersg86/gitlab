@@ -103,6 +103,10 @@ RSpec.describe Resolvers::IssuesResolver do
         it 'filters by more than one type' do
           expect(resolve_issues(issue_types: %w(incident issue))).to contain_exactly(issue1, issue2)
         end
+
+        it 'ignores the filter if none given' do
+          expect(resolve_issues(issue_types: [])).to contain_exactly(issue1, issue2)
+        end
       end
 
       context 'when searching issues' do

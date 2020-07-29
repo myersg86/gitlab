@@ -101,7 +101,7 @@ class IssuesFinder < IssuableFinder
   end
 
   def by_issue_types(items)
-    return items if params[:issue_types].nil?
+    return items if params[:issue_types].blank?
 
     items.with_issue_type(params[:issue_types])
   end
