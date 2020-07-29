@@ -1272,15 +1272,13 @@ describe('Actions Notes Store', () => {
   `('updateLockedAttribute for issuableType=$issuableType', ({ issuableType }) => {
     // Payload for mutation query
     state = { noteableData: { discussion_locked: false } };
-    const iid = '1';
-    const projectPath = 'full/path';
     const targetType = issuableType;
-    const getters = { getNoteableData: { iid, targetType } };
+    const getters = { getNoteableData: { iid: '1', targetType } };
 
     // Target state after mutation
     const locked = true;
-    const actionArgs = { fullPath: projectPath, locked };
-    const input = { iid, projectPath, locked: true };
+    const actionArgs = { fullPath: 'full/path', locked };
+    const input = { iid: '1', projectPath: 'full/path', locked: true };
 
     // Helper functions
     const targetMutation = () => {

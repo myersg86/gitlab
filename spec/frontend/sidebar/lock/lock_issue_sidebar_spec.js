@@ -105,9 +105,7 @@ describe('LockIssueSidebar', () => {
 
           it('shows the editable status', () => {
             expect(findEditLink().exists()).toBe(isEditable);
-            if (isEditable) {
-              expect(findEditLink().text()).toBe('Edit');
-            }
+            expect(findEditLink().text()).toBe('Edit');
           });
 
           describe("when 'Edit' is clicked", () => {

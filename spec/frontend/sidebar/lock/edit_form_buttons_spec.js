@@ -98,22 +98,18 @@ describe('EditFormButtons', () => {
         expect(findLockToggle().text()).toContain(toggleText);
       });
 
-      describe.each`
-        resolved | resolvedStatus
-        ${true}  | ${'success'}
-        ${false} | ${'failure'}
-      `('when toggled', ({ resolved, resolvedStatus }) => {
-        beforeEach(() => {
-          createComponent({
-            props: {
-              isLocked,
-            },
-            resolved,
+      describe('when toggled', () => {
+        describe(`when resolved`, () => {
+          beforeEach(() => {
+            createComponent({
+              props: {
+                isLocked,
+              },
+              resolved: true,
+            });
+            findLockToggle().trigger('click');
           });
-          findLockToggle().trigger('click');
-        });
 
-        describe(`on ${resolvedStatus}`, () => {
           it('dispatches the correct action', () => {
             expect(store.dispatch).toHaveBeenCalledWith('updateLockedAttribute', {
               locked: !isLocked,
@@ -121,8 +117,43 @@ describe('EditFormButtons', () => {
             });
           });
 
-          it('resets loading', () => {
+          it('resets loading', async () => {
+            await wrapper.vm.$nextTick().then(() => {
+              expect(findGlLoadingIcon().exists()).toBe(false);
+            });
+          });
+
+          it('emits close form', () => {
             return wrapper.vm.$nextTick().then(() => {
+              expect(eventHub.$emit).toHaveBeenCalledWith('closeLockForm');
+            });
+          });
+
+          it('does not flash an error message', () => {
+            expect(flash).not.toHaveBeenCalled();
+          });
+        });
+
+        describe(`when not resolved`, () => {
+          beforeEach(() => {
+            createComponent({
+              props: {
+                isLocked,
+              },
+              resolved: false,
+            });
+            findLockToggle().trigger('click');
+          });
+
+          it('dispatches the correct action', () => {
+            expect(store.dispatch).toHaveBeenCalledWith('updateLockedAttribute', {
+              locked: !isLocked,
+              fullPath: '',
+            });
+          });
+
+          it('resets loading', async () => {
+            await wrapper.vm.$nextTick().then(() => {
               expect(findGlLoadingIcon().exists()).toBe(false);
             });
           });
@@ -134,13 +165,9 @@ describe('EditFormButtons', () => {
           });
 
           it('calls flash with the correct message', () => {
-            if (resolved) {
-              expect(flash).not.toHaveBeenCalled();
-            } else {
-              expect(flash).toHaveBeenCalledWith(
-                `Something went wrong trying to change the locked state of this ${issuableDisplayName}`,
-              );
-            }
+            expect(flash).toHaveBeenCalledWith(
+              `Something went wrong trying to change the locked state of this ${issuableDisplayName}`,
+            );
           });
         });
       });
