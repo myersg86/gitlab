@@ -13,9 +13,9 @@ import sidebarTimeTrackingEventHub from '../../sidebar/event_hub';
 import { isInViewport, scrollToElement, isInMRPage } from '../../lib/utils/common_utils';
 import { mergeUrlParams } from '../../lib/utils/url_utility';
 import mrWidgetEventHub from '../../vue_merge_request_widget/event_hub';
-import updateIssueConfidentialMutation from '~/sidebar/components/confidential/queries/update_issue_confidential.mutation.graphql';
-import updateMergeRequestLockMutation from '~/sidebar/components/lock/queries/update_merge_request_lock.mutation.graphql';
-import updateIssueLockMutation from '~/sidebar/components/lock/queries/update_issue_lock.mutation.graphql';
+import updateIssueConfidentialMutation from '~/sidebar/components/confidential/mutations/update_issue_confidential.mutation.graphql';
+import updateMergeRequestLockMutation from '~/sidebar/components/lock/mutations/update_merge_request_lock.mutation.graphql';
+import updateIssueLockMutation from '~/sidebar/components/lock/mutations/update_issue_lock.mutation.graphql';
 import { __, sprintf } from '~/locale';
 import Api from '~/api';
 
@@ -83,8 +83,6 @@ export const setNotesData = ({ commit }, data) => commit(types.SET_NOTES_DATA, d
 export const setNoteableData = ({ commit }, data) => commit(types.SET_NOTEABLE_DATA, data);
 
 export const setConfidentiality = ({ commit }, data) => commit(types.SET_ISSUE_CONFIDENTIAL, data);
-
-export const setIssuableLock = ({ commit }, data) => commit(types.SET_ISSUABLE_LOCK, data);
 
 export const setUserData = ({ commit }, data) => commit(types.SET_USER_DATA, data);
 

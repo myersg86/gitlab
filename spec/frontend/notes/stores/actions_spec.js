@@ -19,9 +19,9 @@ import {
 } from '../mock_data';
 import axios from '~/lib/utils/axios_utils';
 import * as utils from '~/notes/stores/utils';
-import updateIssueConfidentialMutation from '~/sidebar/components/confidential/queries/update_issue_confidential.mutation.graphql';
-import updateMergeRequestLockMutation from '~/sidebar/components/lock/queries/update_merge_request_lock.mutation.graphql';
-import updateIssueLockMutation from '~/sidebar/components/lock/queries/update_issue_lock.mutation.graphql';
+import updateIssueConfidentialMutation from '~/sidebar/components/confidential/mutations/update_issue_confidential.mutation.graphql';
+import updateMergeRequestLockMutation from '~/sidebar/components/lock/mutations/update_merge_request_lock.mutation.graphql';
+import updateIssueLockMutation from '~/sidebar/components/lock/mutations/update_issue_lock.mutation.graphql';
 
 const TEST_ERROR_MESSAGE = 'Test error message';
 jest.mock('~/flash');
