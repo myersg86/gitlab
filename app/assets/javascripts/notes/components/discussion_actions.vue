@@ -38,8 +38,8 @@ export default {
     },
   },
   computed: {
-    showJumpToNextUnresolvedInThreads() {
-      return !this.glFeatures.hideJumpToNextUnresolvedInThreads;
+    hideJumpToNextUnresolvedInThreads() {
+      return this.glFeatures.hideJumpToNextUnresolvedInThreads;
     },
     resolvableNotes() {
       return this.discussion.notes.filter(x => x.resolvable);
@@ -76,7 +76,9 @@ export default {
     </div>
     <div
       v-if="
-        showJumpToNextUnresolvedInThreads && discussion.resolvable && shouldShowJumpToNextDiscussion
+        !hideJumpToNextUnresolvedInThreads &&
+          discussion.resolvable &&
+          shouldShowJumpToNextDiscussion
       "
       class="btn-group discussion-actions ml-sm-2"
     >
