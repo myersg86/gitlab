@@ -80,11 +80,13 @@ describe('EE - DastProfilesList', () => {
       });
 
       it.each(profiles)('renders list item %# correctly', profile => {
-        const { innerText } = getAllTableRows()[profiles.indexOf(profile)];
+        const [profileCell, targetUrlCell, validationStatusCell] = getAllTableRows()[
+          profiles.indexOf(profile)
+        ].cells;
 
-        expect(innerText).toContain(profile.profileName);
-        expect(innerText).toContain(profile.targetUrl);
-        expect(innerText).toContain(profile.validationStatus);
+        expect(profileCell.innerText).toContain(profile.profileName);
+        expect(targetUrlCell.innerText).toContain(profile.targetUrl);
+        expect(validationStatusCell.innerText).toContain(profile.validationStatus);
       });
     });
 
