@@ -4,6 +4,8 @@ import { GlButton, GlTab, GlTabs } from '@gitlab/ui';
 import ProfilesList from './dast_profiles_list.vue';
 import dastSiteProfilesQuery from '../graphql/dast_site_profiles.query.graphql';
 
+const PROFILES_PER_PAGE_LIMIT = 20;
+
 export default {
   components: {
     GlButton,
@@ -34,7 +36,7 @@ export default {
       variables() {
         return {
           fullPath: this.projectFullPath,
-          first: 10,
+          first: PROFILES_PER_PAGE_LIMIT,
         };
       },
       result({ data }) {
@@ -49,7 +51,6 @@ export default {
 
         return siteProfileEdges.map(({ node }) => node);
       },
-      // @TODO - error handling / Sentry ?
       error(e) {
         this.handleLoadingError(e);
       },
@@ -76,7 +77,6 @@ export default {
       $apollo.queries.siteProfiles
         .fetchMore({
           variables: { after: siteProfilesPageInfo.endCursor },
-          // @TODO - check specs about `updateQuery` and clean up code below
           updateQuery: (previousResult, { fetchMoreResult }) => {
             const newResult = { ...fetchMoreResult };
             const previousEdges = previousResult.project.siteProfiles.edges;
@@ -120,7 +120,6 @@ export default {
       </p>
     </header>
 
-    <!--    TODO: Create and switch to `gl-*` class-->
     <gl-tabs>
       <gl-tab>
         <template #title>
@@ -128,11 +127,11 @@ export default {
         </template>
 
         <profiles-list
-          :has-more-pages="hasMoreSiteProfiles"
           :has-error="hasSiteProfilesLoadingError"
+          :has-more-profiles-to-load="hasMoreSiteProfiles"
           :is-loading="isLoadingSiteProfiles"
           :profiles="siteProfiles"
-          @loadMorePages="fetchMoreProfiles"
+          @loadMoreProfiles="fetchMoreProfiles"
         />
       </gl-tab>
     </gl-tabs>

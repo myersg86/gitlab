@@ -96,17 +96,17 @@ describe('EE - DastProfilesList', () => {
       });
 
       it('shows that there are more projects to be loaded', () => {
-        createComponent({ propsData: { profiles, hasMorePages: true } });
+        createComponent({ propsData: { profiles, hasMoreProfilesToLoad: true } });
 
         expect(loadMoreButton()).not.toBe(null);
       });
 
       it('emits "loadMore" when the load-more button is clicked', async () => {
-        expect(wrapper.emitted('loadMorePages')).toBe(undefined);
+        expect(wrapper.emitted('loadMoreProfiles')).toBe(undefined);
 
         await fireEvent.click(loadMoreButton(), {});
 
-        expect(wrapper.emitted('loadMorePages')).toEqual(expect.any(Array));
+        expect(wrapper.emitted('loadMoreProfiles')).toEqual(expect.any(Array));
       });
     });
   });

@@ -26,25 +26,22 @@ export default {
       type: Array,
       required: true,
     },
-    // @TODO - test behaviour
     hasError: {
       type: Boolean,
       required: false,
       default: false,
     },
-    // @TODO - test behaviour
     isLoading: {
       type: Boolean,
       required: false,
       default: false,
     },
-    // @TODO - test behaviour
     profilesPerPage: {
       type: Number,
       required: false,
       default: 10,
     },
-    hasMorePages: {
+    hasMoreProfilesToLoad: {
       type: Boolean,
       required: false,
       default: false,
@@ -148,8 +145,8 @@ export default {
         </template>
       </gl-table>
 
-      <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
-        <gl-button :loading="isLoading && !hasError" @click="$emit('loadMorePages')">{{
+      <p v-if="hasMoreProfilesToLoad" class="gl-display-flex gl-justify-content-center">
+        <gl-button :loading="isLoading && !hasError" @click="$emit('loadMoreProfiles')">{{
           __('Load more')
         }}</gl-button>
       </p>
