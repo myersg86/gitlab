@@ -11,10 +11,6 @@ export default {
       required: true,
       type: Boolean,
     },
-    fullPath: {
-      required: true,
-      type: String,
-    },
     issuableDisplayName: {
       required: true,
       type: String,
@@ -48,11 +44,7 @@ export default {
 
       <p v-else class="text" v-html="lockWarning"></p>
 
-      <edit-form-buttons
-        :full-path="fullPath"
-        :is-locked="isLocked"
-        :issuable-display-name="issuableDisplayName"
-      />
+      <edit-form-buttons :is-locked="isLocked" :issuable-display-name="issuableDisplayName" />
     </div>
   </div>
 </template>

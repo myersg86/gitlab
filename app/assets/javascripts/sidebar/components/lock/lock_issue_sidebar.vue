@@ -30,10 +30,6 @@ export default {
   },
 
   props: {
-    fullPath: {
-      required: true,
-      type: String,
-    },
     isEditable: {
       required: true,
       type: Boolean,
@@ -116,7 +112,6 @@ export default {
         v-if="isLockDialogOpen"
         data-testid="edit-form"
         :is-locked="isLocked"
-        :full-path="fullPath"
         :issuable-display-name="issuableDisplayName"
       />
 

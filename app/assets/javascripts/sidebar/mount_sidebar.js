@@ -88,18 +88,20 @@ function mountLockComponent() {
   const initialData = JSON.parse(dataNode.innerHTML);
 
   return el
-    ? undefined
-    : new Vue({
+    ? new Vue({
         el,
         store: isInIssuePage() ? store : mergeRequestStore,
+        provide: {
+          fullPath,
+        },
         render: createElement =>
           createElement(LockIssueSidebar, {
             props: {
-              fullPath,
               isEditable: initialData.is_editable,
             },
           }),
-      });
+      })
+    : undefined;
 }
 
 function mountParticipantsComponent(mediator) {

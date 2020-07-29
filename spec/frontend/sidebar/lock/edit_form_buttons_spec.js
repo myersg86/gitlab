@@ -35,8 +35,10 @@ describe('EditFormButtons', () => {
 
     wrapper = shallowMount(EditFormButtons, {
       store,
-      propsData: {
+      provide: {
         fullPath: '',
+      },
+      propsData: {
         isLocked: false,
         issuableDisplayName,
         ...props,

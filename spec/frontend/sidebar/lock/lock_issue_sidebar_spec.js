@@ -44,7 +44,6 @@ describe('LockIssueSidebar', () => {
     wrapper = shallowMount(LockIssueSidebar, {
       store,
       propsData: {
-        fullPath: '',
         isEditable: true,
         mediator,
         ...props,

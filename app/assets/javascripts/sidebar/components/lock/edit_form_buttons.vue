@@ -10,14 +10,11 @@ export default {
   components: {
     GlLoadingIcon,
   },
+  inject: ['fullPath'],
   props: {
     isLocked: {
       required: true,
       type: Boolean,
-    },
-    fullPath: {
-      required: true,
-      type: String,
     },
     issuableDisplayName: {
       required: true,

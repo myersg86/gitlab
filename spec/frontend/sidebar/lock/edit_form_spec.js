@@ -18,7 +18,6 @@ describe('Edit Form Dropdown', () => {
     wrapper = shallowMount(EditForm, {
       propsData: {
         isLocked: false,
-        fullPath: '',
         issuableDisplayName,
         ...props,
       },
