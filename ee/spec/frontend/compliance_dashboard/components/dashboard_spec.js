@@ -46,7 +46,7 @@ describe('ComplianceDashboard component', () => {
     });
 
     it('renders a list of merge requests', () => {
-      expect(findMergeRequests().length).toEqual(2);
+      expect(findMergeRequests().length).toBe(2);
     });
 
     describe('approval status', () => {
@@ -76,7 +76,7 @@ describe('ComplianceDashboard component', () => {
     });
 
     it('renders the "merged at" time', () => {
-      expect(findTime().text()).toEqual('merged 2 days ago');
+      expect(findTime().text()).toBe('merged 2 days ago');
     });
   });
 
@@ -90,7 +90,7 @@ describe('ComplianceDashboard component', () => {
     });
 
     it('does not render merge requests', () => {
-      expect(findMergeRequests().exists()).toEqual(false);
+      expect(findMergeRequests().exists()).toBe(false);
     });
   });
 });
