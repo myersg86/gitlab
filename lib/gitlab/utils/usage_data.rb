@@ -120,6 +120,8 @@ module Gitlab
         return unless service_address && service_port
 
         "http://#{service_address}:#{service_port}"
+      rescue
+        nil
       end
 
       def redis_usage_counter
