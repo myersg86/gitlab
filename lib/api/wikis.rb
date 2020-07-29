@@ -62,7 +62,7 @@ module API
           authorize! :create_wiki, container
 
           service_response = WikiPages::CreateService.new(container: container, current_user: current_user, params: params).execute
-          page = serviceresponse.payload.payload(:page)
+          page = service_response.payload[:page]
 
           if service_response.success?
             present page, with: Entities::WikiPage

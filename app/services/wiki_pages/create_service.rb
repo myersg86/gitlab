@@ -11,9 +11,9 @@ module WikiPages
       end
 
       if page.persisted?
-        ServiceResponse.success(payload: {page: page})
+        ServiceResponse.success(payload: { page: page })
       else
-        ServiceResponse.success(message: "Create wiki service failed", payload: {page: page})
+        ServiceResponse.success(message: "Create wiki service failed", payload: { page: page })
       end
 
     end

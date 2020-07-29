@@ -16,7 +16,7 @@ RSpec.shared_examples 'WikiPages::CreateService#execute' do |container_type|
   subject(:service) { described_class.new(container: container, current_user: user, params: opts) }
 
   it 'creates wiki page with valid attributes' do
-    page = service.execute
+    page = service.execute.payload[:page]
 
     expect(page).to be_valid
     expect(page).to be_persisted

@@ -108,7 +108,7 @@ module WikiActions
   # rubocop:disable Gitlab/ModuleWithInstanceVariables
   def create
     service_response = WikiPages::CreateService.new(container: container, current_user: current_user, params: wiki_params).execute
-    page = serviceresponse.payload(:page)
+    page = service_response.payload[:page]
 
     if service_response.success?
       redirect_to(
