@@ -66,11 +66,13 @@ export const receiveStageMedianValuesError = ({ commit }) => {
   createFlash(__('There was an error fetching median data for stages'));
 };
 
-const fetchStageMedian = (currentGroupPath, stageId, params) =>
-  Api.cycleAnalyticsStageMedian(currentGroupPath, stageId, params).then(({ data }) => ({
-    id: stageId,
-    ...data,
-  }));
+const fetchStageMedian = (currentGroupPath, currentValueStreamId, stageId, params) =>
+  Api.cycleAnalyticsStageMedian(currentGroupPath, currentValueStreamId, stageId, params).then(
+    ({ data }) => ({
+      id: stageId,
+      ...data,
+    }),
+  );
 
 export const fetchStageMedianValues = ({ dispatch, getters }) => {
   const {
@@ -234,10 +236,10 @@ export const receiveRemoveStageError = ({ commit }) => {
 };
 
 export const removeStage = ({ dispatch, getters }, stageId) => {
-  const { currentGroupPath } = getters;
+  const { currentGroupPath, currentValueStreamId } = getters;
   dispatch('requestRemoveStage');
 
-  return Api.cycleAnalyticsRemoveStage(currentGroupPath, stageId)
+  return Api.cycleAnalyticsRemoveStage(currentGroupPath, currentValueStreamId, stageId)
     .then(() => dispatch('receiveRemoveStageSuccess'))
     .catch(error => dispatch('receiveRemoveStageError', error));
 };

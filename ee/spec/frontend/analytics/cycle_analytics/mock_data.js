@@ -32,7 +32,7 @@ export const endpoints = {
   durationData: /analytics\/value_stream_analytics\/value_streams\/\d+\/stages\/\d+\/duration_chart/,
   stageData: /analytics\/value_stream_analytics\/value_streams\/\d+\/stages\/\d+\/records/,
   stageMedian: /analytics\/value_stream_analytics\/value_streams\/\d+\/stages\/\d+\/median/,
-  baseStagesEndpoint: /analytics\/value_stream_analytics\/value_streams\/\d+\/tages$/,
+  baseStagesEndpoint: /analytics\/value_stream_analytics\/value_streams\/\d+\/stages/,
   tasksByTypeData: /analytics\/type_of_work\/tasks_by_type/,
   tasksByTypeTopLabelsData: /analytics\/type_of_work\/tasks_by_type\/top_labels/,
   valueStreamData: /analytics\/value_stream_analytics\/value_streams/,
