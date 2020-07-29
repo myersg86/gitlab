@@ -233,14 +233,11 @@ export const receiveRemoveStageError = ({ commit }) => {
   createFlash(__('There was an error removing your custom stage, please try again'));
 };
 
-export const removeStage = ({ dispatch, state }, stageId) => {
-  const {
-    selectedGroup: { fullPath },
-  } = state;
-
+export const removeStage = ({ dispatch, getters }, stageId) => {
+  const { currentGroupPath } = getters;
   dispatch('requestRemoveStage');
 
-  return Api.cycleAnalyticsRemoveStage(stageId, fullPath)
+  return Api.cycleAnalyticsRemoveStage(currentGroupPath, stageId)
     .then(() => dispatch('receiveRemoveStageSuccess'))
     .catch(error => dispatch('receiveRemoveStageError', error));
 };
@@ -303,7 +300,7 @@ export const receiveCreateValueStreamSuccess = ({ commit, dispatch }) => {
 
 export const createValueStream = ({ commit, dispatch, getters }, data) => {
   const { currentGroupPath } = getters;
-  commit(types.REQUEST_CREATE_VALUE_STREAM);cycleAnalyticsSummaryData
+  commit(types.REQUEST_CREATE_VALUE_STREAM);
 
   return Api.cycleAnalyticsCreateValueStream(currentGroupPath, data)
     .then(() => dispatch('receiveCreateValueStreamSuccess'))
