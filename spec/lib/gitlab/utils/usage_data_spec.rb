@@ -76,20 +76,40 @@ RSpec.describe Gitlab::Utils::UsageData do
   end
 
   describe '#with_prometheus_client' do
-    context 'when Prometheus is enabled' do
+    shared_examples 'yields a client instance and returns the block result' do
       it 'yields a client instance and returns the block result' do
-        expect(Gitlab::Prometheus::Internal).to receive(:prometheus_enabled?).and_return(true)
-        expect(Gitlab::Prometheus::Internal).to receive(:uri).and_return('http://prom:9090')
-
         result = described_class.with_prometheus_client { |client| client }
 
         expect(result).to be_an_instance_of(Gitlab::PrometheusClient)
       end
     end
 
-    context 'when Prometheus is disabled' do
+    context 'when Prometheus is available from settings' do
+      before do
+        expect(Gitlab::Prometheus::Internal).to receive(:prometheus_enabled?).and_return(true)
+        expect(Gitlab::Prometheus::Internal).to receive(:uri).and_return('http://prom:9090')
+      end
+
+      it_behaves_like 'yields a client instance and returns the block result'
+    end
+
+    context 'when Prometheus is available from Consul service discovery' do
       before do
         expect(Gitlab::Prometheus::Internal).to receive(:prometheus_enabled?).and_return(false)
+        expect(Diplomat::Service).to receive(:get)
+            .with('prometheus')
+            .and_return(OpenStruct.new(ServiceAddress: 'prom.net', ServicePort: 9090))
+      end
+
+      it_behaves_like 'yields a client instance and returns the block result'
+    end
+
+    context 'when Prometheus is not available' do
+      before do
+        expect(Gitlab::Prometheus::Internal).to receive(:prometheus_enabled?).and_return(false)
+        expect(Diplomat::Service).to receive(:get)
+            .with('prometheus')
+            .and_raise(Diplomat::PathNotFound)
       end
 
       it 'returns nil by default' do

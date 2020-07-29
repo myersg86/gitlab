@@ -78,7 +78,7 @@ module Gitlab
       end
 
       def with_prometheus_client(fallback: nil)
-        prometheus_api_url = prometheus_service_discover
+        prometheus_api_url = prometheus_service_discovery
         return fallback unless prometheus_api_url
 
         yield Gitlab::PrometheusClient.new(prometheus_api_url, allow_local_requests: true)
@@ -98,17 +98,17 @@ module Gitlab
 
       private
 
-      def prometheus_service_discover
+      def prometheus_service_discovery
         if Gitlab::Prometheus::Internal.prometheus_enabled?
           Gitlab::Prometheus::Internal.uri
         else
-          consul_service_discover(service_name: 'prometheus')
+          consul_service_discovery(service_name: 'prometheus')
         end
       end
 
       # Discover Consul service by service name
       # Return service uri: http://service_address:service_port
-      def consul_service_discover(service_name:)
+      def consul_service_discovery(service_name:)
         return unless service_name
 
         require 'diplomat'

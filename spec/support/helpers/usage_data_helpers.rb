@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'diplomat'
+
 module UsageDataHelpers
   SMAU_KEYS = %i(
       snippet_create
