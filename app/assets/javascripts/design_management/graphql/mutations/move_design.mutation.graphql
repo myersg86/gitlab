@@ -6,7 +6,7 @@ mutation DesignManagementMove(
   $next: DesignManagementDesignID
 ) {
   designManagementMove(input: { id: $id, previous: $previous, next: $next }) {
-    collection {
+    designCollection {
       designs {
         edges {
           node {

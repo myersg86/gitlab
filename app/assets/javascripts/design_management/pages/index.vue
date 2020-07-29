@@ -18,6 +18,7 @@ import {
   UPLOAD_DESIGN_ERROR,
   EXISTING_DESIGN_DROP_MANY_FILES_MESSAGE,
   EXISTING_DESIGN_DROP_INVALID_FILENAME_MESSAGE,
+  MOVE_DESIGN_ERROR,
   designUploadSkippedWarning,
   designDeletionError,
 } from '../utils/error_messages';
@@ -65,6 +66,7 @@ export default {
       filesToBeSaved: [],
       selectedDesigns: [],
       isDraggingDesign: false,
+      reorderedDesigns: null,
     };
   },
   computed: {
@@ -260,14 +262,45 @@ export default {
       document.removeEventListener('paste', this.onDesignPaste);
     },
     reorderDesigns({ moved: { newIndex, element } }) {
-      this.$apollo.mutate({
-        mutation: moveDesignMutation,
-        variables: {
-          id: element.id,
-          previous: newIndex > 0 ? this.designs[newIndex - 1].id : null,
-          next: newIndex < this.designs.length - 1 ? this.designs[newIndex + 1].id : null,
-        },
-      });
+      this.$apollo
+        .mutate({
+          mutation: moveDesignMutation,
+          variables: {
+            id: element.id,
+            previous: newIndex > 0 ? this.reorderedDesigns[newIndex - 1].id : null,
+            next:
+              newIndex < this.reorderedDesigns.length - 1
+                ? this.reorderedDesigns[newIndex + 1].id
+                : null,
+          },
+          // optimisticResponse: {
+          //   __typename: 'Mutation',
+          //   designManagementMove: {
+          //     designCollection: {
+          //       __typename: 'DesignCollection',
+          //       designs: {
+          //         __typename: 'DesignConnection',
+          //         edges: {
+          //           __typename: 'DesignEdge',
+          //           ...this.reorderedDesigns,
+          //         },
+          //       },
+          //     },
+          //   },
+          // },
+        })
+        .then(({ data }) => {
+          if (data?.designManagementMove.errors.length) {
+            createFlash(data.designManagementMove.errors[0]);
+            this.designs = this.reorderedDesigns;
+          }
+        })
+        .catch(() => {
+          createFlash(MOVE_DESIGN_ERROR);
+        });
+    },
+    onDesignMove(designs) {
+      this.reorderedDesigns = designs;
     },
   },
   beforeRouteUpdate(to, from, next) {
@@ -333,7 +366,7 @@ export default {
       </gl-alert>
       <vue-draggable
         v-else
-        :list="designs"
+        :value="designs"
         :disabled="!isLatestVersion"
         v-bind="$options.dragOptions"
         tag="ol"
@@ -342,6 +375,7 @@ export default {
         @start="isDraggingDesign = true"
         @end="isDraggingDesign = false"
         @change="reorderDesigns"
+        @input="onDesignMove"
       >
         <li
           v-for="design in designs"
