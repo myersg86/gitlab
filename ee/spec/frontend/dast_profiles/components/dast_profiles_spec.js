@@ -12,8 +12,17 @@ describe('EE - DastProfiles', () => {
       newDastSiteProfilePath: TEST_NEW_DAST_SITE_PROFILE_PATH,
     };
 
+    const apolloMock = {
+      queries: {
+        siteProfiles: {},
+      },
+    };
+
     wrapper = mount(DastProfiles, {
       propsData: defaultProps,
+      mocks: {
+        $apollo: apolloMock,
+      },
     });
   };
 
