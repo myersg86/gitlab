@@ -1,0 +1,5 @@
+---
+title: Add issue type filter to Issue GraphQL query
+merge_request: 38017
+author:
+type: added
