@@ -83,11 +83,11 @@ export default {
   <section>
     <div v-if="isLoadingInitialProfiles || hasProfiles || hasError">
       <gl-table
+        :aria-label="s__('DastProfiles|Site Profiles')"
         :busy="isLoadingInitialProfiles"
-        stacked="sm"
         :fields="$options.tableFields"
         :items="profiles"
-        :aria-label="s__('DastProfiles|Site Profiles')"
+        stacked="sm"
         thead-class="gl-display-none"
       >
         <template #cell(profileName)="{ value }">
@@ -101,15 +101,19 @@ export default {
         <template #cell(validationStatus)="{ value }">
           <span>
             <gl-icon
-              name="information-o"
               :size="16"
               class="gl-vertical-align-text-bottom gl-text-gray-600"
+              name="information-o"
             />
             {{ value }}
           </span>
         </template>
 
         <template #cell(actions)>
+          <!-- 
+            NOTE: The tooltip and `disable` on the button is temporary until the edit feature has been implemented
+            further details: https://gitlab.com/gitlab-org/gitlab/-/issues/222479#proposal
+           -->
           <span
             v-gl-tooltip.hover
             :title="

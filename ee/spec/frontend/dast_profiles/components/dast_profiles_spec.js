@@ -74,4 +74,10 @@ describe('EE - DastProfiles', () => {
       },
     );
   });
+
+  describe('profile loading', () => {});
+
+  describe('profile pagination', () => {});
+
+  describe('error handling', () => {});
 });

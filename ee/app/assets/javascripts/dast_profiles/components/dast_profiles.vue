@@ -121,7 +121,7 @@ export default {
     </header>
 
     <!--    TODO: Create and switch to `gl-*` class-->
-    <gl-tabs content-class="p-md-0">
+    <gl-tabs>
       <gl-tab>
         <template #title>
           <span>{{ s__('DastProfiles|Site Profiles') }}</span>

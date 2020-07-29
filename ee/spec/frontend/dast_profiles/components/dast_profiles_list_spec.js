@@ -39,7 +39,9 @@ describe('EE - DastProfilesList', () => {
     wrapper.destroy();
   });
 
-  describe('empty state', () => {
+  describe('when loading', () => {});
+
+  describe('with no profiles data', () => {
     beforeEach(() => {
       createComponent();
     });
@@ -108,4 +110,8 @@ describe('EE - DastProfilesList', () => {
       });
     });
   });
+
+  describe('with more profiles to load', () => {});
+
+  describe('with errors', () => {});
 });
