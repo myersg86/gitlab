@@ -44,7 +44,7 @@ class MigrateIncidentIssuesToIncidentType < ActiveRecord::Migration[6.0]
     incident_issues = Issue.incident_typed
 
     incident_issues.each_batch(of: BATCH_SIZE) do |batch|
-      batch.update_all(issue_type: :issue )
+      batch.update_all(issue_type: :issue)
     end
   end
 end
