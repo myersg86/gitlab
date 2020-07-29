@@ -12,7 +12,7 @@ import {
   GlTabs,
   GlTab,
 } from '@gitlab/ui';
-import { debounce } from 'lodash';
+import { debounce, trim } from 'lodash';
 import TimeAgoTooltip from '~/vue_shared/components/time_ago_tooltip.vue';
 import { s__ } from '~/locale';
 import { mergeUrlParams } from '~/lib/utils/url_utility';
@@ -88,6 +88,7 @@ export default {
       isErrorAlertDismissed: false,
       redirecting: false,
       searchTerm: '',
+      search: '',
       stateFilter: '',
     };
   },
@@ -110,14 +111,13 @@ export default {
       return mergeUrlParams({ issuable_template: this.incidentTemplateName }, this.newIssuePath);
     },
   },
-  watch: {
-    searchTerm: debounce(function debouncedUserSearch(input) {
-      if (input !== this.searchTerm) {
-        this.searchTerm = input;
+  methods: {
+    onInputChange: debounce(function debounceSearch(input) {
+      const trimmedInput = trim(input);
+      if (trimmedInput !== this.searchTerm) {
+        this.searchTerm = trimmedInput;
       }
     }, INCIDENT_SEARCH_DELAY),
-  },
-  methods: {
     filterIncidentsByState(tabIndex) {
       const { filters } = this.$options.stateTabs[tabIndex];
       this.stateFilter = filters;
@@ -136,7 +136,7 @@ export default {
 
     <div class="incident-management-list-header gl-display-flex gl-justify-content-space-between">
       <gl-tabs content-class="gl-p-0" @input="filterIncidentsByState">
-        <gl-tab v-for="tab in $options.stateTabs" :data-testid="tab.state" :key="tab.state">
+        <gl-tab v-for="tab in $options.stateTabs" :key="tab.state" :data-testid="tab.state">
           <template slot="title">
             <span>{{ tab.title }}</span>
           </template>
@@ -159,9 +159,9 @@ export default {
 
     <div class="gl-bg-gray-10 gl-p-5 gl-border-b-solid gl-border-b-1 gl-border-gray-100">
       <gl-search-box-by-type
-        v-model.trim="searchTerm"
         class="gl-bg-white"
         :placeholder="$options.i18n.searchPlaceholder"
+        @input="onInputChange"
       />
     </div>
 

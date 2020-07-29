@@ -91,7 +91,7 @@
 
   @include media-breakpoint-down(xs) {
     .incident-management-list-header {
-      display: block;
+      flex-direction: column-reverse;
     };
 
     .create-incident-button {
