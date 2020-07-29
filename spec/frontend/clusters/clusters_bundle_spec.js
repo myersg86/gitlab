@@ -2,11 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { loadHTMLFixture } from 'helpers/fixtures';
 import { setTestTimeout } from 'helpers/timeout';
 import Clusters from '~/clusters/clusters_bundle';
-import {
-  APPLICATION_STATUS,
-  APPLICATIONS,
-  RUNNER,
-} from '~/clusters/constants';
+import { APPLICATION_STATUS, APPLICATIONS, RUNNER } from '~/clusters/constants';
 import axios from '~/lib/utils/axios_utils';
 import initProjectSelectDropdown from '~/project_select';
 
