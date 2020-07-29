@@ -1,4 +1,5 @@
 <script>
+import * as Sentry from '@sentry/browser';
 import { GlButton, GlTab, GlTabs } from '@gitlab/ui';
 import ProfilesList from './dast_profiles_list.vue';
 import dastSiteProfilesQuery from '../graphql/dast_site_profiles.query.graphql';
@@ -22,10 +23,9 @@ export default {
   },
   data() {
     return {
-      siteProfiles: {
-        list: [],
-        pageInfo: {},
-      },
+      siteProfiles: [],
+      siteProfilesPageInfo: {},
+      hasSiteProfilesLoadingError: false,
     };
   },
   apollo: {
@@ -37,46 +37,59 @@ export default {
           first: 10,
         };
       },
-      update({ project: { siteProfiles } }) {
-        const { edges = [], pageInfo = {} } = siteProfiles;
-        const list = edges.map(({ node }) => node);
+      result({ data }) {
+        const pageInfo = data?.project?.siteProfiles?.pageInfo;
 
-        return {
-          list,
-          pageInfo,
-        };
+        if (pageInfo) {
+          this.siteProfilesPageInfo = pageInfo;
+        }
+      },
+      update(data) {
+        const siteProfileEdges = data?.project?.siteProfiles?.edges ?? [];
+
+        return siteProfileEdges.map(({ node }) => node);
       },
       // @TODO - error handling / Sentry ?
-      error: () => {},
+      error(e) {
+        this.handleLoadingError(e);
+      },
     },
   },
   computed: {
     hasMoreSiteProfiles() {
-      return this.siteProfiles.pageInfo.hasNextPage;
+      return this.siteProfilesPageInfo.hasNextPage;
     },
     isLoadingSiteProfiles() {
       return this.$apollo.queries.siteProfiles.loading;
     },
   },
   methods: {
+    handleLoadingError(e) {
+      Sentry.captureException(e);
+      this.hasSiteProfilesLoadingError = true;
+    },
     fetchMoreProfiles() {
-      const {
-        siteProfiles: { pageInfo },
-      } = this;
+      const { $apollo, siteProfilesPageInfo } = this;
 
-      this.$apollo.queries.siteProfiles.fetchMore({
-        variables: { after: pageInfo.endCursor },
-        // @TODO - check specs about `updateQuery` and clean up code below
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newResult = { ...fetchMoreResult };
-          const previousEdges = previousResult.project.siteProfiles.edges;
-          const newEdges = newResult.project.siteProfiles.edges;
+      this.hasSiteProfilesLoadingError = false;
 
-          newResult.project.siteProfiles.edges = [...previousEdges, ...newEdges];
+      $apollo.queries.siteProfiles
+        .fetchMore({
+          variables: { after: siteProfilesPageInfo.endCursor },
+          // @TODO - check specs about `updateQuery` and clean up code below
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            const newResult = { ...fetchMoreResult };
+            const previousEdges = previousResult.project.siteProfiles.edges;
+            const newEdges = newResult.project.siteProfiles.edges;
 
-          return newResult;
-        },
-      });
+            newResult.project.siteProfiles.edges = [...previousEdges, ...newEdges];
+
+            return newResult;
+          },
+        })
+        .catch(e => {
+          this.handleLoadingError(e);
+        });
     },
   },
 };
@@ -106,6 +119,7 @@ export default {
         }}
       </p>
     </header>
+
     <!--    TODO: Create and switch to `gl-*` class-->
     <gl-tabs content-class="p-md-0">
       <gl-tab>
@@ -115,8 +129,9 @@ export default {
 
         <profiles-list
           :has-more-pages="hasMoreSiteProfiles"
+          :has-error="hasSiteProfilesLoadingError"
           :is-loading="isLoadingSiteProfiles"
-          :profiles="siteProfiles.list"
+          :profiles="siteProfiles"
           @loadMorePages="fetchMoreProfiles"
         />
       </gl-tab>

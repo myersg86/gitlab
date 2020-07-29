@@ -1,8 +1,9 @@
 <script>
-import { GlButton, GlIcon, GlSkeletonLoading, GlTable, GlTruncate } from '@gitlab/ui';
+import { GlAlert, GlButton, GlIcon, GlSkeletonLoading, GlTable, GlTruncate } from '@gitlab/ui';
 
 export default {
   components: {
+    GlAlert,
     GlButton,
     GlIcon,
     GlSkeletonLoading,
@@ -13,6 +14,12 @@ export default {
     profiles: {
       type: Array,
       required: true,
+    },
+    // @TODO - test behaviour
+    hasError: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
     // @TODO - test behaviour
     isLoading: {
@@ -31,6 +38,11 @@ export default {
       required: false,
       default: false,
     },
+  },
+  data() {
+    return {
+      isErrorDismissed: false,
+    };
   },
   computed: {
     hasProfiles() {
@@ -58,7 +70,7 @@ export default {
 </script>
 <template>
   <section>
-    <div v-if="isLoadingInitialProfiles || hasProfiles">
+    <div v-if="isLoadingInitialProfiles || hasProfiles || hasError">
       <gl-table
         :busy="isLoadingInitialProfiles"
         stacked="sm"
@@ -99,15 +111,29 @@ export default {
             :lines="2"
           />
         </template>
+
+        <template v-if="hasError && !isErrorDismissed" #bottom-row>
+          <td>
+            <gl-alert class="gl-my-4" variant="danger" @dismiss="isErrorDismissed = true">
+              {{
+                s__(
+                  'DastProfiles|Error fetching the profiles list. Please check your network connection and try again.',
+                )
+              }}
+            </gl-alert>
+          </td>
+        </template>
       </gl-table>
 
       <p v-if="hasMorePages" class="gl-display-flex gl-justify-content-center">
-        <gl-button :loading="isLoading" @click="$emit('loadMorePages')">{{
+        <gl-button :loading="isLoading && !hasError" @click="$emit('loadMorePages')">{{
           __('Load more')
         }}</gl-button>
       </p>
     </div>
 
-    <p v-else>{{ s__('DastProfiles|No profiles created yet') }}</p>
+    <p v-else class="gl-my-4">
+      {{ s__('DastProfiles|No profiles created yet') }}
+    </p>
   </section>
 </template>
