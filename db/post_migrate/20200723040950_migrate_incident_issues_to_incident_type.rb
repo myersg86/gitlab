@@ -2,9 +2,6 @@
 
 class MigrateIncidentIssuesToIncidentType < ActiveRecord::Migration[6.0]
   DOWNTIME = false
-
-  INCIDENT_ISSUE_TYPE = 1
-  ISSUE_ISSUE_TYPE = 0
   BATCH_SIZE = 1000
 
   LABEL_PROPERTIES = {
@@ -19,28 +16,35 @@ class MigrateIncidentIssuesToIncidentType < ActiveRecord::Migration[6.0]
   class Issue < ActiveRecord::Base
     include EachBatch
 
+    self.table_name = 'issues'
+
     scope :incident_labelled, -> do
       joins("INNER JOIN label_links ON label_links.target_type = 'Issue' AND label_links.target_id = issues.id")
         .joins("INNER JOIN labels ON labels.id = label_links.label_id")
-        .where(labels: { title: LABEL_PROPERTIES[:title], color: LABEL_PROPERTIES[:color], description: LABEL_PROPERTIES[:description] })
+        .where(labels: LABEL_PROPERTIES)
     end
 
-    scope :incident_issues, -> { where(issue_type: INCIDENT_ISSUE_TYPE) }
+    enum issue_type: {
+      issue: 0,
+      incident: 1
+    }
+
+    scope :incident_typed, -> { where(issue_type: :incident) }
   end
 
   def up
     incident_issues = Issue.incident_labelled
 
     incident_issues.each_batch(of: BATCH_SIZE) do |batch|
-      batch.update_all(issue_type: INCIDENT_ISSUE_TYPE )
+      batch.update_all(issue_type: :incident)
     end
   end
 
   def down
-    incident_issues = Issue.incident_issues
+    incident_issues = Issue.incident_typed
 
     incident_issues.each_batch(of: BATCH_SIZE) do |batch|
-      batch.update_all(issue_type: ISSUE_ISSUE_TYPE )
+      batch.update_all(issue_type: :issue )
     end
   end
 end

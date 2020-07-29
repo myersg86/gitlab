@@ -16,7 +16,7 @@ RSpec.describe MigrateIncidentIssuesToIncidentType do
   let(:namespace) { namespaces.create!(name: 'foo', path: 'foo') }
   let!(:project) { projects.create!(namespace_id: namespace.id) }
   let(:label) { labels.create!(project_id: project.id, **label_props) }
-  let!(:incident_issue) { issues.create!(project_id: project.id, author_id: User.alert_bot.id) }
+  let!(:incident_issue) { issues.create!(project_id: project.id) }
   let!(:other_issue) { issues.create!(project_id: project.id) }
 
   # Issue issue_type enum
@@ -39,7 +39,7 @@ RSpec.describe MigrateIncidentIssuesToIncidentType do
   end
 
   describe '#down' do
-    let!(:incident_issue) { issues.create!(project_id: project.id, author_id: User.alert_bot.id, issue_type: incident_issue_type) }
+    let!(:incident_issue) { issues.create!(project_id: project.id, issue_type: incident_issue_type) }
 
     it 'updates the incident issue type' do
       migration.up

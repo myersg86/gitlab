@@ -1,5 +1,5 @@
 ---
-title: Add post migration to update incident issues
+title: Migrate all 'incident' labelled issues to have issue type 'incident'
 merge_request: 37668
 author:
 type: added
