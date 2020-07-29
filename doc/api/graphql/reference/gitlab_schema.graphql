@@ -10053,6 +10053,11 @@ type Project {
   sastCiConfiguration: SastCiConfiguration
 
   """
+  URL leading to project security dashboard
+  """
+  securityDashboardUrl: String
+
+  """
   Information about security analyzers used in the project
   """
   securityScanners: SecurityScanners
