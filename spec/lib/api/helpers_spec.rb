@@ -242,6 +242,19 @@ RSpec.describe API::Helpers do
         subject.destroy_conditionally!(project)
       end
     end
+
+    context 'invalid if_unmodified_since' do
+      let(:project) { create(:project) }
+
+
+      it 'returns the resource' do
+        time = Time.now
+        allow(subject).to receive(:check_unmodified_since!).with(time).and_return('412 Precondition Failed', 412)
+        expect(subject).to receive(:project)
+        subject.destroy_conditionally!(project)
+
+      end
+    end
   end
 
   describe "#check_unmodified_since!" do
