@@ -4,7 +4,6 @@ import { setTestTimeout } from 'helpers/timeout';
 import Clusters from '~/clusters/clusters_bundle';
 import {
   APPLICATION_STATUS,
-  INGRESS_DOMAIN_SUFFIX,
   APPLICATIONS,
   RUNNER,
 } from '~/clusters/constants';

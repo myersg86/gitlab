@@ -29,7 +29,7 @@ RSpec.describe 'Clusterable > Show page' do
 
       it 'shows help text with the domain as an alternative to custom domain', :js do
         within '.js-cluster-integration-form' do
-          expect((find(cluster_ingress_help_text_selector)).text).to include('192.168.1.100')
+          expect(find(cluster_ingress_help_text_selector).text).to include('192.168.1.100')
         end
       end
     end
